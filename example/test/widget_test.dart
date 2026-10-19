@@ -13,14 +13,43 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_example/main.dart';
 
 void main() {
-  testWidgets('showcase renders the home page', (tester) async {
-    await tester.pumpWidget(const ShowcaseApp());
+  final settings = Oito2SystemSettings.fallback(
+    const Oito2Platform(targetPlatform: TargetPlatform.linux, isWeb: false),
+    desktopEnvironment: Oito2DesktopEnvironment.kde,
+  );
 
-    expect(find.text('oito2_ui'), findsOneWidget);
-    expect(find.text('oito2_ui showcase'), findsOneWidget);
+  Future<void> pumpShowcase(WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(ShowcaseApp(settings: settings));
+  }
+
+  testWidgets('foundation page shows the system settings', (tester) async {
+    await pumpShowcase(tester);
+
+    expect(find.text('oito2_ui · Foundation'), findsOneWidget);
+    expect(find.text('kde'), findsOneWidget);
+    expect(find.text('breeze'), findsOneWidget);
+  });
+
+  testWidgets('navigates to the tokens and typography pages', (tester) async {
+    await pumpShowcase(tester);
+
+    await tester.tap(find.text('Tokens'));
+    await tester.pumpAndSettle();
+    expect(find.text('oito2_ui · Tokens'), findsOneWidget);
+    expect(find.text('Accents'), findsOneWidget);
+
+    await tester.tap(find.text('Typography'));
+    await tester.pumpAndSettle();
+    expect(find.text('oito2_ui · Typography'), findsOneWidget);
+    expect(find.textContaining('displayLarge'), findsOneWidget);
   });
 }

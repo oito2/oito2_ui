@@ -18,3 +18,12 @@
 /// Provides design tokens, color schemes, themes and widgets that render
 /// with one visual identity on Linux, Windows, macOS, iOS, Android and Web.
 library;
+
+export 'src/foundation/contrast.dart';
+export 'src/foundation/desktop_environment.dart';
+export 'src/foundation/platform_info.dart';
+export 'src/foundation/system_settings.dart';
+export 'src/foundation/window_button_layout.dart';
+export 'src/tokens/colors.dart';
+export 'src/tokens/geometry.dart';
+export 'src/tokens/typography.dart';
