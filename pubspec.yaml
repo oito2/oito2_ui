@@ -1,0 +1,16 @@
+name: oito2_ui_workspace
+description: Workspace root for the oito2_ui design system packages and the showcase app.
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+workspace:
+  - packages/oito2_ui
+  - packages/oito2_ui_window
+  - packages/oito2_ui_settings
+  - packages/oito2_ui_syntax
+  - example
+
+dev_dependencies:
+  flutter_lints: ^6.0.0

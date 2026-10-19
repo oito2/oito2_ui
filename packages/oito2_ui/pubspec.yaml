@@ -1,0 +1,36 @@
+name: oito2_ui
+description: Material 3 design system for oito2 apps on Linux, Windows, macOS, iOS, Android and Web, with desktop-grade density and GTK-style surfaces.
+version: 0.1.0
+homepage: https://oito2.github.io/oito2_ui/
+repository: https://github.com/oito2/oito2_ui/tree/main/packages/oito2_ui
+issue_tracker: https://github.com/oito2/oito2_ui/issues
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  material_ui: ^1.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/inter/InterVariable.ttf
+        - asset: assets/fonts/inter/InterVariable-Italic.ttf
+          style: italic
+
+topics:
+  - design-system
+  - material
+  - theme
+  - widgets
+  - desktop
