@@ -22,6 +22,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2SemanticColors` and `Oito2ChromeColors` theme extensions.
 - `SyntaxHighlightPalette` with 11 token roles for every scheme.
 - `Oito2Contrast.minRatio`, `Oito2Contrast.ensure` and `Oito2Contrast.textAAA`.
+- `Oito2Theme` (`light`, `dark`, `fromPreset`, `fromSystem`, `fromColors`): Material 3 `ThemeData` with platform-adaptive density, control sizes, tap targets and splashes, and themes for buttons, inputs, cards, dialogs, sheets, drawers, menus, toggles, sliders, progress, chips, tabs, navigation, list tiles, scrollbars, snack bars and tooltips.
+- Keyboard focus ring and text-safe primary tone on buttons, links, toggles and input focus; input errors in the text-safe error tone.
+- `Oito2DesktopPageTransitionsBuilder` and `oito2PageTransitionsTheme`.
+- `Oito2SyntaxTheme` theme extension carrying the scheme's `SyntaxHighlightPalette`.
+- `Oito2Sizes.touchButtonHeight`.
 
 ### Changed
 

@@ -17,6 +17,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
 import 'pages/colors_page.dart';
+import 'pages/components_page.dart';
 import 'pages/foundation_page.dart';
 import 'pages/tokens_page.dart';
 import 'pages/typography_page.dart';
@@ -42,6 +43,11 @@ final _pages = [
     'Colors',
     Icons.palette_outlined,
     (colors) => ColorsPage(colors: colors),
+  ),
+  _ShowcasePage(
+    'Components',
+    Icons.widgets_outlined,
+    (_) => const ComponentsPage(),
   ),
   _ShowcasePage(
     'Typography',
@@ -82,7 +88,6 @@ class _ShowcaseHomeState extends State<ShowcaseHome> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: colors.chrome.titleBar,
         title: Text('oito2_ui · ${page.label}'),
         actions: [
           _SchemeMenu(options: options, onChanged: widget.onOptionsChanged),
@@ -128,7 +133,6 @@ class _ShowcaseHomeState extends State<ShowcaseHome> {
       body: Row(
         children: [
           NavigationRail(
-            backgroundColor: colors.chrome.sidebar,
             selectedIndex: _selected,
             labelType: NavigationRailLabelType.all,
             onDestinationSelected: (index) => setState(() => _selected = index),

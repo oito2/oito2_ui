@@ -55,7 +55,6 @@
       "Read(*.map)",
       "Read(*.jpg)",
       "Read(*.jpeg)",
-      "Read(*.png)",
       "Read(*.gif)",
       "Read(*.svg)",
       "Read(*.ico)",

@@ -75,4 +75,46 @@ void main() {
     expect(copy, _palette);
     expect(copy.hashCode, _palette.hashCode);
   });
+
+  test('copyWith and lerp', () {
+    const white = Color(0xFFFFFFFF);
+    expect(_palette.copyWith(), _palette);
+    expect(_palette.copyWith(type: white).type, white);
+    final target = _palette.copyWith(comment: white);
+    expect(_palette.lerp(target, 0), _palette);
+    expect(_palette.lerp(target, 1), target);
+    expect(_palette.lerp(null, 0.5), _palette);
+  });
+
+  group('Oito2SyntaxTheme', () {
+    const extension = Oito2SyntaxTheme(_palette);
+
+    test('copyWith, lerp and equality', () {
+      final other = Oito2SyntaxTheme(
+        _palette.copyWith(keyword: const Color(0xFF123456)),
+      );
+      expect(extension.copyWith(), extension);
+      expect(extension.copyWith(palette: other.palette), other);
+      expect(extension.lerp(other, 1), other);
+      expect(extension.lerp(null, 0.5), extension);
+      expect(extension.hashCode, const Oito2SyntaxTheme(_palette).hashCode);
+      expect(extension, isNot(other));
+    });
+
+    testWidgets('maybeOf reads the palette from the theme', (tester) async {
+      SyntaxHighlightPalette? found;
+      await tester.pumpWidget(
+        Theme(
+          data: ThemeData(extensions: const [extension]),
+          child: Builder(
+            builder: (context) {
+              found = Oito2SyntaxTheme.maybeOf(context);
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      expect(found, _palette);
+    });
+  });
 }

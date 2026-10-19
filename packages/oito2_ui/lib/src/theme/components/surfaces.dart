@@ -1,0 +1,137 @@
+// Copyright (C) 2026  oito2
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+import 'package:material_ui/material_ui.dart';
+
+import '../../tokens/geometry.dart';
+import 'component_context.dart';
+
+const _noTint = Color(0x00000000);
+
+/// Cards: no elevation, the scheme surface and a thin `outlineVariant`
+/// border with the large radius.
+CardThemeData buildCardTheme(ComponentThemeContext c) {
+  return CardThemeData(
+    elevation: 0,
+    color: c.scheme.surface,
+    surfaceTintColor: _noTint,
+    shadowColor: _noTint,
+    clipBehavior: Clip.antiAlias,
+    shape: RoundedRectangleBorder(
+      borderRadius: Oito2Radius.largeAll,
+      side: BorderSide(color: c.scheme.outlineVariant),
+    ),
+  );
+}
+
+/// Dialogs: the mainbar tone with the window radius and a thin border.
+DialogThemeData buildDialogTheme(ComponentThemeContext c) {
+  return DialogThemeData(
+    backgroundColor: c.chrome.mainbar,
+    surfaceTintColor: _noTint,
+    elevation: 6,
+    shape: RoundedRectangleBorder(
+      borderRadius: Oito2Radius.windowAll,
+      side: BorderSide(color: c.scheme.outlineVariant),
+    ),
+    titleTextStyle: c.textTheme.titleLarge,
+    contentTextStyle: c.textTheme.bodyMedium,
+    actionsPadding: const EdgeInsets.fromLTRB(
+      Oito2Spacing.xl,
+      0,
+      Oito2Spacing.xl,
+      Oito2Spacing.xl,
+    ),
+  );
+}
+
+/// Bottom sheets: the mainbar tone with the window radius on top.
+BottomSheetThemeData buildBottomSheetTheme(ComponentThemeContext c) {
+  return BottomSheetThemeData(
+    backgroundColor: c.chrome.mainbar,
+    modalBackgroundColor: c.chrome.mainbar,
+    surfaceTintColor: _noTint,
+    showDragHandle: c.isTouch,
+    dragHandleColor: c.scheme.onSurfaceVariant,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(Oito2Radius.window),
+      ),
+    ),
+  );
+}
+
+/// Drawers: the mainbar tone, square on pointer platforms.
+DrawerThemeData buildDrawerTheme(ComponentThemeContext c) {
+  return DrawerThemeData(
+    backgroundColor: c.chrome.mainbar,
+    surfaceTintColor: _noTint,
+    elevation: c.isTouch ? 1 : 0,
+    shape: c.isTouch ? null : const RoundedRectangleBorder(),
+    endShape: c.isTouch ? null : const RoundedRectangleBorder(),
+  );
+}
+
+/// Dividers: one pixel of `outlineVariant`.
+DividerThemeData buildDividerTheme(ComponentThemeContext c) {
+  return DividerThemeData(
+    color: c.scheme.outlineVariant,
+    thickness: 1,
+    space: 1,
+  );
+}
+
+/// Snack bars: floating on pointer platforms, on the inverse surface.
+SnackBarThemeData buildSnackBarTheme(ComponentThemeContext c) {
+  return SnackBarThemeData(
+    behavior: c.isTouch ? SnackBarBehavior.fixed : SnackBarBehavior.floating,
+    backgroundColor: c.scheme.inverseSurface,
+    actionTextColor: c.scheme.inversePrimary,
+    contentTextStyle: c.textTheme.bodyMedium?.copyWith(
+      color: c.scheme.onInverseSurface,
+    ),
+    shape: c.isTouch
+        ? null
+        : const RoundedRectangleBorder(borderRadius: Oito2Radius.mediumAll),
+  );
+}
+
+/// Tooltips: the inverse surface with the small radius, shown after a
+/// short hover delay on pointer platforms.
+TooltipThemeData buildTooltipTheme(ComponentThemeContext c) {
+  return TooltipThemeData(
+    decoration: BoxDecoration(
+      color: c.scheme.inverseSurface,
+      borderRadius: Oito2Radius.smallAll,
+    ),
+    textStyle: c.textTheme.bodySmall?.copyWith(
+      color: c.scheme.onInverseSurface,
+    ),
+    padding: const EdgeInsets.symmetric(
+      horizontal: Oito2Spacing.sm,
+      vertical: Oito2Spacing.xs,
+    ),
+    waitDuration: c.isTouch ? null : const Duration(milliseconds: 500),
+  );
+}
+
+/// Carousels: the large radius on the container surface.
+CarouselViewThemeData buildCarouselViewTheme(ComponentThemeContext c) {
+  return CarouselViewThemeData(
+    backgroundColor: c.scheme.surfaceContainer,
+    elevation: 0,
+    shape: const RoundedRectangleBorder(borderRadius: Oito2Radius.largeAll),
+  );
+}

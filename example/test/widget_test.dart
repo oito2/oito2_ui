@@ -77,4 +77,49 @@ void main() {
     expect(Theme.of(context).brightness, Brightness.dark);
     expect(find.byTooltip('Accent color'), findsNothing);
   });
+
+  testWidgets('components page renders themed controls and a dialog', (
+    tester,
+  ) async {
+    await pumpShowcase(tester);
+    // Indeterminate progress indicators never settle, so advance time
+    // explicitly instead of using pumpAndSettle.
+    Future<void> settle() => tester.pump(const Duration(seconds: 1));
+
+    await tester.tap(find.text('Components'));
+    await settle();
+    expect(find.text('oito2_ui · Components'), findsOneWidget);
+    expect(
+      tester.getSize(find.widgetWithText(FilledButton, 'Filled')).height,
+      Oito2Sizes.buttonHeight,
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Open dialog'),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.tap(find.text('Open dialog'));
+    await settle();
+    expect(find.text('Discard changes?'), findsOneWidget);
+    final dialog = tester.widget<Material>(
+      find
+          .descendant(
+            of: find.byType(AlertDialog),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    final context = tester.element(find.byType(AlertDialog));
+    expect(dialog.color, Oito2ChromeColors.maybeOf(context)!.mainbar);
+
+    await tester.tap(find.text('Cancel'));
+    await settle();
+    expect(find.text('Discard changes?'), findsNothing);
+  });
 }

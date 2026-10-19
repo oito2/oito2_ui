@@ -42,18 +42,10 @@ class ShowcaseApp extends StatefulWidget {
 class _ShowcaseAppState extends State<ShowcaseApp> {
   ShowcaseOptions _options = const ShowcaseOptions();
 
-  ThemeData _theme(Brightness brightness) {
-    final colors = _options.colorsFor(brightness);
-    final onSurface = colors.colorScheme.onSurface;
-    return ThemeData(
-      colorScheme: colors.colorScheme,
-      scaffoldBackgroundColor: colors.background,
-      textTheme: Oito2Typography.textTheme(colors.brightness)
-          .apply(bodyColor: onSurface, displayColor: onSurface),
-      visualDensity: widget.settings.platform.visualDensity,
-      extensions: [colors.semantic, colors.chrome],
-    );
-  }
+  ThemeData _theme(Brightness brightness) => Oito2Theme.fromColors(
+    _options.colorsFor(brightness),
+    platform: widget.settings.platform,
+  );
 
   @override
   Widget build(BuildContext context) {

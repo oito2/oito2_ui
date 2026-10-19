@@ -88,6 +88,10 @@ abstract final class Oito2Sizes {
   /// 34.
   static const double buttonHeight = 34;
 
+  /// Height of buttons and single-line input fields on touch platforms:
+  /// 40, with the tap target padded to [minTouchTarget].
+  static const double touchButtonHeight = 40;
+
   /// Height of the window title bar: 46.
   static const double titleBarHeight = 46;
 

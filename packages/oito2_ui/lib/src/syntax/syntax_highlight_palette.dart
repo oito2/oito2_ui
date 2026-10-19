@@ -18,6 +18,8 @@ import 'package:material_ui/material_ui.dart';
 import '../foundation/contrast.dart';
 
 /// Colors for the token roles of a syntax-highlighted code block.
+///
+/// A theme carries it through the `Oito2SyntaxTheme` extension.
 @immutable
 class SyntaxHighlightPalette {
   /// Creates a syntax palette from explicit colors.
@@ -104,6 +106,54 @@ class SyntaxHighlightPalette {
       attribute: fix(attribute),
       constant: fix(constant),
       invalid: fix(invalid),
+    );
+  }
+
+  /// Returns a copy with the given roles replaced.
+  SyntaxHighlightPalette copyWith({
+    Color? foreground,
+    Color? comment,
+    Color? keyword,
+    Color? string,
+    Color? number,
+    Color? function,
+    Color? type,
+    Color? tag,
+    Color? attribute,
+    Color? constant,
+    Color? invalid,
+  }) {
+    return SyntaxHighlightPalette(
+      foreground: foreground ?? this.foreground,
+      comment: comment ?? this.comment,
+      keyword: keyword ?? this.keyword,
+      string: string ?? this.string,
+      number: number ?? this.number,
+      function: function ?? this.function,
+      type: type ?? this.type,
+      tag: tag ?? this.tag,
+      attribute: attribute ?? this.attribute,
+      constant: constant ?? this.constant,
+      invalid: invalid ?? this.invalid,
+    );
+  }
+
+  /// Linearly interpolates every role between this palette and [other].
+  SyntaxHighlightPalette lerp(SyntaxHighlightPalette? other, double t) {
+    if (other == null) return this;
+    Color mix(Color a, Color b) => Color.lerp(a, b, t)!;
+    return SyntaxHighlightPalette(
+      foreground: mix(foreground, other.foreground),
+      comment: mix(comment, other.comment),
+      keyword: mix(keyword, other.keyword),
+      string: mix(string, other.string),
+      number: mix(number, other.number),
+      function: mix(function, other.function),
+      type: mix(type, other.type),
+      tag: mix(tag, other.tag),
+      attribute: mix(attribute, other.attribute),
+      constant: mix(constant, other.constant),
+      invalid: mix(invalid, other.invalid),
     );
   }
 
