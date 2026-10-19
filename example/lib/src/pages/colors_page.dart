@@ -71,7 +71,7 @@ class ColorsPage extends StatelessWidget {
             Swatch('high', s.surfaceContainerHigh, s.onSurface),
             Swatch('highest', s.surfaceContainerHighest, s.onSurfaceVariant),
             Swatch('inverseSurface', s.inverseSurface, s.onInverseSurface),
-            Swatch('outline', s.surface, s.outline, border: s.outline),
+            Swatch('outline', s.outline, s.surface),
           ],
         ),
         ShowcaseSection(

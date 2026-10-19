@@ -82,7 +82,7 @@ class Swatch extends StatelessWidget {
         .substring(2)
         .toUpperCase();
     return Container(
-      width: 132,
+      width: 160,
       constraints: const BoxConstraints(minHeight: 72),
       padding: const EdgeInsets.all(Oito2Spacing.sm),
       decoration: BoxDecoration(
