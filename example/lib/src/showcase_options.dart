@@ -23,7 +23,7 @@ class ShowcaseOptions {
   const ShowcaseOptions({
     this.themeMode = ThemeMode.system,
     this.preset,
-    this.accent = Oito2AccentColor.fallback,
+    this.accent,
     this.highContrast = false,
   });
 
@@ -34,11 +34,18 @@ class ShowcaseOptions {
   /// The selected preset, or null for the oito2 base scheme.
   final Oito2ThemePreset? preset;
 
-  /// The accent color of the base scheme.
-  final Oito2AccentColor accent;
+  /// The accent color of the base scheme, or null to follow the system
+  /// accent.
+  final Oito2AccentColor? accent;
 
-  /// Whether the base scheme uses high contrast.
+  /// Whether the base scheme forces high contrast, on top of the system
+  /// preference.
   final bool highContrast;
+
+  /// The accent the base scheme uses with [system]: [accent], then the
+  /// system accent, then [Oito2AccentColor.fallback].
+  Color accentFor(Oito2SystemSettings system) =>
+      accent?.color ?? system.accentColor ?? Oito2AccentColor.fallback.color;
 
   /// The theme mode the app applies: the preset's brightness when a
   /// preset is selected, otherwise [themeMode].
@@ -47,30 +54,32 @@ class ShowcaseOptions {
     final preset => preset.isDark ? ThemeMode.dark : ThemeMode.light,
   };
 
-  /// The resolved colors for [brightness].
-  Oito2ColorTheme colorsFor(Brightness brightness) {
+  /// The resolved colors for [brightness] with the [system] accent and
+  /// contrast preferences.
+  Oito2ColorTheme colorsFor(Brightness brightness, Oito2SystemSettings system) {
     if (preset case final preset?) return Oito2ColorTheme.fromPreset(preset);
+    final color = accentFor(system);
+    final contrast = highContrast || system.highContrast;
     return brightness == Brightness.dark
-        ? Oito2ColorTheme.dark(accent: accent.color, highContrast: highContrast)
-        : Oito2ColorTheme.light(
-            accent: accent.color,
-            highContrast: highContrast,
-          );
+        ? Oito2ColorTheme.dark(accent: color, highContrast: contrast)
+        : Oito2ColorTheme.light(accent: color, highContrast: contrast);
   }
 
   /// Returns a copy with the given fields replaced. Pass [clearPreset] to
-  /// return to the base scheme.
+  /// return to the base scheme and [clearAccent] to follow the system
+  /// accent.
   ShowcaseOptions copyWith({
     ThemeMode? themeMode,
     Oito2ThemePreset? preset,
     bool clearPreset = false,
     Oito2AccentColor? accent,
+    bool clearAccent = false,
     bool? highContrast,
   }) {
     return ShowcaseOptions(
       themeMode: themeMode ?? this.themeMode,
       preset: clearPreset ? null : preset ?? this.preset,
-      accent: accent ?? this.accent,
+      accent: clearAccent ? null : accent ?? this.accent,
       highContrast: highContrast ?? this.highContrast,
     );
   }

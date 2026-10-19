@@ -28,7 +28,9 @@ void main() {
     tester.view.physicalSize = const Size(1400, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(ShowcaseApp(settings: settings));
+    await tester.pumpWidget(
+      Oito2SystemScope(settings: settings, child: const ShowcaseApp()),
+    );
   }
 
   testWidgets('foundation page shows the system settings', (tester) async {
@@ -182,5 +184,26 @@ void main() {
       tester.widget<Oito2WindowControl>(shellControls.first).style,
       Oito2WindowControlStyle.breeze,
     );
+  });
+
+  testWidgets('the base scheme follows the system accent by default', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final green = Oito2AccentColor.green.color;
+    await tester.pumpWidget(
+      Oito2SystemScope(
+        settings: settings.copyWith(accentColor: green),
+        child: const ShowcaseApp(),
+      ),
+    );
+    final context = tester.element(find.text('oito2_ui · Foundation'));
+    expect(
+      Theme.of(context).colorScheme.primary,
+      Oito2ColorScheme.light(accent: green).primary,
+    );
+    expect(find.text('#3A944A'), findsOneWidget);
   });
 }

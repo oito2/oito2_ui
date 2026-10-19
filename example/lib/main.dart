@@ -15,6 +15,7 @@
 
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
+import 'package:oito2_ui_settings/oito2_ui_settings.dart';
 import 'package:oito2_ui_window/oito2_ui_window.dart';
 
 import 'src/showcase_home.dart';
@@ -27,21 +28,20 @@ Future<void> main() async {
     size: const Size(1280, 820),
     minimumSize: const Size(720, 480),
   );
+  final settings = await Oito2Settings.load();
   runApp(
-    ShowcaseApp(
-      settings: Oito2SystemSettings.fallback(Oito2Platform.current()),
-      windowController: windowController,
+    Oito2SystemSettingsScope(
+      initialSettings: settings,
+      child: ShowcaseApp(windowController: windowController),
     ),
   );
 }
 
 /// Root widget of the `oito2_ui` showcase.
 class ShowcaseApp extends StatefulWidget {
-  /// Creates the showcase root widget for the given system [settings].
-  const ShowcaseApp({super.key, required this.settings, this.windowController});
-
-  /// The system settings the showcase renders with.
-  final Oito2SystemSettings settings;
+  /// Creates the showcase root widget. It renders with the system settings
+  /// of the closest [Oito2SystemScope].
+  const ShowcaseApp({super.key, this.windowController});
 
   /// The native window controller, or null where the app doesn't own a
   /// desktop window.
@@ -54,27 +54,26 @@ class ShowcaseApp extends StatefulWidget {
 class _ShowcaseAppState extends State<ShowcaseApp> {
   ShowcaseOptions _options = const ShowcaseOptions();
 
-  ThemeData _theme(Brightness brightness) => Oito2Theme.fromColors(
-    _options.colorsFor(brightness),
-    platform: widget.settings.platform,
-  );
+  ThemeData _theme(Brightness brightness, Oito2SystemSettings system) =>
+      Oito2Theme.fromColors(
+        _options.colorsFor(brightness, system),
+        platform: system.platform,
+      );
 
   @override
   Widget build(BuildContext context) {
-    return Oito2SystemScope(
-      settings: widget.settings,
-      child: Oito2WindowScope(
-        controller: widget.windowController,
-        child: MaterialApp(
-          title: 'oito2_ui',
-          debugShowCheckedModeBanner: false,
-          theme: _theme(Brightness.light),
-          darkTheme: _theme(Brightness.dark),
-          themeMode: _options.effectiveThemeMode,
-          home: ShowcaseHome(
-            options: _options,
-            onOptionsChanged: (options) => setState(() => _options = options),
-          ),
+    final system = Oito2SystemScope.of(context);
+    return Oito2WindowScope(
+      controller: widget.windowController,
+      child: MaterialApp(
+        title: 'oito2_ui',
+        debugShowCheckedModeBanner: false,
+        theme: _theme(Brightness.light, system),
+        darkTheme: _theme(Brightness.dark, system),
+        themeMode: _options.effectiveThemeMode,
+        home: ShowcaseHome(
+          options: _options,
+          onOptionsChanged: (options) => setState(() => _options = options),
         ),
       ),
     );

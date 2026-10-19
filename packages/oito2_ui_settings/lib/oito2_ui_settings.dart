@@ -18,3 +18,8 @@
 /// Reads the desktop environment, window button layout, accent color and
 /// high-contrast preference from the operating system.
 library;
+
+export 'src/config_parsers.dart';
+export 'src/oito2_settings.dart';
+export 'src/settings_reader.dart';
+export 'src/sources.dart';

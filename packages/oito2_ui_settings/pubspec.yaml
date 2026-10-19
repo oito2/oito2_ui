@@ -14,7 +14,9 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
+  gsettings: ^0.2.9
   oito2_ui: ^0.1.0
+  system_theme: ^3.3.0
 
 dev_dependencies:
   flutter_test:

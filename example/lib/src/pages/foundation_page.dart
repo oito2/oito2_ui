@@ -41,6 +41,11 @@ class FoundationPage extends StatelessWidget {
       'Leading window buttons': names(layout.leading),
       'Trailing window buttons': names(layout.trailing),
       'High contrast': '${settings.highContrast}',
+      'Accent color': switch (settings.accentColor) {
+        null => '— (none reported)',
+        final color =>
+          '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
+      },
     };
 
     return ListView(
@@ -52,9 +57,8 @@ class FoundationPage extends StatelessWidget {
         ),
         const SizedBox(height: Oito2Spacing.sm),
         Text(
-          'Values derived from the platform. The desktop environment and '
-          'window button layout come from the system once '
-          'oito2_ui_settings is connected.',
+          'Read from the operating system by oito2_ui_settings and kept in '
+          'sync while the app runs.',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: Oito2Spacing.lg),

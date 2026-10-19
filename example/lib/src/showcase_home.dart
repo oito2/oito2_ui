@@ -85,7 +85,8 @@ class _ShowcaseHomeState extends State<ShowcaseHome> {
   Widget build(BuildContext context) {
     final page = _pages[_selected];
     final options = widget.options;
-    final colors = options.colorsFor(Theme.of(context).brightness);
+    final system = Oito2SystemScope.of(context);
+    final colors = options.colorsFor(Theme.of(context).brightness, system);
     final isBase = options.preset == null;
 
     return Scaffold(
@@ -201,8 +202,19 @@ class _AccentMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final system = Oito2SystemScope.of(context).accentColor;
     return MenuAnchor(
       menuChildren: [
+        MenuItemButton(
+          leadingIcon: Icon(
+            Icons.circle,
+            color: system ?? Oito2AccentColor.fallback.color,
+          ),
+          trailingIcon: options.accent == null ? const Icon(Icons.check) : null,
+          onPressed: () => onChanged(options.copyWith(clearAccent: true)),
+          child: Text(system == null ? 'System (unavailable)' : 'System'),
+        ),
+        const Divider(height: 1),
         for (final accent in Oito2AccentColor.values)
           MenuItemButton(
             leadingIcon: Icon(Icons.circle, color: accent.color),
@@ -217,7 +229,10 @@ class _AccentMenu extends StatelessWidget {
         tooltip: 'Accent color',
         onPressed: () =>
             controller.isOpen ? controller.close() : controller.open(),
-        icon: Icon(Icons.circle, color: options.accent.color),
+        icon: Icon(
+          Icons.circle,
+          color: options.accentFor(Oito2SystemScope.of(context)),
+        ),
       ),
     );
   }
