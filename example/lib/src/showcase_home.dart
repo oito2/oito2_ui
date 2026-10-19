@@ -19,6 +19,7 @@ import 'package:oito2_ui/oito2_ui.dart';
 import 'pages/colors_page.dart';
 import 'pages/components_page.dart';
 import 'pages/containers_page.dart';
+import 'pages/controls_page.dart';
 import 'pages/foundation_page.dart';
 import 'pages/layouts_page.dart';
 import 'pages/tokens_page.dart';
@@ -51,6 +52,11 @@ final _pages = [
     'Components',
     Icons.widgets_outlined,
     (_) => const ComponentsPage(),
+  ),
+  _ShowcasePage(
+    'Controls',
+    Icons.toggle_on_outlined,
+    (_) => const ControlsPage(),
   ),
   _ShowcasePage(
     'Containers',

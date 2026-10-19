@@ -227,4 +227,20 @@ void main() {
     expect(find.text('Location, camera and history'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('controls page renders the controls and inputs', (tester) async {
+    await pumpShowcase(tester);
+    await tester.tap(find.text('Controls'));
+    await tester.pumpAndSettle();
+    expect(find.byType(Oito2CheckButton), findsNWidgets(3));
+    expect(find.byType(Oito2SplitButton), findsNWidgets(3));
+    expect(find.byType(Oito2ColorDisk), findsNWidgets(9));
+    await tester.tap(find.text('Sort by size'));
+    await tester.pump();
+    final radio = tester.widget<Oito2RadioButton<String>>(
+      find.widgetWithText(Oito2RadioButton<String>, 'Sort by size'),
+    );
+    expect(radio.groupValue, 'size');
+    expect(tester.takeException(), isNull);
+  });
 }

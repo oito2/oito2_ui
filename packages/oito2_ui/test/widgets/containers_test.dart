@@ -19,13 +19,6 @@ import 'package:oito2_ui/oito2_ui.dart';
 
 import 'test_app.dart';
 
-BoxDecoration _decorationOf(WidgetTester tester, Finder finder) {
-  final container = tester.widget<Container>(
-    find.descendant(of: finder, matching: find.byType(Container)).first,
-  );
-  return container.decoration! as BoxDecoration;
-}
-
 void main() {
   final colors = Oito2ColorTheme.light();
 
@@ -33,13 +26,30 @@ void main() {
     tester,
   ) async {
     await pumpOito2(tester, const Oito2BorderContainer(child: Text('x')));
-    final decoration = _decorationOf(tester, find.byType(Oito2BorderContainer));
-    expect(decoration.color, colors.colorScheme.surface);
-    expect(decoration.borderRadius, Oito2Radius.largeAll);
-    expect(
-      (decoration.border! as Border).top.color,
-      colors.colorScheme.outlineVariant,
+    final material = tester.widget<Material>(
+      find
+          .descendant(
+            of: find.byType(Oito2BorderContainer),
+            matching: find.byType(Material),
+          )
+          .first,
     );
+    final shape = material.shape! as RoundedRectangleBorder;
+    expect(material.color, colors.colorScheme.surface);
+    expect(shape.borderRadius, Oito2Radius.largeAll);
+    expect(shape.side.color, colors.colorScheme.outlineVariant);
+  });
+
+  testWidgets('Oito2BorderContainer hosts ink effects of its children', (
+    tester,
+  ) async {
+    await pumpOito2(
+      tester,
+      Oito2BorderContainer(
+        child: ListTile(title: const Text('Row'), onTap: () {}),
+      ),
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Oito2Section shows a header and its actions', (tester) async {

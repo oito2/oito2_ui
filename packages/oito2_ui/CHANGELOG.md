@@ -32,6 +32,9 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Layout and navigation widgets: `Oito2MasterDetailPage` (side-by-side or stacked by width) with `Oito2MasterTile`, `Oito2MasterTileScope` and `Oito2DetailPage`; `Oito2NavigationPage` (rail or bottom bar by width) with `Oito2NavigationItem`; `Oito2PanedView` (resizable with pointer, keyboard and assistive technologies); `Oito2PageController`.
 - Container widgets: `Oito2BorderContainer`, `Oito2Section`, `Oito2Tile`, `Oito2TileList`, `Oito2SelectableContainer`, `Oito2Banner`, `Oito2InfoBox`, `Oito2InfoBadge`, `Oito2Expandable` and `Oito2Watermark`.
 - Dependency on `lucide_icons_flutter` for widget icons.
+- Controls: `Oito2CheckButton`, `Oito2RadioButton`, `Oito2SwitchButton` (clickable labels), `Oito2SplitButton`, `Oito2OptionButton`, `Oito2ColorDisk`, `Oito2ChoiceChipBar` and `Oito2PageIndicator`.
+- Inputs: `Oito2SearchField`, `Oito2SearchTitleField`, `Oito2DateEntry`, `Oito2TimeEntry`, `Oito2DateTimeEntry` and `Oito2SegmentedEntry`; date and time parsing, hints and errors come from `MaterialLocalizations`.
+- Utilities: `Oito2FocusBorder`, `Oito2EdgeFocusInterceptor`, `Oito2ScrollViewUndershoot`, `Oito2DiagonalClip` and `Oito2Draggable`.
 
 ### Changed
 

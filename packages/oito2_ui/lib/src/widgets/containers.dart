@@ -19,6 +19,9 @@ import '../tokens/geometry.dart';
 
 /// A container with a thin `outlineVariant` border, the large radius and
 /// the scheme surface as background.
+///
+/// It paints on a [Material], so ink effects of widgets inside it, such as
+/// [ListTile] hover and splashes, show on its surface.
 class Oito2BorderContainer extends StatelessWidget {
   /// Creates a bordered container.
   const Oito2BorderContainer({
@@ -64,19 +67,24 @@ class Oito2BorderContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
-      width: width,
-      height: height,
-      margin: margin,
-      padding: padding,
+    final padding = this.padding;
+    final child = this.child;
+    Widget result = Material(
+      color: color ?? scheme.surface,
       clipBehavior: clipBehavior,
-      decoration: BoxDecoration(
-        color: color ?? scheme.surface,
+      shape: RoundedRectangleBorder(
         borderRadius: borderRadius,
-        border: Border.all(color: borderColor ?? scheme.outlineVariant),
+        side: BorderSide(color: borderColor ?? scheme.outlineVariant),
       ),
-      child: child,
+      child: padding == null || child == null
+          ? child
+          : Padding(padding: padding, child: child),
     );
+    if (width != null || height != null) {
+      result = SizedBox(width: width, height: height, child: result);
+    }
+    final margin = this.margin;
+    return margin == null ? result : Padding(padding: margin, child: result);
   }
 }
 
@@ -266,18 +274,15 @@ class Oito2TileList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Oito2BorderContainer(
-      child: Material(
-        type: MaterialType.transparency,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < children.length; i++) ...[
-              if (i > 0) const Divider(height: 1),
-              children[i],
-            ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0) const Divider(height: 1),
+            children[i],
           ],
-        ),
+        ],
       ),
     );
   }
