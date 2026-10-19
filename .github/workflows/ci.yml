@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Mondays at 06:00 UTC: run against the latest Flutter stable.
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pinned Flutter release for push and pull request runs.
+  FLUTTER_VERSION: 3.47.7
+
+jobs:
+  checks:
+    name: Format, analyze and test
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed .
+      - run: flutter analyze
+      - name: Test every package
+        run: |
+          for dir in packages/oito2_ui packages/oito2_ui_window \
+                     packages/oito2_ui_settings packages/oito2_ui_syntax example; do
+            echo "::group::$dir"
+            (cd "$dir" && flutter test)
+            echo "::endgroup::"
+          done
+      - name: Test bundled fonts on the web (Chrome)
+        run: |
+          (cd packages/oito2_ui && flutter test --platform chrome test/tokens/inter_font_test.dart)
+          (cd packages/oito2_ui_syntax && flutter test --platform chrome \
+            --plain-name "JetBrains Mono is bundled" test/code_block_test.dart)
+
+  build-ubuntu:
+    name: Build web, Linux and Android
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libstdc++-12-dev
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - name: Build web
+        working-directory: example
+        run: flutter build web --base-href /oito2_ui/
+      - name: Build Linux
+        working-directory: example
+        run: flutter build linux --debug
+      - name: Build Android
+        working-directory: example
+        run: flutter build apk --debug
+
+  build-macos:
+    name: Build macOS and iOS
+    if: github.event_name != 'schedule'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - name: Build macOS
+        working-directory: example
+        run: flutter build macos --debug
+      - name: Build iOS (no code signing)
+        working-directory: example
+        run: flutter build ios --debug --no-codesign
+
+  build-windows:
+    name: Build Windows
+    if: github.event_name != 'schedule'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - name: Build Windows
+        working-directory: example
+        run: flutter build windows --debug
+
+  latest-stable:
+    name: Latest Flutter stable and dependencies
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter --version
+      - name: Resolve the newest allowed dependencies
+        run: flutter pub upgrade
+      - run: flutter analyze
+      - name: Test every package
+        run: |
+          for dir in packages/oito2_ui packages/oito2_ui_window \
+                     packages/oito2_ui_settings packages/oito2_ui_syntax example; do
+            echo "::group::$dir"
+            (cd "$dir" && flutter test)
+            echo "::endgroup::"
+          done

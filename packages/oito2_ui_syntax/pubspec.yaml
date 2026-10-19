@@ -14,10 +14,17 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  lucide_icons_flutter: ^4.0.0
   material_ui: ^1.7.0
   oito2_ui: ^0.1.0
   re_highlight: ^0.0.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+flutter:
+  fonts:
+    - family: JetBrains Mono
+      fonts:
+        - asset: assets/fonts/jetbrains_mono/JetBrainsMono-Variable.ttf
+        - asset: assets/fonts/jetbrains_mono/JetBrainsMono-Italic-Variable.ttf
+          style: italic

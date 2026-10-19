@@ -15,7 +15,7 @@ dependencies:
   catppuccin_flutter: ^1.0.0
   flutter:
     sdk: flutter
-  lucide_icons_flutter: ^4.0.0
+  flutter_lucide: ^1.59.0
   material_ui: ^1.7.0
 
 dev_dependencies:

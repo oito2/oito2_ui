@@ -1,12 +1,12 @@
 {
-    "name": "oito2_ui_example",
-    "short_name": "oito2_ui_example",
+    "name": "oito2_ui showcase",
+    "short_name": "oito2_ui",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "Interactive showcase for the oito2_ui design system.",
-    "orientation": "portrait-primary",
+    "background_color": "#FAFAFA",
+    "theme_color": "#EBEBEB",
+    "description": "Interactive showcase of oito2_ui, a Material 3 design system for Flutter apps.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

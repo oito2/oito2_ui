@@ -19,6 +19,8 @@
 /// with one visual identity on Linux, Windows, macOS, iOS, Android and Web.
 library;
 
+export 'package:flutter_lucide/flutter_lucide.dart' show LucideIcons;
+
 export 'src/foundation/contrast.dart';
 export 'src/foundation/desktop_environment.dart';
 export 'src/foundation/platform_info.dart';

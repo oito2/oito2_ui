@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../foundation/contrast.dart';
@@ -338,7 +338,7 @@ class Oito2SplitButton extends StatelessWidget {
                         ? controller.close()
                         : controller.open()
                   : null,
-              const Icon(LucideIcons.chevronDown),
+              const Icon(LucideIcons.chevron_down),
             ),
           ),
         ),

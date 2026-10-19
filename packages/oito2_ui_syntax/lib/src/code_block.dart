@@ -16,7 +16,6 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
@@ -62,10 +61,13 @@ class Oito2CodeBlock extends StatefulWidget {
   /// Space around the code.
   final EdgeInsetsGeometry padding;
 
-  /// Monospace families tried in order; `monospace` lets the system pick
-  /// its default monospace font.
+  /// The family name of JetBrains Mono, as bundled by this package. It
+  /// already carries the package prefix.
+  static const String fontFamily = 'packages/oito2_ui_syntax/JetBrains Mono';
+
+  /// System monospace families used for glyphs the bundled font lacks, in
+  /// order.
   static const List<String> monospaceFallback = [
-    'JetBrains Mono',
     'Cascadia Code',
     'Fira Code',
     'Ubuntu Mono',
@@ -74,12 +76,13 @@ class Oito2CodeBlock extends StatefulWidget {
     'Liberation Mono',
     'Consolas',
     'Menlo',
+    'monospace',
   ];
 
-  /// The default code text style: 13-point monospace with 1.45 line
-  /// height.
+  /// The default code text style: 13-point bundled JetBrains Mono with
+  /// 1.45 line height.
   static const TextStyle defaultTextStyle = TextStyle(
-    fontFamily: 'monospace',
+    fontFamily: fontFamily,
     fontFamilyFallback: monospaceFallback,
     fontSize: 13,
     height: 1.45,

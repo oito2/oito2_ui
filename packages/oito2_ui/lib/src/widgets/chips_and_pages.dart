@@ -15,7 +15,7 @@
 
 import 'dart:math' as math;
 
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
@@ -149,7 +149,7 @@ class _Oito2ChoiceChipBarState extends State<Oito2ChoiceChipBar> {
       onPressed: () =>
           _scrollBy(forward ? widget.scrollStep : -widget.scrollStep),
       icon: Icon(
-        forward != rtl ? LucideIcons.chevronRight : LucideIcons.chevronLeft,
+        forward != rtl ? LucideIcons.chevron_right : LucideIcons.chevron_left,
       ),
     );
     return NotificationListener<ScrollMetricsNotification>(

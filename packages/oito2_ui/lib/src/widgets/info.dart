@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../foundation/contrast.dart';
@@ -27,13 +27,13 @@ enum Oito2InfoType {
   information(LucideIcons.info),
 
   /// A successful or positive outcome.
-  success(LucideIcons.circleCheck),
+  success(LucideIcons.circle_check),
 
   /// Something that needs attention.
-  warning(LucideIcons.triangleAlert),
+  warning(LucideIcons.triangle_alert),
 
   /// An error or a destructive consequence.
-  danger(LucideIcons.circleX),
+  danger(LucideIcons.circle_x),
 
   /// Something the user should notice, in the accent color.
   important(LucideIcons.star);

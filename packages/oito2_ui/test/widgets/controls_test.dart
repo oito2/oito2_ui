@@ -14,7 +14,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
@@ -159,7 +158,7 @@ void main() {
       );
       await tester.tap(find.text('Save'));
       expect(pressed, 1);
-      await tester.tap(find.byIcon(LucideIcons.chevronDown));
+      await tester.tap(find.byIcon(LucideIcons.chevron_down));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Save as…'));
       await tester.pumpAndSettle();

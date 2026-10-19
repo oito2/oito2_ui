@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
@@ -94,7 +94,7 @@ class _Oito2ExpandableState extends State<Oito2Expandable> {
       turns: _expanded ? 0.5 : 0,
       duration: const Duration(milliseconds: 200),
       child: Icon(
-        LucideIcons.chevronDown,
+        LucideIcons.chevron_down,
         size: Oito2Sizes.iconSize,
         color: theme.colorScheme.onSurfaceVariant,
       ),

@@ -15,7 +15,6 @@
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_syntax/oito2_ui_syntax.dart';
@@ -116,11 +115,41 @@ void main() {
     expect(find.byType(IconButton), findsNothing);
   });
 
-  test('the default text style is monospace', () {
-    expect(Oito2CodeBlock.defaultTextStyle.fontFamily, 'monospace');
+  test('the default text style uses the bundled JetBrains Mono', () {
+    expect(
+      Oito2CodeBlock.defaultTextStyle.fontFamily,
+      'packages/oito2_ui_syntax/JetBrains Mono',
+    );
     expect(
       Oito2CodeBlock.defaultTextStyle.fontFamilyFallback,
       Oito2CodeBlock.monospaceFallback,
     );
   });
+
+  test(
+    'JetBrains Mono is bundled with a fixed advance for every weight',
+    () async {
+      final data = rootBundle.load(
+        'packages/oito2_ui_syntax/assets/fonts/jetbrains_mono/JetBrainsMono-Variable.ttf',
+      );
+      await (FontLoader('MonoAssetTest')..addFont(data)).load();
+      double width(String text, FontWeight weight) {
+        final painter = TextPainter(
+          text: TextSpan(
+            text: text,
+            style: TextStyle(
+              fontFamily: 'MonoAssetTest',
+              fontSize: 20,
+              fontWeight: weight,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        return painter.width;
+      }
+
+      expect(width('iiii', FontWeight.w400), width('MMMM', FontWeight.w400));
+      expect(width('iiii', FontWeight.w700), width('iiii', FontWeight.w400));
+    },
+  );
 }
