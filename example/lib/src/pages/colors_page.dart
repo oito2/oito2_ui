@@ -15,8 +15,18 @@
 
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
+import 'package:oito2_ui_syntax/oito2_ui_syntax.dart';
 
 import '../widgets/showcase_widgets.dart';
+
+const _sample = r'''
+// Greets everyone on the list.
+@override
+Future<void> greet(List<String> names) async {
+  const limit = 42;
+  if (names.isEmpty) return;
+  print('Hello, ${names.take(limit)}');
+}''';
 
 /// Shows every color of the active scheme: Material roles, semantic
 /// colors, chrome and syntax highlighting.
@@ -93,7 +103,12 @@ class ColorsPage extends StatelessWidget {
         ShowcaseSection('Chrome', children: [_ChromePreview(colors.chrome)]),
         ShowcaseSection(
           'Syntax highlighting',
-          children: [_CodeSample(colors.syntax, s.surfaceContainer)],
+          children: [
+            SizedBox(
+              width: 560,
+              child: Oito2CodeBlock(code: _sample, language: 'dart'),
+            ),
+          ],
         ),
       ],
     );
@@ -181,76 +196,6 @@ class _ChromePreview extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// A short Dart snippet colored with [syntax] on [background].
-class _CodeSample extends StatelessWidget {
-  const _CodeSample(this.syntax, this.background);
-
-  final SyntaxHighlightPalette syntax;
-  final Color background;
-
-  @override
-  Widget build(BuildContext context) {
-    TextSpan t(String text, Color color) => TextSpan(
-      text: text,
-      style: TextStyle(color: color),
-    );
-    final s = syntax;
-    return Container(
-      padding: const EdgeInsets.all(Oito2Spacing.lg),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: Oito2Radius.mediumAll,
-      ),
-      child: Text.rich(
-        TextSpan(
-          style: const TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 13,
-            height: 1.5,
-          ),
-          children: [
-            t('// Greets everyone on the list.\n', s.comment),
-            t('@override\n', s.attribute),
-            t('Future', s.type),
-            t('<', s.foreground),
-            t('void', s.keyword),
-            t('> ', s.foreground),
-            t('greet', s.function),
-            t('(', s.foreground),
-            t('List', s.type),
-            t('<', s.foreground),
-            t('String', s.type),
-            t('> names) ', s.foreground),
-            t('async', s.keyword),
-            t(' {\n  ', s.foreground),
-            t('const', s.keyword),
-            t(' limit = ', s.foreground),
-            t('42', s.number),
-            t(';\n  ', s.foreground),
-            t('final', s.keyword),
-            t(' html = ', s.foreground),
-            t("'<", s.string),
-            t('p', s.tag),
-            t(' class', s.attribute),
-            t("=\"hi\">'", s.string),
-            t(';\n  ', s.foreground),
-            t('if', s.keyword),
-            t(' (names.isEmpty == ', s.foreground),
-            t('true', s.constant),
-            t(') ', s.foreground),
-            t('return', s.keyword),
-            t(';\n  print(', s.foreground),
-            t("'Hello, \${names.take(limit)}'", s.string),
-            t(');\n  ', s.foreground),
-            t('undefinedCall', s.invalid),
-            t('();\n}', s.foreground),
-          ],
-        ),
       ),
     );
   }

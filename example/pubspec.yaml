@@ -15,6 +15,7 @@ dependencies:
   material_ui: ^1.7.0
   oito2_ui: ^0.1.0
   oito2_ui_settings: ^0.1.0
+  oito2_ui_syntax: ^0.1.0
   oito2_ui_window: ^0.1.0
 
 dev_dependencies:

@@ -243,4 +243,16 @@ void main() {
     expect(radio.groupValue, 'size');
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('code page highlights the selected language', (tester) async {
+    await pumpShowcase(tester);
+    await tester.tap(find.text('Code'));
+    await tester.pumpAndSettle();
+    expect(find.text('oito2_ui · Code'), findsOneWidget);
+    await tester.tap(find.text('python'));
+    await tester.pumpAndSettle();
+    final code = tester.widget<SelectableText>(find.byType(SelectableText));
+    expect(code.textSpan!.toPlainText(), contains('class Point'));
+    expect(tester.takeException(), isNull);
+  });
 }

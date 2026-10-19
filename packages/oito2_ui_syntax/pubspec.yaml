@@ -1,5 +1,5 @@
 name: oito2_ui_syntax
-description: "Syntax highlighting themes for oito2_ui, built in memory from the oito2 color presets."
+description: "Syntax highlighting for oito2_ui: code colored with the oito2 color schemes, in pure Dart, plus a ready-made code block widget."
 version: 0.1.0
 homepage: https://oito2.github.io/oito2_ui/
 repository: https://github.com/oito2/oito2_ui/tree/main/packages/oito2_ui_syntax
@@ -14,8 +14,10 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
+  lucide_icons_flutter: ^4.0.0
+  material_ui: ^1.7.0
   oito2_ui: ^0.1.0
-
+  re_highlight: ^0.0.3
 dev_dependencies:
   flutter_test:
     sdk: flutter

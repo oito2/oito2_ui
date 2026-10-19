@@ -13,7 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-/// Syntax highlighting themes for `oito2_ui`.
+/// Syntax highlighting for `oito2_ui`.
 ///
-/// Builds highlighter themes in memory from the `oito2_ui` color presets.
+/// Colors code with the `SyntaxHighlightPalette` of the active oito2
+/// scheme, in pure Dart through `re_highlight`.
 library;
+
+export 'src/code_block.dart';
+export 'src/highlighter.dart';
+export 'src/highlighter_theme.dart';

@@ -16,6 +16,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
+import 'pages/code_page.dart';
 import 'pages/colors_page.dart';
 import 'pages/components_page.dart';
 import 'pages/containers_page.dart';
@@ -69,6 +70,7 @@ final _pages = [
     (_) => const LayoutsPage(),
   ),
   _ShowcasePage('Window', Icons.web_asset_outlined, (_) => const WindowPage()),
+  _ShowcasePage('Code', Icons.code, (_) => const CodePage()),
   _ShowcasePage(
     'Typography',
     Icons.text_fields_outlined,
