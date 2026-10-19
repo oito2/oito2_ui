@@ -24,6 +24,12 @@ abstract final class Oito2Contrast {
   /// components and graphics at WCAG level AA.
   static const double nonTextAA = 3;
 
+  /// Minimum contrast ratio for normal text at WCAG level AAA.
+  static const double textAAA = 7;
+
+  static const _black = Color(0xFF000000);
+  static const _white = Color(0xFFFFFFFF);
+
   /// Returns the WCAG contrast ratio between [a] and [b], from 1 (no
   /// contrast) to 21 (black on white). The alpha channel is ignored.
   static double ratio(Color a, Color b) {
@@ -34,11 +40,48 @@ abstract final class Oito2Contrast {
     return (lighter + 0.05) / (darker + 0.05);
   }
 
-  /// Returns black for backgrounds with a luminance above 0.5 and white
-  /// otherwise.
+  /// Returns black or white, whichever has the higher contrast ratio
+  /// against [background].
   static Color foregroundFor(Color background) {
-    return background.computeLuminance() > 0.5
-        ? const Color(0xFF000000)
-        : const Color(0xFFFFFFFF);
+    return ratio(_black, background) >= ratio(_white, background)
+        ? _black
+        : _white;
+  }
+
+  /// Returns the lowest contrast ratio between [color] and any of
+  /// [backgrounds], or 21 when [backgrounds] is empty.
+  static double minRatio(Color color, Iterable<Color> backgrounds) {
+    var lowest = 21.0;
+    for (final background in backgrounds) {
+      final value = ratio(color, background);
+      if (value < lowest) lowest = value;
+    }
+    return lowest;
+  }
+
+  /// Returns the color closest to [color] that reaches [target] contrast
+  /// against every color in [backgrounds].
+  ///
+  /// Keeps hue and saturation and moves only the HSL lightness, searching
+  /// in steps of 0.005 in both directions and returning the first
+  /// lightness that satisfies [target]. Returns [color] unchanged when it
+  /// already satisfies [target]. When no lightness satisfies it, returns
+  /// black or white, whichever reaches the higher minimum ratio.
+  static Color ensure(Color color, Iterable<Color> backgrounds, double target) {
+    final list = backgrounds.toList(growable: false);
+    if (minRatio(color, list) >= target) return color;
+    final hsl = HSLColor.fromColor(color);
+    for (var step = 1; step <= 200; step++) {
+      for (final sign in const [-1, 1]) {
+        final lightness = hsl.lightness + sign * step * 0.005;
+        if (lightness < 0 || lightness > 1) continue;
+        final candidate = hsl
+            .withLightness(lightness)
+            .toColor()
+            .withValues(alpha: color.a);
+        if (minRatio(candidate, list) >= target) return candidate;
+      }
+    }
+    return minRatio(_black, list) >= minRatio(_white, list) ? _black : _white;
   }
 }

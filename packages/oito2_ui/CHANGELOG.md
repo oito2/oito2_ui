@@ -16,3 +16,14 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2SystemSettings` and the `Oito2SystemScope` inherited widget.
 - `Oito2Contrast` WCAG contrast helpers.
 - Design tokens: `Oito2Radius`, `Oito2Spacing`, `Oito2Sizes`, `Oito2NeutralPalette`, `Oito2AccentColor`, `Oito2StatusPalette` and `Oito2Typography`.
+- Official palettes of Nord, Dracula/Alucard, Everforest and Rosé Pine (`Oito2NordPalette`, `Oito2DraculaPalette`, `Oito2EverforestPalette`, `Oito2RosePinePalette`); Catppuccin read from `catppuccin_flutter`.
+- `Oito2ThemePreset` with the 13 named presets.
+- `Oito2ColorTheme` and `Oito2ColorScheme`: the oito2 base scheme (GTK-style neutrals, custom accent, high contrast) and the 13 presets mapped to Material 3, with WCAG AA text roles on every surface.
+- `Oito2SemanticColors` and `Oito2ChromeColors` theme extensions.
+- `SyntaxHighlightPalette` with 11 token roles for every scheme.
+- `Oito2Contrast.minRatio`, `Oito2Contrast.ensure` and `Oito2Contrast.textAAA`.
+
+### Changed
+
+- `Oito2Contrast.foregroundFor` returns black or white by the higher contrast ratio instead of a 0.5 luminance threshold.
+

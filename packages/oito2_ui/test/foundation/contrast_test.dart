@@ -52,10 +52,76 @@ void main() {
     });
   });
 
-  test('foregroundFor picks black on light and white on dark', () {
+  test('foregroundFor picks the higher-contrast of black and white', () {
     expect(Oito2Contrast.foregroundFor(_white), _black);
     expect(Oito2Contrast.foregroundFor(const Color(0xFFF8E45C)), _black);
     expect(Oito2Contrast.foregroundFor(_black), _white);
     expect(Oito2Contrast.foregroundFor(const Color(0xFF202020)), _white);
+    // Luminance below 0.5, yet black contrasts more (5.57 vs 3.77).
+    expect(Oito2Contrast.foregroundFor(const Color(0xFF3584E4)), _black);
+    expect(Oito2Contrast.foregroundFor(const Color(0xFF9141AC)), _white);
+  });
+
+  test('minRatio returns the lowest ratio, or 21 without backgrounds', () {
+    const grey = Color(0xFF777777);
+    expect(
+      Oito2Contrast.minRatio(_black, const [_white, grey]),
+      Oito2Contrast.ratio(_black, grey),
+    );
+    expect(Oito2Contrast.minRatio(_black, const []), 21);
+  });
+
+  group('ensure', () {
+    test('returns the color unchanged when it already passes', () {
+      const color = Color(0xFF1966C2);
+      expect(Oito2Contrast.ensure(color, const [_white], 4.5), color);
+    });
+
+    test('darkens on light backgrounds until the target is met', () {
+      const accent = Color(0xFF3584E4);
+      final fixed = Oito2Contrast.ensure(accent, const [_white], 4.5);
+      expect(Oito2Contrast.ratio(fixed, _white), greaterThanOrEqualTo(4.5));
+      expect(fixed.computeLuminance(), lessThan(accent.computeLuminance()));
+      final before = HSLColor.fromColor(accent);
+      final after = HSLColor.fromColor(fixed);
+      expect(after.hue, closeTo(before.hue, 1));
+      expect(after.saturation, closeTo(before.saturation, 0.02));
+    });
+
+    test('lightens on dark backgrounds until the target is met', () {
+      const red = Color(0xFFBF616A);
+      const dark = Color(0xFF3B4252);
+      final fixed = Oito2Contrast.ensure(red, const [dark], 4.5);
+      expect(Oito2Contrast.ratio(fixed, dark), greaterThanOrEqualTo(4.5));
+      expect(fixed.computeLuminance(), greaterThan(red.computeLuminance()));
+    });
+
+    test('satisfies every background at once', () {
+      const backgrounds = [Color(0xFFFFFFFF), Color(0xFFE8E8E8)];
+      final fixed = Oito2Contrast.ensure(
+        const Color(0xFFC88800),
+        backgrounds,
+        4.5,
+      );
+      expect(
+        Oito2Contrast.minRatio(fixed, backgrounds),
+        greaterThanOrEqualTo(4.5),
+      );
+    });
+
+    test('falls back to black or white when no lightness passes', () {
+      const backgrounds = [_white, _black];
+      expect(
+        Oito2Contrast.ensure(const Color(0xFF3584E4), backgrounds, 15),
+        anyOf(_black, _white),
+      );
+    });
+
+    test('keeps the alpha channel', () {
+      final fixed = Oito2Contrast.ensure(const Color(0x803584E4), const [
+        _white,
+      ], 4.5);
+      expect(fixed.a, closeTo(0x80 / 255, 0.01));
+    });
   });
 }

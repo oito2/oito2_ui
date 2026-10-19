@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_example/main.dart';
 
@@ -51,5 +51,30 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('oito2_ui · Typography'), findsOneWidget);
     expect(find.textContaining('displayLarge'), findsOneWidget);
+  });
+
+  testWidgets('colors page follows the selected preset', (tester) async {
+    await pumpShowcase(tester);
+
+    await tester.tap(find.text('Colors'));
+    await tester.pumpAndSettle();
+    expect(find.text('oito2_ui · Colors'), findsOneWidget);
+    expect(
+      find.textContaining('primaryText', findRichText: true),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('oito2'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('dracula'));
+    await tester.pumpAndSettle();
+
+    final primary = Oito2ColorTheme.fromPreset(Oito2ThemePreset.dracula)
+        .colorScheme
+        .primary;
+    final context = tester.element(find.text('oito2_ui · Colors'));
+    expect(Theme.of(context).colorScheme.primary, primary);
+    expect(Theme.of(context).brightness, Brightness.dark);
+    expect(find.byTooltip('Accent color'), findsNothing);
   });
 }

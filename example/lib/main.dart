@@ -17,6 +17,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
 import 'src/showcase_home.dart';
+import 'src/showcase_options.dart';
 
 void main() {
   runApp(
@@ -39,16 +40,18 @@ class ShowcaseApp extends StatefulWidget {
 }
 
 class _ShowcaseAppState extends State<ShowcaseApp> {
-  ThemeMode _themeMode = ThemeMode.system;
+  ShowcaseOptions _options = const ShowcaseOptions();
 
   ThemeData _theme(Brightness brightness) {
-    final neutrals = Oito2NeutralPalette.of(brightness);
+    final colors = _options.colorsFor(brightness);
+    final onSurface = colors.colorScheme.onSurface;
     return ThemeData(
-      brightness: brightness,
-      colorSchemeSeed: Oito2AccentColor.fallback.color,
-      scaffoldBackgroundColor: neutrals.surface,
-      textTheme: Oito2Typography.textTheme(brightness),
+      colorScheme: colors.colorScheme,
+      scaffoldBackgroundColor: colors.background,
+      textTheme: Oito2Typography.textTheme(colors.brightness)
+          .apply(bodyColor: onSurface, displayColor: onSurface),
       visualDensity: widget.settings.platform.visualDensity,
+      extensions: [colors.semantic, colors.chrome],
     );
   }
 
@@ -61,10 +64,10 @@ class _ShowcaseAppState extends State<ShowcaseApp> {
         debugShowCheckedModeBanner: false,
         theme: _theme(Brightness.light),
         darkTheme: _theme(Brightness.dark),
-        themeMode: _themeMode,
+        themeMode: _options.effectiveThemeMode,
         home: ShowcaseHome(
-          themeMode: _themeMode,
-          onThemeModeChanged: (mode) => setState(() => _themeMode = mode),
+          options: _options,
+          onOptionsChanged: (options) => setState(() => _options = options),
         ),
       ),
     );
