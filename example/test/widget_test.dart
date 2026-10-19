@@ -206,4 +206,25 @@ void main() {
     );
     expect(find.text('#3A944A'), findsOneWidget);
   });
+
+  testWidgets('containers and layouts pages render their widgets', (
+    tester,
+  ) async {
+    await pumpShowcase(tester);
+
+    await tester.tap(find.text('Containers'));
+    await tester.pumpAndSettle();
+    expect(find.byType(Oito2Section), findsOneWidget);
+    expect(find.byType(Oito2Tile), findsNWidgets(4));
+    expect(find.byType(Oito2SelectableContainer), findsNWidgets(3));
+
+    await tester.tap(find.text('Layouts'));
+    await tester.pumpAndSettle();
+    expect(find.byType(Oito2MasterDetailPage), findsOneWidget);
+    expect(find.text('Wi-Fi, VPN and proxy'), findsOneWidget);
+    await tester.tap(find.text('Privacy'));
+    await tester.pumpAndSettle();
+    expect(find.text('Location, camera and history'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

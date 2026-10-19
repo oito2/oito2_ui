@@ -18,7 +18,9 @@ import 'package:oito2_ui/oito2_ui.dart';
 
 import 'pages/colors_page.dart';
 import 'pages/components_page.dart';
+import 'pages/containers_page.dart';
 import 'pages/foundation_page.dart';
+import 'pages/layouts_page.dart';
 import 'pages/tokens_page.dart';
 import 'pages/typography_page.dart';
 import 'pages/window_page.dart';
@@ -49,6 +51,16 @@ final _pages = [
     'Components',
     Icons.widgets_outlined,
     (_) => const ComponentsPage(),
+  ),
+  _ShowcasePage(
+    'Containers',
+    Icons.dashboard_outlined,
+    (_) => const ContainersPage(),
+  ),
+  _ShowcasePage(
+    'Layouts',
+    Icons.view_sidebar_outlined,
+    (_) => const LayoutsPage(),
   ),
   _ShowcasePage('Window', Icons.web_asset_outlined, (_) => const WindowPage()),
   _ShowcasePage(
@@ -133,23 +145,14 @@ class _ShowcaseHomeState extends State<ShowcaseHome> {
           ],
         ],
       ),
-      body: Row(
-        children: [
-          NavigationRail(
-            selectedIndex: _selected,
-            labelType: NavigationRailLabelType.all,
-            onDestinationSelected: (index) => setState(() => _selected = index),
-            destinations: [
-              for (final p in _pages)
-                NavigationRailDestination(
-                  icon: Icon(p.icon),
-                  label: Text(p.label),
-                ),
-            ],
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(child: page.builder(colors)),
+      body: Oito2NavigationPage(
+        items: [
+          for (final p in _pages)
+            Oito2NavigationItem(icon: Icon(p.icon), label: p.label),
         ],
+        initialIndex: _selected,
+        onSelected: (index) => setState(() => _selected = index),
+        pageBuilder: (context, index) => _pages[index].builder(colors),
       ),
     );
   }

@@ -29,6 +29,9 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2Sizes.touchButtonHeight`.
 - Window chrome: `Oito2TitleBar`, `Oito2WindowTitleBar` (adapts to native desktop, web and touch), `Oito2DialogTitleBar`, `Oito2WindowControl` drawn in the GNOME, Breeze, Xfwm, COSMIC, Windows and macOS styles, `Oito2TitleBarGestureDetector` (drag, double-click maximize, window menu), `Oito2TitleBarThemeData` and `Oito2TitleBarStyle`.
 - `Oito2WindowController` contract, `Oito2WindowState` and the `Oito2WindowScope` inherited widget.
+- Layout and navigation widgets: `Oito2MasterDetailPage` (side-by-side or stacked by width) with `Oito2MasterTile`, `Oito2MasterTileScope` and `Oito2DetailPage`; `Oito2NavigationPage` (rail or bottom bar by width) with `Oito2NavigationItem`; `Oito2PanedView` (resizable with pointer, keyboard and assistive technologies); `Oito2PageController`.
+- Container widgets: `Oito2BorderContainer`, `Oito2Section`, `Oito2Tile`, `Oito2TileList`, `Oito2SelectableContainer`, `Oito2Banner`, `Oito2InfoBox`, `Oito2InfoBadge`, `Oito2Expandable` and `Oito2Watermark`.
+- Dependency on `lucide_icons_flutter` for widget icons.
 
 ### Changed
 
