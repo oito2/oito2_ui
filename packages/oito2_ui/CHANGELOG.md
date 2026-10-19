@@ -27,6 +27,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2DesktopPageTransitionsBuilder` and `oito2PageTransitionsTheme`.
 - `Oito2SyntaxTheme` theme extension carrying the scheme's `SyntaxHighlightPalette`.
 - `Oito2Sizes.touchButtonHeight`.
+- Window chrome: `Oito2TitleBar`, `Oito2WindowTitleBar` (adapts to native desktop, web and touch), `Oito2DialogTitleBar`, `Oito2WindowControl` drawn in the GNOME, Breeze, Xfwm, COSMIC, Windows and macOS styles, `Oito2TitleBarGestureDetector` (drag, double-click maximize, window menu), `Oito2TitleBarThemeData` and `Oito2TitleBarStyle`.
+- `Oito2WindowController` contract, `Oito2WindowState` and the `Oito2WindowScope` inherited widget.
 
 ### Changed
 

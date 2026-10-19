@@ -15,6 +15,7 @@ dependencies:
   flutter:
     sdk: flutter
   oito2_ui: ^0.1.0
+  window_manager: ^0.5.2
 
 dev_dependencies:
   flutter_test:

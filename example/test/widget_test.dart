@@ -122,4 +122,65 @@ void main() {
     await settle();
     expect(find.text('Discard changes?'), findsNothing);
   });
+
+  testWidgets('window page previews every control style and the dialog', (
+    tester,
+  ) async {
+    await pumpShowcase(tester);
+
+    await tester.tap(find.text('Window'));
+    await tester.pumpAndSettle();
+    expect(find.text('oito2_ui · Window'), findsOneWidget);
+    final styles = tester
+        .widgetList<Oito2WindowControl>(find.byType(Oito2WindowControl))
+        .map((c) => c.style)
+        .toSet();
+    expect(
+      styles,
+      containsAll([
+        Oito2WindowControlStyle.breeze,
+        Oito2WindowControlStyle.gnome,
+        Oito2WindowControlStyle.xfwm,
+      ]),
+    );
+
+    final page = find
+        .descendant(
+          of: find.byType(ListView),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    await tester.scrollUntilVisible(
+      find.widgetWithText(OutlinedButton, 'Open dialog'),
+      300,
+      scrollable: page,
+    );
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Open dialog'));
+    await tester.pumpAndSettle();
+    expect(find.text('Preferences'), findsOneWidget);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(Oito2DialogTitleBar),
+        matching: find.byType(Oito2WindowControl),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Preferences'), findsNothing);
+  });
+
+  testWidgets('the shell uses the window title bar with KDE controls', (
+    tester,
+  ) async {
+    await pumpShowcase(tester);
+    expect(find.byType(Oito2WindowTitleBar), findsOneWidget);
+    final shellControls = find.descendant(
+      of: find.byType(Oito2WindowTitleBar),
+      matching: find.byType(Oito2WindowControl),
+    );
+    expect(shellControls, findsNWidgets(3));
+    expect(
+      tester.widget<Oito2WindowControl>(shellControls.first).style,
+      Oito2WindowControlStyle.breeze,
+    );
+  });
 }

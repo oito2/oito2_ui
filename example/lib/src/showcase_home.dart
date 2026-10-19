@@ -21,6 +21,7 @@ import 'pages/components_page.dart';
 import 'pages/foundation_page.dart';
 import 'pages/tokens_page.dart';
 import 'pages/typography_page.dart';
+import 'pages/window_page.dart';
 import 'showcase_options.dart';
 
 /// A showcase page with its navigation label and icon.
@@ -49,6 +50,7 @@ final _pages = [
     Icons.widgets_outlined,
     (_) => const ComponentsPage(),
   ),
+  _ShowcasePage('Window', Icons.web_asset_outlined, (_) => const WindowPage()),
   _ShowcasePage(
     'Typography',
     Icons.text_fields_outlined,
@@ -87,7 +89,8 @@ class _ShowcaseHomeState extends State<ShowcaseHome> {
     final isBase = options.preset == null;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: Oito2WindowTitleBar(
+        platform: Oito2SystemScope.of(context).platform,
         title: Text('oito2_ui · ${page.label}'),
         actions: [
           _SchemeMenu(options: options, onChanged: widget.onOptionsChanged),
@@ -127,7 +130,6 @@ class _ShowcaseHomeState extends State<ShowcaseHome> {
               ),
             ),
           ],
-          const SizedBox(width: Oito2Spacing.md),
         ],
       ),
       body: Row(

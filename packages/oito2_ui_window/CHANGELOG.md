@@ -9,3 +9,4 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Initial package skeleton.
+- `Oito2Window.ensureInitialized`: hides the native title bar for client-side decorations on Linux, Windows and macOS (keeping the macOS traffic lights) and returns an `Oito2WindowController` backed by `window_manager`; returns null on the web, Android and iOS.

@@ -40,3 +40,8 @@ export 'src/tokens/palettes/everforest_palette.dart';
 export 'src/tokens/palettes/nord_palette.dart';
 export 'src/tokens/palettes/rose_pine_palette.dart';
 export 'src/tokens/typography.dart';
+export 'src/window/title_bar.dart';
+export 'src/window/title_bar_gesture_detector.dart';
+export 'src/window/title_bar_theme.dart';
+export 'src/window/window_control.dart';
+export 'src/window/window_controller.dart';

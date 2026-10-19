@@ -18,3 +18,5 @@
 /// Connects the `oito2_ui` title bar and window controls to the native
 /// window on Linux, Windows and macOS.
 library;
+
+export 'src/oito2_window.dart';

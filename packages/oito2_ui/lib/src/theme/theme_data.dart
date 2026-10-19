@@ -17,7 +17,9 @@ import 'package:material_ui/material_ui.dart';
 
 import '../foundation/platform_info.dart';
 import '../foundation/system_settings.dart';
+import '../tokens/geometry.dart';
 import '../tokens/typography.dart';
+import '../window/title_bar_theme.dart';
 import 'color_theme.dart';
 import 'components/buttons.dart';
 import 'components/component_context.dart';
@@ -134,6 +136,16 @@ abstract final class Oito2Theme {
         colors.semantic,
         colors.chrome,
         Oito2SyntaxTheme(colors.syntax),
+        Oito2TitleBarThemeData(
+          style: Oito2TitleBarStyle.normal,
+          height: Oito2Sizes.titleBarHeight,
+          backgroundColor: colors.chrome.titleBar,
+          foregroundColor: scheme.onSurface,
+          border: BorderSide(color: scheme.outlineVariant),
+          titleTextStyle: textTheme.titleMedium,
+          centerTitle: !target.isWindows,
+          inactiveOpacity: 0.7,
+        ),
       ],
       appBarTheme: buildAppBarTheme(c),
       bottomSheetTheme: buildBottomSheetTheme(c),

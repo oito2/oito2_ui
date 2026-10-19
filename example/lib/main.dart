@@ -15,14 +15,22 @@
 
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
+import 'package:oito2_ui_window/oito2_ui_window.dart';
 
 import 'src/showcase_home.dart';
 import 'src/showcase_options.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final windowController = await Oito2Window.ensureInitialized(
+    title: 'oito2_ui',
+    size: const Size(1280, 820),
+    minimumSize: const Size(720, 480),
+  );
   runApp(
     ShowcaseApp(
       settings: Oito2SystemSettings.fallback(Oito2Platform.current()),
+      windowController: windowController,
     ),
   );
 }
@@ -30,10 +38,14 @@ void main() {
 /// Root widget of the `oito2_ui` showcase.
 class ShowcaseApp extends StatefulWidget {
   /// Creates the showcase root widget for the given system [settings].
-  const ShowcaseApp({super.key, required this.settings});
+  const ShowcaseApp({super.key, required this.settings, this.windowController});
 
   /// The system settings the showcase renders with.
   final Oito2SystemSettings settings;
+
+  /// The native window controller, or null where the app doesn't own a
+  /// desktop window.
+  final Oito2WindowController? windowController;
 
   @override
   State<ShowcaseApp> createState() => _ShowcaseAppState();
@@ -51,15 +63,18 @@ class _ShowcaseAppState extends State<ShowcaseApp> {
   Widget build(BuildContext context) {
     return Oito2SystemScope(
       settings: widget.settings,
-      child: MaterialApp(
-        title: 'oito2_ui',
-        debugShowCheckedModeBanner: false,
-        theme: _theme(Brightness.light),
-        darkTheme: _theme(Brightness.dark),
-        themeMode: _options.effectiveThemeMode,
-        home: ShowcaseHome(
-          options: _options,
-          onOptionsChanged: (options) => setState(() => _options = options),
+      child: Oito2WindowScope(
+        controller: widget.windowController,
+        child: MaterialApp(
+          title: 'oito2_ui',
+          debugShowCheckedModeBanner: false,
+          theme: _theme(Brightness.light),
+          darkTheme: _theme(Brightness.dark),
+          themeMode: _options.effectiveThemeMode,
+          home: ShowcaseHome(
+            options: _options,
+            onOptionsChanged: (options) => setState(() => _options = options),
+          ),
         ),
       ),
     );
