@@ -44,6 +44,13 @@ jobs:
             (cd "$dir" && flutter test)
             echo "::endgroup::"
           done
+      - name: Upload golden failures
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: golden-failures
+          path: packages/*/test/goldens/failures/
+          if-no-files-found: ignore
 
   build-ubuntu:
     name: Build web, Linux and Android
@@ -129,11 +136,13 @@ jobs:
       - name: Resolve the newest allowed dependencies
         run: flutter pub upgrade
       - run: flutter analyze
-      - name: Test every package
+      # Goldens are pinned to the Flutter release above; a newer engine
+      # may rasterize differently, so this job skips them.
+      - name: Test every package except goldens
         run: |
           for dir in packages/oito2_ui packages/oito2_ui_window \
                      packages/oito2_ui_settings packages/oito2_ui_syntax example; do
             echo "::group::$dir"
-            (cd "$dir" && flutter test)
+            (cd "$dir" && flutter test --exclude-tags golden)
             echo "::endgroup::"
           done

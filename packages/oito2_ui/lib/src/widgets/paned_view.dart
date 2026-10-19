@@ -18,6 +18,7 @@ import 'dart:math' as math;
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'widget_helpers.dart';
 
@@ -58,7 +59,7 @@ class Oito2PanedView extends StatefulWidget {
     this.resizable = true,
     this.onPaneSizeChanged,
     this.keyboardStep = 16,
-    this.resizeLabel = 'Resize pane',
+    this.resizeLabel,
   });
 
   /// The side widget, such as a list.
@@ -88,8 +89,9 @@ class Oito2PanedView extends StatefulWidget {
   /// How far one arrow key press moves the divider.
   final double keyboardStep;
 
-  /// The accessibility label of the divider.
-  final String resizeLabel;
+  /// The accessibility label of the divider; defaults to
+  /// [Oito2Localizations.resizePane].
+  final String? resizeLabel;
 
   @override
   State<Oito2PanedView> createState() => _Oito2PanedViewState();
@@ -167,7 +169,8 @@ class _Oito2PanedViewState extends State<Oito2PanedView> {
         Widget handle = divider;
         if (widget.resizable) {
           handle = Semantics(
-            label: widget.resizeLabel,
+            label:
+                widget.resizeLabel ?? Oito2Localizations.of(context).resizePane,
             value: '${size.round()}',
             increasedValue: '${_clamp(size + widget.keyboardStep).round()}',
             decreasedValue: '${_clamp(size - widget.keyboardStep).round()}',

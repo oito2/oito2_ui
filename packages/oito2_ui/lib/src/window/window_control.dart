@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import '../l10n/oito2_localizations.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../foundation/window_button_layout.dart';
@@ -33,39 +35,57 @@ enum Oito2WindowControlType {
   close,
 }
 
-/// Accessibility labels of the window control buttons.
+/// Accessibility labels of the window control buttons that override the
+/// [Oito2Localizations] strings.
 ///
-/// `MaterialLocalizations` has no strings for these actions, so apps that
-/// localize their UI pass translated labels.
+/// A null label keeps the localized string.
 @immutable
 class Oito2WindowControlLabels {
-  /// Creates window control labels. The defaults are in English.
+  /// Creates window control label overrides.
   const Oito2WindowControlLabels({
-    this.minimize = 'Minimize',
-    this.maximize = 'Maximize',
-    this.restore = 'Restore',
-    this.close = 'Close',
+    this.minimize,
+    this.maximize,
+    this.restore,
+    this.close,
   });
 
   /// Label of [Oito2WindowControlType.minimize].
-  final String minimize;
+  final String? minimize;
 
   /// Label of [Oito2WindowControlType.maximize].
-  final String maximize;
+  final String? maximize;
 
   /// Label of [Oito2WindowControlType.restore].
-  final String restore;
+  final String? restore;
 
   /// Label of [Oito2WindowControlType.close].
-  final String close;
+  final String? close;
 
-  /// Returns the label for [type].
-  String of(Oito2WindowControlType type) => switch (type) {
+  /// Returns the override for [type], or null when there is none.
+  String? of(Oito2WindowControlType type) => switch (type) {
     Oito2WindowControlType.minimize => minimize,
     Oito2WindowControlType.maximize => maximize,
     Oito2WindowControlType.restore => restore,
     Oito2WindowControlType.close => close,
   };
+
+  /// Returns the label for [type]: the override from [labels] when there
+  /// is one, otherwise the [Oito2Localizations] string of [context].
+  static String resolve(
+    BuildContext context,
+    Oito2WindowControlType type, [
+    Oito2WindowControlLabels? labels,
+  ]) {
+    final override = labels?.of(type);
+    if (override != null) return override;
+    final l10n = Oito2Localizations.of(context);
+    return switch (type) {
+      Oito2WindowControlType.minimize => l10n.minimizeWindow,
+      Oito2WindowControlType.maximize => l10n.maximizeWindow,
+      Oito2WindowControlType.restore => l10n.restoreWindow,
+      Oito2WindowControlType.close => l10n.closeWindow,
+    };
+  }
 }
 
 /// A single window control button drawn in the visual family of [style].
@@ -213,7 +233,7 @@ class _Oito2WindowControlState extends State<Oito2WindowControl> {
         : const Size.square(Oito2Sizes.windowControlSize);
     final glyphSize = isWindows ? 10.0 : (isMac ? 6.0 : 8.0);
     final label =
-        widget.label ?? const Oito2WindowControlLabels().of(widget.type);
+        widget.label ?? Oito2WindowControlLabels.resolve(context, widget.type);
 
     return Semantics(
       button: true,

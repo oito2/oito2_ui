@@ -100,11 +100,11 @@ NavigationBarThemeData buildNavigationBarTheme(ComponentThemeContext c) {
   );
 }
 
-/// Navigation drawers: the mainbar tone with the secondary container
+/// Navigation drawers: the chrome dialog tone with the secondary container
 /// indicator.
 NavigationDrawerThemeData buildNavigationDrawerTheme(ComponentThemeContext c) {
   return NavigationDrawerThemeData(
-    backgroundColor: c.chrome.mainbar,
+    backgroundColor: c.chrome.dialog,
     surfaceTintColor: const Color(0x00000000),
     indicatorColor: c.scheme.secondaryContainer,
     indicatorShape: const RoundedRectangleBorder(

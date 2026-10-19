@@ -37,3 +37,6 @@ coverage/
 
 # AI assistant local-only settings
 *.local.json
+
+# Golden test diffs written on failure
+**/test/goldens/failures/

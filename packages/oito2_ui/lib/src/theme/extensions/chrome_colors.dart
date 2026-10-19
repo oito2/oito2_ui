@@ -15,15 +15,13 @@
 
 import 'package:material_ui/material_ui.dart';
 
-import '../theme_preset.dart';
+import '../../foundation/contrast.dart';
 
 /// Colors of the structural window chrome: the page background, a narrow
-/// sidebar column, a wider mainbar panel and the title bar.
+/// sidebar column, a wider mainbar panel, the title bar and modal surfaces.
 ///
-/// [sidebar] and [mainbar] are derived from the scheme's background and
-/// `onSurface` by [Oito2ChromeColors.derive], so their relationship holds
-/// in every scheme: the mainbar is lighter than the sidebar in dark schemes
-/// and darker in the light ones.
+/// [Oito2ChromeColors.fromColorScheme] takes them from the Material 3
+/// surface container roles, so the same rule holds in every scheme.
 @immutable
 class Oito2ChromeColors extends ThemeExtension<Oito2ChromeColors> {
   /// Creates chrome colors from explicit values.
@@ -32,86 +30,60 @@ class Oito2ChromeColors extends ThemeExtension<Oito2ChromeColors> {
     required this.sidebar,
     required this.mainbar,
     required this.titleBar,
+    required this.dialog,
   });
 
-  /// Derives the chrome colors from a scheme's [background] and
-  /// [onSurface] colors.
+  /// Takes the chrome colors from the surface roles of [colorScheme],
+  /// using [background] as the page background.
   ///
-  /// The sidebar blends [onSurface] at 3% opacity over [background]. The
-  /// mainbar blends white at 5% opacity over the sidebar, or black at 4%
-  /// opacity when [darkerMainbar] is true. [darkerMainbar] defaults to
-  /// whether [preset] is in [darkerMainbarPresets]. The title bar is
-  /// [titleBar] when given, otherwise the mainbar.
-  factory Oito2ChromeColors.derive({
-    required Color background,
-    required Color onSurface,
-    Color? titleBar,
-    Oito2ThemePreset? preset,
-    bool? darkerMainbar,
-  }) {
-    final sidebar = Color.alphaBlend(
-      onSurface.withValues(alpha: 0.03),
-      background,
-    );
-    final overlay = darkerMainbar ?? darkerMainbarPresets.contains(preset)
-        ? const Color(0xFF000000).withValues(alpha: 0.04)
-        : const Color(0xFFFFFFFF).withValues(alpha: 0.05);
-    final mainbar = Color.alphaBlend(overlay, sidebar);
-    return Oito2ChromeColors(
-      background: background,
-      sidebar: sidebar,
-      mainbar: mainbar,
-      titleBar: titleBar ?? mainbar,
-    );
-  }
-
-  /// Derives the chrome colors from [colorScheme], using
-  /// [background] as the page background.
+  /// - The sidebar is `surfaceContainer` and the mainbar is
+  ///   `surfaceContainerHighest`. Each is moved in lightness, when needed,
+  ///   until it reaches [minimumStep] contrast against the page background
+  ///   and the sidebar against the mainbar, so the three stay apart even
+  ///   when a scheme's background sits inside its container range.
+  /// - The title bar is [titleBar] when given, otherwise
+  ///   `surfaceContainer`.
+  /// - Dialogs, sheets and drawers use `surface` in a light scheme and
+  ///   `surfaceContainerHigh` in a dark one, where a raised surface reads
+  ///   lighter.
   ///
   /// Use it while building a theme, before a [ThemeData] exists.
   factory Oito2ChromeColors.fromColorScheme(
     ColorScheme colorScheme, {
     required Color background,
     Color? titleBar,
-    Oito2ThemePreset? preset,
-    bool? darkerMainbar,
   }) {
-    return Oito2ChromeColors.derive(
+    final mainbar = Oito2Contrast.ensure(colorScheme.surfaceContainerHighest, [
+      background,
+    ], minimumStep);
+    final sidebar = Oito2Contrast.ensure(colorScheme.surfaceContainer, [
+      background,
+      mainbar,
+    ], minimumStep);
+    return Oito2ChromeColors(
       background: background,
-      onSurface: colorScheme.onSurface,
-      titleBar: titleBar,
-      preset: preset,
-      darkerMainbar: darkerMainbar,
+      sidebar: sidebar,
+      mainbar: mainbar,
+      titleBar: titleBar ?? colorScheme.surfaceContainer,
+      dialog: colorScheme.brightness == Brightness.dark
+          ? colorScheme.surfaceContainerHigh
+          : colorScheme.surface,
     );
   }
 
-  /// Derives the chrome colors from [theme], using its
+  /// Takes the chrome colors from [theme], using its
   /// `scaffoldBackgroundColor` as the page background.
-  factory Oito2ChromeColors.fromTheme(
-    ThemeData theme, {
-    Color? titleBar,
-    Oito2ThemePreset? preset,
-    bool? darkerMainbar,
-  }) {
-    return Oito2ChromeColors.derive(
+  factory Oito2ChromeColors.fromTheme(ThemeData theme, {Color? titleBar}) {
+    return Oito2ChromeColors.fromColorScheme(
+      theme.colorScheme,
       background: theme.scaffoldBackgroundColor,
-      onSurface: theme.colorScheme.onSurface,
       titleBar: titleBar,
-      preset: preset,
-      darkerMainbar: darkerMainbar,
     );
   }
 
-  /// The presets whose mainbar blends black instead of white: the light
-  /// presets, where blending white over their very light backgrounds leaves
-  /// the mainbar almost indistinguishable from the sidebar.
-  static const Set<Oito2ThemePreset> darkerMainbarPresets = {
-    Oito2ThemePreset.everforestLight,
-    Oito2ThemePreset.rosePineDawn,
-    Oito2ThemePreset.nordLight,
-    Oito2ThemePreset.alucard,
-    Oito2ThemePreset.catppuccinLatte,
-  };
+  /// The minimum contrast ratio between adjacent chrome surfaces: the
+  /// page background, the sidebar and the mainbar.
+  static const double minimumStep = 1.04;
 
   /// Returns the chrome colors of the closest [Theme], or null when the
   /// theme has none.
@@ -130,18 +102,23 @@ class Oito2ChromeColors extends ThemeExtension<Oito2ChromeColors> {
   /// The window title bar.
   final Color titleBar;
 
+  /// Dialogs, bottom sheets and drawers.
+  final Color dialog;
+
   @override
   Oito2ChromeColors copyWith({
     Color? background,
     Color? sidebar,
     Color? mainbar,
     Color? titleBar,
+    Color? dialog,
   }) {
     return Oito2ChromeColors(
       background: background ?? this.background,
       sidebar: sidebar ?? this.sidebar,
       mainbar: mainbar ?? this.mainbar,
       titleBar: titleBar ?? this.titleBar,
+      dialog: dialog ?? this.dialog,
     );
   }
 
@@ -153,6 +130,7 @@ class Oito2ChromeColors extends ThemeExtension<Oito2ChromeColors> {
       sidebar: Color.lerp(sidebar, other.sidebar, t)!,
       mainbar: Color.lerp(mainbar, other.mainbar, t)!,
       titleBar: Color.lerp(titleBar, other.titleBar, t)!,
+      dialog: Color.lerp(dialog, other.dialog, t)!,
     );
   }
 
@@ -162,8 +140,10 @@ class Oito2ChromeColors extends ThemeExtension<Oito2ChromeColors> {
       other.background == background &&
       other.sidebar == sidebar &&
       other.mainbar == mainbar &&
-      other.titleBar == titleBar;
+      other.titleBar == titleBar &&
+      other.dialog == dialog;
 
   @override
-  int get hashCode => Object.hash(background, sidebar, mainbar, titleBar);
+  int get hashCode =>
+      Object.hash(background, sidebar, mainbar, titleBar, dialog);
 }

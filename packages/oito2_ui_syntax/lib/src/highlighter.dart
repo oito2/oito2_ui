@@ -81,7 +81,7 @@ final Map<String, Mode> oito2DefaultLanguages = {
 };
 
 /// Turns source code into a [TextSpan] colored with a
-/// [SyntaxHighlightPalette].
+/// [Oito2SyntaxPalette].
 ///
 /// Tokenizing runs synchronously in pure Dart, with no native code and no
 /// asset loading.
@@ -110,7 +110,7 @@ class Oito2Highlighter {
   /// ones.
   TextSpan highlight(
     String code, {
-    required SyntaxHighlightPalette palette,
+    required Oito2SyntaxPalette palette,
     String? language,
     TextStyle? style,
     bool autoDetect = false,

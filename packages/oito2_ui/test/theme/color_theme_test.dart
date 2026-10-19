@@ -145,19 +145,46 @@ void main() {
         }
       });
 
-      test('mainbar is visibly distinct from the sidebar', () {
+      test('chrome surfaces come from the container roles', () {
         final chrome = theme.chrome;
         expect(chrome.background, theme.background);
+        const step = Oito2ChromeColors.minimumStep;
+        expect(
+          Oito2Contrast.ratio(chrome.sidebar, chrome.background),
+          greaterThanOrEqualTo(step),
+        );
+        expect(
+          Oito2Contrast.ratio(chrome.mainbar, chrome.background),
+          greaterThanOrEqualTo(step),
+        );
         expect(
           Oito2Contrast.ratio(chrome.mainbar, chrome.sidebar),
-          greaterThan(1.03),
+          greaterThanOrEqualTo(step),
         );
-        final mainbar = chrome.mainbar.computeLuminance();
-        final sidebar = chrome.sidebar.computeLuminance();
-        if (s.brightness == Brightness.dark) {
-          expect(mainbar, greaterThan(sidebar));
-        } else {
-          expect(mainbar, lessThan(sidebar));
+        if (Oito2Contrast.minRatio(s.surfaceContainerHighest, [
+              chrome.background,
+            ]) >=
+            step) {
+          expect(chrome.mainbar, s.surfaceContainerHighest);
+        }
+        expect(
+          chrome.dialog,
+          s.brightness == Brightness.dark ? s.surfaceContainerHigh : s.surface,
+        );
+      });
+
+      test('body text reaches its target on every chrome surface', () {
+        final chrome = theme.chrome;
+        for (final surface in [
+          chrome.sidebar,
+          chrome.mainbar,
+          chrome.dialog,
+          chrome.titleBar,
+        ]) {
+          expect(
+            Oito2Contrast.ratio(s.onSurface, surface),
+            greaterThanOrEqualTo(Oito2Contrast.textAA),
+          );
         }
       });
 

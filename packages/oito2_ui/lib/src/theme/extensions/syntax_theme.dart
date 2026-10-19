@@ -15,9 +15,9 @@
 
 import 'package:material_ui/material_ui.dart';
 
-import '../../syntax/syntax_highlight_palette.dart';
+import '../../syntax/syntax_palette.dart';
 
-/// Carries the [SyntaxHighlightPalette] that matches a theme's colors.
+/// Carries the [Oito2SyntaxPalette] that matches a theme's colors.
 @immutable
 class Oito2SyntaxTheme extends ThemeExtension<Oito2SyntaxTheme> {
   /// Creates a syntax theme extension for [palette].
@@ -25,14 +25,14 @@ class Oito2SyntaxTheme extends ThemeExtension<Oito2SyntaxTheme> {
 
   /// Returns the syntax palette of the closest [Theme], or null when the
   /// theme has none.
-  static SyntaxHighlightPalette? maybeOf(BuildContext context) =>
+  static Oito2SyntaxPalette? maybeOf(BuildContext context) =>
       Theme.of(context).extension<Oito2SyntaxTheme>()?.palette;
 
   /// The syntax colors.
-  final SyntaxHighlightPalette palette;
+  final Oito2SyntaxPalette palette;
 
   @override
-  Oito2SyntaxTheme copyWith({SyntaxHighlightPalette? palette}) =>
+  Oito2SyntaxTheme copyWith({Oito2SyntaxPalette? palette}) =>
       Oito2SyntaxTheme(palette ?? this.palette);
 
   @override

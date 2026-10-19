@@ -18,6 +18,7 @@ import 'dart:math' as math;
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'utilities.dart';
 import 'widget_helpers.dart';
@@ -46,8 +47,8 @@ class Oito2ChoiceChipBar extends StatefulWidget {
     this.style = Oito2ChoiceChipBarStyle.row,
     this.spacing = Oito2Spacing.sm,
     this.scrollStep = 200,
-    this.previousLabel = 'Scroll back',
-    this.nextLabel = 'Scroll forward',
+    this.previousLabel,
+    this.nextLabel,
   }) : assert(labels.length == isSelected.length);
 
   /// The chip labels, usually [Text]s.
@@ -68,11 +69,13 @@ class Oito2ChoiceChipBar extends StatefulWidget {
   /// How far one arrow button scrolls.
   final double scrollStep;
 
-  /// The accessibility label of the backward arrow.
-  final String previousLabel;
+  /// The accessibility label of the backward arrow; defaults to
+  /// [Oito2Localizations.scrollBack].
+  final String? previousLabel;
 
-  /// The accessibility label of the forward arrow.
-  final String nextLabel;
+  /// The accessibility label of the forward arrow; defaults to
+  /// [Oito2Localizations.scrollForward].
+  final String? nextLabel;
 
   @override
   State<Oito2ChoiceChipBar> createState() => _Oito2ChoiceChipBarState();
@@ -145,7 +148,9 @@ class _Oito2ChoiceChipBarState extends State<Oito2ChoiceChipBar> {
     });
     final rtl = Directionality.of(context) == TextDirection.rtl;
     Widget arrow(bool forward) => IconButton(
-      tooltip: forward ? widget.nextLabel : widget.previousLabel,
+      tooltip: forward
+          ? widget.nextLabel ?? Oito2Localizations.of(context).scrollForward
+          : widget.previousLabel ?? Oito2Localizations.of(context).scrollBack,
       onPressed: () =>
           _scrollBy(forward ? widget.scrollStep : -widget.scrollStep),
       icon: Icon(
@@ -190,11 +195,8 @@ class Oito2PageIndicator extends StatelessWidget {
     this.onTap,
     this.dotSize = 8,
     this.spacing = Oito2Spacing.sm,
-    this.pageLabel = _defaultPageLabel,
+    this.pageLabel,
   }) : assert(page >= 0 && page < length);
-
-  static String _defaultPageLabel(int page, int length) =>
-      'Page $page of $length';
 
   /// The number of pages.
   final int length;
@@ -212,13 +214,14 @@ class Oito2PageIndicator extends StatelessWidget {
   final double spacing;
 
   /// Builds the accessibility label of a dot from its 1-based page number
-  /// and the page count.
-  final String Function(int page, int length) pageLabel;
+  /// and the page count; defaults to [Oito2Localizations.pageOf].
+  final String Function(int page, int length)? pageLabel;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final active = semanticColorsOf(context).primaryText;
+    final pageLabel = this.pageLabel ?? Oito2Localizations.of(context).pageOf;
     final selectedWidth = dotSize * 3;
     final needed =
         selectedWidth + (length - 1) * dotSize + (length - 1) * spacing + 16;

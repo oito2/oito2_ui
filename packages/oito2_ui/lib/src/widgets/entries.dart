@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 
 /// Shared behaviour of the date and time entries: a text field whose text
@@ -473,7 +474,8 @@ class Oito2EntrySegment {
   /// Whether only digits are accepted.
   final bool numeric;
 
-  /// The accessibility label; defaults to "Part n of m".
+  /// The accessibility label; defaults to the [Oito2Localizations]
+  /// "part n of m" string.
   final String? label;
 }
 
@@ -612,7 +614,9 @@ class _Oito2SegmentedEntryState extends State<Oito2SegmentedEntry> {
           SizedBox(
             width: _segmentWidth(context, widget.segments[i]),
             child: Semantics(
-              label: widget.segments[i].label ?? 'Part ${i + 1} of $count',
+              label:
+                  widget.segments[i].label ??
+                  Oito2Localizations.of(context).partOf(i + 1, count),
               child: TextField(
                 controller: _controllers[i],
                 focusNode: _nodes[i],

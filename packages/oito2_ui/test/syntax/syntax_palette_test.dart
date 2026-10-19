@@ -19,7 +19,7 @@ import 'package:oito2_ui/oito2_ui.dart';
 
 const _grey = Color(0xFF999999);
 
-const _palette = SyntaxHighlightPalette(
+const _palette = Oito2SyntaxPalette(
   foreground: Color(0xFF000000),
   comment: _grey,
   keyword: _grey,
@@ -102,7 +102,7 @@ void main() {
     });
 
     testWidgets('maybeOf reads the palette from the theme', (tester) async {
-      SyntaxHighlightPalette? found;
+      Oito2SyntaxPalette? found;
       await tester.pumpWidget(
         Theme(
           data: ThemeData(extensions: const [extension]),

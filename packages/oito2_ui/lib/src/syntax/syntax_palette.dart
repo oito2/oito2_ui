@@ -21,9 +21,9 @@ import '../foundation/contrast.dart';
 ///
 /// A theme carries it through the `Oito2SyntaxTheme` extension.
 @immutable
-class SyntaxHighlightPalette {
+class Oito2SyntaxPalette {
   /// Creates a syntax palette from explicit colors.
-  const SyntaxHighlightPalette({
+  const Oito2SyntaxPalette({
     required this.foreground,
     required this.comment,
     required this.keyword,
@@ -88,13 +88,13 @@ class SyntaxHighlightPalette {
   /// Returns a copy where every role reaches [target] contrast against
   /// every color in [backgrounds], adjusting only the lightness of the
   /// roles that don't.
-  SyntaxHighlightPalette ensureContrast(
+  Oito2SyntaxPalette ensureContrast(
     Iterable<Color> backgrounds, {
     double target = Oito2Contrast.textAA,
   }) {
     final list = backgrounds.toList(growable: false);
     Color fix(Color color) => Oito2Contrast.ensure(color, list, target);
-    return SyntaxHighlightPalette(
+    return Oito2SyntaxPalette(
       foreground: fix(foreground),
       comment: fix(comment),
       keyword: fix(keyword),
@@ -110,7 +110,7 @@ class SyntaxHighlightPalette {
   }
 
   /// Returns a copy with the given roles replaced.
-  SyntaxHighlightPalette copyWith({
+  Oito2SyntaxPalette copyWith({
     Color? foreground,
     Color? comment,
     Color? keyword,
@@ -123,7 +123,7 @@ class SyntaxHighlightPalette {
     Color? constant,
     Color? invalid,
   }) {
-    return SyntaxHighlightPalette(
+    return Oito2SyntaxPalette(
       foreground: foreground ?? this.foreground,
       comment: comment ?? this.comment,
       keyword: keyword ?? this.keyword,
@@ -139,10 +139,10 @@ class SyntaxHighlightPalette {
   }
 
   /// Linearly interpolates every role between this palette and [other].
-  SyntaxHighlightPalette lerp(SyntaxHighlightPalette? other, double t) {
+  Oito2SyntaxPalette lerp(Oito2SyntaxPalette? other, double t) {
     if (other == null) return this;
     Color mix(Color a, Color b) => Color.lerp(a, b, t)!;
-    return SyntaxHighlightPalette(
+    return Oito2SyntaxPalette(
       foreground: mix(foreground, other.foreground),
       comment: mix(comment, other.comment),
       keyword: mix(keyword, other.keyword),
@@ -159,7 +159,7 @@ class SyntaxHighlightPalette {
 
   @override
   bool operator ==(Object other) =>
-      other is SyntaxHighlightPalette &&
+      other is Oito2SyntaxPalette &&
       other.foreground == foreground &&
       other.comment == comment &&
       other.keyword == keyword &&

@@ -36,10 +36,10 @@ CardThemeData buildCardTheme(ComponentThemeContext c) {
   );
 }
 
-/// Dialogs: the mainbar tone with the window radius and a thin border.
+/// Dialogs: the chrome dialog tone with the window radius and a thin border.
 DialogThemeData buildDialogTheme(ComponentThemeContext c) {
   return DialogThemeData(
-    backgroundColor: c.chrome.mainbar,
+    backgroundColor: c.chrome.dialog,
     surfaceTintColor: _noTint,
     elevation: 6,
     shape: RoundedRectangleBorder(
@@ -57,11 +57,11 @@ DialogThemeData buildDialogTheme(ComponentThemeContext c) {
   );
 }
 
-/// Bottom sheets: the mainbar tone with the window radius on top.
+/// Bottom sheets: the chrome dialog tone with the window radius on top.
 BottomSheetThemeData buildBottomSheetTheme(ComponentThemeContext c) {
   return BottomSheetThemeData(
-    backgroundColor: c.chrome.mainbar,
-    modalBackgroundColor: c.chrome.mainbar,
+    backgroundColor: c.chrome.dialog,
+    modalBackgroundColor: c.chrome.dialog,
     surfaceTintColor: _noTint,
     showDragHandle: c.isTouch,
     dragHandleColor: c.scheme.onSurfaceVariant,
@@ -73,10 +73,10 @@ BottomSheetThemeData buildBottomSheetTheme(ComponentThemeContext c) {
   );
 }
 
-/// Drawers: the mainbar tone, square on pointer platforms.
+/// Drawers: the chrome dialog tone, square on pointer platforms.
 DrawerThemeData buildDrawerTheme(ComponentThemeContext c) {
   return DrawerThemeData(
-    backgroundColor: c.chrome.mainbar,
+    backgroundColor: c.chrome.dialog,
     surfaceTintColor: _noTint,
     elevation: c.isTouch ? 1 : 0,
     shape: c.isTouch ? null : const RoundedRectangleBorder(),

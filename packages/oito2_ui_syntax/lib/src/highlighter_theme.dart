@@ -16,7 +16,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-/// A token role of a [SyntaxHighlightPalette].
+/// A token role of a [Oito2SyntaxPalette].
 enum Oito2SyntaxRole {
   /// Plain code text.
   foreground,
@@ -52,7 +52,7 @@ enum Oito2SyntaxRole {
   invalid;
 
   /// The color of this role in [palette].
-  Color colorIn(SyntaxHighlightPalette palette) => switch (this) {
+  Color colorIn(Oito2SyntaxPalette palette) => switch (this) {
     foreground => palette.foreground,
     comment => palette.comment,
     keyword => palette.keyword,
@@ -67,7 +67,7 @@ enum Oito2SyntaxRole {
   };
 }
 
-/// Builds `re_highlight` themes from a [SyntaxHighlightPalette].
+/// Builds `re_highlight` themes from a [Oito2SyntaxPalette].
 ///
 /// The highlighter tokenizes code with highlight.js grammars, whose token
 /// scopes (such as `keyword`, `title.function` or `selector-tag`) are
@@ -126,7 +126,7 @@ abstract final class Oito2HighlighterTheme {
   /// Returns the scope styles for [palette]: every scope of [scopeRoles]
   /// in its role color, comments in italics, plus italic `emphasis` and
   /// bold `strong` for markup.
-  static Map<String, TextStyle> fromPalette(SyntaxHighlightPalette palette) {
+  static Map<String, TextStyle> fromPalette(Oito2SyntaxPalette palette) {
     return {
       for (final MapEntry(key: scope, value: role) in scopeRoles.entries)
         scope: TextStyle(

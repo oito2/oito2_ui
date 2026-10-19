@@ -177,11 +177,37 @@ void main() {
     handle.dispose();
   });
 
-  test('labels resolve every type', () {
-    const labels = Oito2WindowControlLabels(close: 'Fechar');
-    expect(labels.of(Oito2WindowControlType.close), 'Fechar');
-    expect(labels.of(Oito2WindowControlType.minimize), 'Minimize');
-    expect(labels.of(Oito2WindowControlType.maximize), 'Maximize');
-    expect(labels.of(Oito2WindowControlType.restore), 'Restore');
+  test('labels return only the given overrides', () {
+    const labels = Oito2WindowControlLabels(close: 'Shut');
+    expect(labels.of(Oito2WindowControlType.close), 'Shut');
+    expect(labels.of(Oito2WindowControlType.minimize), isNull);
+    expect(labels.of(Oito2WindowControlType.maximize), isNull);
+    expect(labels.of(Oito2WindowControlType.restore), isNull);
+  });
+
+  testWidgets('resolve falls back to the localized strings', (tester) async {
+    late BuildContext context;
+    await tester.pumpWidget(
+      Localizations(
+        locale: const Locale('pt', 'BR'),
+        delegates: const [
+          Oito2Localizations.delegate,
+          DefaultWidgetsLocalizations.delegate,
+        ],
+        child: Builder(
+          builder: (c) {
+            context = c;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    const labels = Oito2WindowControlLabels(close: 'Shut');
+    String resolve(Oito2WindowControlType type) =>
+        Oito2WindowControlLabels.resolve(context, type, labels);
+    expect(resolve(Oito2WindowControlType.close), 'Shut');
+    expect(resolve(Oito2WindowControlType.minimize), 'Minimizar');
+    expect(resolve(Oito2WindowControlType.maximize), 'Maximizar');
+    expect(resolve(Oito2WindowControlType.restore), 'Restaurar');
   });
 }

@@ -15,7 +15,7 @@
 
 /// Syntax highlighting for `oito2_ui`.
 ///
-/// Colors code with the `SyntaxHighlightPalette` of the active oito2
+/// Colors code with the `Oito2SyntaxPalette` of the active oito2
 /// scheme, in pure Dart through `re_highlight`.
 library;
 

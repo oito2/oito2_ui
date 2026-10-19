@@ -155,16 +155,16 @@ void main() {
         expect(shape.borderRadius, Oito2Radius.largeAll);
       });
 
-      test('modals use the mainbar tone with the window radius', () {
-        expect(theme.dialogTheme.backgroundColor, colors.chrome.mainbar);
+      test('modals use the chrome dialog tone with the window radius', () {
+        expect(theme.dialogTheme.backgroundColor, colors.chrome.dialog);
         expect(
           (theme.dialogTheme.shape! as RoundedRectangleBorder).borderRadius,
           Oito2Radius.windowAll,
         );
-        expect(theme.bottomSheetTheme.backgroundColor, colors.chrome.mainbar);
+        expect(theme.bottomSheetTheme.backgroundColor, colors.chrome.dialog);
         expect(
           theme.bottomSheetTheme.modalBackgroundColor,
-          colors.chrome.mainbar,
+          colors.chrome.dialog,
         );
       });
 

@@ -118,7 +118,7 @@ void main() {
           .first,
     );
     final context = tester.element(find.byType(AlertDialog));
-    expect(dialog.color, Oito2ChromeColors.maybeOf(context)!.mainbar);
+    expect(dialog.color, Oito2ChromeColors.maybeOf(context)!.dialog);
 
     await tester.tap(find.text('Cancel'));
     await settle();

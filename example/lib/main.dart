@@ -71,6 +71,11 @@ class _ShowcaseAppState extends State<ShowcaseApp> {
         theme: _theme(Brightness.light, system),
         darkTheme: _theme(Brightness.dark, system),
         themeMode: _options.effectiveThemeMode,
+        localizationsDelegates: const [
+          Oito2Localizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: Oito2Localizations.supportedLocales,
         home: ShowcaseHome(
           options: _options,
           onOptionsChanged: (options) => setState(() => _options = options),

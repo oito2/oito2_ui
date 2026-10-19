@@ -77,63 +77,50 @@ void main() {
   });
 
   group('Oito2ChromeColors', () {
-    test('derive blends onSurface over the background for the sidebar', () {
-      final chrome = Oito2ChromeColors.derive(
-        background: const Color(0xFF202020),
-        onSurface: _white,
+    test('takes the sidebar and mainbar from the container roles', () {
+      final scheme = ColorScheme.fromSeed(
+        seedColor: const Color(0xFF3584E4),
+        brightness: Brightness.dark,
       );
-      expect(
-        chrome.sidebar,
-        Color.alphaBlend(
-          _white.withValues(alpha: 0.03),
-          const Color(0xFF202020),
-        ),
+      final chrome = Oito2ChromeColors.fromColorScheme(
+        scheme,
+        background: _black,
       );
-      expect(
-        chrome.mainbar,
-        Color.alphaBlend(_white.withValues(alpha: 0.05), chrome.sidebar),
-      );
-      expect(chrome.titleBar, chrome.mainbar);
+      expect(chrome.background, _black);
+      expect(chrome.sidebar, scheme.surfaceContainer);
+      expect(chrome.mainbar, scheme.surfaceContainerHighest);
+      expect(chrome.titleBar, scheme.surfaceContainer);
+      expect(chrome.dialog, scheme.surfaceContainerHigh);
     });
 
-    test('darkerMainbarPresets blend black over the sidebar', () {
-      for (final preset in Oito2ChromeColors.darkerMainbarPresets) {
-        expect(preset.isDark, isFalse, reason: preset.name);
-        final chrome = Oito2ChromeColors.derive(
-          background: _white,
-          onSurface: _black,
-          preset: preset,
-        );
+    test('dialogs use surface in a light scheme', () {
+      final scheme = ColorScheme.fromSeed(seedColor: const Color(0xFF3584E4));
+      final chrome = Oito2ChromeColors.fromColorScheme(
+        scheme,
+        background: _white,
+      );
+      expect(chrome.dialog, scheme.surface);
+    });
+
+    test('a chrome surface too close to the background is moved apart', () {
+      final scheme = ColorScheme.fromSeed(seedColor: const Color(0xFF3584E4))
+          .copyWith(surfaceContainer: const Color(0xFFF0F0F0));
+      final chrome = Oito2ChromeColors.fromColorScheme(
+        scheme,
+        background: const Color(0xFFF0F0F0),
+      );
+      for (final other in [chrome.background, chrome.mainbar]) {
         expect(
-          chrome.mainbar,
-          Color.alphaBlend(_black.withValues(alpha: 0.04), chrome.sidebar),
+          Oito2Contrast.ratio(chrome.sidebar, other),
+          greaterThanOrEqualTo(Oito2ChromeColors.minimumStep),
         );
       }
     });
 
-    test('every light preset is in darkerMainbarPresets', () {
-      expect(
-        Oito2ChromeColors.darkerMainbarPresets,
-        Oito2ThemePreset.values.where((p) => !p.isDark).toSet(),
-      );
-    });
-
-    test('darkerMainbar overrides the preset check', () {
-      final chrome = Oito2ChromeColors.derive(
-        background: _white,
-        onSurface: _black,
-        darkerMainbar: true,
-      );
-      expect(
-        chrome.mainbar.computeLuminance(),
-        lessThan(chrome.sidebar.computeLuminance()),
-      );
-    });
-
     test('an explicit title bar is kept', () {
-      final chrome = Oito2ChromeColors.derive(
+      final chrome = Oito2ChromeColors.fromColorScheme(
+        ColorScheme.fromSeed(seedColor: const Color(0xFF3584E4)),
         background: _white,
-        onSurface: _black,
         titleBar: const Color(0xFFEBEBEB),
       );
       expect(chrome.titleBar, const Color(0xFFEBEBEB));
@@ -155,10 +142,11 @@ void main() {
     });
 
     test('copyWith, lerp and equality', () {
-      final a = Oito2ChromeColors.derive(background: _white, onSurface: _black);
-      final b = Oito2ChromeColors.derive(background: _black, onSurface: _white);
+      final a = Oito2ColorTheme.light().chrome;
+      final b = Oito2ColorTheme.dark().chrome;
       expect(a.copyWith(), a);
       expect(a.copyWith(titleBar: _black).titleBar, _black);
+      expect(a.copyWith(dialog: _black).dialog, _black);
       expect(a.lerp(b, 0), a);
       expect(a.lerp(b, 1), b);
       expect(a.lerp(null, 0.5), a);

@@ -17,7 +17,7 @@ import 'package:catppuccin_flutter/catppuccin_flutter.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../foundation/contrast.dart';
-import '../syntax/syntax_highlight_palette.dart';
+import '../syntax/syntax_palette.dart';
 import '../tokens/colors.dart';
 import '../tokens/palettes/dracula_palette.dart';
 import '../tokens/palettes/everforest_palette.dart';
@@ -123,7 +123,7 @@ class Oito2ColorTheme {
   final Oito2ChromeColors chrome;
 
   /// Syntax highlighting colors.
-  final SyntaxHighlightPalette syntax;
+  final Oito2SyntaxPalette syntax;
 
   /// The preset this theme was built from, or null for the base scheme.
   final Oito2ThemePreset? preset;
@@ -134,8 +134,8 @@ class Oito2ColorTheme {
   /// The brightness of this theme.
   Brightness get brightness => colorScheme.brightness;
 
-  /// Every surface of this theme: [background], the title bar and all
-  /// `ColorScheme` surface roles.
+  /// Every surface of this theme: [background], the chrome surfaces and
+  /// all `ColorScheme` surface roles.
   List<Color> get surfaces => _surfacesOf(colorScheme, background, chrome);
 
   static List<Color> _surfacesOf(
@@ -153,6 +153,9 @@ class Oito2ColorTheme {
     scheme.surfaceContainerHigh,
     scheme.surfaceContainerHighest,
     ?chrome?.titleBar,
+    ?chrome?.sidebar,
+    ?chrome?.mainbar,
+    ?chrome?.dialog,
   ];
 
   static Oito2ColorTheme _base(
@@ -218,7 +221,7 @@ class Oito2ColorTheme {
     required Color success,
     required Color warning,
     required Color info,
-    required SyntaxHighlightPalette syntax,
+    required Oito2SyntaxPalette syntax,
     Oito2ThemePreset? preset,
   }) {
     final isDark = brightness == Brightness.dark;
@@ -228,6 +231,20 @@ class Oito2ColorTheme {
     final nonTextTarget = highContrast
         ? Oito2Contrast.textAA
         : Oito2Contrast.nonTextAA;
+    final seed = ColorScheme.fromSeed(
+      seedColor: primary,
+      brightness: brightness,
+    );
+    final chrome = Oito2ChromeColors.fromColorScheme(
+      seed.copyWith(
+        surface: surface,
+        surfaceContainer: surfaceContainer,
+        surfaceContainerHigh: surfaceContainerHigh,
+        surfaceContainerHighest: surfaceContainerHighest,
+      ),
+      background: background,
+      titleBar: titleBar,
+    );
     final surfaces = [
       background,
       surface,
@@ -236,17 +253,16 @@ class Oito2ColorTheme {
       surfaceContainer,
       surfaceContainerHigh,
       surfaceContainerHighest,
-      titleBar,
+      chrome.titleBar,
+      chrome.sidebar,
+      chrome.mainbar,
+      chrome.dialog,
     ];
     Color text(Color color) =>
         Oito2Contrast.ensure(color, surfaces, textTarget);
 
     final fixedOnSurface = text(onSurface);
     final fixedOutline = Oito2Contrast.ensure(outline, surfaces, nonTextTarget);
-    final seed = ColorScheme.fromSeed(
-      seedColor: primary,
-      brightness: brightness,
-    );
     final colorScheme = seed.copyWith(
       primary: primary,
       onPrimary: onPrimary,
@@ -287,13 +303,7 @@ class Oito2ColorTheme {
         info: text(info),
         link: primaryText,
       ),
-      chrome: Oito2ChromeColors.fromColorScheme(
-        colorScheme,
-        background: background,
-        titleBar: titleBar,
-        preset: preset,
-        darkerMainbar: preset == null && !isDark ? true : null,
-      ),
+      chrome: chrome,
       syntax: syntax.ensureContrast(surfaces, target: textTarget),
     );
   }
@@ -332,7 +342,7 @@ class Oito2ColorTheme {
 }
 
 /// Syntax colors of the light base scheme, from the GNOME color palette.
-const _baseLightSyntax = SyntaxHighlightPalette(
+const _baseLightSyntax = Oito2SyntaxPalette(
   foreground: Color(0xFF202020),
   comment: Color(0xFF77767B),
   keyword: Color(0xFF9141AC),
@@ -347,7 +357,7 @@ const _baseLightSyntax = SyntaxHighlightPalette(
 );
 
 /// Syntax colors of the dark base scheme, from the GNOME color palette.
-const _baseDarkSyntax = SyntaxHighlightPalette(
+const _baseDarkSyntax = Oito2SyntaxPalette(
   foreground: Color(0xFFF7F7F7),
   comment: Color(0xFF9A9996),
   keyword: Color(0xFFDC8ADD),
@@ -389,7 +399,7 @@ class _PresetRoles {
   final Color success;
   final Color warning;
   final Color info;
-  final SyntaxHighlightPalette syntax;
+  final Oito2SyntaxPalette syntax;
 }
 
 _PresetRoles _presetRoles(Oito2ThemePreset preset) => switch (preset) {
@@ -428,7 +438,7 @@ _PresetRoles _everforest(Oito2EverforestPalette p, {required bool isDark}) =>
       success: p.green,
       warning: p.yellow,
       info: p.blue,
-      syntax: SyntaxHighlightPalette(
+      syntax: Oito2SyntaxPalette(
         foreground: p.fg,
         comment: p.grey1,
         keyword: p.red,
@@ -457,7 +467,7 @@ _PresetRoles _rosePine(Oito2RosePinePalette p) => _PresetRoles(
   success: p.foam,
   warning: p.gold,
   info: p.iris,
-  syntax: SyntaxHighlightPalette(
+  syntax: Oito2SyntaxPalette(
     foreground: p.text,
     comment: p.muted,
     keyword: p.pine,
@@ -485,7 +495,7 @@ _PresetRoles _nordDark() => const _PresetRoles(
   success: Oito2NordPalette.nord14,
   warning: Oito2NordPalette.nord13,
   info: Oito2NordPalette.nord9,
-  syntax: SyntaxHighlightPalette(
+  syntax: Oito2SyntaxPalette(
     foreground: Oito2NordPalette.nord4,
     comment: Oito2NordPalette.nord3,
     keyword: Oito2NordPalette.nord9,
@@ -514,7 +524,7 @@ _PresetRoles _nordLight() => const _PresetRoles(
   success: Oito2NordPalette.nord14,
   warning: Oito2NordPalette.nord12,
   info: Oito2NordPalette.nord10,
-  syntax: SyntaxHighlightPalette(
+  syntax: Oito2SyntaxPalette(
     foreground: Oito2NordPalette.nord0,
     comment: Oito2NordPalette.nord3,
     keyword: Oito2NordPalette.nord10,
@@ -573,20 +583,19 @@ _PresetRoles _alucard() {
   );
 }
 
-SyntaxHighlightPalette _draculaSyntax(Oito2DraculaPalette p) =>
-    SyntaxHighlightPalette(
-      foreground: p.foreground,
-      comment: p.comment,
-      keyword: p.pink,
-      string: p.yellow,
-      number: p.purple,
-      function: p.green,
-      type: p.cyan,
-      tag: p.pink,
-      attribute: p.green,
-      constant: p.purple,
-      invalid: p.red,
-    );
+Oito2SyntaxPalette _draculaSyntax(Oito2DraculaPalette p) => Oito2SyntaxPalette(
+  foreground: p.foreground,
+  comment: p.comment,
+  keyword: p.pink,
+  string: p.yellow,
+  number: p.purple,
+  function: p.green,
+  type: p.cyan,
+  tag: p.pink,
+  attribute: p.green,
+  constant: p.purple,
+  invalid: p.red,
+);
 
 /// Catppuccin: every role is official, read from `catppuccin_flutter`.
 _PresetRoles _catppuccin(Flavor f) => _PresetRoles(
@@ -601,7 +610,7 @@ _PresetRoles _catppuccin(Flavor f) => _PresetRoles(
   success: f.green,
   warning: f.yellow,
   info: f.blue,
-  syntax: SyntaxHighlightPalette(
+  syntax: Oito2SyntaxPalette(
     foreground: f.text,
     comment: f.overlay2,
     keyword: f.mauve,

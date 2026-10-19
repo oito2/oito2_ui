@@ -16,6 +16,7 @@
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../l10n/oito2_localizations.dart';
 import '../foundation/contrast.dart';
 import '../tokens/geometry.dart';
 import 'widget_helpers.dart';
@@ -258,7 +259,7 @@ class Oito2SplitButton extends StatelessWidget {
     required this.child,
     required this.menuChildren,
     this.variant = Oito2SplitButtonVariant.elevated,
-    this.menuLabel = 'More options',
+    this.menuLabel,
   });
 
   /// The main action; null disables both parts.
@@ -273,8 +274,9 @@ class Oito2SplitButton extends StatelessWidget {
   /// The visual variant.
   final Oito2SplitButtonVariant variant;
 
-  /// The accessibility label of the arrow part.
-  final String menuLabel;
+  /// The accessibility label of the arrow part; defaults to
+  /// [Oito2Localizations.moreOptions].
+  final String? menuLabel;
 
   ButtonStyle _shape(BorderRadius radius, {EdgeInsetsGeometry? padding}) {
     return ButtonStyle(
@@ -325,7 +327,7 @@ class Oito2SplitButton extends StatelessWidget {
         MenuAnchor(
           menuChildren: menuChildren,
           builder: (context, controller, _) => Semantics(
-            label: menuLabel,
+            label: menuLabel ?? Oito2Localizations.of(context).moreOptions,
             child: _button(
               _shape(
                 endRadius,

@@ -15,6 +15,7 @@
 
 import 'package:material_ui/material_ui.dart';
 
+import '../l10n/oito2_localizations.dart';
 import '../foundation/platform_info.dart';
 import '../foundation/system_settings.dart';
 import '../foundation/window_button_layout.dart';
@@ -56,7 +57,7 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
     ),
     this.controller,
     this.onClose,
-    this.labels = const Oito2WindowControlLabels(),
+    this.labels,
     this.leadingInset = 0,
     this.backgroundColor,
     this.foregroundColor,
@@ -93,8 +94,9 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
   /// Replaces the controller's close action, for example to pop a route.
   final VoidCallback? onClose;
 
-  /// Accessibility labels of the window buttons.
-  final Oito2WindowControlLabels labels;
+  /// Overrides of the window buttons' accessibility labels, which
+  /// otherwise come from [Oito2Localizations].
+  final Oito2WindowControlLabels? labels;
 
   /// Empty space kept at the leading edge, for native window buttons drawn
   /// by the operating system.
@@ -185,7 +187,7 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
       return Oito2WindowControl(
         type: type,
         style: controlStyle,
-        label: labels.of(type),
+        label: Oito2WindowControlLabels.resolve(context, type, labels),
         foregroundColor: foreground,
         height: barHeight,
         isActive: state.isActive,
@@ -312,7 +314,7 @@ class Oito2WindowTitleBar extends StatelessWidget
     this.centerTitle,
     this.style,
     this.controller,
-    this.labels = const Oito2WindowControlLabels(),
+    this.labels,
     this.platform,
   });
 
@@ -334,8 +336,9 @@ class Oito2WindowTitleBar extends StatelessWidget
   /// The window controller; defaults to the closest [Oito2WindowScope].
   final Oito2WindowController? controller;
 
-  /// Accessibility labels of the window buttons.
-  final Oito2WindowControlLabels labels;
+  /// Overrides of the window buttons' accessibility labels, which
+  /// otherwise come from [Oito2Localizations].
+  final Oito2WindowControlLabels? labels;
 
   /// The platform used to compute [preferredSize], which is read before
   /// the widget has a context; defaults to [Oito2Platform.current]. The
@@ -415,12 +418,7 @@ class Oito2WindowTitleBar extends StatelessWidget
 class Oito2DialogTitleBar extends StatelessWidget
     implements PreferredSizeWidget {
   /// Creates a dialog title bar.
-  const Oito2DialogTitleBar({
-    super.key,
-    this.title,
-    this.onClose,
-    this.labels = const Oito2WindowControlLabels(),
-  });
+  const Oito2DialogTitleBar({super.key, this.title, this.onClose, this.labels});
 
   /// The dialog title, usually a [Text].
   final Widget? title;
@@ -429,8 +427,9 @@ class Oito2DialogTitleBar extends StatelessWidget
   /// current route.
   final VoidCallback? onClose;
 
-  /// Accessibility labels of the close button.
-  final Oito2WindowControlLabels labels;
+  /// Override of the close button's accessibility label, which otherwise
+  /// comes from [Oito2Localizations].
+  final Oito2WindowControlLabels? labels;
 
   @override
   Size get preferredSize => const Size.fromHeight(Oito2Sizes.titleBarHeight);

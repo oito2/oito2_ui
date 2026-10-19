@@ -19,13 +19,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Official palettes of Nord, Dracula/Alucard, Everforest and Rosé Pine (`Oito2NordPalette`, `Oito2DraculaPalette`, `Oito2EverforestPalette`, `Oito2RosePinePalette`); Catppuccin read from `catppuccin_flutter`.
 - `Oito2ThemePreset` with the 13 named presets.
 - `Oito2ColorTheme` and `Oito2ColorScheme`: the oito2 base scheme (GTK-style neutrals, custom accent, high contrast) and the 13 presets mapped to Material 3, with WCAG AA text roles on every surface.
-- `Oito2SemanticColors` and `Oito2ChromeColors` theme extensions.
-- `SyntaxHighlightPalette` with 11 token roles for every scheme.
+- `Oito2SemanticColors` and `Oito2ChromeColors` theme extensions. The chrome sidebar, mainbar, title bar and dialog tones come from the Material 3 surface container roles, kept at least 1.04:1 apart from the page background.
+- `Oito2SyntaxPalette` with 11 token roles for every scheme.
 - `Oito2Contrast.minRatio`, `Oito2Contrast.ensure` and `Oito2Contrast.textAAA`.
 - `Oito2Theme` (`light`, `dark`, `fromPreset`, `fromSystem`, `fromColors`): Material 3 `ThemeData` with platform-adaptive density, control sizes, tap targets and splashes, and themes for buttons, inputs, cards, dialogs, sheets, drawers, menus, toggles, sliders, progress, chips, tabs, navigation, list tiles, scrollbars, snack bars and tooltips.
 - Keyboard focus ring and text-safe primary tone on buttons, links, toggles and input focus; input errors in the text-safe error tone.
 - `Oito2DesktopPageTransitionsBuilder` and `oito2PageTransitionsTheme`.
-- `Oito2SyntaxTheme` theme extension carrying the scheme's `SyntaxHighlightPalette`.
+- `Oito2SyntaxTheme` theme extension carrying the scheme's `Oito2SyntaxPalette`.
 - `Oito2Sizes.touchButtonHeight`.
 - Window chrome: `Oito2TitleBar`, `Oito2WindowTitleBar` (adapts to native desktop, web and touch), `Oito2DialogTitleBar`, `Oito2WindowControl` drawn in the GNOME, Breeze, Xfwm, COSMIC, Windows and macOS styles, `Oito2TitleBarGestureDetector` (drag, double-click maximize, window menu), `Oito2TitleBarThemeData` and `Oito2TitleBarStyle`.
 - `Oito2WindowController` contract, `Oito2WindowState` and the `Oito2WindowScope` inherited widget.
@@ -35,6 +35,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Controls: `Oito2CheckButton`, `Oito2RadioButton`, `Oito2SwitchButton` (clickable labels), `Oito2SplitButton`, `Oito2OptionButton`, `Oito2ColorDisk`, `Oito2ChoiceChipBar` and `Oito2PageIndicator`.
 - Inputs: `Oito2SearchField`, `Oito2SearchTitleField`, `Oito2DateEntry`, `Oito2TimeEntry`, `Oito2DateTimeEntry` and `Oito2SegmentedEntry`; date and time parsing, hints and errors come from `MaterialLocalizations`.
 - Utilities: `Oito2FocusBorder`, `Oito2EdgeFocusInterceptor`, `Oito2ScrollViewUndershoot`, `Oito2DiagonalClip` and `Oito2Draggable`.
+- `Oito2Localizations` with English and Brazilian Portuguese strings for the window controls, pane resizing, split button menus, chip bar arrows, page indicators and segmented entries; English is the fallback when its delegate isn't registered. `Oito2WindowControlLabels` and the widgets' label parameters now only override these strings.
 
 ### Changed
 

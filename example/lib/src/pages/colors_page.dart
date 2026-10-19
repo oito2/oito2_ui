@@ -146,8 +146,8 @@ class _TextSample extends StatelessWidget {
   }
 }
 
-/// A miniature window showing the title bar, sidebar, mainbar and page
-/// background.
+/// A miniature window showing the title bar, sidebar, mainbar, page
+/// background and a dialog.
 class _ChromePreview extends StatelessWidget {
   const _ChromePreview(this.chrome);
 
@@ -189,7 +189,22 @@ class _ChromePreview extends StatelessWidget {
                 Expanded(
                   child: ColoredBox(
                     color: chrome.background,
-                    child: label('background'),
+                    child: Column(
+                      children: [
+                        label('background'),
+                        Container(
+                          width: 120,
+                          height: 56,
+                          margin: const EdgeInsets.all(Oito2Spacing.md),
+                          decoration: BoxDecoration(
+                            color: chrome.dialog,
+                            borderRadius: Oito2Radius.windowAll,
+                            border: Border.all(color: border),
+                          ),
+                          child: label('dialog'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
