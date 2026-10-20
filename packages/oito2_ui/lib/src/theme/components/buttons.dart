@@ -141,11 +141,19 @@ IconButtonThemeData buildIconButtonTheme(ComponentThemeContext c) {
 
 /// Segmented buttons: control height, medium radius and `outline`
 /// borders, with the selected segment in the secondary container.
+///
+/// `SegmentedButton` keeps neither `minimumSize` nor `fixedSize` for its
+/// segments: each one is a text button 40 pixels tall adjusted by the
+/// style's visual density. The vertical density is therefore set to bring
+/// that height to [ComponentThemeContext.controlHeight].
 SegmentedButtonThemeData buildSegmentedButtonTheme(ComponentThemeContext c) {
+  const segmentBaseHeight = 40.0;
+  final density = VisualDensity(
+    horizontal: c.platform.visualDensity.horizontal,
+    vertical: (c.controlHeight - segmentBaseHeight) / 4,
+  );
   return SegmentedButtonThemeData(
     style: ButtonStyle(
-      minimumSize: WidgetStatePropertyAll(Size(48, c.controlHeight)),
-      fixedSize: WidgetStatePropertyAll(Size.fromHeight(c.controlHeight)),
       iconSize: WidgetStatePropertyAll(c.iconSize),
       textStyle: WidgetStatePropertyAll(c.textTheme.labelLarge),
       shape: const WidgetStatePropertyAll(
@@ -155,7 +163,7 @@ SegmentedButtonThemeData buildSegmentedButtonTheme(ComponentThemeContext c) {
       tapTargetSize: c.isTouch
           ? MaterialTapTargetSize.padded
           : MaterialTapTargetSize.shrinkWrap,
-      visualDensity: c.platform.visualDensity,
+      visualDensity: density,
     ),
   );
 }

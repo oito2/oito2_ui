@@ -87,7 +87,8 @@ class _WindowPageState extends State<WindowPage> {
     return Container(
       width: 560,
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(borderRadius: Oito2Radius.windowAll),
+      foregroundDecoration: BoxDecoration(
         borderRadius: Oito2Radius.windowAll,
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),

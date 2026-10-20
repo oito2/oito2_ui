@@ -162,7 +162,8 @@ class _ChromePreview extends StatelessWidget {
       width: 480,
       height: 220,
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(borderRadius: Oito2Radius.windowAll),
+      foregroundDecoration: BoxDecoration(
         borderRadius: Oito2Radius.windowAll,
         border: Border.all(color: border),
       ),

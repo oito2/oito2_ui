@@ -126,7 +126,20 @@ ProgressIndicatorThemeData buildProgressIndicatorTheme(
 
 /// Chips: the medium radius, an `outlineVariant` border and the
 /// secondary container when selected.
+///
+/// A chip is 32 pixels tall plus its label's vertical padding, its
+/// 1-pixel side above and below and half of the visual density
+/// adjustment; the label padding is set so that the chip is
+/// [ComponentThemeContext.controlHeight] tall.
 ChipThemeData buildChipTheme(ComponentThemeContext c) {
+  const chipBaseHeight = 32.0;
+  const sides = 2.0;
+  final labelPadding =
+      (c.controlHeight -
+          chipBaseHeight -
+          sides -
+          c.platform.visualDensity.baseSizeAdjustment.dy / 2) /
+      2;
   return ChipThemeData(
     shape: const RoundedRectangleBorder(borderRadius: Oito2Radius.mediumAll),
     side: WidgetStateBorderSide.resolveWith(
@@ -140,5 +153,9 @@ ChipThemeData buildChipTheme(ComponentThemeContext c) {
     labelStyle: c.textTheme.labelLarge,
     iconTheme: IconThemeData(size: Oito2Sizes.iconSize - 2),
     padding: const EdgeInsets.symmetric(horizontal: Oito2Spacing.xs),
+    labelPadding: EdgeInsets.symmetric(
+      horizontal: Oito2Spacing.sm,
+      vertical: labelPadding,
+    ),
   );
 }

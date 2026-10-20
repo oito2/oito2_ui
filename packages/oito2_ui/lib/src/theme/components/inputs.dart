@@ -22,6 +22,12 @@ import 'component_context.dart';
 /// border that reaches 3:1 against the surface, a 2-pixel focus border in
 /// the text-safe primary tone and error borders and messages in the
 /// text-safe error tone.
+///
+/// A single-line field is [ComponentThemeContext.controlHeight] tall, the
+/// height of the buttons, with or without prefix and suffix icons: the
+/// vertical padding centers one line of `bodyLarge` text in that height,
+/// net of the platform's visual density adjustment, and the icon boxes
+/// are as wide as the field is tall, with no minimum height. Helper and error text are laid out below that height.
 InputDecorationThemeData buildInputDecorationTheme(ComponentThemeContext c) {
   OutlineInputBorder border(Color color, [double width = 1]) =>
       OutlineInputBorder(
@@ -29,15 +35,22 @@ InputDecorationThemeData buildInputDecorationTheme(ComponentThemeContext c) {
         borderSide: BorderSide(color: color, width: width),
       );
   final error = c.semantic.errorText;
-  final vertical = c.isTouch ? Oito2Spacing.md : Oito2Spacing.sm;
+  final height = c.controlHeight;
+  final iconBox = BoxConstraints(minWidth: height);
   return InputDecorationThemeData(
     filled: true,
     fillColor: c.scheme.surfaceContainerHigh,
-    isDense: !c.isTouch,
+    isDense: true,
     contentPadding: EdgeInsets.symmetric(
       horizontal: Oito2Spacing.md,
-      vertical: vertical,
+      vertical:
+          (height -
+              inputLineHeight(c) -
+              c.platform.visualDensity.baseSizeAdjustment.dy) /
+          2,
     ),
+    prefixIconConstraints: iconBox,
+    suffixIconConstraints: iconBox,
     border: border(c.scheme.outline),
     enabledBorder: border(c.scheme.outline),
     focusedBorder: border(c.indicator, Oito2Sizes.focusBorderWidth),
@@ -69,6 +82,17 @@ InputDecorationThemeData buildInputDecorationTheme(ComponentThemeContext c) {
     prefixIconColor: c.scheme.onSurfaceVariant,
     suffixIconColor: c.scheme.onSurfaceVariant,
   );
+}
+
+/// The height of one line of input text: the `bodyLarge` font size times
+/// its line height, which is what `TextField` uses by default. Without an
+/// explicit height, the `englishLike2021` geometry that `Theme.of`
+/// merges in at run time applies.
+double inputLineHeight(ComponentThemeContext c) {
+  final style = c.textTheme.bodyLarge;
+  final geometry = Typography.englishLike2021.bodyLarge!;
+  final fontSize = style?.fontSize ?? geometry.fontSize!;
+  return fontSize * (style?.height ?? geometry.height!);
 }
 
 /// Text selection: the primary fill at 35% alpha, with the cursor and

@@ -215,17 +215,11 @@ class _ControlsPageState extends State<ControlsPage> {
                 onChanged: (v) => setState(() => _search = v),
               ),
             ),
-            Oito2BorderContainer(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Oito2Spacing.md,
-                vertical: Oito2Spacing.xs,
-              ),
-              child: Oito2SearchTitleField(
-                title: Text('Files', style: textTheme.titleMedium),
-                searchActive: _searching,
-                onSearchActiveChanged: (v) => setState(() => _searching = v),
-                onChanged: (v) => setState(() => _search = v),
-              ),
+            Oito2SearchTitleField(
+              title: Text('Files', style: textTheme.titleMedium),
+              searchActive: _searching,
+              onSearchActiveChanged: (v) => setState(() => _searching = v),
+              onChanged: (v) => setState(() => _search = v),
             ),
             Text('Query: "$_search"', style: textTheme.bodySmall),
           ],

@@ -18,6 +18,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
+import 'widget_helpers.dart';
 
 /// A search text field with a search icon and a clear button that appears
 /// while it has text.
@@ -37,6 +38,7 @@ class Oito2SearchField extends StatefulWidget {
     this.onClear,
     this.onEscape,
     this.autofocus = false,
+    this.prefixIcon,
   });
 
   /// Controls the text; one is created when null.
@@ -62,6 +64,9 @@ class Oito2SearchField extends StatefulWidget {
 
   /// Whether the field takes focus when shown.
   final bool autofocus;
+
+  /// The widget before the text; defaults to a search icon.
+  final Widget? prefixIcon;
 
   @override
   State<Oito2SearchField> createState() => _Oito2SearchFieldState();
@@ -134,12 +139,14 @@ class _Oito2SearchFieldState extends State<Oito2SearchField> {
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
           hintText: widget.hintText ?? localizations.searchFieldLabel,
-          prefixIcon: const Icon(LucideIcons.search, size: Oito2Sizes.iconSize),
+          prefixIcon:
+              widget.prefixIcon ??
+              const Icon(LucideIcons.search, size: Oito2Sizes.iconSize),
           suffixIcon: hasText
-              ? IconButton(
+              ? FieldIconButton(
                   tooltip: localizations.clearButtonTooltip,
                   onPressed: _clear,
-                  icon: const Icon(LucideIcons.x, size: Oito2Sizes.iconSize),
+                  icon: LucideIcons.x,
                 )
               : null,
         ),
@@ -151,9 +158,17 @@ class _Oito2SearchFieldState extends State<Oito2SearchField> {
 /// A title bar element that switches between a [title] and a search
 /// field, with a toggle button, as in GNOME apps.
 ///
-/// Escape on an empty field closes the search. The toggle button reports
-/// its pressed state to assistive technologies.
-class Oito2SearchTitleField extends StatelessWidget {
+/// The element keeps the same size in both states: a box [fieldWidth]
+/// wide and as tall as a field, with the toggle button at its start.
+/// While the search is closed, the [title] follows the button; while it
+/// is open, the search field fills the box and the button serves as its
+/// search icon. Only the content fades, so the surrounding layout never
+/// moves.
+///
+/// Escape on an empty field closes the search and returns focus to the
+/// toggle button. The toggle button reports its pressed state to
+/// assistive technologies.
+class Oito2SearchTitleField extends StatefulWidget {
   /// Creates a search title field.
   const Oito2SearchTitleField({
     super.key,
@@ -189,7 +204,7 @@ class Oito2SearchTitleField extends StatelessWidget {
   /// The search hint; defaults to the localized "Search".
   final String? hintText;
 
-  /// The width of the search field.
+  /// The width of the element, in both states.
   final double fieldWidth;
 
   /// The tooltip of the toggle button; defaults to the localized
@@ -197,39 +212,77 @@ class Oito2SearchTitleField extends StatelessWidget {
   final String? toggleLabel;
 
   @override
+  State<Oito2SearchTitleField> createState() => _Oito2SearchTitleFieldState();
+}
+
+class _Oito2SearchTitleFieldState extends State<Oito2SearchTitleField> {
+  final _toggleFocusNode = FocusNode(debugLabel: 'Oito2SearchTitleField');
+
+  @override
+  void dispose() {
+    _toggleFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _close() {
+    widget.onSearchActiveChanged(false);
+    _toggleFocusNode.requestFocus();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final label =
-        toggleLabel ?? MaterialLocalizations.of(context).searchFieldLabel;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: Oito2Spacing.sm,
-      children: [
-        Flexible(
-          child: AnimatedSwitcher(
+        widget.toggleLabel ??
+        MaterialLocalizations.of(context).searchFieldLabel;
+    final buttonSize =
+        Theme.of(context).iconButtonTheme.style?.minimumSize
+            ?.resolve({})
+            ?.height ??
+        Oito2Sizes.buttonHeight;
+    return SizedBox(
+      width: widget.fieldWidth,
+      child: Stack(
+        alignment: AlignmentDirectional.centerStart,
+        children: [
+          AnimatedSwitcher(
             duration: const Duration(milliseconds: 150),
-            child: searchActive
-                ? SizedBox(
+            layoutBuilder: (current, previous) => Stack(
+              alignment: AlignmentDirectional.centerStart,
+              children: [...previous, ?current],
+            ),
+            child: widget.searchActive
+                ? Oito2SearchField(
                     key: const ValueKey('search'),
-                    width: fieldWidth,
-                    child: Oito2SearchField(
-                      controller: controller,
-                      hintText: hintText,
-                      autofocus: true,
-                      onChanged: onChanged,
-                      onSubmitted: onSubmitted,
-                      onEscape: () => onSearchActiveChanged(false),
-                    ),
+                    controller: widget.controller,
+                    hintText: widget.hintText,
+                    autofocus: true,
+                    onChanged: widget.onChanged,
+                    onSubmitted: widget.onSubmitted,
+                    onEscape: _close,
+                    prefixIcon: SizedBox(width: buttonSize),
                   )
-                : KeyedSubtree(key: const ValueKey('title'), child: title),
+                : Padding(
+                    key: const ValueKey('title'),
+                    padding: EdgeInsetsDirectional.only(
+                      start: buttonSize + Oito2Spacing.sm,
+                    ),
+                    child: widget.title,
+                  ),
           ),
-        ),
-        IconButton(
-          tooltip: label,
-          isSelected: searchActive,
-          onPressed: () => onSearchActiveChanged(!searchActive),
-          icon: const Icon(LucideIcons.search),
-        ),
-      ],
+          IconButton(
+            focusNode: _toggleFocusNode,
+            tooltip: label,
+            isSelected: widget.searchActive,
+            style: IconButton.styleFrom(
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            onPressed: () => widget.searchActive
+                ? _close()
+                : widget.onSearchActiveChanged(true),
+            icon: const Icon(LucideIcons.search),
+          ),
+        ],
+      ),
     );
   }
 }

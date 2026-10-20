@@ -57,6 +57,11 @@ static void my_application_activate(GApplication* application) {
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
       project, self->dart_entrypoint_arguments);
+  // Renders with Skia; OITO2_IMPELLER=1 renders with Impeller instead.
+  // Impeller's OpenGL ES backend draws curved strokes and rounded clips
+  // without smooth edges on Linux.
+  fl_dart_project_set_enable_impeller(
+      project, g_strcmp0(g_getenv("OITO2_IMPELLER"), "1") == 0);
 
   FlView* view = fl_view_new(project);
   GdkRGBA background_color;

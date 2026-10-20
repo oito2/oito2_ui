@@ -19,6 +19,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
+import 'widget_helpers.dart';
 
 /// Shared behaviour of the date and time entries: a text field whose text
 /// is parsed into a value, with the error shown only after the field
@@ -216,13 +217,10 @@ class _Oito2DateEntryState extends _ParsedEntryState<Oito2DateEntry, DateTime> {
         hintText: _l10n.dateHelpText,
         errorText: visibleError,
         suffixIcon: widget.showPickerButton
-            ? IconButton(
+            ? FieldIconButton(
                 tooltip: _l10n.datePickerHelpText,
                 onPressed: _pick,
-                icon: const Icon(
-                  LucideIcons.calendar,
-                  size: Oito2Sizes.iconSize,
-                ),
+                icon: LucideIcons.calendar,
               )
             : null,
       ),
@@ -354,10 +352,10 @@ class _Oito2TimeEntryState
         labelText: widget.labelText ?? _l10n.timePickerInputHelpText,
         errorText: visibleError,
         suffixIcon: widget.showPickerButton
-            ? IconButton(
+            ? FieldIconButton(
                 tooltip: _l10n.timePickerDialHelpText,
                 onPressed: _pick,
-                icon: const Icon(LucideIcons.clock, size: Oito2Sizes.iconSize),
+                icon: LucideIcons.clock,
               )
             : null,
       ),

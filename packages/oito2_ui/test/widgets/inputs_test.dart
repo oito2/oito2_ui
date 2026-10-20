@@ -91,6 +91,64 @@ void main() {
     expect(find.text('Files'), findsOneWidget);
   });
 
+  testWidgets('Oito2SearchTitleField keeps its size and one search icon', (
+    tester,
+  ) async {
+    var active = false;
+    await pumpOito2(
+      tester,
+      StatefulBuilder(
+        builder: (context, setState) => Center(
+          child: Oito2SearchTitleField(
+            title: const Text('Files'),
+            fieldWidth: 240,
+            searchActive: active,
+            onSearchActiveChanged: (v) => setState(() => active = v),
+          ),
+        ),
+      ),
+    );
+    final closed = tester.getSize(find.byType(Oito2SearchTitleField));
+    await tester.tap(find.byIcon(LucideIcons.search));
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(tester.getSize(find.byType(Oito2SearchTitleField)), closed);
+    await tester.pumpAndSettle();
+    expect(tester.getSize(find.byType(Oito2SearchTitleField)), closed);
+    expect(closed.width, 240);
+    expect(find.byIcon(LucideIcons.search), findsOneWidget);
+  });
+
+  testWidgets('Oito2SearchTitleField returns focus to the toggle on Escape', (
+    tester,
+  ) async {
+    var active = true;
+    await pumpOito2(
+      tester,
+      StatefulBuilder(
+        builder: (context, setState) => Center(
+          child: Oito2SearchTitleField(
+            title: const Text('Files'),
+            searchActive: active,
+            onSearchActiveChanged: (v) => setState(() => active = v),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      FocusManager.instance.primaryFocus?.context
+          ?.findAncestorWidgetOfExactType<EditableText>(),
+      isNotNull,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(active, isFalse);
+    expect(
+      FocusManager.instance.primaryFocus?.debugLabel,
+      'Oito2SearchTitleField',
+    );
+  });
+
   group('Oito2DateEntry', () {
     Widget entry(List<DateTime?> values, {bool acceptEmpty = true}) => Center(
       child: SizedBox(
