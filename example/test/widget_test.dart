@@ -13,11 +13,23 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-import 'package:oito2_ui_themes/oito2_ui_themes.dart';
 import 'package:oito2_ui_example/main.dart';
+import 'package:oito2_ui_example/src/showcase_catalog.dart';
+import 'package:oito2_ui_example/src/showcase_options.dart';
+import 'package:oito2_ui_syntax/oito2_ui_syntax.dart';
+import 'package:oito2_ui_themes/oito2_ui_themes.dart';
+
+/// Advances time over several frames, since some pages show indeterminate
+/// progress indicators that never settle.
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 10; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
 
 void main() {
   final settings = Oito2SystemSettings.fallback(
@@ -25,76 +37,161 @@ void main() {
     desktopEnvironment: Oito2DesktopEnvironment.kde,
   );
 
-  Future<void> pumpShowcase(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(1400, 1000);
+  Future<void> pumpShowcase(
+    WidgetTester tester, {
+    String? slug,
+    ShowcaseOptions options = const ShowcaseOptions(),
+    Size size = const Size(1400, 1000),
+  }) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
-      Oito2SystemScope(settings: settings, child: const ShowcaseApp()),
+      Oito2SystemScope(
+        settings: settings,
+        child: ShowcaseApp(initialSlug: slug ?? '', initialOptions: options),
+      ),
     );
+    await _settle(tester);
   }
 
-  testWidgets('foundation page shows the system settings', (tester) async {
-    await pumpShowcase(tester);
-
-    expect(find.text('oito2_ui · Foundation'), findsOneWidget);
-    expect(find.text('kde'), findsOneWidget);
-    expect(find.text('breeze'), findsOneWidget);
+  test('page slugs are unique', () {
+    final slugs = showcasePages.map((page) => page.slug).toSet();
+    expect(slugs, hasLength(showcasePages.length));
   });
 
-  testWidgets('navigates to the tokens and typography pages', (tester) async {
-    await pumpShowcase(tester);
-
-    await tester.tap(find.text('Tokens'));
-    await tester.pumpAndSettle();
-    expect(find.text('oito2_ui · Tokens'), findsOneWidget);
-    expect(find.text('Accents'), findsOneWidget);
-
-    await tester.tap(find.text('Typography'));
-    await tester.pumpAndSettle();
-    expect(find.text('oito2_ui · Typography'), findsOneWidget);
-    expect(find.textContaining('displayLarge'), findsOneWidget);
+  test('every page bundles its source', () async {
+    for (final page in showcasePages) {
+      final source = await rootBundle.loadString(page.sourceAsset);
+      expect(source, contains('class '), reason: page.source);
+    }
   });
 
-  testWidgets('colors page follows the selected preset', (tester) async {
+  for (final page in showcasePages) {
+    testWidgets('${page.slug} builds side by side, light and English', (
+      tester,
+    ) async {
+      await pumpShowcase(tester, slug: page.slug);
+      expect(tester.takeException(), isNull);
+      expect(find.text(page.title), findsWidgets);
+    });
+
+    testWidgets('${page.slug} builds narrow, dark, right to left, pt-BR', (
+      tester,
+    ) async {
+      await pumpShowcase(
+        tester,
+        slug: page.slug,
+        size: const Size(1000, 900),
+        options: const ShowcaseOptions(
+          themeMode: ThemeMode.dark,
+          rtl: true,
+          locale: Locale('pt', 'BR'),
+          compactMode: true,
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.text(page.title), findsWidgets);
+    });
+  }
+
+  testWidgets('selecting a page in the list shows it', (tester) async {
     await pumpShowcase(tester);
-
-    await tester.tap(find.text('Colors'));
-    await tester.pumpAndSettle();
-    expect(find.text('oito2_ui · Colors'), findsOneWidget);
-    expect(
-      find.textContaining('primaryText', findRichText: true),
-      findsOneWidget,
-    );
-
-    await tester.tap(find.text('oito2'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('dracula'));
-    await tester.pumpAndSettle();
-
-    final primary = Oito2ThemePreset.dracula.colors.colorScheme.primary;
-    final context = tester.element(find.text('oito2_ui · Colors'));
-    expect(Theme.of(context).colorScheme.primary, primary);
-    expect(Theme.of(context).brightness, Brightness.dark);
-    expect(find.byTooltip('Accent color'), findsNothing);
+    await tester.tap(find.text('Oito2CheckButton'));
+    await _settle(tester);
+    expect(find.text('Show hidden files'), findsOneWidget);
   });
 
-  testWidgets('components page renders themed controls and a dialog', (
+  testWidgets('the search field filters the page list', (tester) async {
+    await pumpShowcase(tester);
+    await tester.enterText(find.byType(TextField).first, 'button');
+    await _settle(tester);
+    expect(find.text('Oito2CheckButton'), findsWidgets);
+    expect(find.text('Oito2Watermark'), findsNothing);
+  });
+
+  testWidgets('the narrow layout pushes the page and goes back', (
+    tester,
+  ) async {
+    await pumpShowcase(tester, size: const Size(500, 900));
+    await tester.tap(find.text('Oito2CheckButton'));
+    await _settle(tester);
+    expect(find.text('Show hidden files'), findsOneWidget);
+    await tester.tap(find.byType(BackButton));
+    await _settle(tester);
+    expect(find.text('Show hidden files'), findsNothing);
+    expect(find.text('Oito2CheckButton'), findsOneWidget);
+  });
+
+  testWidgets('split title bars put each window button side on its pane', (
     tester,
   ) async {
     await pumpShowcase(tester);
-    // Indeterminate progress indicators never settle, so advance time
-    // explicitly instead of using pumpAndSettle.
-    Future<void> settle() => tester.pump(const Duration(seconds: 1));
+    final bars = tester
+        .widgetList<Oito2WindowTitleBar>(find.byType(Oito2WindowTitleBar))
+        .map((bar) => bar.buttonSides)
+        .toSet();
+    expect(bars, {
+      Oito2WindowButtonSides.leading,
+      Oito2WindowButtonSides.trailing,
+    });
+  });
 
-    await tester.tap(find.text('Components'));
-    await settle();
-    expect(find.text('oito2_ui · Components'), findsOneWidget);
+  testWidgets('the scheme menu applies a preset', (tester) async {
+    await pumpShowcase(tester, slug: 'colors');
+    await tester.tap(find.byTooltip('Color scheme'));
+    await _settle(tester);
+    await tester.tap(find.widgetWithText(MenuItemButton, 'dracula'));
+    await _settle(tester);
+    final context = tester.element(find.byType(Scaffold).first);
     expect(
-      tester.getSize(find.widgetWithText(FilledButton, 'Filled')).height,
-      Oito2Sizes.buttonHeight,
+      Theme.of(context).colorScheme.primary,
+      Oito2ThemePreset.dracula.colors.colorScheme.primary,
     );
+    expect(Theme.of(context).brightness, Brightness.dark);
+    expect(find.byTooltip('High contrast'), findsNothing);
+  });
 
+  testWidgets('the settings dialog switches to compact mode', (tester) async {
+    await pumpShowcase(tester);
+    await tester.tap(find.text('Settings'));
+    await _settle(tester);
+    await tester.tap(find.text('Compact mode'));
+    await _settle(tester);
+    await tester.tap(find.byType(Oito2WindowControl).last);
+    await _settle(tester);
+    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(Oito2MasterDetailPage), findsNothing);
+  });
+
+  testWidgets('touch control size rebuilds the theme for touch', (
+    tester,
+  ) async {
+    await pumpShowcase(
+      tester,
+      slug: 'check-button',
+      options: const ShowcaseOptions(density: ShowcaseDensity.touch),
+    );
+    final context = tester.element(find.text('Show hidden files'));
+    expect(Theme.of(context).platform, TargetPlatform.android);
+  });
+
+  testWidgets('view source shows the page code', (tester) async {
+    await pumpShowcase(tester, slug: 'banner');
+    await tester.tap(find.byTooltip('View source').first);
+    await tester.pump();
+    // The asset loads with real I/O, outside the fake test clock.
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 200)),
+    );
+    await _settle(tester);
+    expect(find.text('banner_page.dart'), findsOneWidget);
+    expect(find.text('Open on GitHub'), findsOneWidget);
+    expect(find.byType(Oito2CodeBlock), findsOneWidget);
+  });
+
+  testWidgets('Material dialogs use the chrome dialog tone', (tester) async {
+    await pumpShowcase(tester, slug: 'material');
     await tester.scrollUntilVisible(
       find.text('Open dialog'),
       200,
@@ -106,8 +203,7 @@ void main() {
           .first,
     );
     await tester.tap(find.text('Open dialog'));
-    await settle();
-    expect(find.text('Discard changes?'), findsOneWidget);
+    await _settle(tester);
     final dialog = tester.widget<Material>(
       find
           .descendant(
@@ -118,140 +214,5 @@ void main() {
     );
     final context = tester.element(find.byType(AlertDialog));
     expect(dialog.color, Oito2ChromeColors.maybeOf(context)!.dialog);
-
-    await tester.tap(find.text('Cancel'));
-    await settle();
-    expect(find.text('Discard changes?'), findsNothing);
-  });
-
-  testWidgets('window page previews every control style and the dialog', (
-    tester,
-  ) async {
-    await pumpShowcase(tester);
-
-    await tester.tap(find.text('Window'));
-    await tester.pumpAndSettle();
-    expect(find.text('oito2_ui · Window'), findsOneWidget);
-    final styles = tester
-        .widgetList<Oito2WindowControl>(find.byType(Oito2WindowControl))
-        .map((c) => c.style)
-        .toSet();
-    expect(
-      styles,
-      containsAll([
-        Oito2WindowControlStyle.breeze,
-        Oito2WindowControlStyle.gnome,
-        Oito2WindowControlStyle.xfwm,
-      ]),
-    );
-
-    final page = find
-        .descendant(
-          of: find.byType(ListView),
-          matching: find.byType(Scrollable),
-        )
-        .first;
-    await tester.scrollUntilVisible(
-      find.widgetWithText(OutlinedButton, 'Open dialog'),
-      300,
-      scrollable: page,
-    );
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Open dialog'));
-    await tester.pumpAndSettle();
-    expect(find.text('Preferences'), findsOneWidget);
-    await tester.tap(
-      find.descendant(
-        of: find.byType(Oito2DialogTitleBar),
-        matching: find.byType(Oito2WindowControl),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Preferences'), findsNothing);
-  });
-
-  testWidgets('the shell uses the window title bar with KDE controls', (
-    tester,
-  ) async {
-    await pumpShowcase(tester);
-    expect(find.byType(Oito2WindowTitleBar), findsOneWidget);
-    final shellControls = find.descendant(
-      of: find.byType(Oito2WindowTitleBar),
-      matching: find.byType(Oito2WindowControl),
-    );
-    expect(shellControls, findsNWidgets(3));
-    expect(
-      tester.widget<Oito2WindowControl>(shellControls.first).style,
-      Oito2WindowControlStyle.breeze,
-    );
-  });
-
-  testWidgets('the base scheme follows the system accent by default', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1400, 1000);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    final green = Oito2AccentColor.green.color;
-    await tester.pumpWidget(
-      Oito2SystemScope(
-        settings: settings.copyWith(accentColor: green),
-        child: const ShowcaseApp(),
-      ),
-    );
-    final context = tester.element(find.text('oito2_ui · Foundation'));
-    expect(
-      Theme.of(context).colorScheme.primary,
-      Oito2ColorScheme.light(accent: green).primary,
-    );
-    expect(find.text('#3A944A'), findsOneWidget);
-  });
-
-  testWidgets('containers and layouts pages render their widgets', (
-    tester,
-  ) async {
-    await pumpShowcase(tester);
-
-    await tester.tap(find.text('Containers'));
-    await tester.pumpAndSettle();
-    expect(find.byType(Oito2Section), findsOneWidget);
-    expect(find.byType(Oito2Tile), findsNWidgets(4));
-    expect(find.byType(Oito2SelectableContainer), findsNWidgets(3));
-
-    await tester.tap(find.text('Layouts'));
-    await tester.pumpAndSettle();
-    expect(find.byType(Oito2MasterDetailPage), findsOneWidget);
-    expect(find.text('Wi-Fi, VPN and proxy'), findsOneWidget);
-    await tester.tap(find.text('Privacy'));
-    await tester.pumpAndSettle();
-    expect(find.text('Location, camera and history'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('controls page renders the controls and inputs', (tester) async {
-    await pumpShowcase(tester);
-    await tester.tap(find.text('Controls'));
-    await tester.pumpAndSettle();
-    expect(find.byType(Oito2CheckButton), findsNWidgets(3));
-    expect(find.byType(Oito2SplitButton), findsNWidgets(3));
-    expect(find.byType(Oito2ColorDisk), findsNWidgets(9));
-    await tester.tap(find.text('Sort by size'));
-    await tester.pump();
-    final radio = tester.widget<Oito2RadioButton<String>>(
-      find.widgetWithText(Oito2RadioButton<String>, 'Sort by size'),
-    );
-    expect(radio.groupValue, 'size');
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('code page highlights the selected language', (tester) async {
-    await pumpShowcase(tester);
-    await tester.tap(find.text('Code'));
-    await tester.pumpAndSettle();
-    expect(find.text('oito2_ui · Code'), findsOneWidget);
-    await tester.tap(find.text('python'));
-    await tester.pumpAndSettle();
-    final code = tester.widget<SelectableText>(find.byType(SelectableText));
-    expect(code.textSpan!.toPlainText(), contains('class Point'));
-    expect(tester.takeException(), isNull);
   });
 }

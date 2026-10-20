@@ -292,6 +292,22 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
+/// Which side's window buttons an [Oito2WindowTitleBar] shows.
+///
+/// A window split into a sidebar and a content area can give each its own
+/// title bar, as GNOME apps do: the sidebar bar shows the [leading]
+/// buttons of the system layout and the content bar the [trailing] ones.
+enum Oito2WindowButtonSides {
+  /// Both sides of the system button layout.
+  both,
+
+  /// Only the leading side, such as macOS buttons or a left-side close.
+  leading,
+
+  /// Only the trailing side.
+  trailing,
+}
+
 /// The app window's title bar, adapted to the platform.
 ///
 /// - On native Linux and Windows it is an [Oito2TitleBar] with the window
@@ -316,6 +332,9 @@ class Oito2WindowTitleBar extends StatelessWidget
     this.controller,
     this.labels,
     this.platform,
+    this.buttonSides = Oito2WindowButtonSides.both,
+    this.backgroundColor,
+    this.border,
   });
 
   /// The title, usually a [Text].
@@ -344,6 +363,15 @@ class Oito2WindowTitleBar extends StatelessWidget
   /// the widget has a context; defaults to [Oito2Platform.current]. The
   /// layout itself follows [Oito2SystemScope].
   final Oito2Platform? platform;
+
+  /// Which side's window buttons the bar shows, for split title bars.
+  final Oito2WindowButtonSides buttonSides;
+
+  /// The bar background on desktop and the web; defaults to the theme.
+  final Color? backgroundColor;
+
+  /// The bottom border on desktop and the web; defaults to the theme.
+  final BorderSide? border;
 
   @override
   Size get preferredSize {
@@ -377,11 +405,16 @@ class Oito2WindowTitleBar extends StatelessWidget
         style: style,
         controlStyle: Oito2WindowControlStyle.none,
         isDraggable: false,
+        backgroundColor: backgroundColor,
+        border: border,
       );
     }
 
     final controller = this.controller ?? Oito2WindowScope.maybeOf(context);
     final nativeButtons = target.isMacOS;
+    final layout = settings.windowButtonLayout;
+    final showLeading = buttonSides != Oito2WindowButtonSides.trailing;
+    final showTrailing = buttonSides != Oito2WindowButtonSides.leading;
     Widget bar(Oito2WindowState state) => Oito2TitleBar(
       title: title,
       leading: leading,
@@ -391,12 +424,17 @@ class Oito2WindowTitleBar extends StatelessWidget
       controlStyle: nativeButtons
           ? Oito2WindowControlStyle.none
           : settings.windowControlStyle,
-      buttonLayout: settings.windowButtonLayout,
+      buttonLayout: Oito2WindowButtonLayout(
+        leading: showLeading ? layout.leading : const [],
+        trailing: showTrailing ? layout.trailing : const [],
+      ),
       controller: controller,
       labels: labels,
-      leadingInset: nativeButtons && !state.isFullScreen
+      leadingInset: nativeButtons && showLeading && !state.isFullScreen
           ? _macosTrafficLightsInset
           : 0,
+      backgroundColor: backgroundColor,
+      border: border,
     );
 
     if (controller == null || !nativeButtons) {

@@ -1,6 +1,9 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  # Build output, including the showcase page sources copied as assets.
+  exclude:
+    - "**/build/**"
   language:
     strict-casts: true
     strict-inference: true

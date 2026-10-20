@@ -82,24 +82,24 @@ LIMIT 10;''',
 +  re_highlight: ^0.0.3''',
 };
 
-/// Shows code highlighted with the active scheme's syntax palette.
-class CodePage extends StatefulWidget {
-  /// Creates the code page.
-  const CodePage({super.key});
+/// Shows [Oito2CodeBlock] highlighting several languages with the active
+/// scheme's syntax palette.
+class CodeBlockPage extends StatefulWidget {
+  /// Creates the code block page.
+  const CodeBlockPage({super.key});
 
   @override
-  State<CodePage> createState() => _CodePageState();
+  State<CodeBlockPage> createState() => _CodeBlockPageState();
 }
 
-class _CodePageState extends State<CodePage> {
+class _CodeBlockPageState extends State<CodeBlockPage> {
   String _language = 'dart';
   bool _lineNumbers = true;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return ListView(
-      padding: const EdgeInsets.all(Oito2Spacing.page),
+    return ShowcasePageBody(
       children: [
         ShowcaseSection(
           'Language',

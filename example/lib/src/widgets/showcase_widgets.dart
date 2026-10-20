@@ -110,3 +110,83 @@ class Swatch extends StatelessWidget {
     );
   }
 }
+
+/// The scrolling body of a showcase page: [children] in a padded list.
+class ShowcasePageBody extends StatelessWidget {
+  /// Creates a page body.
+  const ShowcasePageBody({super.key, required this.children});
+
+  /// The page sections, usually [ShowcaseSection]s.
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(Oito2Spacing.page),
+      children: children,
+    );
+  }
+}
+
+/// A bordered frame with a width slider, for layouts that adapt to the
+/// space they get.
+class ShowcaseFrame extends StatefulWidget {
+  /// Creates a frame around [child].
+  const ShowcaseFrame({
+    super.key,
+    required this.child,
+    this.initialWidth = 760,
+    this.height = 380,
+  });
+
+  /// The framed layout.
+  final Widget child;
+
+  /// The width at start.
+  final double initialWidth;
+
+  /// The frame height.
+  final double height;
+
+  @override
+  State<ShowcaseFrame> createState() => _ShowcaseFrameState();
+}
+
+class _ShowcaseFrameState extends State<ShowcaseFrame> {
+  late double _width = widget.initialWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 320,
+              child: Slider(
+                min: 360,
+                max: 900,
+                divisions: 27,
+                value: _width,
+                label: '${_width.round()}',
+                onChanged: (value) => setState(() => _width = value),
+              ),
+            ),
+            Text(
+              'Frame width: ${_width.round()} px',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        const SizedBox(height: Oito2Spacing.sm),
+        SizedBox(
+          width: _width,
+          height: widget.height,
+          child: Oito2BorderContainer(child: widget.child),
+        ),
+      ],
+    );
+  }
+}

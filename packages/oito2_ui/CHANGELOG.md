@@ -42,4 +42,6 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Single-line text fields, with or without prefix and suffix icons, `Oito2SearchField`, the date and time entries, segmented buttons and chips are as tall as the buttons: 34 pixels on pointer platforms and 40 on touch platforms. Helper and error text sit below that height. `DropdownMenu` keeps its own height, because its trailing button can't be sized from the theme.
 - `Oito2SearchTitleField` keeps one size in both states: a box `fieldWidth` wide with the toggle button at its start. The title follows the button; the open search field fills the box and uses the button as its search icon. Escape on an empty field returns focus to the toggle button.
 - `Oito2SearchField.prefixIcon` replaces the default search icon.
+- `Oito2WindowTitleBar.buttonSides` (`Oito2WindowButtonSides`) shows only the leading or trailing window buttons of the system layout, for split title bars over a sidebar and a content area; `backgroundColor` and `border` style the bar on desktop and the web.
+- The `Oito2NavigationPage` rail scrolls when its destinations don't fit the height.
 

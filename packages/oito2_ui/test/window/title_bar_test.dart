@@ -283,6 +283,63 @@ void main() {
       expect(controller.calls, ['close']);
     });
 
+    for (final (sides, expected) in [
+      (Oito2WindowButtonSides.leading, [Oito2WindowControlType.close]),
+      (
+        Oito2WindowButtonSides.trailing,
+        [Oito2WindowControlType.minimize, Oito2WindowControlType.maximize],
+      ),
+    ]) {
+      testWidgets('split bars show only the ${sides.name} buttons', (
+        tester,
+      ) async {
+        final settings =
+            Oito2SystemSettings.fallback(
+              _linux,
+              desktopEnvironment: Oito2DesktopEnvironment.kde,
+            ).copyWith(
+              windowButtonLayout: Oito2WindowButtonLayout.parseKde(
+                buttonsOnLeft: 'X',
+                buttonsOnRight: 'IA',
+              ),
+            );
+        await _pump(
+          tester,
+          settings: settings,
+          controller: FakeWindowController(),
+          appBar: Oito2WindowTitleBar(
+            title: const Text('Files'),
+            platform: _linux,
+            buttonSides: sides,
+            backgroundColor: const Color(0xFF123456),
+          ),
+        );
+        expect(_controlTypes(tester), expected);
+        expect(
+          tester
+              .widget<Oito2TitleBar>(find.byType(Oito2TitleBar))
+              .backgroundColor,
+          const Color(0xFF123456),
+        );
+      });
+    }
+
+    testWidgets('macOS keeps the traffic light room only on the leading bar', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        settings: Oito2SystemSettings.fallback(_macos),
+        controller: FakeWindowController(),
+        appBar: const Oito2WindowTitleBar(
+          leading: Icon(Icons.menu),
+          platform: _macos,
+          buttonSides: Oito2WindowButtonSides.trailing,
+        ),
+      );
+      expect(tester.getTopLeft(find.byIcon(Icons.menu)).dx, lessThan(72));
+    });
+
     testWidgets('Windows draws Windows-style buttons', (tester) async {
       await _pump(
         tester,

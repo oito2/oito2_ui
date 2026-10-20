@@ -252,6 +252,35 @@ void main() {
       expect(selected, [2]);
     });
 
+    testWidgets('a rail with more items than fit scrolls', (tester) async {
+      final many = [
+        for (var i = 0; i < 30; i++)
+          Oito2NavigationItem(icon: const Icon(Icons.circle), label: 'Item $i'),
+      ];
+      await pumpOito2(
+        tester,
+        Oito2NavigationPage(
+          items: many,
+          pageBuilder: (context, index) => Text('Page $index'),
+        ),
+        size: const Size(800, 400),
+      );
+      expect(tester.takeException(), isNull);
+      await tester.scrollUntilVisible(
+        find.text('Item 29'),
+        200,
+        scrollable: find
+            .descendant(
+              of: find.byType(Oito2NavigationPage),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.tap(find.text('Item 29'));
+      await tester.pumpAndSettle();
+      expect(find.text('Page 29'), findsOneWidget);
+    });
+
     testWidgets('narrow layouts use a bottom bar', (tester) async {
       await pumpOito2(tester, nav(), size: const Size(400, 700));
       expect(find.byType(NavigationBar), findsOneWidget);

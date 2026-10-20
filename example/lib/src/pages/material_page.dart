@@ -19,15 +19,15 @@ import 'package:oito2_ui/oito2_ui.dart';
 import '../widgets/showcase_widgets.dart';
 
 /// Shows the Material components styled by `Oito2Theme`.
-class ComponentsPage extends StatefulWidget {
-  /// Creates the components page.
-  const ComponentsPage({super.key});
+class MaterialComponentsPage extends StatefulWidget {
+  /// Creates the Material components page.
+  const MaterialComponentsPage({super.key});
 
   @override
-  State<ComponentsPage> createState() => _ComponentsPageState();
+  State<MaterialComponentsPage> createState() => _MaterialComponentsPageState();
 }
 
-class _ComponentsPageState extends State<ComponentsPage> {
+class _MaterialComponentsPageState extends State<MaterialComponentsPage> {
   bool _checked = true;
   bool _switched = true;
   int _radio = 0;

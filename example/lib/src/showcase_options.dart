@@ -17,7 +17,19 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_themes/oito2_ui_themes.dart';
 
-/// The user-selected appearance of the showcase.
+/// How the showcase sizes its controls.
+enum ShowcaseDensity {
+  /// Follows the platform the app runs on.
+  auto,
+
+  /// Pointer-sized controls, as on desktop platforms.
+  desktop,
+
+  /// Touch-sized controls, as on phones and tablets.
+  touch,
+}
+
+/// The user-selected appearance and layout of the showcase.
 @immutable
 class ShowcaseOptions {
   /// Creates showcase options.
@@ -26,6 +38,10 @@ class ShowcaseOptions {
     this.preset,
     this.accent,
     this.highContrast = false,
+    this.compactMode = false,
+    this.rtl = false,
+    this.locale,
+    this.density = ShowcaseDensity.auto,
   });
 
   /// Light, dark or system brightness for the base scheme. Presets have a
@@ -42,6 +58,34 @@ class ShowcaseOptions {
   /// Whether the base scheme forces high contrast, on top of the system
   /// preference.
   final bool highContrast;
+
+  /// Whether the pages are listed in a navigation rail instead of a
+  /// master-detail list.
+  final bool compactMode;
+
+  /// Whether the showcase is laid out right to left.
+  final bool rtl;
+
+  /// The app language, or null to follow the system.
+  final Locale? locale;
+
+  /// How the controls are sized.
+  final ShowcaseDensity density;
+
+  /// The platform the theme is built for: [system], or a desktop or touch
+  /// platform when [density] forces one.
+  Oito2Platform platformFor(Oito2Platform system) => switch (density) {
+    ShowcaseDensity.auto => system,
+    ShowcaseDensity.desktop when system.usesTouchInput => Oito2Platform(
+      targetPlatform: TargetPlatform.linux,
+      isWeb: system.isWeb,
+    ),
+    ShowcaseDensity.touch when !system.usesTouchInput => Oito2Platform(
+      targetPlatform: TargetPlatform.android,
+      isWeb: system.isWeb,
+    ),
+    _ => system,
+  };
 
   /// The accent the base scheme uses with [system]: [accent], then the
   /// system accent, then [Oito2AccentColor.fallback].
@@ -67,8 +111,8 @@ class ShowcaseOptions {
   }
 
   /// Returns a copy with the given fields replaced. Pass [clearPreset] to
-  /// return to the base scheme and [clearAccent] to follow the system
-  /// accent.
+  /// return to the base scheme, [clearAccent] to follow the system accent
+  /// and [clearLocale] to follow the system language.
   ShowcaseOptions copyWith({
     ThemeMode? themeMode,
     Oito2ThemePreset? preset,
@@ -76,12 +120,31 @@ class ShowcaseOptions {
     Oito2AccentColor? accent,
     bool clearAccent = false,
     bool? highContrast,
+    bool? compactMode,
+    bool? rtl,
+    Locale? locale,
+    bool clearLocale = false,
+    ShowcaseDensity? density,
   }) {
     return ShowcaseOptions(
       themeMode: themeMode ?? this.themeMode,
       preset: clearPreset ? null : preset ?? this.preset,
       accent: clearAccent ? null : accent ?? this.accent,
       highContrast: highContrast ?? this.highContrast,
+      compactMode: compactMode ?? this.compactMode,
+      rtl: rtl ?? this.rtl,
+      locale: clearLocale ? null : locale ?? this.locale,
+      density: density ?? this.density,
     );
   }
+}
+
+/// Holds the showcase options and notifies listeners when they change.
+class ShowcaseController extends ValueNotifier<ShowcaseOptions> {
+  /// Creates a controller with [initial] options.
+  ShowcaseController([super.initial = const ShowcaseOptions()]);
+
+  /// Replaces the options with the result of [change].
+  void update(ShowcaseOptions Function(ShowcaseOptions options) change) =>
+      value = change(value);
 }

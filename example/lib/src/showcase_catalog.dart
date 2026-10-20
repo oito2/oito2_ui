@@ -1,0 +1,321 @@
+// Copyright (C) 2026  oito2
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+import 'package:material_ui/material_ui.dart';
+import 'package:oito2_ui/oito2_ui.dart';
+
+import 'pages/banner_page.dart';
+import 'pages/border_container_page.dart';
+import 'pages/check_button_page.dart';
+import 'pages/choice_chip_bar_page.dart';
+import 'pages/code_block_page.dart';
+import 'pages/color_disk_page.dart';
+import 'pages/colors_page.dart';
+import 'pages/date_time_entry_page.dart';
+import 'pages/diagonal_clip_page.dart';
+import 'pages/dialog_title_bar_page.dart';
+import 'pages/draggable_page.dart';
+import 'pages/expandable_page.dart';
+import 'pages/focus_border_page.dart';
+import 'pages/foundation_page.dart';
+import 'pages/info_page.dart';
+import 'pages/master_detail_page.dart';
+import 'pages/material_page.dart';
+import 'pages/navigation_page.dart';
+import 'pages/option_button_page.dart';
+import 'pages/page_indicator_page.dart';
+import 'pages/paned_view_page.dart';
+import 'pages/radio_button_page.dart';
+import 'pages/search_field_page.dart';
+import 'pages/section_page.dart';
+import 'pages/segmented_entry_page.dart';
+import 'pages/selectable_container_page.dart';
+import 'pages/split_button_page.dart';
+import 'pages/switch_button_page.dart';
+import 'pages/tile_page.dart';
+import 'pages/title_bar_page.dart';
+import 'pages/tokens_page.dart';
+import 'pages/typography_page.dart';
+import 'pages/undershoot_page.dart';
+import 'pages/watermark_page.dart';
+
+/// The group a showcase page is listed under.
+enum ShowcaseGroup {
+  /// One page per oito2_ui widget.
+  components('Components'),
+
+  /// The design tokens, colors, typography and the themed Material
+  /// widgets.
+  theme('Theme');
+
+  const ShowcaseGroup(this.label);
+
+  /// The group heading.
+  final String label;
+}
+
+/// A page of the showcase.
+@immutable
+class ShowcasePage {
+  /// Creates a showcase page.
+  const ShowcasePage({
+    required this.title,
+    required this.icon,
+    required this.source,
+    required this.builder,
+    this.group = ShowcaseGroup.components,
+  });
+
+  /// The page title, usually the widget name.
+  final String title;
+
+  /// The icon in the page list.
+  final IconData icon;
+
+  /// The page's source file name under `lib/src/pages/`, which the
+  /// showcase bundles as an asset to show its code.
+  final String source;
+
+  /// Builds the page body with the active scheme [colors].
+  final Widget Function(BuildContext context, Oito2ColorTheme colors) builder;
+
+  /// The group the page is listed under.
+  final ShowcaseGroup group;
+
+  /// The page identifier in links: [source] without the `_page.dart`
+  /// suffix, with dashes, such as `check-button`.
+  String get slug =>
+      source.replaceFirst(RegExp(r'_page\.dart$'), '').replaceAll('_', '-');
+
+  /// The asset path of [source].
+  String get sourceAsset => 'lib/src/pages/$source';
+}
+
+Widget Function(BuildContext, Oito2ColorTheme) _page(Widget page) =>
+    (_, _) => page;
+
+/// Every showcase page: the components in alphabetical order, then the
+/// theme pages.
+final List<ShowcasePage> showcasePages = [
+  ShowcasePage(
+    title: 'Oito2Banner',
+    icon: LucideIcons.panel_top,
+    source: 'banner_page.dart',
+    builder: _page(const BannerPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2BorderContainer',
+    icon: LucideIcons.square_dashed,
+    source: 'border_container_page.dart',
+    builder: _page(const BorderContainerPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2CheckButton',
+    icon: LucideIcons.square_check,
+    source: 'check_button_page.dart',
+    builder: _page(const CheckButtonPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2ChoiceChipBar',
+    icon: LucideIcons.list_filter,
+    source: 'choice_chip_bar_page.dart',
+    builder: _page(const ChoiceChipBarPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2CodeBlock',
+    icon: LucideIcons.code,
+    source: 'code_block_page.dart',
+    builder: _page(const CodeBlockPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2ColorDisk',
+    icon: LucideIcons.palette,
+    source: 'color_disk_page.dart',
+    builder: _page(const ColorDiskPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2DateTimeEntry',
+    icon: LucideIcons.calendar_clock,
+    source: 'date_time_entry_page.dart',
+    builder: _page(const DateTimeEntryPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2DiagonalClip',
+    icon: LucideIcons.scissors,
+    source: 'diagonal_clip_page.dart',
+    builder: _page(const DiagonalClipPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2DialogTitleBar',
+    icon: LucideIcons.app_window,
+    source: 'dialog_title_bar_page.dart',
+    builder: _page(const DialogTitleBarPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Draggable',
+    icon: LucideIcons.move,
+    source: 'draggable_page.dart',
+    builder: _page(const DraggablePage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Expandable',
+    icon: LucideIcons.chevrons_down_up,
+    source: 'expandable_page.dart',
+    builder: _page(const ExpandablePage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2FocusBorder',
+    icon: LucideIcons.focus,
+    source: 'focus_border_page.dart',
+    builder: _page(const FocusBorderPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2InfoBox',
+    icon: LucideIcons.info,
+    source: 'info_page.dart',
+    builder: _page(const InfoPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2MasterDetailPage',
+    icon: LucideIcons.columns_2,
+    source: 'master_detail_page.dart',
+    builder: _page(const MasterDetailPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2NavigationPage',
+    icon: LucideIcons.panel_left,
+    source: 'navigation_page.dart',
+    builder: _page(const NavigationPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2OptionButton',
+    icon: LucideIcons.circle_plus,
+    source: 'option_button_page.dart',
+    builder: _page(const OptionButtonPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2PageIndicator',
+    icon: LucideIcons.ellipsis,
+    source: 'page_indicator_page.dart',
+    builder: _page(const PageIndicatorPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2PanedView',
+    icon: LucideIcons.square_split_horizontal,
+    source: 'paned_view_page.dart',
+    builder: _page(const PanedViewPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2RadioButton',
+    icon: LucideIcons.circle_dot,
+    source: 'radio_button_page.dart',
+    builder: _page(const RadioButtonPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2ScrollViewUndershoot',
+    icon: LucideIcons.rows_2,
+    source: 'undershoot_page.dart',
+    builder: _page(const UndershootPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2SearchField',
+    icon: LucideIcons.search,
+    source: 'search_field_page.dart',
+    builder: _page(const SearchFieldPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Section',
+    icon: LucideIcons.heading,
+    source: 'section_page.dart',
+    builder: _page(const SectionPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2SegmentedEntry',
+    icon: LucideIcons.text_cursor_input,
+    source: 'segmented_entry_page.dart',
+    builder: _page(const SegmentedEntryPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2SelectableContainer',
+    icon: LucideIcons.mouse_pointer_click,
+    source: 'selectable_container_page.dart',
+    builder: _page(const SelectableContainerPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2SplitButton',
+    icon: LucideIcons.split,
+    source: 'split_button_page.dart',
+    builder: _page(const SplitButtonPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2SwitchButton',
+    icon: LucideIcons.toggle_right,
+    source: 'switch_button_page.dart',
+    builder: _page(const SwitchButtonPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Tile',
+    icon: LucideIcons.layout_list,
+    source: 'tile_page.dart',
+    builder: _page(const TilePage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2TitleBar',
+    icon: LucideIcons.panels_top_left,
+    source: 'title_bar_page.dart',
+    builder: _page(const TitleBarPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Watermark',
+    icon: LucideIcons.stamp,
+    source: 'watermark_page.dart',
+    builder: _page(const WatermarkPage()),
+  ),
+  ShowcasePage(
+    title: 'Foundation',
+    icon: LucideIcons.monitor_smartphone,
+    source: 'foundation_page.dart',
+    group: ShowcaseGroup.theme,
+    builder: _page(const FoundationPage()),
+  ),
+  ShowcasePage(
+    title: 'Tokens',
+    icon: LucideIcons.ruler,
+    source: 'tokens_page.dart',
+    group: ShowcaseGroup.theme,
+    builder: _page(const TokensPage()),
+  ),
+  ShowcasePage(
+    title: 'Colors',
+    icon: LucideIcons.swatch_book,
+    source: 'colors_page.dart',
+    group: ShowcaseGroup.theme,
+    builder: (context, colors) => ColorsPage(colors: colors),
+  ),
+  ShowcasePage(
+    title: 'Typography',
+    icon: LucideIcons.type,
+    source: 'typography_page.dart',
+    group: ShowcaseGroup.theme,
+    builder: _page(const TypographyPage()),
+  ),
+  ShowcasePage(
+    title: 'Material components',
+    icon: LucideIcons.layout_grid,
+    source: 'material_page.dart',
+    group: ShowcaseGroup.theme,
+    builder: _page(const MaterialComponentsPage()),
+  ),
+];

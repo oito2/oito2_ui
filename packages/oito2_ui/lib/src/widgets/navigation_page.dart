@@ -47,8 +47,9 @@ class Oito2NavigationItem {
 /// Below [compactBreakpoint] wide, the destinations are a bottom
 /// [NavigationBar]. Otherwise they are a [NavigationRail] at the start
 /// side, extended with labels beside the icons at or above
-/// [extendedBreakpoint] when given. Both use the theme's chrome colors
-/// through `Oito2Theme`. The selected page fades in when it changes.
+/// [extendedBreakpoint] when given; the rail scrolls when its items don't
+/// fit the height. Both use the theme's chrome colors through
+/// `Oito2Theme`. The selected page fades in when it changes.
 class Oito2NavigationPage extends StatefulWidget {
   /// Creates a navigation page.
   const Oito2NavigationPage({
@@ -180,28 +181,34 @@ class _Oito2NavigationPageState extends State<Oito2NavigationPage> {
         final extended =
             widget.extendedBreakpoint != null &&
             width >= widget.extendedBreakpoint!;
+        final rail = NavigationRail(
+          selectedIndex: index,
+          onDestinationSelected: _select,
+          extended: extended,
+          labelType: extended ? NavigationRailLabelType.none : widget.labelType,
+          leading: widget.leading,
+          trailing: widget.trailing,
+          destinations: [
+            for (final item in widget.items)
+              NavigationRailDestination(
+                icon: Tooltip(
+                  message: item.tooltip ?? item.label,
+                  child: item.icon,
+                ),
+                selectedIcon: item.selectedIcon,
+                label: Text(item.label),
+              ),
+          ],
+        );
         return Row(
           children: [
-            NavigationRail(
-              selectedIndex: index,
-              onDestinationSelected: _select,
-              extended: extended,
-              labelType: extended
-                  ? NavigationRailLabelType.none
-                  : widget.labelType,
-              leading: widget.leading,
-              trailing: widget.trailing,
-              destinations: [
-                for (final item in widget.items)
-                  NavigationRailDestination(
-                    icon: Tooltip(
-                      message: item.tooltip ?? item.label,
-                      child: item.icon,
-                    ),
-                    selectedIcon: item.selectedIcon,
-                    label: Text(item.label),
-                  ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(child: rail),
+                ),
+              ),
             ),
             const VerticalDivider(width: 1),
             Expanded(child: page),

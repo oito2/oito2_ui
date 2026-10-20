@@ -54,17 +54,17 @@ class _PreviewWindowController implements Oito2WindowController {
   void dispose() => _state.dispose();
 }
 
-/// Previews the title bar in every window control style and layout, the
-/// inactive state and the dialog title bar.
-class WindowPage extends StatefulWidget {
-  /// Creates the window page.
-  const WindowPage({super.key});
+/// Shows [Oito2TitleBar] and [Oito2WindowControl] in every window control
+/// style and button layout, and the inactive window state.
+class TitleBarPage extends StatefulWidget {
+  /// Creates the title bar page.
+  const TitleBarPage({super.key});
 
   @override
-  State<WindowPage> createState() => _WindowPageState();
+  State<TitleBarPage> createState() => _TitleBarPageState();
 }
 
-class _WindowPageState extends State<WindowPage> {
+class _TitleBarPageState extends State<TitleBarPage> {
   final _preview = _PreviewWindowController();
   bool _active = true;
 
@@ -104,40 +104,13 @@ class _WindowPageState extends State<WindowPage> {
     );
   }
 
-  void _openDialog() {
-    showDialog<void>(
-      context: context,
-      builder: (context) => Dialog(
-        clipBehavior: Clip.antiAlias,
-        child: SizedBox(
-          width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Oito2DialogTitleBar(title: Text('Preferences')),
-              Padding(
-                padding: const EdgeInsets.all(Oito2Spacing.xl),
-                child: Text(
-                  'The close button follows the system button style and '
-                  'side, and pops the dialog.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final settings = Oito2SystemScope.of(context);
     final macLayout = Oito2WindowButtonLayout.defaultFor(
       Oito2WindowControlStyle.macos,
     );
-    return ListView(
-      padding: const EdgeInsets.all(Oito2Spacing.page),
+    return ShowcasePageBody(
       children: [
         ShowcaseSection(
           'This window',
@@ -208,15 +181,6 @@ class _WindowPageState extends State<WindowPage> {
                 _active = value;
                 _preview.isActive = value;
               }),
-            ),
-          ],
-        ),
-        ShowcaseSection(
-          'Dialog title bar',
-          children: [
-            OutlinedButton(
-              onPressed: _openDialog,
-              child: const Text('Open dialog'),
             ),
           ],
         ),

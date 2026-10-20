@@ -18,8 +18,8 @@ import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_settings/oito2_ui_settings.dart';
 import 'package:oito2_ui_window/oito2_ui_window.dart';
 
-import 'src/showcase_home.dart';
 import 'src/showcase_options.dart';
+import 'src/showcase_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,45 +41,86 @@ Future<void> main() async {
 class ShowcaseApp extends StatefulWidget {
   /// Creates the showcase root widget. It renders with the system settings
   /// of the closest [Oito2SystemScope].
-  const ShowcaseApp({super.key, this.windowController});
+  ///
+  /// [initialSlug] selects the first page; it defaults to the page named in
+  /// the launch route, such as `#/check-button` on the web.
+  const ShowcaseApp({
+    super.key,
+    this.windowController,
+    this.initialSlug,
+    this.initialOptions = const ShowcaseOptions(),
+  });
 
   /// The native window controller, or null where the app doesn't own a
   /// desktop window.
   final Oito2WindowController? windowController;
+
+  /// The slug of the page to show first.
+  final String? initialSlug;
+
+  /// The appearance and layout at start.
+  final ShowcaseOptions initialOptions;
 
   @override
   State<ShowcaseApp> createState() => _ShowcaseAppState();
 }
 
 class _ShowcaseAppState extends State<ShowcaseApp> {
-  ShowcaseOptions _options = const ShowcaseOptions();
-
-  ThemeData _theme(Brightness brightness, Oito2SystemSettings system) =>
-      Oito2Theme.fromColors(
-        _options.colorsFor(brightness, system),
-        platform: system.platform,
+  late final _controller = ShowcaseController(widget.initialOptions);
+  late final String _initialSlug =
+      widget.initialSlug ??
+      WidgetsBinding.instance.platformDispatcher.defaultRouteName.replaceFirst(
+        RegExp('^/'),
+        '',
       );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final system = Oito2SystemScope.of(context);
     return Oito2WindowScope(
       controller: widget.windowController,
-      child: MaterialApp(
-        title: 'oito2_ui',
-        debugShowCheckedModeBanner: false,
-        theme: _theme(Brightness.light, system),
-        darkTheme: _theme(Brightness.dark, system),
-        themeMode: _options.effectiveThemeMode,
-        localizationsDelegates: const [
-          Oito2Localizations.delegate,
-          ...GlobalMaterialLocalizations.delegates,
-        ],
-        supportedLocales: Oito2Localizations.supportedLocales,
-        home: ShowcaseHome(
-          options: _options,
-          onOptionsChanged: (options) => setState(() => _options = options),
-        ),
+      child: ValueListenableBuilder<ShowcaseOptions>(
+        valueListenable: _controller,
+        builder: (context, options, _) {
+          final platform = options.platformFor(system.platform);
+          ThemeData theme(Brightness brightness) => Oito2Theme.fromColors(
+            options.colorsFor(brightness, system),
+            platform: platform,
+          );
+          return MaterialApp(
+            title: 'oito2_ui',
+            debugShowCheckedModeBanner: false,
+            theme: theme(Brightness.light),
+            darkTheme: theme(Brightness.dark),
+            themeMode: options.effectiveThemeMode,
+            locale: options.locale,
+            localizationsDelegates: const [
+              Oito2Localizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: Oito2Localizations.supportedLocales,
+            initialRoute: '/',
+            builder: (context, child) => Directionality(
+              textDirection: options.rtl
+                  ? TextDirection.rtl
+                  : Directionality.of(context),
+              child: child!,
+            ),
+            home: Builder(
+              builder: (context) => ShowcaseShell(
+                controller: _controller,
+                colors: options.colorsFor(Theme.of(context).brightness, system),
+                initialSlug: _initialSlug,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
