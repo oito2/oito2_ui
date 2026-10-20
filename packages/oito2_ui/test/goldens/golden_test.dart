@@ -357,6 +357,47 @@ class _ProgressButtonsScene extends StatelessWidget {
   }
 }
 
+/// Shortcut labels in two notations, the shortcut recorder and
+/// highlighted search text.
+class _ShortcutsScene extends StatelessWidget {
+  const _ShortcutsScene();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Oito2Shortcut.parse('Mod+Shift+P');
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(Oito2Spacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: Oito2Spacing.md,
+          children: [
+            Row(
+              spacing: Oito2Spacing.lg,
+              children: [
+                Oito2ShortcutLabel(palette, platform: TargetPlatform.linux),
+                Oito2ShortcutLabel(palette, platform: TargetPlatform.macOS),
+                Oito2ShortcutLabel(Oito2Shortcut.parse('G H')),
+              ],
+            ),
+            Row(
+              spacing: Oito2Spacing.md,
+              children: [
+                Oito2ShortcutRecorder(value: palette, onChanged: (_) {}),
+                Oito2ShortcutRecorder(value: null, onChanged: (_) {}),
+              ],
+            ),
+            const Oito2HighlightedText(
+              'Configurações de ação e acessibilidade',
+              query: 'acao config',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 void main() {
   for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
     testWidgets('components in $name', (tester) async {
@@ -403,6 +444,63 @@ void main() {
         name: 'progress_buttons_$name',
         colors: colors,
         size: const Size(480, 200),
+      );
+    });
+  }
+
+  for (final name in ['light', 'dark']) {
+    testWidgets('shortcuts in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _ShortcutsScene(),
+        name: 'shortcuts_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(560, 180),
+      );
+    });
+
+    testWidgets('command palette in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        Oito2Commands(
+          commands: [
+            Oito2Command(
+              id: 'theme',
+              label: 'Toggle dark style',
+              group: 'View',
+              icon: LucideIcons.moon,
+              shortcut: Oito2Shortcut.parse('Mod+Shift+L'),
+              onInvoke: () {},
+            ),
+            Oito2Command(
+              id: 'settings',
+              label: 'Open settings',
+              icon: LucideIcons.settings,
+              shortcut: Oito2Shortcut.parse('Mod+,'),
+              onInvoke: () {},
+            ),
+            Oito2Command(
+              id: 'home',
+              label: 'Go to the first page',
+              group: 'Navigation',
+              icon: LucideIcons.house,
+              shortcut: Oito2Shortcut.parse('G H'),
+              onInvoke: () {},
+            ),
+          ],
+          child: Builder(
+            builder: (context) {
+              WidgetsBinding.instance.addPostFrameCallback(
+                (_) => showOito2CommandPalette(context),
+              );
+              return const Scaffold();
+            },
+          ),
+        ),
+        name: 'command_palette_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(640, 400),
+        wholeApp: true,
       );
     });
   }

@@ -22,16 +22,20 @@ import 'pages/check_button_page.dart';
 import 'pages/checkbox_page.dart';
 import 'pages/choice_chip_bar_page.dart';
 import 'pages/code_block_page.dart';
+import 'pages/collections_page.dart';
 import 'pages/color_disk_page.dart';
 import 'pages/colors_page.dart';
+import 'pages/commands_page.dart';
 import 'pages/date_time_entry_page.dart';
 import 'pages/diagonal_clip_page.dart';
 import 'pages/dialog_title_bar_page.dart';
 import 'pages/draggable_page.dart';
 import 'pages/expandable_page.dart';
 import 'pages/focus_border_page.dart';
+import 'pages/format_page.dart';
 import 'pages/foundation_page.dart';
 import 'pages/icon_button_page.dart';
+import 'pages/highlighted_text_page.dart';
 import 'pages/info_page.dart';
 import 'pages/master_detail_page.dart';
 import 'pages/material_page.dart';
@@ -48,6 +52,7 @@ import 'pages/segmented_entry_page.dart';
 import 'pages/selectable_container_page.dart';
 import 'pages/split_button_page.dart';
 import 'pages/switch_button_page.dart';
+import 'pages/swap_page.dart';
 import 'pages/switch_page.dart';
 import 'pages/tile_page.dart';
 import 'pages/title_bar_page.dart';
@@ -62,6 +67,9 @@ import 'pages/watermark_page.dart';
 enum ShowcaseGroup {
   /// One page per oito2_ui widget.
   components('Components'),
+
+  /// Collections, formatting and keyboard commands.
+  utilities('Utilities'),
 
   /// The design tokens, colors, typography and the themed Material
   /// widgets.
@@ -114,7 +122,7 @@ Widget Function(BuildContext, Oito2ColorTheme) _page(Widget page) =>
     (_, _) => page;
 
 /// Every showcase page: the components in alphabetical order, then the
-/// theme pages.
+/// utilities and the theme pages.
 final List<ShowcasePage> showcasePages = [
   ShowcasePage(
     title: 'Oito2Banner',
@@ -199,6 +207,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.focus,
     source: 'focus_border_page.dart',
     builder: _page(const FocusBorderPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2HighlightedText',
+    icon: LucideIcons.highlighter,
+    source: 'highlighted_text_page.dart',
+    builder: _page(const HighlightedTextPage()),
   ),
   ShowcasePage(
     title: 'Oito2IconButton',
@@ -297,6 +311,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const SplitButtonPage()),
   ),
   ShowcasePage(
+    title: 'Oito2Swap',
+    icon: LucideIcons.repeat_2,
+    source: 'swap_page.dart',
+    builder: _page(const SwapPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2Switch',
     icon: LucideIcons.toggle_left,
     source: 'switch_page.dart',
@@ -331,6 +351,27 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.stamp,
     source: 'watermark_page.dart',
     builder: _page(const WatermarkPage()),
+  ),
+  ShowcasePage(
+    title: 'Collections',
+    icon: LucideIcons.list_tree,
+    source: 'collections_page.dart',
+    group: ShowcaseGroup.utilities,
+    builder: _page(const CollectionsPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Commands',
+    icon: LucideIcons.command,
+    source: 'commands_page.dart',
+    group: ShowcaseGroup.utilities,
+    builder: _page(const CommandsPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Format',
+    icon: LucideIcons.binary,
+    source: 'format_page.dart',
+    group: ShowcaseGroup.utilities,
+    builder: _page(const FormatPage()),
   ),
   ShowcasePage(
     title: 'Foundation',

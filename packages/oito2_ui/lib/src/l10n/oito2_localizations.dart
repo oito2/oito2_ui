@@ -90,6 +90,54 @@ abstract class Oito2Localizations {
   /// Label of a segment of a segmented entry: part [part] of [count],
   /// counted from 1.
   String partOf(int part, int count);
+
+  /// A moment less than a minute away from now.
+  String get justNow;
+
+  /// A time [count] [unit]s in the past, such as "3 minutes ago".
+  String timeAgo(int count, Oito2TimeUnit unit);
+
+  /// A time [count] [unit]s in the future, such as "in 3 minutes".
+  String timeFromNow(int count, Oito2TimeUnit unit);
+
+  /// The hint of the command palette search field.
+  String get commandPaletteHint;
+
+  /// Shown when no command matches the command palette search.
+  String get noCommandsFound;
+
+  /// Shown by a shortcut recorder while it waits for keys.
+  String get pressShortcut;
+
+  /// Shown by a shortcut recorder without a shortcut.
+  String get noShortcut;
+
+  /// Label of the button that clears a recorded shortcut.
+  String get clearShortcut;
+}
+
+/// The units of a relative time, from [second] to [year].
+enum Oito2TimeUnit {
+  /// Seconds.
+  second,
+
+  /// Minutes.
+  minute,
+
+  /// Hours.
+  hour,
+
+  /// Days.
+  day,
+
+  /// Weeks.
+  week,
+
+  /// Months.
+  month,
+
+  /// Years.
+  year,
 }
 
 /// The English [Oito2Localizations].
@@ -126,6 +174,36 @@ class Oito2LocalizationsEn extends Oito2Localizations {
 
   @override
   String partOf(int part, int count) => 'Part $part of $count';
+
+  @override
+  String get justNow => 'now';
+
+  static String _unit(int count, Oito2TimeUnit unit) {
+    final name = unit.name;
+    return count == 1 ? '1 $name' : '$count ${name}s';
+  }
+
+  @override
+  String timeAgo(int count, Oito2TimeUnit unit) => '${_unit(count, unit)} ago';
+
+  @override
+  String timeFromNow(int count, Oito2TimeUnit unit) =>
+      'in ${_unit(count, unit)}';
+
+  @override
+  String get commandPaletteHint => 'Type a command';
+
+  @override
+  String get noCommandsFound => 'No commands found';
+
+  @override
+  String get pressShortcut => 'Press a shortcut';
+
+  @override
+  String get noShortcut => 'No shortcut';
+
+  @override
+  String get clearShortcut => 'Clear shortcut';
 }
 
 /// The Brazilian Portuguese [Oito2Localizations].
@@ -162,6 +240,44 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String partOf(int part, int count) => 'Parte $part de $count';
+
+  @override
+  String get justNow => 'agora';
+
+  static String _unit(int count, Oito2TimeUnit unit) {
+    final (one, many) = switch (unit) {
+      Oito2TimeUnit.second => ('segundo', 'segundos'),
+      Oito2TimeUnit.minute => ('minuto', 'minutos'),
+      Oito2TimeUnit.hour => ('hora', 'horas'),
+      Oito2TimeUnit.day => ('dia', 'dias'),
+      Oito2TimeUnit.week => ('semana', 'semanas'),
+      Oito2TimeUnit.month => ('mês', 'meses'),
+      Oito2TimeUnit.year => ('ano', 'anos'),
+    };
+    return count == 1 ? '1 $one' : '$count $many';
+  }
+
+  @override
+  String timeAgo(int count, Oito2TimeUnit unit) => 'há ${_unit(count, unit)}';
+
+  @override
+  String timeFromNow(int count, Oito2TimeUnit unit) =>
+      'em ${_unit(count, unit)}';
+
+  @override
+  String get commandPaletteHint => 'Digite um comando';
+
+  @override
+  String get noCommandsFound => 'Nenhum comando encontrado';
+
+  @override
+  String get pressShortcut => 'Pressione um atalho';
+
+  @override
+  String get noShortcut => 'Sem atalho';
+
+  @override
+  String get clearShortcut => 'Limpar atalho';
 }
 
 class _Oito2LocalizationsDelegate

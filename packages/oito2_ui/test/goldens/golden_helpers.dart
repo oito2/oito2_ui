@@ -92,32 +92,38 @@ class _TolerantComparator extends LocalFileComparator {
 /// Pumps [child] at [size] under the oito2 theme of [colors], with the
 /// app localizations and real shadows, and compares it with the golden
 /// file `goldens/<name>.png`.
+///
+/// With [wholeApp], the capture includes the routes above [child], such
+/// as dialogs.
 Future<void> expectGoldenScene(
   WidgetTester tester,
   Widget child, {
   required String name,
   required Oito2ColorTheme colors,
   Size size = const Size(640, 480),
+  bool wholeApp = false,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   debugDisableShadows = false;
   try {
+    const appKey = ValueKey('golden-app');
+    final app = MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: Oito2Theme.fromColors(colors, platform: goldenPlatform),
+      localizationsDelegates: const [
+        Oito2Localizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      home: wholeApp ? child : RepaintBoundary(child: child),
+    );
     await tester.pumpWidget(
-      MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: Oito2Theme.fromColors(colors, platform: goldenPlatform),
-        localizationsDelegates: const [
-          Oito2Localizations.delegate,
-          ...GlobalMaterialLocalizations.delegates,
-        ],
-        home: RepaintBoundary(child: child),
-      ),
+      wholeApp ? RepaintBoundary(key: appKey, child: app) : app,
     );
     await tester.pumpAndSettle();
     await expectLater(
-      find.byType(RepaintBoundary).first,
+      wholeApp ? find.byKey(appKey) : find.byType(RepaintBoundary).first,
       matchesGoldenFile('goldens/$name.png'),
     );
   } finally {

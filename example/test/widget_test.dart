@@ -215,4 +215,43 @@ void main() {
     final context = tester.element(find.byType(AlertDialog));
     expect(dialog.color, Oito2ChromeColors.maybeOf(context)!.dialog);
   });
+
+  testWidgets('Ctrl+K opens the palette and runs a page command', (
+    tester,
+  ) async {
+    await pumpShowcase(tester);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await _settle(tester);
+    expect(find.text('Type a command'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).last, 'go to watermark');
+    await _settle(tester);
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await _settle(tester);
+    expect(find.text('Type a command'), findsNothing);
+    expect(find.text('No messages'), findsOneWidget);
+  });
+
+  testWidgets('Ctrl+F focuses the page search', (tester) async {
+    await pumpShowcase(tester);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await _settle(tester);
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'Page search');
+  });
+
+  testWidgets('the page list highlights the search matches', (tester) async {
+    await pumpShowcase(tester);
+    await tester.enterText(find.byType(TextField).first, 'swap');
+    await _settle(tester);
+    expect(
+      find.descendant(
+        of: find.byType(Oito2MasterTile),
+        matching: find.byType(Oito2HighlightedText),
+      ),
+      findsOneWidget,
+    );
+  });
 }

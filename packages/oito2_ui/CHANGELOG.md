@@ -39,6 +39,20 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2CheckboxListTile`, `Oito2RadioListTile` and `Oito2SwitchListTile`, with `Oito2ControlAffinity`.
 - Painted `Oito2CircularProgressIndicator` and `Oito2LinearProgressIndicator`, determinate and indeterminate (a spinning arc, a gliding pulse), drawn with filled shapes and round ends, still when animations are disabled, with a percentage as their accessibility value; colors and sizes come from the new `Oito2ProgressIndicatorThemeData` extension of `Oito2Theme`.
 - `Oito2IconButton` (square, control height, toggle mode with a filled selected state), `Oito2BackButton` (start-side chevron, pops the route) and `Oito2CloseButton`; `Oito2DetailPage` uses `Oito2BackButton`.
+- Collections, in pure Dart:
+  - `Oito2ListCollection` (values, labels, disabled items, groups, typeahead, filtering).
+  - `Oito2SelectionController` (none, single and multiple selection, Shift ranges, Control/Command toggles, select all).
+  - `Oito2TreeCollection` and `Oito2TreeNode` (lookups, visible order for expanded branches, filtering, insert/remove/move/replace, building from file paths).
+  - `Oito2AsyncListController` (cursor pages, filter text, sorting, stale loads dropped).
+- `Oito2Format`: byte sizes (SI and IEC), compact numbers and localized relative times ("3 minutes ago" / "há 3 minutos").
+- `Oito2HighlightedText`, which emphasizes the words of a query ignoring case and accents, and `Oito2Swap`, which animates between two widgets with a fade, scale, rotate or flip.
+- Keyboard commands:
+  - `Oito2Shortcut` and `Oito2KeyChord`: single chords and sequences, with a platform-neutral primary modifier and parsing from text such as `Mod+Shift+P` or `G H`.
+  - `Oito2Command` and `Oito2Commands`: scoped commands that run on their shortcut while the focus is inside, with sequences that time out, plain-key shortcuts that skip text fields, and conflict detection.
+  - `Oito2ShortcutLabel` (key caps in the platform notation) and `Oito2ShortcutRecorder`.
+  - `showOito2CommandPalette`: searchable, keyboard-driven, with shortcuts shown.
+- `Oito2Localizations` strings for relative times, the command palette and the shortcut recorder.
+- `intl` is now a direct dependency.
 - `Oito2Localizations` with English and Brazilian Portuguese strings for the window controls, pane resizing, split button menus, chip bar arrows, page indicators and segmented entries; English is the fallback when its delegate isn't registered. `Oito2WindowControlLabels` and the widgets' label parameters now only override these strings.
 
 ### Changed

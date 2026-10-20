@@ -74,6 +74,8 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
     initialIndex: _initialIndex,
   );
   String _query = '';
+  final _searchFocus = FocusNode(debugLabel: 'Page search');
+  final _searchController = TextEditingController();
 
   List<ShowcasePage> get _filtered => _query.isEmpty
       ? showcasePages
@@ -90,6 +92,8 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
 
   @override
   void dispose() {
+    _searchFocus.dispose();
+    _searchController.dispose();
     _listController.dispose();
     super.dispose();
   }
@@ -115,7 +119,123 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
       ..index = filtered.indexOf(_selected);
   }
 
+  /// Opens the command palette with the commands available where the
+  /// keyboard focus is, so page-level commands are listed too.
+  void _openPalette() => showOito2CommandPalette(
+    FocusManager.instance.primaryFocus?.context ?? context,
+  );
+
+  void _cycleThemeMode() => widget.controller.update(
+    (o) => o.copyWith(
+      themeMode: switch (o.themeMode) {
+        ThemeMode.system => ThemeMode.light,
+        ThemeMode.light => ThemeMode.dark,
+        ThemeMode.dark => ThemeMode.system,
+      },
+    ),
+  );
+
+  /// The app-wide commands: palette, search, settings, appearance and one
+  /// "Go to" command per page.
+  List<Oito2Command> _commands() {
+    final options = widget.controller.value;
+    return [
+      Oito2Command(
+        id: 'app.palette',
+        label: 'Show all commands',
+        icon: LucideIcons.command,
+        shortcut: Oito2Shortcut.parse('Mod+K'),
+        onInvoke: _openPalette,
+      ),
+      Oito2Command(
+        id: 'app.search',
+        label: 'Search pages',
+        icon: LucideIcons.search,
+        shortcut: Oito2Shortcut.parse('Mod+F'),
+        enabled: !options.compactMode,
+        onInvoke: _searchFocus.requestFocus,
+      ),
+      Oito2Command(
+        id: 'app.settings',
+        label: 'Open settings',
+        icon: LucideIcons.settings,
+        keywords: const ['preferences'],
+        shortcut: Oito2Shortcut.parse('Mod+,'),
+        onInvoke: _openSettings,
+      ),
+      Oito2Command(
+        id: 'app.theme',
+        label: 'Switch light, dark or system style',
+        group: 'Appearance',
+        icon: LucideIcons.sun_moon,
+        shortcut: Oito2Shortcut.parse('Mod+Shift+L'),
+        enabled: options.preset == null,
+        onInvoke: _cycleThemeMode,
+      ),
+      Oito2Command(
+        id: 'app.contrast',
+        label: 'Toggle high contrast',
+        group: 'Appearance',
+        icon: LucideIcons.contrast,
+        enabled: options.preset == null,
+        onInvoke: () => widget.controller.update(
+          (o) => o.copyWith(highContrast: !o.highContrast),
+        ),
+      ),
+      Oito2Command(
+        id: 'app.compact',
+        label: 'Toggle compact mode',
+        group: 'Appearance',
+        icon: LucideIcons.panel_left,
+        onInvoke: () => widget.controller.update(
+          (o) => o.copyWith(compactMode: !o.compactMode),
+        ),
+      ),
+      Oito2Command(
+        id: 'app.source',
+        label: 'View the source of this page',
+        icon: LucideIcons.file_code,
+        onInvoke: () => showDialog<void>(
+          context: context,
+          builder: (context) => _SourceDialog(page: _selected),
+        ),
+      ),
+      Oito2Command(
+        id: 'app.home',
+        label: 'Go to the first page',
+        group: 'Pages',
+        icon: LucideIcons.house,
+        shortcut: Oito2Shortcut.parse('G H'),
+        onInvoke: () => _goTo(showcasePages.first),
+      ),
+      for (final page in showcasePages)
+        Oito2Command(
+          id: 'page.${page.slug}',
+          label: 'Go to ${page.title}',
+          group: 'Pages',
+          icon: page.icon,
+          keywords: [page.slug],
+          onInvoke: () => _goTo(page),
+        ),
+    ];
+  }
+
+  /// Shows [page], clearing the search so it is in the list.
+  void _goTo(ShowcasePage page) {
+    if (_query.isNotEmpty) {
+      _searchController.clear();
+      _search('');
+    }
+    _select(page);
+    _listController.index = showcasePages.indexOf(page);
+  }
+
   List<Widget> _actions({bool source = false}) => [
+    IconButton(
+      tooltip: 'Commands',
+      icon: const Icon(LucideIcons.command),
+      onPressed: _openPalette,
+    ),
     if (source)
       IconButton(
         tooltip: 'View source',
@@ -142,10 +262,21 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
   @override
   Widget build(BuildContext context) {
     final platform = Oito2SystemScope.of(context).platform;
-    if (widget.controller.value.compactMode) return _compact(platform);
-    return LayoutBuilder(
-      builder: (context, constraints) =>
-          _masterDetail(platform, wide: constraints.maxWidth >= _breakpoint),
+    return Oito2Commands(
+      commands: _commands(),
+      // Gives the shell the initial focus, so the shortcuts work before
+      // the user clicks anything.
+      child: Focus(
+        autofocus: true,
+        child: widget.controller.value.compactMode
+            ? _compact(platform)
+            : LayoutBuilder(
+                builder: (context, constraints) => _masterDetail(
+                  platform,
+                  wide: constraints.maxWidth >= _breakpoint,
+                ),
+              ),
+      ),
     );
   }
 
@@ -184,7 +315,11 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
                     Oito2Spacing.sm,
                     0,
                   ),
-                  child: Oito2SearchField(onChanged: _search),
+                  child: Oito2SearchField(
+                    focusNode: _searchFocus,
+                    controller: _searchController,
+                    onChanged: _search,
+                  ),
                 ),
               ),
             ],
@@ -204,7 +339,12 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
           final page = filtered[index];
           final tile = Oito2MasterTile(
             leading: Icon(page.icon),
-            title: Text(page.title, overflow: TextOverflow.ellipsis),
+            title: Oito2HighlightedText(
+              page.title,
+              query: _query,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           );
           if (index > 0 && filtered[index - 1].group == page.group) {
             return tile;
