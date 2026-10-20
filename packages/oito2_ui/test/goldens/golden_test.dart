@@ -735,6 +735,128 @@ class _TourSceneState extends State<_TourScene> {
   }
 }
 
+/// Number, password, code, editable label, tags, rating and angle inputs.
+class _EntriesScene extends StatelessWidget {
+  const _EntriesScene();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(Oito2Spacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: Oito2Spacing.md,
+          children: [
+            Row(
+              spacing: Oito2Spacing.md,
+              children: [
+                SizedBox(
+                  width: 180,
+                  child: Oito2NumberEntry(
+                    value: 12,
+                    onChanged: (_) {},
+                    labelText: 'Copies',
+                  ),
+                ),
+                const SizedBox(
+                  width: 220,
+                  child: Oito2PasswordField(labelText: 'Password'),
+                ),
+              ],
+            ),
+            Row(
+              spacing: Oito2Spacing.lg,
+              children: [
+                Oito2PinEntry(
+                  length: 4,
+                  controller: TextEditingController(text: '42'),
+                ),
+                Oito2EditableLabel(text: 'Project notes', onSubmitted: (_) {}),
+              ],
+            ),
+            SizedBox(
+              width: 360,
+              child: Oito2TagsField(
+                tags: const ['flutter', 'dart', 'linux'],
+                onChanged: (_) {},
+                hintText: 'Add tag',
+              ),
+            ),
+            Row(
+              spacing: Oito2Spacing.xl,
+              children: [
+                Oito2Rating(value: 3.5, allowHalf: true, onChanged: (_) {}),
+                Oito2AngleSlider(value: 135, onChanged: (_) {}, size: 72),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A list box, a color picker and a calendar range with week numbers.
+class _PickersScene extends StatelessWidget {
+  const _PickersScene();
+
+  @override
+  Widget build(BuildContext context) {
+    final fruits = Oito2ListCollection(const [
+      'Apple',
+      'Banana',
+      'Cherry',
+      'Date',
+    ], isDisabled: (f) => f == 'Cherry');
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(Oito2Spacing.lg),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: Oito2Spacing.lg,
+          children: [
+            SizedBox(
+              width: 140,
+              child: Oito2ListBox(
+                collection: fruits,
+                controller: Oito2SelectionController(
+                  collection: fruits,
+                  mode: Oito2SelectionMode.multiple,
+                  initialValues: const ['Apple', 'Date'],
+                ),
+              ),
+            ),
+            Oito2ColorPicker(
+              value: const Color(0xCC3584E4),
+              onChanged: (_) {},
+              width: 220,
+              swatches: const [
+                Color(0xFFE01B24),
+                Color(0xFFFF7800),
+                Color(0xFF2EC27E),
+                Color(0xFF3584E4),
+              ],
+            ),
+            Oito2Calendar(
+              firstDate: DateTime(2026),
+              lastDate: DateTime(2026, 12, 31),
+              initialMonth: DateTime(2026, 10),
+              currentDate: DateTime(2026, 10, 20),
+              showWeekNumbers: true,
+              selectedRange: DateTimeRange(
+                start: DateTime(2026, 10, 6),
+                end: DateTime(2026, 10, 14),
+              ),
+              onRangeSelected: (_) {},
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// A carousel and the page indicator layouts.
 class _CarouselScene extends StatelessWidget {
   const _CarouselScene();
@@ -915,6 +1037,28 @@ void main() {
         colors: goldenSchemes[name]!,
         size: const Size(520, 300),
         wholeApp: true,
+      );
+    });
+  }
+
+  for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
+    testWidgets('entries in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _EntriesScene(),
+        name: 'entries_wave9_$name',
+        colors: colors,
+        size: const Size(520, 340),
+      );
+    });
+
+    testWidgets('pickers in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _PickersScene(),
+        name: 'pickers_$name',
+        colors: colors,
+        size: const Size(860, 460),
       );
     });
   }

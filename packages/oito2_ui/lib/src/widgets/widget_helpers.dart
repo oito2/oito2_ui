@@ -104,3 +104,27 @@ class FieldIconButton extends StatelessWidget {
     );
   }
 }
+
+/// The height of buttons and single-line fields in the closest theme: 34
+/// pixels on pointer platforms and 40 on touch ones, read from the width
+/// of the input decoration icon boxes, which match the field height.
+double controlHeightOf(BuildContext context) =>
+    Theme.of(context).inputDecorationTheme.suffixIconConstraints?.minWidth ??
+    Oito2Sizes.buttonHeight;
+
+/// An input decoration with no fill, border, padding or minimum size,
+/// overriding the theme, for a text field placed inside another
+/// decorated box.
+InputDecoration bareInputDecoration({String? hintText}) => InputDecoration(
+  hintText: hintText,
+  isCollapsed: true,
+  filled: false,
+  border: InputBorder.none,
+  enabledBorder: InputBorder.none,
+  focusedBorder: InputBorder.none,
+  disabledBorder: InputBorder.none,
+  errorBorder: InputBorder.none,
+  focusedErrorBorder: InputBorder.none,
+  contentPadding: EdgeInsets.zero,
+  constraints: const BoxConstraints(),
+);

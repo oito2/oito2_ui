@@ -16,10 +16,12 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
+import 'pages/angle_slider_page.dart';
 import 'pages/animated_icon_page.dart';
 import 'pages/autocomplete_page.dart';
 import 'pages/banner_page.dart';
 import 'pages/border_container_page.dart';
+import 'pages/calendar_page.dart';
 import 'pages/carousel_page.dart';
 import 'pages/check_button_page.dart';
 import 'pages/checkbox_page.dart';
@@ -27,6 +29,7 @@ import 'pages/choice_chip_bar_page.dart';
 import 'pages/code_block_page.dart';
 import 'pages/collections_page.dart';
 import 'pages/color_disk_page.dart';
+import 'pages/color_picker_page.dart';
 import 'pages/colors_page.dart';
 import 'pages/commands_page.dart';
 import 'pages/context_menu_page.dart';
@@ -34,6 +37,7 @@ import 'pages/date_time_entry_page.dart';
 import 'pages/diagonal_clip_page.dart';
 import 'pages/dialog_title_bar_page.dart';
 import 'pages/draggable_page.dart';
+import 'pages/editable_label_page.dart';
 import 'pages/expandable_page.dart';
 import 'pages/expansion_panel_page.dart';
 import 'pages/focus_border_page.dart';
@@ -44,20 +48,25 @@ import 'pages/highlighted_text_page.dart';
 import 'pages/hover_card_page.dart';
 import 'pages/icon_button_page.dart';
 import 'pages/info_page.dart';
+import 'pages/list_box_page.dart';
 import 'pages/list_tile_page.dart';
 import 'pages/master_detail_page.dart';
 import 'pages/material_page.dart';
 import 'pages/navigation_page.dart';
 import 'pages/navigation_rail_page.dart';
+import 'pages/number_entry_page.dart';
 import 'pages/option_button_page.dart';
 import 'pages/page_indicator_page.dart';
 import 'pages/paned_view_page.dart';
+import 'pages/password_field_page.dart';
+import 'pages/pin_entry_page.dart';
 import 'pages/placeholder_icon_page.dart';
 import 'pages/popover_page.dart';
 import 'pages/popup_menu_page.dart';
 import 'pages/progress_page.dart';
 import 'pages/radio_button_page.dart';
 import 'pages/radio_page.dart';
+import 'pages/rating_page.dart';
 import 'pages/search_field_page.dart';
 import 'pages/section_page.dart';
 import 'pages/segmented_entry_page.dart';
@@ -68,6 +77,7 @@ import 'pages/swap_page.dart';
 import 'pages/switch_button_page.dart';
 import 'pages/switch_page.dart';
 import 'pages/tab_bar_page.dart';
+import 'pages/tags_field_page.dart';
 import 'pages/tile_page.dart';
 import 'pages/title_bar_page.dart';
 import 'pages/toast_page.dart';
@@ -141,6 +151,12 @@ Widget Function(BuildContext, Oito2ColorTheme) _page(Widget page) =>
 /// utilities and the theme pages.
 final List<ShowcasePage> showcasePages = [
   ShowcasePage(
+    title: 'Oito2AngleSlider',
+    icon: LucideIcons.compass,
+    source: 'angle_slider_page.dart',
+    builder: _page(const AngleSliderPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2AnimatedIcon',
     icon: LucideIcons.sparkles,
     source: 'animated_icon_page.dart',
@@ -163,6 +179,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.square_dashed,
     source: 'border_container_page.dart',
     builder: _page(const BorderContainerPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Calendar',
+    icon: LucideIcons.calendar_days,
+    source: 'calendar_page.dart',
+    builder: _page(const CalendarPage()),
   ),
   ShowcasePage(
     title: 'Oito2Carousel',
@@ -207,6 +229,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const ColorDiskPage()),
   ),
   ShowcasePage(
+    title: 'Oito2ColorPicker',
+    icon: LucideIcons.pipette,
+    source: 'color_picker_page.dart',
+    builder: _page(const ColorPickerPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2ContextMenuRegion',
     icon: LucideIcons.mouse_pointer_click,
     source: 'context_menu_page.dart',
@@ -235,6 +263,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.move,
     source: 'draggable_page.dart',
     builder: _page(const DraggablePage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2EditableLabel',
+    icon: LucideIcons.pencil_line,
+    source: 'editable_label_page.dart',
+    builder: _page(const EditableLabelPage()),
   ),
   ShowcasePage(
     title: 'Oito2Expandable',
@@ -279,6 +313,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const InfoPage()),
   ),
   ShowcasePage(
+    title: 'Oito2ListBox',
+    icon: LucideIcons.list,
+    source: 'list_box_page.dart',
+    builder: _page(const ListBoxPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2ListTile',
     icon: LucideIcons.rows_3,
     source: 'list_tile_page.dart',
@@ -303,6 +343,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const NavigationRailPage()),
   ),
   ShowcasePage(
+    title: 'Oito2NumberEntry',
+    icon: LucideIcons.hash,
+    source: 'number_entry_page.dart',
+    builder: _page(const NumberEntryPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2OptionButton',
     icon: LucideIcons.circle_plus,
     source: 'option_button_page.dart',
@@ -319,6 +365,18 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.square_split_horizontal,
     source: 'paned_view_page.dart',
     builder: _page(const PanedViewPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2PasswordField',
+    icon: LucideIcons.key_round,
+    source: 'password_field_page.dart',
+    builder: _page(const PasswordFieldPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2PinEntry',
+    icon: LucideIcons.rectangle_ellipsis,
+    source: 'pin_entry_page.dart',
+    builder: _page(const PinEntryPage()),
   ),
   ShowcasePage(
     title: 'Oito2PlaceholderIcon',
@@ -355,6 +413,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.circle_dot,
     source: 'radio_button_page.dart',
     builder: _page(const RadioButtonPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Rating',
+    icon: LucideIcons.star,
+    source: 'rating_page.dart',
+    builder: _page(const RatingPage()),
   ),
   ShowcasePage(
     title: 'Oito2ScrollViewUndershoot',
@@ -421,6 +485,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.panels_top_left,
     source: 'tab_bar_page.dart',
     builder: _page(const TabBarPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2TagsField',
+    icon: LucideIcons.tags,
+    source: 'tags_field_page.dart',
+    builder: _page(const TagsFieldPage()),
   ),
   ShowcasePage(
     title: 'Oito2Tile',

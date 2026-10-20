@@ -207,10 +207,27 @@ void main() {
       await pumpOito2(tester, entry(values));
       await tester.tap(find.byIcon(LucideIcons.calendar));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('OK'));
+      expect(find.byType(Oito2Calendar), findsOneWidget);
+      await tester.tap(find.text('15'));
       await tester.pumpAndSettle();
-      expect(values.single, isNotNull);
-      expect(find.byType(TextField), findsOneWidget);
+      expect(values.single?.day, 15);
+      expect(find.byType(Oito2Calendar), findsNothing);
+    });
+
+    testWidgets('the calendar opens focused and picks with Enter', (
+      tester,
+    ) async {
+      final values = <DateTime?>[];
+      await pumpOito2(tester, entry(values));
+      await tester.tap(find.byIcon(LucideIcons.calendar));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(
+        values.single,
+        DateUtils.addDaysToDate(DateUtils.dateOnly(DateTime.now()), 1),
+      );
     });
   });
 

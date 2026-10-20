@@ -19,6 +19,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
+import 'calendar.dart';
+import 'popover.dart';
 import 'widget_helpers.dart';
 
 /// Shared behaviour of the date and time entries: a text field whose text
@@ -185,44 +187,55 @@ class _Oito2DateEntryState extends _ParsedEntryState<Oito2DateEntry, DateTime> {
     return (date, null);
   }
 
-  Future<void> _pick() async {
-    final (current, _) = parse(controller.text);
-    var initial = current ?? DateUtils.dateOnly(DateTime.now());
-    if (initial.isBefore(widget.firstDate)) initial = widget.firstDate;
-    if (initial.isAfter(widget.lastDate)) initial = widget.lastDate;
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: widget.firstDate,
-      lastDate: widget.lastDate,
-      selectableDayPredicate: widget.selectableDayPredicate,
-    );
-    if (picked != null && mounted) setValue(picked);
+  final _popover = Oito2PopoverController();
+
+  @override
+  void dispose() {
+    _popover.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      focusNode: focusNode,
-      autofocus: widget.autofocus,
-      keyboardType: TextInputType.datetime,
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[0-9./\- ]')),
-      ],
-      onChanged: onTextChanged,
-      onSubmitted: onSubmitted,
-      decoration: InputDecoration(
-        labelText: widget.labelText ?? _l10n.dateInputLabel,
-        hintText: _l10n.dateHelpText,
-        errorText: visibleError,
-        suffixIcon: widget.showPickerButton
-            ? FieldIconButton(
-                tooltip: _l10n.datePickerHelpText,
-                onPressed: _pick,
-                icon: LucideIcons.calendar,
-              )
-            : null,
+    final (current, _) = parse(controller.text);
+    return Oito2Popover(
+      controller: _popover,
+      focusOnOpen: false,
+      padding: const EdgeInsets.all(Oito2Spacing.sm),
+      semanticLabel: _l10n.datePickerHelpText,
+      builder: (context, popover) => TextField(
+        controller: controller,
+        focusNode: focusNode,
+        autofocus: widget.autofocus,
+        keyboardType: TextInputType.datetime,
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9./\- ]')),
+        ],
+        onChanged: onTextChanged,
+        onSubmitted: onSubmitted,
+        decoration: InputDecoration(
+          labelText: widget.labelText ?? _l10n.dateInputLabel,
+          hintText: _l10n.dateHelpText,
+          errorText: visibleError,
+          suffixIcon: widget.showPickerButton
+              ? FieldIconButton(
+                  tooltip: _l10n.datePickerHelpText,
+                  onPressed: popover.toggle,
+                  icon: LucideIcons.calendar,
+                )
+              : null,
+        ),
+      ),
+      popoverBuilder: (context, popover) => Oito2Calendar(
+        firstDate: widget.firstDate,
+        lastDate: widget.lastDate,
+        selectedDate: current,
+        selectableDayPredicate: widget.selectableDayPredicate,
+        autofocus: true,
+        onDateSelected: (day) {
+          setValue(day);
+          popover.close();
+        },
       ),
     );
   }

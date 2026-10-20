@@ -147,6 +147,63 @@ abstract class Oito2Localizations {
 
   /// The position of a tour step, such as "Step 2 of 5".
   String tourProgress(int step, int total);
+
+  /// The button that shows a hidden password.
+  String get showPassword;
+
+  /// The button that hides a shown password.
+  String get hidePassword;
+
+  /// Warns that Caps Lock is on while typing a password.
+  String get capsLockOn;
+
+  /// The button that raises a number.
+  String get increase;
+
+  /// The button that lowers a number.
+  String get decrease;
+
+  /// The accessibility label of a code entry with [length] characters.
+  String codeEntry(int length);
+
+  /// The accessibility value of a rating, such as "3.5 of 5 stars".
+  String ratingValue(String value, int max);
+
+  /// The button that removes [label] from a list, such as a tag.
+  String removeItem(String label);
+
+  /// The accessibility hint of a label that can be edited.
+  String get editText;
+
+  /// The hue of a color.
+  String get hue;
+
+  /// The saturation of a color.
+  String get saturation;
+
+  /// The lightness of a color.
+  String get lightness;
+
+  /// The opacity of a color.
+  String get opacity;
+
+  /// The red channel of a color.
+  String get red;
+
+  /// The green channel of a color.
+  String get green;
+
+  /// The blue channel of a color.
+  String get blue;
+
+  /// The saturation and brightness area of a color picker.
+  String get saturationAndBrightness;
+
+  /// The heading of the week number column of a calendar.
+  String get weekNumberHeading;
+
+  /// The accessibility label of a week number.
+  String weekNumber(int week);
 }
 
 /// The units of a relative time, from [second] to [year].
@@ -269,6 +326,62 @@ class Oito2LocalizationsEn extends Oito2Localizations {
 
   @override
   String tourProgress(int step, int total) => 'Step $step of $total';
+  @override
+  String get showPassword => 'Show password';
+
+  @override
+  String get hidePassword => 'Hide password';
+
+  @override
+  String get capsLockOn => 'Caps Lock is on';
+
+  @override
+  String get increase => 'Increase';
+
+  @override
+  String get decrease => 'Decrease';
+
+  @override
+  String codeEntry(int length) => 'Code of $length characters';
+
+  @override
+  String ratingValue(String value, int max) => '$value of $max stars';
+
+  @override
+  String removeItem(String label) => 'Remove $label';
+
+  @override
+  String get editText => 'Press Enter to edit';
+
+  @override
+  String get hue => 'Hue';
+
+  @override
+  String get saturation => 'Saturation';
+
+  @override
+  String get lightness => 'Lightness';
+
+  @override
+  String get opacity => 'Opacity';
+
+  @override
+  String get red => 'Red';
+
+  @override
+  String get green => 'Green';
+
+  @override
+  String get blue => 'Blue';
+
+  @override
+  String get saturationAndBrightness => 'Saturation and brightness';
+
+  @override
+  String get weekNumberHeading => 'Wk';
+
+  @override
+  String weekNumber(int week) => 'Week $week';
 }
 
 /// The Brazilian Portuguese [Oito2Localizations].
@@ -377,6 +490,63 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String tourProgress(int step, int total) => 'Passo $step de $total';
+
+  @override
+  String get showPassword => 'Mostrar senha';
+
+  @override
+  String get hidePassword => 'Ocultar senha';
+
+  @override
+  String get capsLockOn => 'Caps Lock está ativado';
+
+  @override
+  String get increase => 'Aumentar';
+
+  @override
+  String get decrease => 'Diminuir';
+
+  @override
+  String codeEntry(int length) => 'Código de $length caracteres';
+
+  @override
+  String ratingValue(String value, int max) => '$value de $max estrelas';
+
+  @override
+  String removeItem(String label) => 'Remover $label';
+
+  @override
+  String get editText => 'Pressione Enter para editar';
+
+  @override
+  String get hue => 'Matiz';
+
+  @override
+  String get saturation => 'Saturação';
+
+  @override
+  String get lightness => 'Luminosidade';
+
+  @override
+  String get opacity => 'Opacidade';
+
+  @override
+  String get red => 'Vermelho';
+
+  @override
+  String get green => 'Verde';
+
+  @override
+  String get blue => 'Azul';
+
+  @override
+  String get saturationAndBrightness => 'Saturação e brilho';
+
+  @override
+  String get weekNumberHeading => 'Sem';
+
+  @override
+  String weekNumber(int week) => 'Semana $week';
 }
 
 class _Oito2LocalizationsDelegate

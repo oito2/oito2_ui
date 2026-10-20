@@ -81,9 +81,21 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2ContextMenuRegion`: right-click, long-press, Shift+F10 and menu-key menus on any widget, with nested `MenuAnchor` items.
 - `Oito2Tour`, `Oito2TourController` and `Oito2TourStep`: guided steps with a spotlight, placement, progress, keyboard navigation, skip, and steps that wait for a tap on their target.
 - `Oito2Localizations` strings for closing, dismissing, the notification area, the sheet handle and the tour buttons.
+- `Oito2NumberEntry`: a spin field with steppers, limits, decimals in the locale format, keyboard steps, the mouse wheel and scrubbing.
+- `Oito2PasswordField`: a visibility toggle, a Caps Lock warning and password autofill hints.
+- `Oito2PinEntry`: one-character cells over a single field, with paste, one-time code autofill, masking and completion.
+- `Oito2EditableLabel`: a label renamed in place by double click, Enter or F2.
+- `Oito2TagsField`: tags as chips with delimiters, paste splitting, a limit, validation, keyboard navigation between tags and optional suggestions.
+- `Oito2Rating`: stars with half values, hover preview, keyboard and slider semantics.
+- `Oito2AngleSlider`: a dial for an angle with steps, markers, pointer and keyboard input.
+- `Oito2ListBox`: a selectable list over `Oito2ListCollection` and `Oito2SelectionController`, with groups, typeahead and single or multiple selection.
+- `Oito2ColorPicker`, `Oito2ColorPickerButton` and `Oito2ColorFormat`: saturation and brightness area, hue and opacity sliders, hex/RGB/HSL fields and swatches, inline or in a popover; `oito2ColorToHex` and `oito2ColorFromHex`.
+- `Oito2Calendar` and `Oito2DatePicker`: a month grid with single or range selection, ISO week numbers (`oito2IsoWeekNumber`) and keyboard grid navigation, and a field that opens it in a popover.
+- `Oito2Localizations` strings for the password, number, code, rating, tag, color and week labels.
 
 ### Changed
 
+- `Oito2DateEntry` opens an `Oito2Calendar` in a popover instead of the Material date picker dialog.
 - `Oito2Contrast.foregroundFor` returns black or white by the higher contrast ratio instead of a 0.5 luminance threshold.
 - Single-line text fields, with or without prefix and suffix icons, `Oito2SearchField`, the date and time entries, segmented buttons and chips are as tall as the buttons: 34 pixels on pointer platforms and 40 on touch platforms. Helper and error text sit below that height. `DropdownMenu` keeps its own height, because its trailing button can't be sized from the theme.
 - `Oito2SearchTitleField` keeps one size in both states: a box `fieldWidth` wide with the toggle button at its start. The title follows the button; the open search field fills the box and uses the button as its search icon. Escape on an empty field returns focus to the toggle button.

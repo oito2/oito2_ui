@@ -20,7 +20,7 @@ import '../collections/list_collection.dart';
 import '../collections/text_folding.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
-import 'highlighted_text.dart';
+import 'options_view.dart';
 
 /// A text field that suggests items of a [collection] as the user types,
 /// as a combobox.
@@ -160,7 +160,7 @@ class _Oito2AutocompleteState<T extends Object>
                   ),
                 ),
             optionsViewBuilder: (context, onSelected, options) =>
-                _OptionsView<T>(
+                AutocompleteOptionsView<T>(
                   options: options.toList(),
                   collection: widget.collection,
                   query: text,
@@ -179,87 +179,6 @@ class _Oito2AutocompleteState<T extends Object>
             child: const SizedBox.shrink(),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _OptionsView<T extends Object> extends StatelessWidget {
-  const _OptionsView({
-    required this.options,
-    required this.collection,
-    required this.query,
-    required this.onSelected,
-    required this.maxHeight,
-    required this.width,
-  });
-
-  final List<T> options;
-  final Oito2ListCollection<T> collection;
-  final String query;
-  final AutocompleteOnSelected<T> onSelected;
-  final double maxHeight;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final highlighted = AutocompleteHighlightedOption.of(context);
-    return Align(
-      alignment: AlignmentDirectional.topStart,
-      child: Padding(
-        padding: const EdgeInsets.only(top: Oito2Spacing.xs),
-        child: Material(
-          color: scheme.surfaceContainer,
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: Oito2Radius.mediumAll,
-            side: BorderSide(color: scheme.outlineVariant),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxHeight, maxWidth: width),
-            child: ListView.builder(
-              shrinkWrap: true,
-              padding: const EdgeInsets.symmetric(vertical: Oito2Spacing.xs),
-              itemCount: options.length,
-              itemBuilder: (context, index) {
-                final option = options[index];
-                final selected = index == highlighted;
-                if (selected) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (context.mounted) {
-                      Scrollable.ensureVisible(context, alignment: 0.5);
-                    }
-                  });
-                }
-                return Semantics(
-                  selected: selected,
-                  button: true,
-                  child: InkWell(
-                    onTap: () => onSelected(option),
-                    child: Container(
-                      color: selected ? scheme.secondaryContainer : null,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: Oito2Spacing.md,
-                        vertical: Oito2Spacing.sm,
-                      ),
-                      child: Oito2HighlightedText(
-                        collection.labelOf(option),
-                        query: query,
-                        style: TextStyle(
-                          color: selected
-                              ? scheme.onSecondaryContainer
-                              : scheme.onSurface,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
       ),
     );
   }
