@@ -46,7 +46,7 @@ class _TilePageState extends State<TilePage> {
                     leading: const Icon(LucideIcons.wifi),
                     title: const Text('Wi-Fi'),
                     subtitle: const Text('Home network'),
-                    trailing: Switch(
+                    trailing: Oito2Switch(
                       value: _wifi,
                       onChanged: (v) => setState(() => _wifi = v),
                     ),
@@ -55,7 +55,7 @@ class _TilePageState extends State<TilePage> {
                     leading: const Icon(LucideIcons.bluetooth),
                     title: const Text('Bluetooth'),
                     subtitle: const Text('No devices'),
-                    trailing: Switch(
+                    trailing: Oito2Switch(
                       value: _bluetooth,
                       onChanged: (v) => setState(() => _bluetooth = v),
                     ),

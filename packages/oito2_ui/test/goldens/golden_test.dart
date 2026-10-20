@@ -208,6 +208,94 @@ class _TitleBarsScene extends StatelessWidget {
   }
 }
 
+/// Every painted toggle state: check boxes, radios and switches, the
+/// toggle buttons and the list tiles, with one control focused.
+class _TogglesScene extends StatelessWidget {
+  const _TogglesScene();
+
+  @override
+  Widget build(BuildContext context) {
+    void noop(Object? _) {}
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(Oito2Spacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: Oito2Spacing.sm,
+          children: [
+            Row(
+              children: [
+                Oito2Checkbox(value: false, onChanged: noop),
+                Oito2Checkbox(value: true, onChanged: noop),
+                Oito2Checkbox(value: null, tristate: true, onChanged: noop),
+                const Oito2Checkbox(value: true, onChanged: null),
+                Oito2Checkbox(value: true, autofocus: true, onChanged: noop),
+                const SizedBox(width: Oito2Spacing.lg),
+                Oito2Radio<int>(value: 0, groupValue: 1, onChanged: noop),
+                Oito2Radio<int>(value: 1, groupValue: 1, onChanged: noop),
+                const Oito2Radio<int>(value: 1, groupValue: 1, onChanged: null),
+              ],
+            ),
+            Row(
+              children: [
+                Oito2Switch(value: false, onChanged: noop),
+                Oito2Switch(value: true, onChanged: noop),
+                Oito2Switch(value: false, onOffShapes: true, onChanged: noop),
+                Oito2Switch(value: true, onOffShapes: true, onChanged: noop),
+                const Oito2Switch(value: true, onChanged: null),
+              ],
+            ),
+            Row(
+              children: [
+                Oito2CheckButton(
+                  value: true,
+                  onChanged: noop,
+                  title: const Text('Check button'),
+                  subtitle: const Text('With a subtitle'),
+                ),
+                Oito2RadioButton<int>(
+                  value: 1,
+                  groupValue: 1,
+                  onChanged: noop,
+                  title: const Text('Radio button'),
+                ),
+                Oito2SwitchButton(
+                  value: true,
+                  onChanged: noop,
+                  title: const Text('Switch button'),
+                ),
+              ],
+            ),
+            Oito2BorderContainer(
+              child: Column(
+                children: [
+                  Oito2CheckboxListTile(
+                    value: true,
+                    onChanged: noop,
+                    title: const Text('Check box tile'),
+                  ),
+                  Oito2RadioListTile<int>(
+                    value: 1,
+                    groupValue: 1,
+                    onChanged: noop,
+                    title: const Text('Radio tile'),
+                  ),
+                  Oito2SwitchListTile(
+                    value: false,
+                    onChanged: noop,
+                    title: const Text('Switch tile'),
+                    subtitle: const Text('Off'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 void main() {
   for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
     testWidgets('components in $name', (tester) async {
@@ -226,6 +314,22 @@ void main() {
         name: 'chrome_$name',
         colors: colors,
         size: const Size(720, 360),
+      );
+    });
+  }
+
+  for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
+    testWidgets('toggles in $name', (tester) async {
+      final strategy = FocusManager.instance.highlightStrategy;
+      FocusManager.instance.highlightStrategy =
+          FocusHighlightStrategy.alwaysTraditional;
+      addTearDown(() => FocusManager.instance.highlightStrategy = strategy);
+      await expectGoldenScene(
+        tester,
+        const _TogglesScene(),
+        name: 'toggles_$name',
+        colors: colors,
+        size: const Size(640, 360),
       );
     });
   }

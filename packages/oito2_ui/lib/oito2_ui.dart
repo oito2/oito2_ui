@@ -51,6 +51,7 @@ export 'src/widgets/page_controller.dart';
 export 'src/widgets/paned_view.dart';
 export 'src/widgets/search.dart';
 export 'src/widgets/selectable.dart';
+export 'src/widgets/toggles.dart';
 export 'src/widgets/utilities.dart';
 export 'src/window/title_bar.dart';
 export 'src/window/title_bar_gesture_detector.dart';

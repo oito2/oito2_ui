@@ -508,7 +508,7 @@ class _SettingsDialog extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: Oito2Spacing.sm,
                   children: [
-                    SwitchListTile(
+                    Oito2SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Compact mode'),
                       subtitle: const Text('Pages in a navigation rail'),
@@ -516,7 +516,7 @@ class _SettingsDialog extends StatelessWidget {
                       onChanged: (v) =>
                           controller.update((o) => o.copyWith(compactMode: v)),
                     ),
-                    SwitchListTile(
+                    Oito2SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Right to left'),
                       value: options.rtl,

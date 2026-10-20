@@ -130,7 +130,7 @@ void main() {
       ),
     );
     final label = tester.getCenter(find.text('Dark style'));
-    final control = tester.getCenter(find.byType(Switch));
+    final control = tester.getCenter(find.byType(Oito2Switch));
     expect(label.dx, lessThan(control.dx));
     await tester.tap(find.text('Dark style'));
     await tester.pump();

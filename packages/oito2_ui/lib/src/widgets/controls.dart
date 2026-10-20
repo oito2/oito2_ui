@@ -19,84 +19,17 @@ import 'package:material_ui/material_ui.dart';
 import '../l10n/oito2_localizations.dart';
 import '../foundation/contrast.dart';
 import '../tokens/geometry.dart';
+import 'toggles.dart';
 import 'widget_helpers.dart';
 
-/// A compact row with a toggle [control] and a clickable [title] and
-/// [subtitle]: clicking anywhere on the row activates the control, and the
-/// row reads as one element to assistive technologies.
-class _ToggleRow extends StatelessWidget {
-  const _ToggleRow({
-    required this.control,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    required this.padding,
-    this.controlAtEnd = false,
-  });
-
-  final Widget control;
-  final Widget title;
-  final Widget? subtitle;
-  final VoidCallback? onTap;
-  final EdgeInsetsGeometry padding;
-  final bool controlAtEnd;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final enabled = onTap != null;
-    final foreground = enabled
-        ? theme.colorScheme.onSurface
-        : theme.colorScheme.onSurface.withValues(alpha: 0.38);
-    final subtitle = this.subtitle;
-    final text = Flexible(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          DefaultTextStyle.merge(
-            style: theme.textTheme.bodyMedium?.copyWith(color: foreground),
-            child: title,
-          ),
-          if (subtitle != null)
-            DefaultTextStyle.merge(
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: enabled
-                    ? theme.colorScheme.onSurfaceVariant
-                    : foreground,
-              ),
-              child: subtitle,
-            ),
-        ],
-      ),
-    );
-    return MergeSemantics(
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          canRequestFocus: false,
-          borderRadius: Oito2Radius.smallAll,
-          child: Padding(
-            padding: padding,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              spacing: Oito2Spacing.sm,
-              children: controlAtEnd ? [text, control] : [control, text],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
+/// The default padding of the check, radio and switch buttons.
 const _rowPadding = EdgeInsets.symmetric(
   horizontal: Oito2Spacing.xs,
   vertical: Oito2Spacing.xxs,
 );
 
-/// A desktop check box with a clickable label.
+/// A desktop check box with a clickable label: an [Oito2Checkbox] in an
+/// [Oito2ToggleButton].
 class Oito2CheckButton extends StatelessWidget {
   /// Creates a check button.
   const Oito2CheckButton({
@@ -136,17 +69,22 @@ class Oito2CheckButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onChanged = this.onChanged;
-    return _ToggleRow(
-      control: Checkbox(value: value, tristate: tristate, onChanged: onChanged),
+    return Oito2ToggleButton(
+      control: Oito2Checkbox(
+        value: value,
+        tristate: tristate,
+        onChanged: onChanged,
+      ),
       title: title,
       subtitle: subtitle,
       padding: padding,
-      onTap: onChanged == null ? null : () => onChanged(_next),
+      onToggled: onChanged == null ? null : () => onChanged(_next),
     );
   }
 }
 
-/// A desktop radio button with a clickable label.
+/// A desktop radio button with a clickable label: an [Oito2Radio] in an
+/// [Oito2ToggleButton].
 ///
 /// It is selected when [value] equals [groupValue].
 class Oito2RadioButton<T> extends StatelessWidget {
@@ -182,21 +120,22 @@ class Oito2RadioButton<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onChanged = this.onChanged;
-    return _ToggleRow(
-      control: RadioGroup<T>(
+    return Oito2ToggleButton(
+      control: Oito2Radio<T>(
+        value: value,
         groupValue: groupValue,
-        onChanged: onChanged ?? (_) {},
-        child: Radio<T>(value: value, enabled: onChanged != null),
+        onChanged: onChanged,
       ),
       title: title,
       subtitle: subtitle,
       padding: padding,
-      onTap: onChanged == null ? null : () => onChanged(value),
+      onToggled: onChanged == null ? null : () => onChanged(value),
     );
   }
 }
 
-/// A desktop switch with a clickable label placed before it.
+/// A desktop switch with a clickable label placed before it: an
+/// [Oito2Switch] in an [Oito2ToggleButton].
 class Oito2SwitchButton extends StatelessWidget {
   /// Creates a switch button.
   const Oito2SwitchButton({
@@ -226,13 +165,13 @@ class Oito2SwitchButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onChanged = this.onChanged;
-    return _ToggleRow(
-      control: Switch(value: value, onChanged: onChanged),
+    return Oito2ToggleButton(
+      control: Oito2Switch(value: value, onChanged: onChanged),
       title: title,
       subtitle: subtitle,
       padding: padding,
       controlAtEnd: true,
-      onTap: onChanged == null ? null : () => onChanged(!value),
+      onToggled: onChanged == null ? null : () => onChanged(!value),
     );
   }
 }

@@ -31,9 +31,12 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Layout and navigation widgets: `Oito2MasterDetailPage` (side-by-side or stacked by width) with `Oito2MasterTile`, `Oito2MasterTileScope` and `Oito2DetailPage`; `Oito2NavigationPage` (rail or bottom bar by width) with `Oito2NavigationItem`; `Oito2PanedView` (resizable with pointer, keyboard and assistive technologies); `Oito2PageController`.
 - Container widgets: `Oito2BorderContainer`, `Oito2Section`, `Oito2Tile`, `Oito2TileList`, `Oito2SelectableContainer`, `Oito2Banner`, `Oito2InfoBox`, `Oito2InfoBadge`, `Oito2Expandable` and `Oito2Watermark`.
 - Lucide icons through `flutter_lucide` (a single tree-shaken icon font), re-exported as `LucideIcons` so apps use the same icon set without depending on the icon package directly.
-- Controls: `Oito2CheckButton`, `Oito2RadioButton`, `Oito2SwitchButton` (clickable labels), `Oito2SplitButton`, `Oito2OptionButton`, `Oito2ColorDisk`, `Oito2ChoiceChipBar` and `Oito2PageIndicator`.
+- Controls: `Oito2CheckButton`, `Oito2RadioButton`, `Oito2SwitchButton` (clickable labels, built on the painted toggles), `Oito2SplitButton`, `Oito2OptionButton`, `Oito2ColorDisk`, `Oito2ChoiceChipBar` and `Oito2PageIndicator`.
 - Inputs: `Oito2SearchField`, `Oito2SearchTitleField`, `Oito2DateEntry`, `Oito2TimeEntry`, `Oito2DateTimeEntry` and `Oito2SegmentedEntry`; date and time parsing, hints and errors come from `MaterialLocalizations`.
 - Utilities: `Oito2FocusBorder`, `Oito2EdgeFocusInterceptor`, `Oito2ScrollViewUndershoot`, `Oito2DiagonalClip` and `Oito2Draggable`.
+- Painted toggles `Oito2Checkbox` (tristate), `Oito2Radio` (toggleable) and `Oito2Switch` (optional on/off shapes), drawn with filled shapes. They are 34-pixel targets on pointer platforms and 48 on touch, toggle with Space and Enter, show the focus ring in keyboard navigation, report checked/mixed/toggled states to assistive technologies, and skip their animation when animations are disabled. Selected fills use the scheme's primary tone with its on-color when it stands out 3:1 from the surfaces, and the text-safe primary tone otherwise.
+- `Oito2ToggleButton`: the clickable label row of the check, radio and switch buttons, now public, focusable as one element.
+- `Oito2CheckboxListTile`, `Oito2RadioListTile` and `Oito2SwitchListTile`, with `Oito2ControlAffinity`.
 - `Oito2Localizations` with English and Brazilian Portuguese strings for the window controls, pane resizing, split button menus, chip bar arrows, page indicators and segmented entries; English is the fallback when its delegate isn't registered. `Oito2WindowControlLabels` and the widgets' label parameters now only override these strings.
 
 ### Changed

@@ -19,6 +19,7 @@ import 'package:oito2_ui/oito2_ui.dart';
 import 'pages/banner_page.dart';
 import 'pages/border_container_page.dart';
 import 'pages/check_button_page.dart';
+import 'pages/checkbox_page.dart';
 import 'pages/choice_chip_bar_page.dart';
 import 'pages/code_block_page.dart';
 import 'pages/color_disk_page.dart';
@@ -38,14 +39,18 @@ import 'pages/option_button_page.dart';
 import 'pages/page_indicator_page.dart';
 import 'pages/paned_view_page.dart';
 import 'pages/radio_button_page.dart';
+import 'pages/radio_page.dart';
 import 'pages/search_field_page.dart';
 import 'pages/section_page.dart';
 import 'pages/segmented_entry_page.dart';
 import 'pages/selectable_container_page.dart';
 import 'pages/split_button_page.dart';
 import 'pages/switch_button_page.dart';
+import 'pages/switch_page.dart';
 import 'pages/tile_page.dart';
 import 'pages/title_bar_page.dart';
+import 'pages/toggle_button_page.dart';
+import 'pages/toggle_list_tile_page.dart';
 import 'pages/tokens_page.dart';
 import 'pages/typography_page.dart';
 import 'pages/undershoot_page.dart';
@@ -126,6 +131,18 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.square_check,
     source: 'check_button_page.dart',
     builder: _page(const CheckButtonPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Checkbox',
+    icon: LucideIcons.square_check_big,
+    source: 'checkbox_page.dart',
+    builder: _page(const CheckboxPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2CheckboxListTile',
+    icon: LucideIcons.list_checks,
+    source: 'toggle_list_tile_page.dart',
+    builder: _page(const ToggleListTilePage()),
   ),
   ShowcasePage(
     title: 'Oito2ChoiceChipBar',
@@ -218,6 +235,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const PanedViewPage()),
   ),
   ShowcasePage(
+    title: 'Oito2Radio',
+    icon: LucideIcons.circle_dot_dashed,
+    source: 'radio_page.dart',
+    builder: _page(const RadioPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2RadioButton',
     icon: LucideIcons.circle_dot,
     source: 'radio_button_page.dart',
@@ -260,6 +283,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const SplitButtonPage()),
   ),
   ShowcasePage(
+    title: 'Oito2Switch',
+    icon: LucideIcons.toggle_left,
+    source: 'switch_page.dart',
+    builder: _page(const SwitchPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2SwitchButton',
     icon: LucideIcons.toggle_right,
     source: 'switch_button_page.dart',
@@ -276,6 +305,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.panels_top_left,
     source: 'title_bar_page.dart',
     builder: _page(const TitleBarPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2ToggleButton',
+    icon: LucideIcons.square_mouse_pointer,
+    source: 'toggle_button_page.dart',
+    builder: _page(const ToggleButtonPage()),
   ),
   ShowcasePage(
     title: 'Oito2Watermark',
