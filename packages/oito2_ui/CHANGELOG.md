@@ -71,6 +71,9 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2MasterListView`, the master list of `Oito2MasterDetailPage`, now public. It scrolls the selected tile into view, even one far below.
 - `Oito2NavigationPageThemeData` and `Oito2MasterDetailThemeData` theme extensions, registered by `Oito2Theme`, for the breakpoints, pane sizes, spacing, colors and separator. The page parameters now default to them.
 - `Oito2Localizations` with English and Brazilian Portuguese strings for the window controls, pane resizing, split button menus, chip bar arrows, page indicators and segmented entries; English is the fallback when its delegate isn't registered. `Oito2WindowControlLabels` and the widgets' label parameters now only override these strings.
+- `Oito2AnimatedIcon`, `Oito2AnimationMode` (`once`, `repeat`, `still`) and `Oito2AnimatedIcons`: ten painted icons (`ok`, `okFilled`, `heart`, `heartFilled`, `star`, `starFilled`, `starHalfFilled`, `compass`, `compassFilled`, `noNetwork`) that show their final frame when animations are disabled. Custom icons use `Oito2AnimatedIconData`.
+- `Oito2PlaceholderIcon`: a decorative picture placeholder painted from the color scheme.
+- `Oito2FreedesktopIcons`: 199 freedesktop icon names mapped to Lucide icons, with `byName` lookup that ignores the `-symbolic` suffix.
 
 ### Changed
 

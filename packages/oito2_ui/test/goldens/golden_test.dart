@@ -500,6 +500,73 @@ class _MenusListsScene extends StatelessWidget {
   }
 }
 
+/// Animated icons at their final frame, placeholders and freedesktop icons.
+class _IconsScene extends StatelessWidget {
+  const _IconsScene();
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(Oito2Spacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: Oito2Spacing.md,
+          children: [
+            Wrap(
+              spacing: Oito2Spacing.md,
+              children: [
+                for (final data in const [
+                  Oito2AnimatedIcons.ok,
+                  Oito2AnimatedIcons.okFilled,
+                  Oito2AnimatedIcons.heart,
+                  Oito2AnimatedIcons.heartFilled,
+                  Oito2AnimatedIcons.star,
+                  Oito2AnimatedIcons.starFilled,
+                  Oito2AnimatedIcons.starHalfFilled,
+                  Oito2AnimatedIcons.compass,
+                  Oito2AnimatedIcons.compassFilled,
+                  Oito2AnimatedIcons.noNetwork,
+                ])
+                  Oito2AnimatedIcon(
+                    data,
+                    size: 32,
+                    mode: Oito2AnimationMode.still,
+                  ),
+              ],
+            ),
+            Oito2AnimatedIcon(
+              Oito2AnimatedIcons.heartFilled,
+              size: 32,
+              color: primary,
+              mode: Oito2AnimationMode.still,
+            ),
+            const Row(
+              spacing: Oito2Spacing.md,
+              children: [
+                Oito2PlaceholderIcon(size: 32),
+                Oito2PlaceholderIcon(),
+                Oito2PlaceholderIcon(
+                  size: 72,
+                  borderRadius: Oito2Radius.largeAll,
+                ),
+              ],
+            ),
+            Wrap(
+              spacing: Oito2Spacing.md,
+              children: [
+                for (final icon in Oito2FreedesktopIcons.values.take(12))
+                  Icon(icon.icon),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// A carousel and the page indicator layouts.
 class _CarouselScene extends StatelessWidget {
   const _CarouselScene();
@@ -631,6 +698,18 @@ void main() {
         name: 'menus_lists_$name',
         colors: colors,
         size: const Size(720, 320),
+      );
+    });
+  }
+
+  for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
+    testWidgets('icons in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _IconsScene(),
+        name: 'icons_$name',
+        colors: colors,
+        size: const Size(520, 280),
       );
     });
   }

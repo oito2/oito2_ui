@@ -16,6 +16,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
+import 'pages/animated_icon_page.dart';
 import 'pages/autocomplete_page.dart';
 import 'pages/banner_page.dart';
 import 'pages/border_container_page.dart';
@@ -36,6 +37,7 @@ import 'pages/expandable_page.dart';
 import 'pages/expansion_panel_page.dart';
 import 'pages/focus_border_page.dart';
 import 'pages/format_page.dart';
+import 'pages/freedesktop_icons_page.dart';
 import 'pages/foundation_page.dart';
 import 'pages/icon_button_page.dart';
 import 'pages/highlighted_text_page.dart';
@@ -48,6 +50,7 @@ import 'pages/navigation_rail_page.dart';
 import 'pages/option_button_page.dart';
 import 'pages/page_indicator_page.dart';
 import 'pages/paned_view_page.dart';
+import 'pages/placeholder_icon_page.dart';
 import 'pages/popup_menu_page.dart';
 import 'pages/progress_page.dart';
 import 'pages/radio_button_page.dart';
@@ -131,6 +134,12 @@ Widget Function(BuildContext, Oito2ColorTheme) _page(Widget page) =>
 /// Every showcase page: the components in alphabetical order, then the
 /// utilities and the theme pages.
 final List<ShowcasePage> showcasePages = [
+  ShowcasePage(
+    title: 'Oito2AnimatedIcon',
+    icon: LucideIcons.sparkles,
+    source: 'animated_icon_page.dart',
+    builder: _page(const AnimatedIconPage()),
+  ),
   ShowcasePage(
     title: 'Oito2Autocomplete',
     icon: LucideIcons.text_search,
@@ -294,6 +303,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const PanedViewPage()),
   ),
   ShowcasePage(
+    title: 'Oito2PlaceholderIcon',
+    icon: LucideIcons.image,
+    source: 'placeholder_icon_page.dart',
+    builder: _page(const PlaceholderIconPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2PopupMenuButton',
     icon: LucideIcons.square_chevron_down,
     source: 'popup_menu_page.dart',
@@ -421,6 +436,13 @@ final List<ShowcasePage> showcasePages = [
     source: 'format_page.dart',
     group: ShowcaseGroup.utilities,
     builder: _page(const FormatPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2FreedesktopIcons',
+    icon: LucideIcons.shapes,
+    source: 'freedesktop_icons_page.dart',
+    group: ShowcaseGroup.utilities,
+    builder: _page(const FreedesktopIconsPage()),
   ),
   ShowcasePage(
     title: 'Foundation',
