@@ -254,4 +254,14 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('the app toaster shows toasts from a page', (tester) async {
+    await pumpShowcase(tester, slug: 'toast');
+    await tester.tap(find.widgetWithText(OutlinedButton, 'success'));
+    await _settle(tester);
+    expect(find.text('A success message.'), findsOneWidget);
+    await tester.tap(find.byTooltip('Dismiss'));
+    await _settle(tester);
+    expect(find.text('A success message.'), findsNothing);
+  });
 }

@@ -567,6 +567,174 @@ class _IconsScene extends StatelessWidget {
   }
 }
 
+/// Two open popovers, one with an arrow, over a stack of toasts.
+class _OverlaysScene extends StatefulWidget {
+  const _OverlaysScene();
+
+  @override
+  State<_OverlaysScene> createState() => _OverlaysSceneState();
+}
+
+class _OverlaysSceneState extends State<_OverlaysScene> {
+  final _toaster = GlobalKey<Oito2ToasterState>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _toaster.currentState!
+        ..show(
+          Oito2Toast(
+            title: 'File saved',
+            type: Oito2InfoType.success,
+            actionLabel: 'Open',
+            onAction: () {},
+            duration: null,
+          ),
+        )
+        ..show(
+          const Oito2Toast(
+            title: 'Connection lost',
+            description: 'Changes are kept on this device.',
+            type: Oito2InfoType.warning,
+            duration: null,
+          ),
+        );
+    });
+  }
+
+  Widget _popover(String label, Oito2PopoverPlacement placement, bool arrow) {
+    return Oito2Popover(
+      controller: Oito2PopoverController()..open(),
+      placement: placement,
+      showArrow: arrow,
+      focusOnOpen: false,
+      builder: (context, _) =>
+          OutlinedButton(onPressed: () {}, child: Text(label)),
+      popoverBuilder: (context, _) => const Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: Oito2Spacing.xs,
+        children: [Text('Share link'), Text('Anyone with the link can view.')],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Oito2Toaster(
+      key: _toaster,
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.all(Oito2Spacing.lg),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _popover('Plain', Oito2PopoverPlacement.bottom, false),
+              _popover('Arrow', Oito2PopoverPlacement.bottom, true),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A modal end sheet.
+class _SheetScene extends StatelessWidget {
+  const _SheetScene();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Builder(
+        builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => showOito2Sheet<void>(
+              context,
+              builder: (_) => Oito2Sheet(
+                title: const Text('Filters'),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Oito2CheckboxListTile(
+                      value: true,
+                      onChanged: (_) {},
+                      title: const Text('Images'),
+                    ),
+                    Oito2CheckboxListTile(
+                      value: false,
+                      onChanged: (_) {},
+                      title: const Text('Documents'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+          return const Center(child: Text('Page'));
+        },
+      ),
+    );
+  }
+}
+
+/// A tour step pointing at a button.
+class _TourScene extends StatefulWidget {
+  const _TourScene();
+
+  @override
+  State<_TourScene> createState() => _TourSceneState();
+}
+
+class _TourSceneState extends State<_TourScene> {
+  final _target = GlobalKey();
+  late final _controller = Oito2TourController(
+    steps: [
+      Oito2TourStep(
+        target: _target,
+        title: 'Create a project',
+        description: 'Start here to set up your first project.',
+      ),
+      const Oito2TourStep(title: 'Done'),
+    ],
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _controller.start());
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Oito2Tour(
+        controller: _controller,
+        child: Padding(
+          padding: const EdgeInsets.all(Oito2Spacing.xl),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: FilledButton(
+              key: _target,
+              onPressed: () {},
+              child: const Text('New project'),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// A carousel and the page indicator layouts.
 class _CarouselScene extends StatelessWidget {
   const _CarouselScene();
@@ -710,6 +878,43 @@ void main() {
         name: 'icons_$name',
         colors: colors,
         size: const Size(520, 280),
+      );
+    });
+  }
+
+  for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
+    testWidgets('overlays in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _OverlaysScene(),
+        name: 'overlays_$name',
+        colors: colors,
+        size: const Size(560, 360),
+        wholeApp: true,
+      );
+    });
+  }
+
+  for (final name in ['light', 'dark']) {
+    testWidgets('sheet in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _SheetScene(),
+        name: 'sheet_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(640, 360),
+        wholeApp: true,
+      );
+    });
+
+    testWidgets('tour in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _TourScene(),
+        name: 'tour_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(520, 300),
+        wholeApp: true,
       );
     });
   }

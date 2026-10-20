@@ -120,6 +120,33 @@ abstract class Oito2Localizations {
 
   /// Announced with the number of search or autocomplete results.
   String resultCount(int count);
+
+  /// The label of a button that closes a panel, sheet or card.
+  String get close;
+
+  /// The label of a button that dismisses a notification.
+  String get dismiss;
+
+  /// The accessibility label of the notification area.
+  String get notifications;
+
+  /// The accessibility label of a sheet's resize handle.
+  String get resizeSheet;
+
+  /// The button that returns to the previous step of a tour.
+  String get tourBack;
+
+  /// The button that moves to the next step of a tour.
+  String get tourNext;
+
+  /// The button that finishes a tour on its last step.
+  String get tourDone;
+
+  /// The button that ends a tour before its last step.
+  String get tourSkip;
+
+  /// The position of a tour step, such as "Step 2 of 5".
+  String tourProgress(int step, int total);
 }
 
 /// The units of a relative time, from [second] to [year].
@@ -216,6 +243,32 @@ class Oito2LocalizationsEn extends Oito2Localizations {
 
   @override
   String resultCount(int count) => count == 1 ? '1 result' : '$count results';
+  @override
+  String get close => 'Close';
+
+  @override
+  String get dismiss => 'Dismiss';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get resizeSheet => 'Resize sheet';
+
+  @override
+  String get tourBack => 'Back';
+
+  @override
+  String get tourNext => 'Next';
+
+  @override
+  String get tourDone => 'Done';
+
+  @override
+  String get tourSkip => 'Skip tour';
+
+  @override
+  String tourProgress(int step, int total) => 'Step $step of $total';
 }
 
 /// The Brazilian Portuguese [Oito2Localizations].
@@ -297,6 +350,33 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
   @override
   String resultCount(int count) =>
       count == 1 ? '1 resultado' : '$count resultados';
+
+  @override
+  String get close => 'Fechar';
+
+  @override
+  String get dismiss => 'Dispensar';
+
+  @override
+  String get notifications => 'Notificações';
+
+  @override
+  String get resizeSheet => 'Redimensionar painel';
+
+  @override
+  String get tourBack => 'Voltar';
+
+  @override
+  String get tourNext => 'Próximo';
+
+  @override
+  String get tourDone => 'Concluir';
+
+  @override
+  String get tourSkip => 'Pular tour';
+
+  @override
+  String tourProgress(int step, int total) => 'Passo $step de $total';
 }
 
 class _Oito2LocalizationsDelegate

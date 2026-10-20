@@ -29,6 +29,7 @@ import 'pages/collections_page.dart';
 import 'pages/color_disk_page.dart';
 import 'pages/colors_page.dart';
 import 'pages/commands_page.dart';
+import 'pages/context_menu_page.dart';
 import 'pages/date_time_entry_page.dart';
 import 'pages/diagonal_clip_page.dart';
 import 'pages/dialog_title_bar_page.dart';
@@ -37,10 +38,11 @@ import 'pages/expandable_page.dart';
 import 'pages/expansion_panel_page.dart';
 import 'pages/focus_border_page.dart';
 import 'pages/format_page.dart';
-import 'pages/freedesktop_icons_page.dart';
 import 'pages/foundation_page.dart';
-import 'pages/icon_button_page.dart';
+import 'pages/freedesktop_icons_page.dart';
 import 'pages/highlighted_text_page.dart';
+import 'pages/hover_card_page.dart';
+import 'pages/icon_button_page.dart';
 import 'pages/info_page.dart';
 import 'pages/list_tile_page.dart';
 import 'pages/master_detail_page.dart';
@@ -51,6 +53,7 @@ import 'pages/option_button_page.dart';
 import 'pages/page_indicator_page.dart';
 import 'pages/paned_view_page.dart';
 import 'pages/placeholder_icon_page.dart';
+import 'pages/popover_page.dart';
 import 'pages/popup_menu_page.dart';
 import 'pages/progress_page.dart';
 import 'pages/radio_button_page.dart';
@@ -59,16 +62,19 @@ import 'pages/search_field_page.dart';
 import 'pages/section_page.dart';
 import 'pages/segmented_entry_page.dart';
 import 'pages/selectable_container_page.dart';
+import 'pages/sheet_page.dart';
 import 'pages/split_button_page.dart';
-import 'pages/switch_button_page.dart';
 import 'pages/swap_page.dart';
+import 'pages/switch_button_page.dart';
 import 'pages/switch_page.dart';
 import 'pages/tab_bar_page.dart';
 import 'pages/tile_page.dart';
 import 'pages/title_bar_page.dart';
+import 'pages/toast_page.dart';
 import 'pages/toggle_button_page.dart';
 import 'pages/toggle_list_tile_page.dart';
 import 'pages/tokens_page.dart';
+import 'pages/tour_page.dart';
 import 'pages/typography_page.dart';
 import 'pages/undershoot_page.dart';
 import 'pages/watermark_page.dart';
@@ -201,6 +207,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const ColorDiskPage()),
   ),
   ShowcasePage(
+    title: 'Oito2ContextMenuRegion',
+    icon: LucideIcons.mouse_pointer_click,
+    source: 'context_menu_page.dart',
+    builder: _page(const ContextMenuPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2DateTimeEntry',
     icon: LucideIcons.calendar_clock,
     source: 'date_time_entry_page.dart',
@@ -247,6 +259,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.highlighter,
     source: 'highlighted_text_page.dart',
     builder: _page(const HighlightedTextPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2HoverCard',
+    icon: LucideIcons.id_card,
+    source: 'hover_card_page.dart',
+    builder: _page(const HoverCardPage()),
   ),
   ShowcasePage(
     title: 'Oito2IconButton',
@@ -309,6 +327,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const PlaceholderIconPage()),
   ),
   ShowcasePage(
+    title: 'Oito2Popover',
+    icon: LucideIcons.message_square,
+    source: 'popover_page.dart',
+    builder: _page(const PopoverPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2PopupMenuButton',
     icon: LucideIcons.square_chevron_down,
     source: 'popup_menu_page.dart',
@@ -363,6 +387,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const SelectableContainerPage()),
   ),
   ShowcasePage(
+    title: 'Oito2Sheet',
+    icon: LucideIcons.panel_right,
+    source: 'sheet_page.dart',
+    builder: _page(const SheetPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2SplitButton',
     icon: LucideIcons.split,
     source: 'split_button_page.dart',
@@ -405,10 +435,22 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const TitleBarPage()),
   ),
   ShowcasePage(
+    title: 'Oito2Toaster',
+    icon: LucideIcons.bell,
+    source: 'toast_page.dart',
+    builder: _page(const ToastPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2ToggleButton',
     icon: LucideIcons.square_mouse_pointer,
     source: 'toggle_button_page.dart',
     builder: _page(const ToggleButtonPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Tour',
+    icon: LucideIcons.route,
+    source: 'tour_page.dart',
+    builder: _page(const TourPage()),
   ),
   ShowcasePage(
     title: 'Oito2Watermark',

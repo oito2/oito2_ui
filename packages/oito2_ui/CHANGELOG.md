@@ -74,6 +74,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2AnimatedIcon`, `Oito2AnimationMode` (`once`, `repeat`, `still`) and `Oito2AnimatedIcons`: ten painted icons (`ok`, `okFilled`, `heart`, `heartFilled`, `star`, `starFilled`, `starHalfFilled`, `compass`, `compassFilled`, `noNetwork`) that show their final frame when animations are disabled. Custom icons use `Oito2AnimatedIconData`.
 - `Oito2PlaceholderIcon`: a decorative picture placeholder painted from the color scheme.
 - `Oito2FreedesktopIcons`: 199 freedesktop icon names mapped to Lucide icons, with `byName` lookup that ignores the `-symbolic` suffix.
+- `Oito2Popover` and `Oito2PopoverController`: a non-modal panel anchored to a widget, with placement and flip (`Oito2PopoverPlacement`, `Oito2PopoverAlignment`), an optional arrow, the anchor width, nesting, Escape and outside-tap dismissal, and focus moved in and back.
+- `Oito2HoverCard`: a card on hover or keyboard focus with open and close delays, and a long press on touch.
+- `showOito2Sheet` and `Oito2Sheet`: start, end and bottom sheets, modal or not, closed by Escape, the scrim or a drag, with bottom snap points that also move by keyboard and assistive technologies.
+- `Oito2Toaster`, `Oito2Toast` and `Oito2ToastHandle`: stacked notifications with placement, a visible limit, `Oito2InfoType` icons, an action, a time that stops on hover and focus, loading toasts and `promise`.
+- `Oito2ContextMenuRegion`: right-click, long-press, Shift+F10 and menu-key menus on any widget, with nested `MenuAnchor` items.
+- `Oito2Tour`, `Oito2TourController` and `Oito2TourStep`: guided steps with a spotlight, placement, progress, keyboard navigation, skip, and steps that wait for a tap on their target.
+- `Oito2Localizations` strings for closing, dismissing, the notification area, the sheet handle and the tour buttons.
 
 ### Changed
 

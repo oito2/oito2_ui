@@ -110,7 +110,7 @@ class _ShowcaseAppState extends State<ShowcaseApp> {
               textDirection: options.rtl
                   ? TextDirection.rtl
                   : Directionality.of(context),
-              child: child!,
+              child: Oito2Toaster(child: child!),
             ),
             home: Builder(
               builder: (context) => ShowcaseShell(
