@@ -114,6 +114,12 @@ abstract class Oito2Localizations {
 
   /// Label of the button that clears a recorded shortcut.
   String get clearShortcut;
+
+  /// Announced when a search or autocomplete finds nothing.
+  String get noResults;
+
+  /// Announced with the number of search or autocomplete results.
+  String resultCount(int count);
 }
 
 /// The units of a relative time, from [second] to [year].
@@ -204,6 +210,12 @@ class Oito2LocalizationsEn extends Oito2Localizations {
 
   @override
   String get clearShortcut => 'Clear shortcut';
+
+  @override
+  String get noResults => 'No results';
+
+  @override
+  String resultCount(int count) => count == 1 ? '1 result' : '$count results';
 }
 
 /// The Brazilian Portuguese [Oito2Localizations].
@@ -278,6 +290,13 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String get clearShortcut => 'Limpar atalho';
+
+  @override
+  String get noResults => 'Nenhum resultado';
+
+  @override
+  String resultCount(int count) =>
+      count == 1 ? '1 resultado' : '$count resultados';
 }
 
 class _Oito2LocalizationsDelegate

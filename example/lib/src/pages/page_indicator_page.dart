@@ -45,6 +45,21 @@ class _PageIndicatorPageState extends State<PageIndicatorPage> {
           ],
         ),
         ShowcaseSection(
+          'Layouts with 12 pages: fixed, stepped and bounded in 160 px',
+          children: [
+            for (final layout in Oito2PageIndicatorLayout.values)
+              SizedBox(
+                width: 160,
+                child: Oito2PageIndicator(
+                  length: 12,
+                  page: _page % 12,
+                  layout: layout,
+                  onTap: (i) => setState(() => _page = i),
+                ),
+              ),
+          ],
+        ),
+        ShowcaseSection(
           'Counter when the dots do not fit',
           children: [
             SizedBox(

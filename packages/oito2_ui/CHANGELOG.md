@@ -57,6 +57,12 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2ListTile` and `Oito2ListTile.square`: interactive rows with hover, selected and keyboard focus states, sized per platform.
 - `Oito2ExpansionPanel`: an accordion of `Oito2Expandable` sections, with an option to keep several open.
 - `Oito2TabBar` and `Oito2Tab`: tabs with a sliding rounded pill, at the control height, fixed or scrollable.
+- `Oito2Carousel` and `Oito2CarouselController`:
+  - Pages change with buttons, dots, the arrow keys, or a swipe (also with a mouse); `loop` wraps around.
+  - Automatic scrolling pauses on hover and focus and never runs when animations are disabled.
+- `Oito2PageIndicatorLayout` (`fixed`, `stepped`, `bounded`) for `Oito2PageIndicator.layout`.
+- `Oito2Autocomplete`: suggestions from an `Oito2ListCollection`, filtered ignoring case and accents, with highlighted matches, keyboard selection and a live region announcing the number of results.
+- `Oito2Localizations.noResults` and `resultCount`.
 - `Oito2Localizations` with English and Brazilian Portuguese strings for the window controls, pane resizing, split button menus, chip bar arrows, page indicators and segmented entries; English is the fallback when its delegate isn't registered. `Oito2WindowControlLabels` and the widgets' label parameters now only override these strings.
 
 ### Changed

@@ -49,6 +49,8 @@ export 'src/theme/theme_data.dart';
 export 'src/tokens/colors.dart';
 export 'src/tokens/geometry.dart';
 export 'src/tokens/typography.dart';
+export 'src/widgets/autocomplete.dart';
+export 'src/widgets/carousel.dart';
 export 'src/widgets/chips_and_pages.dart';
 export 'src/widgets/containers.dart';
 export 'src/widgets/controls.dart';

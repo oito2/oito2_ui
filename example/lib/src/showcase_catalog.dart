@@ -16,8 +16,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
+import 'pages/autocomplete_page.dart';
 import 'pages/banner_page.dart';
 import 'pages/border_container_page.dart';
+import 'pages/carousel_page.dart';
 import 'pages/check_button_page.dart';
 import 'pages/checkbox_page.dart';
 import 'pages/choice_chip_bar_page.dart';
@@ -129,6 +131,12 @@ Widget Function(BuildContext, Oito2ColorTheme) _page(Widget page) =>
 /// utilities and the theme pages.
 final List<ShowcasePage> showcasePages = [
   ShowcasePage(
+    title: 'Oito2Autocomplete',
+    icon: LucideIcons.text_search,
+    source: 'autocomplete_page.dart',
+    builder: _page(const AutocompletePage()),
+  ),
+  ShowcasePage(
     title: 'Oito2Banner',
     icon: LucideIcons.panel_top,
     source: 'banner_page.dart',
@@ -139,6 +147,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.square_dashed,
     source: 'border_container_page.dart',
     builder: _page(const BorderContainerPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Carousel',
+    icon: LucideIcons.gallery_horizontal,
+    source: 'carousel_page.dart',
+    builder: _page(const CarouselPage()),
   ),
   ShowcasePage(
     title: 'Oito2CheckButton',

@@ -500,6 +500,49 @@ class _MenusListsScene extends StatelessWidget {
   }
 }
 
+/// A carousel and the page indicator layouts.
+class _CarouselScene extends StatelessWidget {
+  const _CarouselScene();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(Oito2Spacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: Oito2Spacing.md,
+          children: [
+            Oito2Carousel(
+              height: 140,
+              children: [
+                for (final color in [
+                  scheme.primaryContainer,
+                  scheme.secondaryContainer,
+                  scheme.tertiaryContainer,
+                ])
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: Oito2Radius.largeAll,
+                    ),
+                  ),
+              ],
+            ),
+            for (final layout in Oito2PageIndicatorLayout.values)
+              SizedBox(
+                width: 200,
+                child: Oito2PageIndicator(length: 9, page: 2, layout: layout),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 void main() {
   for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
     testWidgets('components in $name', (tester) async {
@@ -558,6 +601,54 @@ void main() {
         name: 'menus_lists_$name',
         colors: colors,
         size: const Size(720, 320),
+      );
+    });
+  }
+
+  for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
+    testWidgets('carousel in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _CarouselScene(),
+        name: 'carousel_$name',
+        colors: colors,
+        size: const Size(520, 320),
+      );
+    });
+  }
+
+  for (final name in ['light', 'dark']) {
+    testWidgets('open autocomplete in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(Oito2Spacing.lg),
+            child: SizedBox(
+              width: 280,
+              child: Builder(
+                builder: (context) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) async {
+                    await tester.enterText(find.byType(TextField), 'sa');
+                  });
+                  return Oito2Autocomplete<String>(
+                    collection: Oito2ListCollection(const [
+                      'Belo Horizonte',
+                      'Salvador',
+                      'São Paulo',
+                      'Santos',
+                    ]),
+                    hintText: 'City',
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+        name: 'open_autocomplete_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(320, 240),
+        wholeApp: true,
       );
     });
   }

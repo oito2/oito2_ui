@@ -181,6 +181,20 @@ class _Oito2ChoiceChipBarState extends State<Oito2ChoiceChipBar> {
   }
 }
 
+/// How an [Oito2PageIndicator] spaces its dots.
+enum Oito2PageIndicatorLayout {
+  /// Always [Oito2PageIndicator.spacing] apart.
+  fixed,
+
+  /// Closer together as pages are added: the full spacing up to 5 pages,
+  /// three quarters up to 10 and half beyond.
+  stepped,
+
+  /// The full spacing when it fits, otherwise as close as needed to fit
+  /// the width, down to half the dot size.
+  bounded,
+}
+
 /// Dots showing the current page of a carousel or a paged view.
 ///
 /// The current page is a wider pill in the text-safe primary tone. Each
@@ -195,6 +209,7 @@ class Oito2PageIndicator extends StatelessWidget {
     this.onTap,
     this.dotSize = 8,
     this.spacing = Oito2Spacing.sm,
+    this.layout = Oito2PageIndicatorLayout.fixed,
     this.pageLabel,
   }) : assert(page >= 0 && page < length);
 
@@ -210,8 +225,11 @@ class Oito2PageIndicator extends StatelessWidget {
   /// The diameter of the dots.
   final double dotSize;
 
-  /// Space between dots.
+  /// Space between dots; [layout] may reduce it.
   final double spacing;
+
+  /// How the dots are spaced.
+  final Oito2PageIndicatorLayout layout;
 
   /// Builds the accessibility label of a dot from its 1-based page number
   /// and the page count; defaults to [Oito2Localizations.pageOf].
@@ -223,12 +241,25 @@ class Oito2PageIndicator extends StatelessWidget {
     final active = semanticColorsOf(context).primaryText;
     final pageLabel = this.pageLabel ?? Oito2Localizations.of(context).pageOf;
     final selectedWidth = dotSize * 3;
-    final needed =
-        selectedWidth + (length - 1) * dotSize + (length - 1) * spacing + 16;
+    final dots = selectedWidth + (length - 1) * dotSize + 16;
+    final gaps = math.max(1, length - 1);
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < needed) {
+        final spacing = switch (layout) {
+          Oito2PageIndicatorLayout.fixed => this.spacing,
+          Oito2PageIndicatorLayout.stepped =>
+            length <= 5
+                ? this.spacing
+                : length <= 10
+                ? this.spacing * 0.75
+                : this.spacing * 0.5,
+          Oito2PageIndicatorLayout.bounded => math.max(
+            dotSize / 2,
+            math.min(this.spacing, (constraints.maxWidth - dots) / gaps),
+          ),
+        };
+        if (constraints.maxWidth < dots + (length - 1) * spacing) {
           return Semantics(
             label: pageLabel(page + 1, length),
             excludeSemantics: true,
