@@ -16,7 +16,6 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'color_theme.dart';
-import 'theme_preset.dart';
 
 /// Material [ColorScheme]s of the oito2 schemes.
 ///
@@ -36,8 +35,4 @@ abstract final class Oito2ColorScheme {
         accent: accent,
         highContrast: highContrast,
       ).colorScheme;
-
-  /// The scheme of [preset].
-  static ColorScheme fromPreset(Oito2ThemePreset preset) =>
-      Oito2ColorTheme.fromPreset(preset).colorScheme;
 }

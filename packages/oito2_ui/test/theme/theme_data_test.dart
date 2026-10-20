@@ -17,6 +17,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
+import '../support/sample_roles.dart';
+
 const _linux = Oito2Platform(
   targetPlatform: TargetPlatform.linux,
   isWeb: false,
@@ -38,8 +40,8 @@ Map<String, Oito2ColorTheme> _schemes() => {
   'base light': Oito2ColorTheme.light(),
   'base dark': Oito2ColorTheme.dark(),
   'base light HC': Oito2ColorTheme.light(highContrast: true),
-  for (final preset in Oito2ThemePreset.values)
-    preset.name: Oito2ColorTheme.fromPreset(preset),
+  for (final MapEntry(key: name, value: roles) in sampleRoles.entries)
+    name: Oito2ColorTheme.fromRoles(roles),
 };
 
 void main() {
@@ -245,7 +247,7 @@ void main() {
   });
 
   group('builders', () {
-    test('light, dark and fromPreset wrap Oito2ColorTheme', () {
+    test('light, dark and fromColors wrap Oito2ColorTheme', () {
       const accent = Color(0xFF3A944A);
       expect(
         Oito2Theme.light(accent: accent, platform: _linux).colorScheme,
@@ -255,12 +257,12 @@ void main() {
         Oito2Theme.dark(highContrast: true, platform: _linux).colorScheme,
         Oito2ColorScheme.dark(highContrast: true),
       );
+      final colors = Oito2ColorTheme.fromRoles(
+        sampleRoles['roles dark lifted']!,
+      );
       expect(
-        Oito2Theme.fromPreset(
-          Oito2ThemePreset.rosePine,
-          platform: _linux,
-        ).colorScheme,
-        Oito2ColorScheme.fromPreset(Oito2ThemePreset.rosePine),
+        Oito2Theme.fromColors(colors, platform: _linux).colorScheme,
+        colors.colorScheme,
       );
     });
 
@@ -283,7 +285,7 @@ void main() {
       expect(theme.platform, TargetPlatform.windows);
     });
 
-    test('fromSystem prefers an explicit accent and a preset', () {
+    test('fromSystem prefers an explicit accent', () {
       final settings = Oito2SystemSettings.fallback(_linux)
           .copyWith(accentColor: Oito2AccentColor.orange.color);
       expect(
@@ -293,14 +295,6 @@ void main() {
           accent: Oito2AccentColor.teal.color,
         ).colorScheme,
         Oito2ColorScheme.light(accent: Oito2AccentColor.teal.color),
-      );
-      expect(
-        Oito2Theme.fromSystem(
-          settings,
-          brightness: Brightness.light,
-          preset: Oito2ThemePreset.nordDark,
-        ).colorScheme,
-        Oito2ColorScheme.fromPreset(Oito2ThemePreset.nordDark),
       );
     });
   });

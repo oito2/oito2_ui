@@ -13,10 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:catppuccin_flutter/catppuccin_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
+
+import '../support/sample_roles.dart';
 
 /// Every theme under test, keyed by a readable name.
 Map<String, Oito2ColorTheme> _allThemes() => {
@@ -33,8 +34,8 @@ Map<String, Oito2ColorTheme> _allThemes() => {
                 accent: accent.color,
                 highContrast: highContrast,
               ),
-  for (final preset in Oito2ThemePreset.values)
-    preset.name: Oito2ColorTheme.fromPreset(preset),
+  for (final MapEntry(key: name, value: roles) in sampleRoles.entries)
+    name: Oito2ColorTheme.fromRoles(roles),
 };
 
 double _textTarget(Oito2ColorTheme t) =>
@@ -44,23 +45,6 @@ double _nonTextTarget(Oito2ColorTheme t) =>
     t.highContrast ? Oito2Contrast.textAA : Oito2Contrast.nonTextAA;
 
 Matcher _atLeast(double target) => greaterThanOrEqualTo(target - 0.0001);
-
-/// The official signature color of every preset.
-final _signatures = {
-  Oito2ThemePreset.everforestLight: Oito2EverforestPalette.light.green,
-  Oito2ThemePreset.everforestDark: Oito2EverforestPalette.dark.green,
-  Oito2ThemePreset.rosePine: Oito2RosePinePalette.main.pine,
-  Oito2ThemePreset.rosePineMoon: Oito2RosePinePalette.moon.pine,
-  Oito2ThemePreset.rosePineDawn: Oito2RosePinePalette.dawn.pine,
-  Oito2ThemePreset.nordDark: Oito2NordPalette.nord8,
-  Oito2ThemePreset.nordLight: Oito2NordPalette.nord10,
-  Oito2ThemePreset.dracula: Oito2DraculaPalette.dracula.purple,
-  Oito2ThemePreset.alucard: Oito2DraculaPalette.alucard.purple,
-  Oito2ThemePreset.catppuccinLatte: catppuccin.latte.mauve,
-  Oito2ThemePreset.catppuccinFrappe: catppuccin.frappe.mauve,
-  Oito2ThemePreset.catppuccinMacchiato: catppuccin.macchiato.mauve,
-  Oito2ThemePreset.catppuccinMocha: catppuccin.mocha.mauve,
-};
 
 void main() {
   _allThemes().forEach((name, theme) {
@@ -194,28 +178,48 @@ void main() {
     });
   });
 
-  group('presets', () {
-    for (final preset in Oito2ThemePreset.values) {
-      test('${preset.name} keeps its signature color and brightness', () {
-        final theme = Oito2ColorTheme.fromPreset(preset);
-        expect(theme.preset, preset);
-        expect(theme.brightness, preset.brightness);
-        expect(theme.colorScheme.primary, _signatures[preset]);
+  group('fromRoles', () {
+    sampleRoles.forEach((name, roles) {
+      test('$name keeps the given accent, error and brightness', () {
+        final theme = Oito2ColorTheme.fromRoles(roles);
+        expect(theme.brightness, roles.brightness);
+        expect(theme.colorScheme.primary, roles.primary);
         expect(
           theme.colorScheme.onPrimary,
-          Oito2Contrast.foregroundFor(theme.colorScheme.primary),
+          Oito2Contrast.foregroundFor(roles.primary),
         );
+        expect(theme.colorScheme.error, roles.destructive);
+        expect(theme.background, roles.background);
+        expect(theme.colorScheme.surface, roles.card);
+        expect(theme.colorScheme.surfaceContainerHighest, roles.secondary);
+        expect(theme.colorScheme.outlineVariant, roles.border);
       });
-    }
+    });
 
-    test('error fills keep the official destructive color', () {
+    test('the lowest container is the lower of background and card', () {
+      final dim = Oito2ColorTheme.fromRoles(sampleRoles['roles light dim']!);
       expect(
-        Oito2ColorTheme.fromPreset(Oito2ThemePreset.dracula).colorScheme.error,
-        Oito2DraculaPalette.dracula.red,
+        dim.colorScheme.surfaceContainerLowest,
+        sampleRoles['roles light dim']!.card,
+      );
+      final lifted = Oito2ColorTheme.fromRoles(
+        sampleRoles['roles dark lifted']!,
       );
       expect(
-        Oito2ColorTheme.fromPreset(Oito2ThemePreset.nordDark).colorScheme.error,
-        Oito2NordPalette.nord11,
+        lifted.colorScheme.surfaceContainerLowest,
+        sampleRoles['roles dark lifted']!.background,
+      );
+    });
+
+    test('faint text roles are raised to the text target', () {
+      final roles = sampleRoles['roles light dim']!;
+      final theme = Oito2ColorTheme.fromRoles(roles);
+      expect(theme.colorScheme.onSurfaceVariant, isNot(roles.mutedForeground));
+      expect(
+        Oito2Contrast.minRatio(theme.colorScheme.onSurfaceVariant, [
+          roles.card,
+        ]),
+        _atLeast(Oito2Contrast.textAA),
       );
     });
   });
@@ -228,7 +232,6 @@ void main() {
         hue,
         closeTo(HSLColor.fromColor(Oito2AccentColor.blue.color).hue, 1),
       );
-      expect(theme.preset, isNull);
     });
 
     test('keeps white text on the accent, adjusting only its lightness', () {
@@ -284,9 +287,11 @@ void main() {
   test('equal inputs produce equal themes', () {
     expect(Oito2ColorTheme.light(), Oito2ColorTheme.light());
     expect(Oito2ColorTheme.light().hashCode, Oito2ColorTheme.light().hashCode);
+    final roles = sampleRoles['roles dark lifted']!;
+    expect(Oito2ColorTheme.fromRoles(roles), Oito2ColorTheme.fromRoles(roles));
     expect(
-      Oito2ColorTheme.fromPreset(Oito2ThemePreset.dracula),
-      isNot(Oito2ColorTheme.fromPreset(Oito2ThemePreset.alucard)),
+      Oito2ColorTheme.fromRoles(roles),
+      isNot(Oito2ColorTheme.fromRoles(sampleRoles['roles light flat']!)),
     );
   });
 
@@ -299,10 +304,6 @@ void main() {
     expect(
       Oito2ColorScheme.dark(highContrast: true),
       Oito2ColorTheme.dark(highContrast: true).colorScheme,
-    );
-    expect(
-      Oito2ColorScheme.fromPreset(Oito2ThemePreset.nordDark),
-      Oito2ColorTheme.fromPreset(Oito2ThemePreset.nordDark).colorScheme,
     );
   });
 }

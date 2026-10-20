@@ -30,7 +30,6 @@ import 'components/selection.dart';
 import 'components/surfaces.dart';
 import 'extensions/syntax_theme.dart';
 import 'page_transitions.dart';
-import 'theme_preset.dart';
 
 /// Builds the oito2 Material 3 [ThemeData].
 ///
@@ -58,24 +57,16 @@ abstract final class Oito2Theme {
     platform: platform,
   );
 
-  /// The theme of [preset].
-  static ThemeData fromPreset(
-    Oito2ThemePreset preset, {
-    Oito2Platform? platform,
-  }) => fromColors(Oito2ColorTheme.fromPreset(preset), platform: platform);
-
   /// The theme that follows the system [settings] for [brightness].
   ///
-  /// Uses [preset] when given. Otherwise builds the base theme with
-  /// [accent], falling back to the system accent color, and the system
-  /// high-contrast preference. The platform comes from [settings].
+  /// Builds the base theme with [accent], falling back to the system
+  /// accent color, and the system high-contrast preference. The platform
+  /// comes from [settings].
   static ThemeData fromSystem(
     Oito2SystemSettings settings, {
     required Brightness brightness,
     Color? accent,
-    Oito2ThemePreset? preset,
   }) {
-    if (preset != null) return fromPreset(preset, platform: settings.platform);
     final color = accent ?? settings.accentColor;
     return brightness == Brightness.dark
         ? dark(

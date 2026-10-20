@@ -16,13 +16,12 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2SystemSettings` and the `Oito2SystemScope` inherited widget.
 - `Oito2Contrast` WCAG contrast helpers.
 - Design tokens: `Oito2Radius`, `Oito2Spacing`, `Oito2Sizes`, `Oito2NeutralPalette`, `Oito2AccentColor`, `Oito2StatusPalette` and `Oito2Typography`.
-- Official palettes of Nord, Dracula/Alucard, Everforest and Rosé Pine (`Oito2NordPalette`, `Oito2DraculaPalette`, `Oito2EverforestPalette`, `Oito2RosePinePalette`); Catppuccin read from `catppuccin_flutter`.
-- `Oito2ThemePreset` with the 13 named presets.
-- `Oito2ColorTheme` and `Oito2ColorScheme`: the oito2 base scheme (GTK-style neutrals, custom accent, high contrast) and the 13 presets mapped to Material 3, with WCAG AA text roles on every surface.
+- `Oito2ColorTheme` and `Oito2ColorScheme`: the oito2 base scheme (GTK-style neutrals, custom accent, high contrast) mapped to Material 3, with WCAG AA text roles on every surface.
+- `Oito2ColorRoles` and `Oito2ColorTheme.fromRoles`: a complete, WCAG-checked oito2 scheme from the dozen role colors a theme family defines (background, card, foreground, accent, secondary surface, border and status colors). The named presets live in the separate `oito2_ui_themes` package.
 - `Oito2SemanticColors` and `Oito2ChromeColors` theme extensions. The chrome sidebar, mainbar, title bar and dialog tones come from the Material 3 surface container roles, kept at least 1.04:1 apart from the page background.
 - `Oito2SyntaxPalette` with 11 token roles for every scheme.
 - `Oito2Contrast.minRatio`, `Oito2Contrast.ensure` and `Oito2Contrast.textAAA`.
-- `Oito2Theme` (`light`, `dark`, `fromPreset`, `fromSystem`, `fromColors`): Material 3 `ThemeData` with platform-adaptive density, control sizes, tap targets and splashes, and themes for buttons, inputs, cards, dialogs, sheets, drawers, menus, toggles, sliders, progress, chips, tabs, navigation, list tiles, scrollbars, snack bars and tooltips.
+- `Oito2Theme` (`light`, `dark`, `fromSystem`, `fromColors`): Material 3 `ThemeData` with platform-adaptive density, control sizes, tap targets and splashes, and themes for buttons, inputs, cards, dialogs, sheets, drawers, menus, toggles, sliders, progress, chips, tabs, navigation, list tiles, scrollbars, snack bars and tooltips.
 - Keyboard focus ring and text-safe primary tone on buttons, links, toggles and input focus; input errors in the text-safe error tone.
 - `Oito2DesktopPageTransitionsBuilder` and `oito2PageTransitionsTheme`.
 - `Oito2SyntaxTheme` theme extension carrying the scheme's `Oito2SyntaxPalette`.

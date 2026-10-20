@@ -123,8 +123,8 @@ void main() {
       for (final theme in [
         Oito2ColorTheme.light(),
         Oito2ColorTheme.dark(),
-        Oito2ColorTheme.fromPreset(Oito2ThemePreset.dracula),
-        Oito2ColorTheme.fromPreset(Oito2ThemePreset.everforestLight),
+        Oito2ColorTheme.light(highContrast: true),
+        Oito2ColorTheme.dark(highContrast: true),
       ]) {
         for (final language in oito2DefaultLanguages.keys) {
           final runs = _runs(

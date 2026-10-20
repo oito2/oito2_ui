@@ -1,0 +1,67 @@
+// Copyright (C) 2026  oito2
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+/// The largest share of differing pixels a golden comparison accepts,
+/// absorbing anti-aliasing differences between machines.
+const double goldenTolerance = 0.005;
+
+/// Loads Inter, JetBrains Mono, the Lucide icons and the Material icons,
+/// so goldens show real glyphs instead of the test font's boxes.
+Future<void> loadGoldenFonts() async {
+  const fonts = {
+    'packages/oito2_ui/Inter':
+        'packages/oito2_ui/assets/fonts/inter/InterVariable.ttf',
+    'packages/oito2_ui_syntax/JetBrains Mono':
+        'packages/oito2_ui_syntax/assets/fonts/jetbrains_mono/'
+        'JetBrainsMono-Variable.ttf',
+    'packages/flutter_lucide/lucide':
+        'packages/flutter_lucide/lib/fonts/lucide.ttf',
+    'MaterialIcons': 'fonts/MaterialIcons-Regular.otf',
+  };
+  for (final MapEntry(key: family, value: asset) in fonts.entries) {
+    await (FontLoader(family)..addFont(rootBundle.load(asset))).load();
+  }
+}
+
+/// Replaces the golden comparator with one that accepts up to
+/// [goldenTolerance] of differing pixels.
+void installGoldenComparator() {
+  final current = goldenFileComparator;
+  if (current is! LocalFileComparator) return;
+  goldenFileComparator = _TolerantComparator(current.basedir);
+}
+
+class _TolerantComparator extends LocalFileComparator {
+  _TolerantComparator(Uri basedir) : super(basedir.resolve('golden_test.dart'));
+
+  @override
+  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
+    final result = await GoldenFileComparator.compareLists(
+      imageBytes,
+      await getGoldenBytes(golden),
+    );
+    if (result.passed || result.diffPercent <= goldenTolerance) {
+      result.dispose();
+      return true;
+    }
+    final error = await generateFailureOutput(result, golden, basedir);
+    result.dispose();
+    throw FlutterError(error);
+  }
+}

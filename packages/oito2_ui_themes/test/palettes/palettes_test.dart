@@ -15,7 +15,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:oito2_ui/oito2_ui.dart';
+import 'package:oito2_ui_themes/oito2_ui_themes.dart';
 
 void main() {
   test('Nord keeps its official values', () {

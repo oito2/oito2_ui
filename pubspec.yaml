@@ -10,6 +10,7 @@ workspace:
   - packages/oito2_ui_window
   - packages/oito2_ui_settings
   - packages/oito2_ui_syntax
+  - packages/oito2_ui_themes
   - example
 
 dev_dependencies:

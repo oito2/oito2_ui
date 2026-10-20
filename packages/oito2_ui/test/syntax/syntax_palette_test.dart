@@ -63,10 +63,10 @@ void main() {
     );
   });
 
-  test('every preset provides a distinct keyword and string color', () {
-    for (final preset in Oito2ThemePreset.values) {
-      final syntax = Oito2ColorTheme.fromPreset(preset).syntax;
-      expect(syntax.keyword, isNot(syntax.string), reason: preset.name);
+  test('every base scheme provides a distinct keyword and string color', () {
+    for (final theme in [Oito2ColorTheme.light(), Oito2ColorTheme.dark()]) {
+      final syntax = theme.syntax;
+      expect(syntax.keyword, isNot(syntax.string));
     }
   });
 

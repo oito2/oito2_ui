@@ -16,6 +16,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
+import 'package:oito2_ui_themes/oito2_ui_themes.dart';
 import 'package:oito2_ui_example/main.dart';
 
 void main() {
@@ -71,9 +72,7 @@ void main() {
     await tester.tap(find.text('dracula'));
     await tester.pumpAndSettle();
 
-    final primary = Oito2ColorTheme.fromPreset(Oito2ThemePreset.dracula)
-        .colorScheme
-        .primary;
+    final primary = Oito2ThemePreset.dracula.colors.colorScheme.primary;
     final context = tester.element(find.text('oito2_ui · Colors'));
     expect(Theme.of(context).colorScheme.primary, primary);
     expect(Theme.of(context).brightness, Brightness.dark);

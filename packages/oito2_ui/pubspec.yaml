@@ -12,7 +12,6 @@ environment:
 resolution: workspace
 
 dependencies:
-  catppuccin_flutter: ^1.0.0
   flutter:
     sdk: flutter
   flutter_lucide: ^1.59.0

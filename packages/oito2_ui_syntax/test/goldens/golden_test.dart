@@ -37,10 +37,6 @@ void main() {
   final schemes = {
     'light': Oito2ColorTheme.light(),
     'dark': Oito2ColorTheme.dark(),
-    'dracula': Oito2ColorTheme.fromPreset(Oito2ThemePreset.dracula),
-    'everforest_light': Oito2ColorTheme.fromPreset(
-      Oito2ThemePreset.everforestLight,
-    ),
   };
   for (final MapEntry(key: name, value: colors) in schemes.entries) {
     testWidgets('code block in $name', (tester) async {

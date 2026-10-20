@@ -20,6 +20,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
+import '../support/sample_roles.dart';
+
 /// The largest share of differing pixels a golden comparison accepts,
 /// absorbing anti-aliasing differences between machines.
 const double goldenTolerance = 0.005;
@@ -35,9 +37,9 @@ final Map<String, Oito2ColorTheme> goldenSchemes = {
   'light': Oito2ColorTheme.light(),
   'dark': Oito2ColorTheme.dark(),
   'light_high_contrast': Oito2ColorTheme.light(highContrast: true),
-  'rose_pine_dawn': Oito2ColorTheme.fromPreset(Oito2ThemePreset.rosePineDawn),
-  'catppuccin_mocha': Oito2ColorTheme.fromPreset(
-    Oito2ThemePreset.catppuccinMocha,
+  'roles_light_dim': Oito2ColorTheme.fromRoles(sampleRoles['roles light dim']!),
+  'roles_dark_lifted': Oito2ColorTheme.fromRoles(
+    sampleRoles['roles dark lifted']!,
   ),
 };
 

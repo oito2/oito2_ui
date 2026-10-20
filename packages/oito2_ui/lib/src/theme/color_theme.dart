@@ -13,19 +13,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:catppuccin_flutter/catppuccin_flutter.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../foundation/contrast.dart';
 import '../syntax/syntax_palette.dart';
 import '../tokens/colors.dart';
-import '../tokens/palettes/dracula_palette.dart';
-import '../tokens/palettes/everforest_palette.dart';
-import '../tokens/palettes/nord_palette.dart';
-import '../tokens/palettes/rose_pine_palette.dart';
+import 'color_roles.dart';
 import 'extensions/chrome_colors.dart';
 import 'extensions/semantic_colors.dart';
-import 'theme_preset.dart';
 
 const _white = Color(0xFFFFFFFF);
 const _transparent = Color(0x00000000);
@@ -34,8 +29,9 @@ const _transparent = Color(0x00000000);
 /// [colorScheme] plus the oito2 [semantic], [chrome] and [syntax] colors.
 ///
 /// Build it with [Oito2ColorTheme.light] or [Oito2ColorTheme.dark] for the
-/// oito2 base scheme, or with [Oito2ColorTheme.fromPreset] for a named
-/// preset.
+/// oito2 base scheme, or with [Oito2ColorTheme.fromRoles] for any other
+/// color theme family, such as the presets of `oito2_ui_themes` or an
+/// app's own brand colors.
 ///
 /// Text roles are guaranteed to reach WCAG AA: `onSurface`,
 /// `onSurfaceVariant` and every [semantic] and [syntax] color reach
@@ -51,7 +47,6 @@ class Oito2ColorTheme {
     required this.semantic,
     required this.chrome,
     required this.syntax,
-    this.preset,
     this.highContrast = false,
   });
 
@@ -71,13 +66,26 @@ class Oito2ColorTheme {
   factory Oito2ColorTheme.dark({Color? accent, bool highContrast = false}) =>
       _base(Brightness.dark, accent, highContrast);
 
-  /// The scheme of [preset].
+  /// A scheme derived from the role colors of a theme family.
   ///
-  /// The primary fill keeps the preset's official signature color, with
-  /// black or white text, whichever contrasts more.
-  factory Oito2ColorTheme.fromPreset(Oito2ThemePreset preset) {
-    final roles = _presetRoles(preset);
-    final isDark = preset.isDark;
+  /// The primary fill keeps [Oito2ColorRoles.primary] as given, with black
+  /// or white text, whichever contrasts more. The surface ladder runs from
+  /// the lower of the background and the card up to the secondary surface:
+  ///
+  /// - `surfaceContainerLowest` is whichever of `background` and `card`
+  ///   sits lower (darker in a dark scheme, lighter in a light one);
+  /// - `surfaceContainerLow` is halfway from it to `card`;
+  /// - `surfaceContainer` and `surfaceContainerHigh` are one third and two
+  ///   thirds of the way from `card` to `secondary`, and
+  ///   `surfaceContainerHighest` is `secondary`;
+  /// - the title bar is `surfaceContainer`;
+  /// - `outline` is `border` mixed 35% toward `foreground`, and
+  ///   `outlineVariant` is `border`.
+  ///
+  /// Text, outline, semantic and syntax colors are then adjusted to reach
+  /// WCAG AA against every surface, as for the base scheme.
+  factory Oito2ColorTheme.fromRoles(Oito2ColorRoles roles) {
+    final isDark = roles.brightness == Brightness.dark;
     final card = roles.card;
     final secondary = roles.secondary;
     final lowest = _isLowerLayer(roles.background, card, isDark)
@@ -85,8 +93,7 @@ class Oito2ColorTheme {
         : card;
     final container = Color.lerp(card, secondary, 1 / 3)!;
     return _assemble(
-      brightness: preset.brightness,
-      preset: preset,
+      brightness: roles.brightness,
       highContrast: false,
       primary: roles.primary,
       onPrimary: Oito2Contrast.foregroundFor(roles.primary),
@@ -124,9 +131,6 @@ class Oito2ColorTheme {
 
   /// Syntax highlighting colors.
   final Oito2SyntaxPalette syntax;
-
-  /// The preset this theme was built from, or null for the base scheme.
-  final Oito2ThemePreset? preset;
 
   /// Whether this theme uses the high-contrast targets.
   final bool highContrast;
@@ -222,7 +226,6 @@ class Oito2ColorTheme {
     required Color warning,
     required Color info,
     required Oito2SyntaxPalette syntax,
-    Oito2ThemePreset? preset,
   }) {
     final isDark = brightness == Brightness.dark;
     final textTarget = highContrast
@@ -293,7 +296,6 @@ class Oito2ColorTheme {
     return Oito2ColorTheme(
       colorScheme: colorScheme,
       background: background,
-      preset: preset,
       highContrast: highContrast,
       semantic: Oito2SemanticColors(
         primaryText: primaryText,
@@ -326,7 +328,6 @@ class Oito2ColorTheme {
       other.semantic == semantic &&
       other.chrome == chrome &&
       other.syntax == syntax &&
-      other.preset == preset &&
       other.highContrast == highContrast;
 
   @override
@@ -336,7 +337,6 @@ class Oito2ColorTheme {
     semantic,
     chrome,
     syntax,
-    preset,
     highContrast,
   );
 }
@@ -369,258 +369,4 @@ const _baseDarkSyntax = Oito2SyntaxPalette(
   attribute: Color(0xFFF9F06B),
   constant: Color(0xFFF49AC1),
   invalid: Color(0xFFFF7B63),
-);
-
-/// The roles a preset family defines, before contrast adjustments.
-class _PresetRoles {
-  const _PresetRoles({
-    required this.background,
-    required this.card,
-    required this.foreground,
-    required this.primary,
-    required this.secondary,
-    required this.mutedForeground,
-    required this.destructive,
-    required this.border,
-    required this.success,
-    required this.warning,
-    required this.info,
-    required this.syntax,
-  });
-
-  final Color background;
-  final Color card;
-  final Color foreground;
-  final Color primary;
-  final Color secondary;
-  final Color mutedForeground;
-  final Color destructive;
-  final Color border;
-  final Color success;
-  final Color warning;
-  final Color info;
-  final Oito2SyntaxPalette syntax;
-}
-
-_PresetRoles _presetRoles(Oito2ThemePreset preset) => switch (preset) {
-  Oito2ThemePreset.everforestLight => _everforest(
-    Oito2EverforestPalette.light,
-    isDark: false,
-  ),
-  Oito2ThemePreset.everforestDark => _everforest(
-    Oito2EverforestPalette.dark,
-    isDark: true,
-  ),
-  Oito2ThemePreset.rosePine => _rosePine(Oito2RosePinePalette.main),
-  Oito2ThemePreset.rosePineMoon => _rosePine(Oito2RosePinePalette.moon),
-  Oito2ThemePreset.rosePineDawn => _rosePine(Oito2RosePinePalette.dawn),
-  Oito2ThemePreset.nordDark => _nordDark(),
-  Oito2ThemePreset.nordLight => _nordLight(),
-  Oito2ThemePreset.dracula => _dracula(),
-  Oito2ThemePreset.alucard => _alucard(),
-  Oito2ThemePreset.catppuccinLatte => _catppuccin(catppuccin.latte),
-  Oito2ThemePreset.catppuccinFrappe => _catppuccin(catppuccin.frappe),
-  Oito2ThemePreset.catppuccinMacchiato => _catppuccin(catppuccin.macchiato),
-  Oito2ThemePreset.catppuccinMocha => _catppuccin(catppuccin.mocha),
-};
-
-/// Everforest: every role is official.
-_PresetRoles _everforest(Oito2EverforestPalette p, {required bool isDark}) =>
-    _PresetRoles(
-      background: p.bgDim,
-      card: p.bg0,
-      foreground: p.fg,
-      primary: p.green,
-      secondary: p.bg1,
-      mutedForeground: p.grey1,
-      destructive: p.red,
-      border: isDark ? p.bg2 : p.bg3,
-      success: p.green,
-      warning: p.yellow,
-      info: p.blue,
-      syntax: Oito2SyntaxPalette(
-        foreground: p.fg,
-        comment: p.grey1,
-        keyword: p.red,
-        string: p.aqua,
-        number: p.purple,
-        function: p.green,
-        type: p.yellow,
-        tag: p.orange,
-        attribute: p.blue,
-        constant: p.purple,
-        invalid: p.red,
-      ),
-    );
-
-/// Rosé Pine: every role is official; `overlay` serves as both secondary
-/// surface and border.
-_PresetRoles _rosePine(Oito2RosePinePalette p) => _PresetRoles(
-  background: p.base,
-  card: p.surface,
-  foreground: p.text,
-  primary: p.pine,
-  secondary: p.overlay,
-  mutedForeground: p.muted,
-  destructive: p.love,
-  border: p.overlay,
-  success: p.foam,
-  warning: p.gold,
-  info: p.iris,
-  syntax: Oito2SyntaxPalette(
-    foreground: p.text,
-    comment: p.muted,
-    keyword: p.pine,
-    string: p.gold,
-    number: p.gold,
-    function: p.rose,
-    type: p.foam,
-    tag: p.foam,
-    attribute: p.iris,
-    constant: p.gold,
-    invalid: p.love,
-  ),
-);
-
-/// Nord, dark: every role is official.
-_PresetRoles _nordDark() => const _PresetRoles(
-  background: Oito2NordPalette.nord0,
-  card: Oito2NordPalette.nord1,
-  foreground: Oito2NordPalette.nord4,
-  primary: Oito2NordPalette.nord8,
-  secondary: Oito2NordPalette.nord2,
-  mutedForeground: Oito2NordPalette.nord3,
-  destructive: Oito2NordPalette.nord11,
-  border: Oito2NordPalette.nord3,
-  success: Oito2NordPalette.nord14,
-  warning: Oito2NordPalette.nord13,
-  info: Oito2NordPalette.nord9,
-  syntax: Oito2SyntaxPalette(
-    foreground: Oito2NordPalette.nord4,
-    comment: Oito2NordPalette.nord3,
-    keyword: Oito2NordPalette.nord9,
-    string: Oito2NordPalette.nord14,
-    number: Oito2NordPalette.nord15,
-    function: Oito2NordPalette.nord8,
-    type: Oito2NordPalette.nord7,
-    tag: Oito2NordPalette.nord9,
-    attribute: Oito2NordPalette.nord7,
-    constant: Oito2NordPalette.nord12,
-    invalid: Oito2NordPalette.nord11,
-  ),
-);
-
-/// Nord, light: an unofficial derivation that swaps Polar Night and Snow
-/// Storm and uses `nord10` as primary for contrast on a light background.
-_PresetRoles _nordLight() => const _PresetRoles(
-  background: Oito2NordPalette.nord6,
-  card: Oito2NordPalette.nord5,
-  foreground: Oito2NordPalette.nord0,
-  primary: Oito2NordPalette.nord10,
-  secondary: Oito2NordPalette.nord4,
-  mutedForeground: Oito2NordPalette.nord3,
-  destructive: Oito2NordPalette.nord11,
-  border: Oito2NordPalette.nord4,
-  success: Oito2NordPalette.nord14,
-  warning: Oito2NordPalette.nord12,
-  info: Oito2NordPalette.nord10,
-  syntax: Oito2SyntaxPalette(
-    foreground: Oito2NordPalette.nord0,
-    comment: Oito2NordPalette.nord3,
-    keyword: Oito2NordPalette.nord10,
-    string: Oito2NordPalette.nord14,
-    number: Oito2NordPalette.nord15,
-    function: Oito2NordPalette.nord8,
-    type: Oito2NordPalette.nord7,
-    tag: Oito2NordPalette.nord10,
-    attribute: Oito2NordPalette.nord7,
-    constant: Oito2NordPalette.nord12,
-    invalid: Oito2NordPalette.nord11,
-  ),
-);
-
-/// Dracula: `background`, `currentLine` (card) and the accents are
-/// official. Dracula has no third surface layer, so the secondary surface
-/// is derived 12% from `currentLine` toward `foreground`, and the border
-/// 15%.
-_PresetRoles _dracula() {
-  const p = Oito2DraculaPalette.dracula;
-  return _PresetRoles(
-    background: p.background,
-    card: p.currentLine,
-    foreground: p.foreground,
-    primary: p.purple,
-    secondary: Color.lerp(p.currentLine, p.foreground, 0.12)!,
-    mutedForeground: p.comment,
-    destructive: p.red,
-    border: Color.lerp(p.currentLine, p.foreground, 0.15)!,
-    success: p.green,
-    warning: p.yellow,
-    info: p.cyan,
-    syntax: _draculaSyntax(p),
-  );
-}
-
-/// Alucard: `background` and the accents are official. Alucard has no
-/// second surface layer, so the card is the background itself, the
-/// secondary surface is derived 6% from `background` toward `foreground`,
-/// and the border 15%.
-_PresetRoles _alucard() {
-  const p = Oito2DraculaPalette.alucard;
-  return _PresetRoles(
-    background: p.background,
-    card: p.background,
-    foreground: p.foreground,
-    primary: p.purple,
-    secondary: Color.lerp(p.background, p.foreground, 0.06)!,
-    mutedForeground: p.comment,
-    destructive: p.red,
-    border: Color.lerp(p.background, p.foreground, 0.15)!,
-    success: p.green,
-    warning: p.orange,
-    info: p.cyan,
-    syntax: _draculaSyntax(p),
-  );
-}
-
-Oito2SyntaxPalette _draculaSyntax(Oito2DraculaPalette p) => Oito2SyntaxPalette(
-  foreground: p.foreground,
-  comment: p.comment,
-  keyword: p.pink,
-  string: p.yellow,
-  number: p.purple,
-  function: p.green,
-  type: p.cyan,
-  tag: p.pink,
-  attribute: p.green,
-  constant: p.purple,
-  invalid: p.red,
-);
-
-/// Catppuccin: every role is official, read from `catppuccin_flutter`.
-_PresetRoles _catppuccin(Flavor f) => _PresetRoles(
-  background: f.mantle,
-  card: f.base,
-  foreground: f.text,
-  primary: f.mauve,
-  secondary: f.surface0,
-  mutedForeground: f.overlay0,
-  destructive: f.red,
-  border: f.surface1,
-  success: f.green,
-  warning: f.yellow,
-  info: f.blue,
-  syntax: Oito2SyntaxPalette(
-    foreground: f.text,
-    comment: f.overlay2,
-    keyword: f.mauve,
-    string: f.green,
-    number: f.peach,
-    function: f.blue,
-    type: f.yellow,
-    tag: f.blue,
-    attribute: f.yellow,
-    constant: f.peach,
-    invalid: f.red,
-  ),
 );

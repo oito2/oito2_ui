@@ -15,6 +15,7 @@
 
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
+import 'package:oito2_ui_themes/oito2_ui_themes.dart';
 
 /// The user-selected appearance of the showcase.
 @immutable
@@ -57,7 +58,7 @@ class ShowcaseOptions {
   /// The resolved colors for [brightness] with the [system] accent and
   /// contrast preferences.
   Oito2ColorTheme colorsFor(Brightness brightness, Oito2SystemSettings system) {
-    if (preset case final preset?) return Oito2ColorTheme.fromPreset(preset);
+    if (preset case final preset?) return preset.colors;
     final color = accentFor(system);
     final contrast = highContrast || system.highContrast;
     return brightness == Brightness.dark

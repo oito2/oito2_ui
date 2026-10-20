@@ -19,6 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
+import '../support/sample_roles.dart';
 import 'test_app.dart';
 
 BorderSide _side(WidgetTester tester, Finder finder) {
@@ -112,51 +113,51 @@ void main() {
   });
 
   group('info', () {
-    for (final scheme in [
-      Oito2ColorTheme.light(),
-      Oito2ColorTheme.dark(),
-      Oito2ColorTheme.fromPreset(Oito2ThemePreset.dracula),
-      Oito2ColorTheme.fromPreset(Oito2ThemePreset.everforestLight),
-    ]) {
+    final schemes = {
+      'light': Oito2ColorTheme.light(),
+      'dark': Oito2ColorTheme.dark(),
+      for (final MapEntry(key: name, value: roles) in sampleRoles.entries)
+        name: Oito2ColorTheme.fromRoles(roles),
+    };
+    for (final MapEntry(key: name, value: scheme) in schemes.entries) {
       for (final type in Oito2InfoType.values) {
-        testWidgets(
-          '${type.name} box title is readable in ${scheme.preset?.name ?? scheme.brightness.name}',
-          (tester) async {
-            await pumpOito2(
-              tester,
-              Oito2InfoBox(
-                type: type,
-                title: const Text('Title'),
-                subtitle: const Text('Body'),
-              ),
-              colors: scheme,
-            );
-            final container = tester.widget<Container>(
-              find
-                  .descendant(
-                    of: find.byType(Oito2InfoBox),
-                    matching: find.byType(Container),
-                  )
-                  .first,
-            );
-            final background = (container.decoration! as BoxDecoration).color!;
-            final title = DefaultTextStyle.of(
-              tester.element(find.text('Title')),
-            ).style.color!;
-            final body = DefaultTextStyle.of(tester.element(find.text('Body')))
-                .style
-                .color!;
-            expect(
-              Oito2Contrast.ratio(title, background),
-              greaterThanOrEqualTo(Oito2Contrast.textAA),
-            );
-            expect(
-              Oito2Contrast.ratio(body, background),
-              greaterThanOrEqualTo(Oito2Contrast.textAA),
-            );
-            expect(find.byIcon(type.icon), findsOneWidget);
-          },
-        );
+        testWidgets('${type.name} box title is readable in $name', (
+          tester,
+        ) async {
+          await pumpOito2(
+            tester,
+            Oito2InfoBox(
+              type: type,
+              title: const Text('Title'),
+              subtitle: const Text('Body'),
+            ),
+            colors: scheme,
+          );
+          final container = tester.widget<Container>(
+            find
+                .descendant(
+                  of: find.byType(Oito2InfoBox),
+                  matching: find.byType(Container),
+                )
+                .first,
+          );
+          final background = (container.decoration! as BoxDecoration).color!;
+          final title = DefaultTextStyle.of(tester.element(find.text('Title')))
+              .style
+              .color!;
+          final body = DefaultTextStyle.of(tester.element(find.text('Body')))
+              .style
+              .color!;
+          expect(
+            Oito2Contrast.ratio(title, background),
+            greaterThanOrEqualTo(Oito2Contrast.textAA),
+          );
+          expect(
+            Oito2Contrast.ratio(body, background),
+            greaterThanOrEqualTo(Oito2Contrast.textAA),
+          );
+          expect(find.byIcon(type.icon), findsOneWidget);
+        });
       }
     }
 

@@ -27,9 +27,7 @@ const _linux = Oito2Platform(
 Future<void> _pump(WidgetTester tester, Widget child, {ThemeData? theme}) {
   return tester.pumpWidget(
     MaterialApp(
-      theme:
-          theme ??
-          Oito2Theme.fromPreset(Oito2ThemePreset.nordDark, platform: _linux),
+      theme: theme ?? Oito2Theme.dark(platform: _linux),
       home: Scaffold(body: Center(child: child)),
     ),
   );
@@ -48,7 +46,7 @@ void main() {
       tester,
       const Oito2CodeBlock(code: 'final x = 1;', language: 'dart'),
     );
-    final colors = Oito2ColorTheme.fromPreset(Oito2ThemePreset.nordDark);
+    final colors = Oito2ColorTheme.dark();
     expect(_codeSpan(tester).style!.color, colors.syntax.foreground);
     expect(_codeSpan(tester).toPlainText(), 'final x = 1;');
     final material = tester.widget<Material>(

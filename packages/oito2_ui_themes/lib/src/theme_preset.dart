@@ -14,8 +14,15 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:material_ui/material_ui.dart';
+import 'package:oito2_ui/oito2_ui.dart';
+
+import 'preset_roles.dart';
 
 /// The named color presets, each with a fixed signature color.
+///
+/// Each preset maps the official palette of its theme family to
+/// [Oito2ColorRoles], from which [colors] derives a complete
+/// [Oito2ColorTheme] and [theme] a Material `ThemeData`.
 enum Oito2ThemePreset {
   /// Everforest Light.
   everforestLight(isDark: false),
@@ -64,4 +71,15 @@ enum Oito2ThemePreset {
 
   /// The brightness of this preset.
   Brightness get brightness => isDark ? Brightness.dark : Brightness.light;
+
+  /// The role colors of this preset, as published by its theme family.
+  Oito2ColorRoles get roles => presetRoles(this);
+
+  /// The complete colors of this preset.
+  Oito2ColorTheme get colors => Oito2ColorTheme.fromRoles(roles);
+
+  /// The oito2 Material theme of this preset for [platform], which
+  /// defaults to [Oito2Platform.current].
+  ThemeData theme({Oito2Platform? platform}) =>
+      Oito2Theme.fromColors(colors, platform: platform);
 }
