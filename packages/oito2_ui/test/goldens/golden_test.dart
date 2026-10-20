@@ -398,6 +398,108 @@ class _ShortcutsScene extends StatelessWidget {
   }
 }
 
+final _goldenDesktops = Oito2ListCollection(
+  const [
+    ('gnome', 'GNOME', 'GTK'),
+    ('xfce', 'Xfce', 'GTK'),
+    ('kde', 'KDE Plasma', 'Qt'),
+    ('lxqt', 'LXQt', 'Qt'),
+  ],
+  valueOf: (d) => d.$1,
+  labelOf: (d) => d.$2,
+  groupOf: (d) => d.$3,
+  isDisabled: (d) => d.$1 == 'lxqt',
+);
+
+/// The select, a list tile list, an expansion panel and a tab bar.
+class _MenusListsScene extends StatelessWidget {
+  const _MenusListsScene();
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.all(Oito2Spacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: Oito2Spacing.md,
+            children: [
+              Row(
+                spacing: Oito2Spacing.md,
+                children: [
+                  Oito2Select(
+                    collection: _goldenDesktops,
+                    value: 'kde',
+                    onChanged: (_) {},
+                  ),
+                  Oito2Select(
+                    collection: _goldenDesktops,
+                    value: null,
+                    placeholder: const Text('Desktop'),
+                    onChanged: (_) {},
+                  ),
+                  const Expanded(
+                    child: Oito2TabBar(
+                      tabs: [
+                        Oito2Tab(label: Text('General')),
+                        Oito2Tab(label: Text('Appearance')),
+                        Oito2Tab(label: Text('About')),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: Oito2Spacing.md,
+                children: [
+                  Expanded(
+                    child: Oito2TileList(
+                      children: [
+                        Oito2ListTile.square(
+                          leading: const Icon(LucideIcons.wifi),
+                          titleText: 'Wi-Fi',
+                          subtitleText: 'Connected',
+                          trailing: const Icon(LucideIcons.chevron_right),
+                          onTap: () {},
+                        ),
+                        Oito2ListTile.square(
+                          leading: const Icon(LucideIcons.bluetooth),
+                          titleText: 'Bluetooth',
+                          selected: true,
+                          onTap: () {},
+                        ),
+                        Oito2ListTile.square(
+                          leading: const Icon(LucideIcons.plane),
+                          titleText: 'Airplane mode',
+                          enabled: false,
+                          onTap: () {},
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Expanded(
+                    child: Oito2ExpansionPanel(
+                      initiallyExpanded: {0},
+                      headers: [Text('Privacy'), Text('Storage')],
+                      children: [
+                        Text('Location services are off.'),
+                        Text('12 GB used of 64 GB.'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 void main() {
   for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
     testWidgets('components in $name', (tester) async {
@@ -444,6 +546,50 @@ void main() {
         name: 'progress_buttons_$name',
         colors: colors,
         size: const Size(480, 200),
+      );
+    });
+  }
+
+  for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
+    testWidgets('menus and lists in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _MenusListsScene(),
+        name: 'menus_lists_$name',
+        colors: colors,
+        size: const Size(720, 320),
+      );
+    });
+  }
+
+  for (final name in ['light', 'dark']) {
+    testWidgets('open select in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(Oito2Spacing.lg),
+            child: Align(
+              alignment: AlignmentDirectional.topStart,
+              child: Builder(
+                builder: (context) {
+                  WidgetsBinding.instance.addPostFrameCallback(
+                    (_) => tester.tap(find.text('KDE Plasma')),
+                  );
+                  return Oito2Select(
+                    collection: _goldenDesktops,
+                    value: 'kde',
+                    onChanged: (_) {},
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+        name: 'open_select_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(320, 280),
+        wholeApp: true,
       );
     });
   }

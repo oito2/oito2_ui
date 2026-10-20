@@ -31,18 +31,21 @@ import 'pages/diagonal_clip_page.dart';
 import 'pages/dialog_title_bar_page.dart';
 import 'pages/draggable_page.dart';
 import 'pages/expandable_page.dart';
+import 'pages/expansion_panel_page.dart';
 import 'pages/focus_border_page.dart';
 import 'pages/format_page.dart';
 import 'pages/foundation_page.dart';
 import 'pages/icon_button_page.dart';
 import 'pages/highlighted_text_page.dart';
 import 'pages/info_page.dart';
+import 'pages/list_tile_page.dart';
 import 'pages/master_detail_page.dart';
 import 'pages/material_page.dart';
 import 'pages/navigation_page.dart';
 import 'pages/option_button_page.dart';
 import 'pages/page_indicator_page.dart';
 import 'pages/paned_view_page.dart';
+import 'pages/popup_menu_page.dart';
 import 'pages/progress_page.dart';
 import 'pages/radio_button_page.dart';
 import 'pages/radio_page.dart';
@@ -54,6 +57,7 @@ import 'pages/split_button_page.dart';
 import 'pages/switch_button_page.dart';
 import 'pages/swap_page.dart';
 import 'pages/switch_page.dart';
+import 'pages/tab_bar_page.dart';
 import 'pages/tile_page.dart';
 import 'pages/title_bar_page.dart';
 import 'pages/toggle_button_page.dart';
@@ -203,6 +207,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const ExpandablePage()),
   ),
   ShowcasePage(
+    title: 'Oito2ExpansionPanel',
+    icon: LucideIcons.list_collapse,
+    source: 'expansion_panel_page.dart',
+    builder: _page(const ExpansionPanelPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2FocusBorder',
     icon: LucideIcons.focus,
     source: 'focus_border_page.dart',
@@ -225,6 +235,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.info,
     source: 'info_page.dart',
     builder: _page(const InfoPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2ListTile',
+    icon: LucideIcons.rows_3,
+    source: 'list_tile_page.dart',
+    builder: _page(const ListTilePage()),
   ),
   ShowcasePage(
     title: 'Oito2MasterDetailPage',
@@ -255,6 +271,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.square_split_horizontal,
     source: 'paned_view_page.dart',
     builder: _page(const PanedViewPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2PopupMenuButton',
+    icon: LucideIcons.square_chevron_down,
+    source: 'popup_menu_page.dart',
+    builder: _page(const PopupMenuPage()),
   ),
   ShowcasePage(
     title: 'Oito2ProgressIndicator',
@@ -327,6 +349,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.toggle_right,
     source: 'switch_button_page.dart',
     builder: _page(const SwitchButtonPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2TabBar',
+    icon: LucideIcons.panels_top_left,
+    source: 'tab_bar_page.dart',
+    builder: _page(const TabBarPage()),
   ),
   ShowcasePage(
     title: 'Oito2Tile',

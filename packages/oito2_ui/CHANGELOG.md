@@ -53,6 +53,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `showOito2CommandPalette`: searchable, keyboard-driven, with shortcuts shown.
 - `Oito2Localizations` strings for relative times, the command palette and the shortcut recorder.
 - `intl` is now a direct dependency.
+- `Oito2PopupMenuButton`: a field-shaped button that opens a menu, sized like the text fields and opened with a click, Enter, Space or the Down arrow. Its items are `Oito2CheckedMenuItem` (single choice) and `Oito2MultiSelectMenuItem` (multiple choices; the menu stays open). `Oito2Select` picks a value from an `Oito2ListCollection`, with group headings and disabled items.
+- `Oito2ListTile` and `Oito2ListTile.square`: interactive rows with hover, selected and keyboard focus states, sized per platform.
+- `Oito2ExpansionPanel`: an accordion of `Oito2Expandable` sections, with an option to keep several open.
+- `Oito2TabBar` and `Oito2Tab`: tabs with a sliding rounded pill, at the control height, fixed or scrollable.
 - `Oito2Localizations` with English and Brazilian Portuguese strings for the window controls, pane resizing, split button menus, chip bar arrows, page indicators and segmented entries; English is the fallback when its delegate isn't registered. `Oito2WindowControlLabels` and the widgets' label parameters now only override these strings.
 
 ### Changed
