@@ -296,6 +296,67 @@ class _TogglesScene extends StatelessWidget {
   }
 }
 
+/// Progress indicators (determinate and still indeterminate) and the icon,
+/// back and close buttons.
+class _ProgressButtonsScene extends StatelessWidget {
+  const _ProgressButtonsScene();
+
+  @override
+  Widget build(BuildContext context) {
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(disableAnimations: true),
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.all(Oito2Spacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: Oito2Spacing.md,
+            children: [
+              const Row(
+                spacing: Oito2Spacing.md,
+                children: [
+                  Oito2CircularProgressIndicator(value: 0),
+                  Oito2CircularProgressIndicator(value: 0.3),
+                  Oito2CircularProgressIndicator(value: 0.75),
+                  Oito2CircularProgressIndicator(value: 1),
+                  Oito2CircularProgressIndicator(),
+                  Oito2CircularProgressIndicator(size: 16, strokeWidth: 2),
+                ],
+              ),
+              const Oito2LinearProgressIndicator(value: 0.4),
+              const Oito2LinearProgressIndicator(),
+              Row(
+                children: [
+                  Oito2IconButton(
+                    icon: const Icon(LucideIcons.settings),
+                    onPressed: () {},
+                  ),
+                  Oito2IconButton(
+                    icon: const Icon(LucideIcons.bold),
+                    isSelected: true,
+                    onPressed: () {},
+                  ),
+                  Oito2IconButton(
+                    icon: const Icon(LucideIcons.italic),
+                    isSelected: false,
+                    onPressed: () {},
+                  ),
+                  const Oito2IconButton(
+                    icon: Icon(LucideIcons.trash),
+                    onPressed: null,
+                  ),
+                  const Oito2BackButton(),
+                  const Oito2CloseButton(),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 void main() {
   for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
     testWidgets('components in $name', (tester) async {
@@ -330,6 +391,18 @@ void main() {
         name: 'toggles_$name',
         colors: colors,
         size: const Size(640, 360),
+      );
+    });
+  }
+
+  for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
+    testWidgets('progress and buttons in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _ProgressButtonsScene(),
+        name: 'progress_buttons_$name',
+        colors: colors,
+        size: const Size(480, 200),
       );
     });
   }

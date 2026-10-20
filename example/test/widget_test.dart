@@ -117,7 +117,7 @@ void main() {
     await tester.tap(find.text('Oito2CheckButton'));
     await _settle(tester);
     expect(find.text('Show hidden files'), findsOneWidget);
-    await tester.tap(find.byType(BackButton));
+    await tester.tap(find.byType(Oito2BackButton));
     await _settle(tester);
     expect(find.text('Show hidden files'), findsNothing);
     expect(find.text('Oito2CheckButton'), findsOneWidget);

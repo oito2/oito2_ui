@@ -55,6 +55,19 @@ class ComponentThemeContext {
   /// Whether the primary input is touch.
   bool get isTouch => platform.usesTouchInput;
 
+  /// The fill of selected controls and progress: the primary tone when it
+  /// stands out 3:1 from the surface, the page background and the
+  /// container surface, otherwise the text-safe [indicator].
+  Color get selectedFill =>
+      Oito2Contrast.minRatio(scheme.primary, [
+            scheme.surface,
+            colors.background,
+            scheme.surfaceContainer,
+          ]) >=
+          Oito2Contrast.nonTextAA
+      ? scheme.primary
+      : indicator;
+
   /// Height of buttons and single-line fields.
   double get controlHeight =>
       isTouch ? Oito2Sizes.touchButtonHeight : Oito2Sizes.buttonHeight;

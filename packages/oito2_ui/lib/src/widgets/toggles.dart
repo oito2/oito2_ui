@@ -18,7 +18,6 @@ import 'dart:ui' show PathMetric;
 import 'package:flutter/semantics.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../foundation/contrast.dart';
 import '../tokens/geometry.dart';
 import 'utilities.dart';
 import 'widget_helpers.dart';
@@ -37,22 +36,11 @@ class _ToggleColors {
   factory _ToggleColors.of(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final primaryText = semanticColorsOf(context).primaryText;
-    // The selected fill is the scheme's primary fill, with its on-color,
-    // when it stands out 3:1 from the surfaces; otherwise the text-safe
-    // primary tone, which always does.
-    final usePrimary =
-        Oito2Contrast.minRatio(scheme.primary, [
-          scheme.surface,
-          theme.scaffoldBackgroundColor,
-          scheme.surfaceContainer,
-        ]) >=
-        Oito2Contrast.nonTextAA;
-    final fill = usePrimary ? scheme.primary : primaryText;
+    final (:fill, :onFill) = selectedFillOf(context);
     return _ToggleColors._(
       fill: fill,
-      onFill: usePrimary ? scheme.onPrimary : Oito2Contrast.foregroundFor(fill),
-      focus: primaryText,
+      onFill: onFill,
+      focus: semanticColorsOf(context).primaryText,
       outline: scheme.outline,
       surface: scheme.surfaceContainerLowest,
       track: scheme.surfaceContainerHighest,

@@ -15,6 +15,7 @@
 
 import 'package:material_ui/material_ui.dart';
 
+import '../foundation/contrast.dart';
 import '../theme/extensions/chrome_colors.dart';
 import '../theme/extensions/semantic_colors.dart';
 import '../tokens/colors.dart';
@@ -43,6 +44,28 @@ Oito2SemanticColors semanticColorsOf(BuildContext context) {
 Oito2ChromeColors chromeColorsOf(BuildContext context) {
   return Oito2ChromeColors.maybeOf(context) ??
       Oito2ChromeColors.fromTheme(Theme.of(context));
+}
+
+/// The fill and mark colors of selected controls and progress indicators
+/// in the closest theme.
+///
+/// The fill is the scheme's primary tone, with its on-color, when it
+/// stands out 3:1 from the surface, the scaffold background and the
+/// container surface; otherwise it is the text-safe primary tone, which
+/// always does, with black or white, whichever contrasts more.
+({Color fill, Color onFill}) selectedFillOf(BuildContext context) {
+  final theme = Theme.of(context);
+  final scheme = theme.colorScheme;
+  final usePrimary =
+      Oito2Contrast.minRatio(scheme.primary, [
+        scheme.surface,
+        theme.scaffoldBackgroundColor,
+        scheme.surfaceContainer,
+      ]) >=
+      Oito2Contrast.nonTextAA;
+  if (usePrimary) return (fill: scheme.primary, onFill: scheme.onPrimary);
+  final text = semanticColorsOf(context).primaryText;
+  return (fill: text, onFill: Oito2Contrast.foregroundFor(text));
 }
 
 /// An [IconButton] placed inside a text field decoration, such as a clear

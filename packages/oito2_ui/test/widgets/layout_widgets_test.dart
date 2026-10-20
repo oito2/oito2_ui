@@ -169,7 +169,7 @@ void main() {
       await pumpOito2(tester, page(), scaffold: false);
       expect(find.text('Item 0'), findsOneWidget);
       expect(find.text('Body 0'), findsOneWidget);
-      expect(find.byType(BackButton), findsNothing);
+      expect(find.byType(Oito2BackButton), findsNothing);
 
       await tester.tap(find.text('Item 2'));
       await tester.pumpAndSettle();
@@ -194,10 +194,10 @@ void main() {
       await tester.tap(find.text('Item 1'));
       await tester.pumpAndSettle();
       expect(find.text('Body 1'), findsOneWidget);
-      expect(find.byType(BackButton), findsOneWidget);
+      expect(find.byType(Oito2BackButton), findsOneWidget);
       expect(controller.index, 1);
 
-      await tester.tap(find.byType(BackButton));
+      await tester.tap(find.byType(Oito2BackButton));
       await tester.pumpAndSettle();
       expect(find.text('Body 1'), findsNothing);
       expect(find.text('Item 1'), findsOneWidget);

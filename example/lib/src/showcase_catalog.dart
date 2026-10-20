@@ -31,6 +31,7 @@ import 'pages/draggable_page.dart';
 import 'pages/expandable_page.dart';
 import 'pages/focus_border_page.dart';
 import 'pages/foundation_page.dart';
+import 'pages/icon_button_page.dart';
 import 'pages/info_page.dart';
 import 'pages/master_detail_page.dart';
 import 'pages/material_page.dart';
@@ -38,6 +39,7 @@ import 'pages/navigation_page.dart';
 import 'pages/option_button_page.dart';
 import 'pages/page_indicator_page.dart';
 import 'pages/paned_view_page.dart';
+import 'pages/progress_page.dart';
 import 'pages/radio_button_page.dart';
 import 'pages/radio_page.dart';
 import 'pages/search_field_page.dart';
@@ -199,6 +201,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const FocusBorderPage()),
   ),
   ShowcasePage(
+    title: 'Oito2IconButton',
+    icon: LucideIcons.square_mouse_pointer,
+    source: 'icon_button_page.dart',
+    builder: _page(const IconButtonPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2InfoBox',
     icon: LucideIcons.info,
     source: 'info_page.dart',
@@ -233,6 +241,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.square_split_horizontal,
     source: 'paned_view_page.dart',
     builder: _page(const PanedViewPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2ProgressIndicator',
+    icon: LucideIcons.loader_circle,
+    source: 'progress_page.dart',
+    builder: _page(const ProgressPage()),
   ),
   ShowcasePage(
     title: 'Oito2Radio',

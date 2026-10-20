@@ -238,7 +238,7 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
               return Oito2DetailPage(
                 appBar: Oito2WindowTitleBar(
                   platform: platform,
-                  leading: canPop ? const BackButton() : null,
+                  leading: canPop ? const Oito2BackButton() : null,
                   title: Text(page.title),
                   actions: [
                     IconButton(
@@ -331,7 +331,7 @@ class _HighContrastButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final options = controller.value;
-    return IconButton(
+    return Oito2IconButton(
       tooltip: 'High contrast',
       isSelected: options.highContrast,
       icon: const Icon(LucideIcons.contrast),
@@ -459,7 +459,11 @@ class _SourceDialogState extends State<_SourceDialog> {
                   AsyncSnapshot(:final error?) => Center(
                     child: Text('Could not load the source: $error'),
                   ),
-                  _ => const Center(child: CircularProgressIndicator()),
+                  _ => const Center(
+                    child: Oito2CircularProgressIndicator(
+                      semanticsLabel: 'Loading the source',
+                    ),
+                  ),
                 },
               ),
             ),

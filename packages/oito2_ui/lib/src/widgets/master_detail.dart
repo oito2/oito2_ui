@@ -18,6 +18,7 @@ import 'package:material_ui/material_ui.dart';
 import '../tokens/geometry.dart';
 import '../window/title_bar.dart';
 import '../window/title_bar_theme.dart';
+import 'icon_buttons.dart';
 import 'page_controller.dart';
 import 'paned_view.dart';
 import 'widget_helpers.dart';
@@ -356,7 +357,7 @@ class Oito2DetailPage extends StatelessWidget {
                 actions: actions,
                 style: Oito2TitleBarStyle.undecorated,
                 isDraggable: false,
-                leading: canPop ? const BackButton() : null,
+                leading: canPop ? const Oito2BackButton() : null,
               ));
     return Scaffold(
       appBar: bar,
