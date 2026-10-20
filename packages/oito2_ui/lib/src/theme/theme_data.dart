@@ -28,6 +28,7 @@ import 'components/menus.dart';
 import 'components/navigation.dart';
 import 'components/selection.dart';
 import 'components/surfaces.dart';
+import 'extensions/navigation_themes.dart';
 import 'extensions/progress_theme.dart';
 import 'extensions/syntax_theme.dart';
 import 'page_transitions.dart';
@@ -128,6 +129,8 @@ abstract final class Oito2Theme {
         colors.semantic,
         colors.chrome,
         Oito2SyntaxTheme(colors.syntax),
+        Oito2NavigationPageThemeData(railColor: colors.chrome.sidebar),
+        Oito2MasterDetailThemeData(paneColor: colors.chrome.mainbar),
         Oito2ProgressIndicatorThemeData(
           color: c.selectedFill,
           trackColor: scheme.surfaceContainerHighest,

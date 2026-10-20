@@ -13,14 +13,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
 import '../window/title_bar.dart';
+import '../theme/extensions/navigation_themes.dart';
 import '../window/title_bar_theme.dart';
 import 'icon_buttons.dart';
 import 'page_controller.dart';
 import 'paned_view.dart';
+import 'utilities.dart';
 import 'widget_helpers.dart';
 
 /// Builds the master list tile at [index]; [selected] tells whether its
@@ -50,10 +53,10 @@ class Oito2MasterDetailPage extends StatefulWidget {
     this.emptyBuilder,
     this.initialIndex,
     this.onSelected,
-    this.breakpoint = 620,
-    this.paneSize = 280,
-    this.minPaneSize = 180,
-    this.minPageSize = 320,
+    this.breakpoint,
+    this.paneSize,
+    this.minPaneSize,
+    this.minPageSize,
     this.resizable = true,
     this.masterBar,
     this.masterFooter,
@@ -83,17 +86,19 @@ class Oito2MasterDetailPage extends StatefulWidget {
   /// Called when the user selects an item.
   final ValueChanged<int>? onSelected;
 
-  /// The width at which the master and the detail are shown side by side.
-  final double breakpoint;
+  /// The width at which the master and the detail are shown side by side;
+  /// defaults to the theme's [Oito2MasterDetailThemeData], then 620.
+  final double? breakpoint;
 
-  /// The initial master pane width.
-  final double paneSize;
+  /// The initial master pane width; defaults to the theme, then 280.
+  final double? paneSize;
 
-  /// The smallest master pane width.
-  final double minPaneSize;
+  /// The smallest master pane width; defaults to the theme, then 180.
+  final double? minPaneSize;
 
-  /// The smallest width left for the detail page.
-  final double minPageSize;
+  /// The smallest width left for the detail page; defaults to the theme,
+  /// then 320.
+  final double? minPageSize;
 
   /// Whether the master pane can be resized.
   final bool resizable;
@@ -154,28 +159,23 @@ class _Oito2MasterDetailPageState extends State<Oito2MasterDetailPage> {
   }
 
   Widget _master(BuildContext context, double width, int selected) {
+    final theme = Oito2MasterDetailThemeData.maybeOf(context);
     final bar = widget.masterBar;
     final footer = widget.masterFooter;
     return Material(
-      color: chromeColorsOf(context).mainbar,
+      color: theme?.paneColor ?? chromeColorsOf(context).mainbar,
       child: Column(
         children: [
           ?bar,
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(Oito2Spacing.sm),
-              itemCount: _controller.length,
-              itemBuilder: (context, index) => Oito2MasterTileScope(
-                index: index,
-                selected: index == selected,
-                onTap: () => _select(index),
-                child: widget.tileBuilder(
-                  context,
-                  index,
-                  index == selected,
-                  width,
-                ),
-              ),
+            child: Oito2MasterListView(
+              length: _controller.length,
+              selectedIndex: selected,
+              availableWidth: width,
+              padding: theme?.listPadding,
+              tileSpacing: theme?.tileSpacing,
+              onTap: _select,
+              builder: widget.tileBuilder,
             ),
           ),
           ?footer,
@@ -191,13 +191,14 @@ class _Oito2MasterDetailPageState extends State<Oito2MasterDetailPage> {
     }
     return LayoutBuilder(
       builder: (context, constraints) {
+        final theme = Oito2MasterDetailThemeData.maybeOf(context);
         final width = constraints.maxWidth;
-        if (width >= widget.breakpoint) {
+        if (width >= (widget.breakpoint ?? theme?.breakpoint ?? 620)) {
           final index = _controller.hasSelection ? _controller.index : 0;
           return Oito2PanedView(
-            initialPaneSize: widget.paneSize,
-            minPaneSize: widget.minPaneSize,
-            minPageSize: widget.minPageSize,
+            initialPaneSize: widget.paneSize ?? theme?.paneSize ?? 280,
+            minPaneSize: widget.minPaneSize ?? theme?.minPaneSize ?? 180,
+            minPageSize: widget.minPageSize ?? theme?.minPageSize ?? 320,
             resizable: widget.resizable,
             pane: LayoutBuilder(
               builder: (context, pane) =>
@@ -228,6 +229,162 @@ class _Oito2MasterDetailPageState extends State<Oito2MasterDetailPage> {
           },
         );
       },
+    );
+  }
+}
+
+/// The list of an [Oito2MasterDetailPage] master pane: one tile per item,
+/// built by [builder], with undershoot shadows at the scroll edges.
+///
+/// It keeps the selected tile in view: when [selectedIndex] changes, or
+/// on first show, the list scrolls just enough to reveal it, even if it
+/// starts far below the visible part.
+class Oito2MasterListView extends StatefulWidget {
+  /// Creates a master list.
+  const Oito2MasterListView({
+    super.key,
+    required this.length,
+    required this.selectedIndex,
+    required this.builder,
+    required this.onTap,
+    required this.availableWidth,
+    this.padding,
+    this.tileSpacing,
+  });
+
+  /// The number of tiles.
+  final int length;
+
+  /// The selected tile, or -1 for none.
+  final int selectedIndex;
+
+  /// Builds a tile; [Oito2MasterTile]s take their selection and tap action
+  /// from the surrounding [Oito2MasterTileScope].
+  final Oito2MasterTileBuilder builder;
+
+  /// Called with the index of an activated tile.
+  final ValueChanged<int> onTap;
+
+  /// The width of the pane, passed to [builder].
+  final double availableWidth;
+
+  /// Space around the list; defaults to 8 pixels.
+  final EdgeInsetsGeometry? padding;
+
+  /// Space between tiles; defaults to 4 pixels.
+  final double? tileSpacing;
+
+  @override
+  State<Oito2MasterListView> createState() => _Oito2MasterListViewState();
+}
+
+class _Oito2MasterListViewState extends State<Oito2MasterListView> {
+  final _scroll = ScrollController();
+  final _selectedKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _revealSoon(animate: false);
+  }
+
+  @override
+  void didUpdateWidget(Oito2MasterListView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedIndex != widget.selectedIndex) _revealSoon();
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _revealSoon({bool animate = true}) {
+    if (widget.selectedIndex < 0) return;
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _reveal(animate: animate, retries: 3),
+    );
+  }
+
+  /// Centers the selected tile when it isn't fully visible. A tile far
+  /// below the built part of the list isn't built yet, so the list first
+  /// jumps near it, using the average tile height, and retries on the next
+  /// frame.
+  void _reveal({required bool animate, required int retries}) {
+    if (!mounted || !_scroll.hasClients) return;
+    final position = _scroll.position;
+    if (!position.hasContentDimensions) {
+      if (retries > 0) {
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _reveal(animate: animate, retries: retries - 1),
+        );
+      }
+      return;
+    }
+    final tile = _selectedKey.currentContext?.findRenderObject();
+    if (tile == null) {
+      if (retries == 0 || widget.length == 0) return;
+      final extent = position.maxScrollExtent + position.viewportDimension;
+      final estimate = extent / widget.length * widget.selectedIndex;
+      _scroll.jumpTo(
+        (estimate - position.viewportDimension / 2).clamp(
+          0,
+          position.maxScrollExtent,
+        ),
+      );
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _reveal(animate: false, retries: retries - 1),
+      );
+      return;
+    }
+    final viewport = RenderAbstractViewport.of(tile);
+    final atTop = viewport.getOffsetToReveal(tile, 0).offset;
+    final atBottom = viewport.getOffsetToReveal(tile, 1).offset;
+    if (position.pixels >= atBottom && position.pixels <= atTop) return;
+    final target = viewport
+        .getOffsetToReveal(tile, 0.5)
+        .offset
+        .clamp(position.minScrollExtent, position.maxScrollExtent);
+    final reduced = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    if (animate && !reduced) {
+      _scroll.animateTo(
+        target,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      _scroll.jumpTo(target);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = widget.tileSpacing ?? Oito2Spacing.xs;
+    return Oito2ScrollViewUndershoot(
+      child: ListView.builder(
+        controller: _scroll,
+        padding: widget.padding ?? const EdgeInsets.all(Oito2Spacing.sm),
+        itemCount: widget.length,
+        itemBuilder: (context, index) {
+          final selected = index == widget.selectedIndex;
+          return Padding(
+            key: selected ? _selectedKey : null,
+            padding: EdgeInsets.only(top: index == 0 ? 0 : spacing),
+            child: Oito2MasterTileScope(
+              index: index,
+              selected: selected,
+              onTap: () => widget.onTap(index),
+              child: widget.builder(
+                context,
+                index,
+                selected,
+                widget.availableWidth,
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -298,16 +455,13 @@ class Oito2MasterTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scope = Oito2MasterTileScope.maybeOf(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Oito2Spacing.xxs),
-      child: ListTile(
-        leading: leading,
-        title: title,
-        subtitle: subtitle,
-        trailing: trailing,
-        selected: selected ?? scope?.selected ?? false,
-        onTap: onTap ?? scope?.onTap,
-      ),
+    return ListTile(
+      leading: leading,
+      title: title,
+      subtitle: subtitle,
+      trailing: trailing,
+      selected: selected ?? scope?.selected ?? false,
+      onTap: onTap ?? scope?.onTap,
     );
   }
 }

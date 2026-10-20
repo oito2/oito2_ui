@@ -224,6 +224,63 @@ void main() {
     });
   });
 
+  group('Oito2MasterListView', () {
+    Widget page({int? initial, double? breakpoint}) => Oito2MasterDetailPage(
+      length: 60,
+      initialIndex: initial,
+      breakpoint: breakpoint,
+      tileBuilder: (context, index, selected, width) =>
+          Oito2MasterTile(title: Text('Item $index')),
+      pageBuilder: (context, index) => Text('Detail $index'),
+    );
+
+    testWidgets('shows a selected tile that starts far below', (tester) async {
+      await pumpOito2(tester, page(initial: 45), size: const Size(900, 500));
+      await tester.pumpAndSettle();
+      final tile = tester.getRect(find.text('Item 45'));
+      expect(tile.top, greaterThanOrEqualTo(0));
+      expect(tile.bottom, lessThanOrEqualTo(500));
+      expect(find.text('Detail 45'), findsOneWidget);
+    });
+
+    testWidgets('does not scroll when the selected tile is visible', (
+      tester,
+    ) async {
+      await pumpOito2(tester, page(initial: 1), size: const Size(900, 500));
+      await tester.pumpAndSettle();
+      final before = tester.getTopLeft(find.text('Item 1'));
+      await tester.tap(find.text('Item 3'));
+      await tester.pumpAndSettle();
+      expect(tester.getTopLeft(find.text('Item 1')), before);
+    });
+
+    testWidgets('the theme sets the breakpoint', (tester) async {
+      final base = Oito2Theme.light(platform: testPlatform);
+      tester.view.physicalSize = const Size(900, 500);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: base.copyWith(
+            extensions: [
+              ...base.extensions.values,
+              const Oito2MasterDetailThemeData(breakpoint: 1000),
+            ],
+          ),
+          home: Scaffold(body: page()),
+        ),
+      );
+      expect(find.byType(Oito2PanedView), findsNothing);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: base,
+          home: Scaffold(body: page(breakpoint: 1000)),
+        ),
+      );
+      expect(find.byType(Oito2PanedView), findsNothing);
+    });
+  });
+
   group('Oito2NavigationPage', () {
     const items = [
       Oito2NavigationItem(icon: Icon(Icons.home_outlined), label: 'Home'),
@@ -244,7 +301,7 @@ void main() {
     testWidgets('wide layouts use a rail', (tester) async {
       final selected = <int>[];
       await pumpOito2(tester, nav(onSelected: selected.add));
-      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.byType(Oito2NavigationRail), findsOneWidget);
       expect(find.text('Page Home'), findsOneWidget);
       await tester.tap(find.text('Settings'));
       await tester.pumpAndSettle();
@@ -281,11 +338,63 @@ void main() {
       expect(find.text('Page 29'), findsOneWidget);
     });
 
-    testWidgets('narrow layouts use a bottom bar', (tester) async {
-      await pumpOito2(tester, nav(), size: const Size(400, 700));
+    testWidgets('the rail shows a selected destination far below', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        Oito2NavigationPage(
+          items: [
+            for (var i = 0; i < 40; i++)
+              Oito2NavigationItem(
+                icon: const Icon(Icons.circle),
+                label: 'Item $i',
+              ),
+          ],
+          initialIndex: 35,
+          pageBuilder: (context, index) => Text('Page $index'),
+        ),
+        size: const Size(800, 400),
+      );
+      await tester.pumpAndSettle();
+      final item = tester.getRect(find.text('Item 35'));
+      expect(item.top, greaterThanOrEqualTo(0));
+      expect(item.bottom, lessThanOrEqualTo(400));
+    });
+
+    testWidgets('narrow touch layouts use a bottom bar', (tester) async {
+      tester.view.physicalSize = const Size(400, 700);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: Oito2Theme.light(
+            platform: const Oito2Platform(
+              targetPlatform: TargetPlatform.android,
+              isWeb: false,
+            ),
+          ),
+          home: Scaffold(body: nav()),
+        ),
+      );
       expect(find.byType(NavigationBar), findsOneWidget);
-      expect(find.byType(NavigationRail), findsNothing);
+      expect(find.byType(Oito2NavigationRail), findsNothing);
       await tester.tap(find.text('Search'));
+      await tester.pumpAndSettle();
+      expect(find.text('Page Search'), findsOneWidget);
+    });
+
+    testWidgets('narrow pointer layouts use a compact rail with tooltips', (
+      tester,
+    ) async {
+      await pumpOito2(tester, nav(), size: const Size(400, 700));
+      final rail = tester.widget<Oito2NavigationRail>(
+        find.byType(Oito2NavigationRail),
+      );
+      expect(rail.style, Oito2NavigationRailStyle.compact);
+      expect(find.byTooltip('Search'), findsOneWidget);
+      expect(find.text('Search'), findsNothing);
+      await tester.tap(find.byTooltip('Search'));
       await tester.pumpAndSettle();
       expect(find.text('Page Search'), findsOneWidget);
     });
@@ -293,15 +402,50 @@ void main() {
     testWidgets('the rail extends past the extended breakpoint', (
       tester,
     ) async {
+      Oito2NavigationRailStyle style() => tester
+          .widget<Oito2NavigationRail>(find.byType(Oito2NavigationRail))
+          .style;
       await pumpOito2(tester, nav(extended: 900));
-      expect(
-        tester.widget<NavigationRail>(find.byType(NavigationRail)).extended,
-        isTrue,
-      );
+      expect(style(), Oito2NavigationRailStyle.labelledExtended);
       await pumpOito2(tester, nav(extended: 1200));
+      await tester.pumpAndSettle();
+      expect(style(), Oito2NavigationRailStyle.labelled);
+    });
+
+    testWidgets('rail items read as selectable buttons', (tester) async {
+      await pumpOito2(tester, nav());
       expect(
-        tester.widget<NavigationRail>(find.byType(NavigationRail)).extended,
-        isFalse,
+        tester.getSemantics(find.byType(Oito2NavigationRailItem).first),
+        isSemantics(
+          label: 'Home',
+          isButton: true,
+          hasSelectedState: true,
+          isSelected: true,
+        ),
+      );
+    });
+
+    testWidgets('the theme sets the breakpoints', (tester) async {
+      final base = Oito2Theme.light(platform: testPlatform);
+      tester.view.physicalSize = const Size(1000, 600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: base.copyWith(
+            extensions: [
+              ...base.extensions.values,
+              const Oito2NavigationPageThemeData(extendedBreakpoint: 800),
+            ],
+          ),
+          home: Scaffold(body: nav()),
+        ),
+      );
+      expect(
+        tester
+            .widget<Oito2NavigationRail>(find.byType(Oito2NavigationRail))
+            .style,
+        Oito2NavigationRailStyle.labelledExtended,
       );
     });
   });

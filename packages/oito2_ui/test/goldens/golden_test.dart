@@ -543,6 +543,36 @@ class _CarouselScene extends StatelessWidget {
   }
 }
 
+/// The three navigation rail styles side by side.
+class _RailsScene extends StatelessWidget {
+  const _RailsScene();
+
+  @override
+  Widget build(BuildContext context) {
+    const items = [
+      Oito2NavigationItem(icon: Icon(LucideIcons.house), label: 'Home'),
+      Oito2NavigationItem(icon: Icon(LucideIcons.search), label: 'Search'),
+      Oito2NavigationItem(icon: Icon(LucideIcons.settings), label: 'Settings'),
+    ];
+    return Scaffold(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final style in Oito2NavigationRailStyle.values) ...[
+            Oito2NavigationRail(
+              items: items,
+              selectedIndex: 1,
+              style: style,
+              onDestinationSelected: (_) {},
+            ),
+            const VerticalDivider(width: 1),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 void main() {
   for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
     testWidgets('components in $name', (tester) async {
@@ -649,6 +679,18 @@ void main() {
         colors: goldenSchemes[name]!,
         size: const Size(320, 240),
         wholeApp: true,
+      );
+    });
+  }
+
+  for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
+    testWidgets('navigation rails in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _RailsScene(),
+        name: 'rails_$name',
+        colors: colors,
+        size: const Size(460, 240),
       );
     });
   }

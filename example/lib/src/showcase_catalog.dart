@@ -44,6 +44,7 @@ import 'pages/list_tile_page.dart';
 import 'pages/master_detail_page.dart';
 import 'pages/material_page.dart';
 import 'pages/navigation_page.dart';
+import 'pages/navigation_rail_page.dart';
 import 'pages/option_button_page.dart';
 import 'pages/page_indicator_page.dart';
 import 'pages/paned_view_page.dart';
@@ -267,6 +268,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.panel_left,
     source: 'navigation_page.dart',
     builder: _page(const NavigationPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2NavigationRail',
+    icon: LucideIcons.panel_left_open,
+    source: 'navigation_rail_page.dart',
+    builder: _page(const NavigationRailPage()),
   ),
   ShowcasePage(
     title: 'Oito2OptionButton',

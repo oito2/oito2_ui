@@ -160,7 +160,7 @@ void main() {
     await _settle(tester);
     await tester.tap(find.byType(Oito2WindowControl).last);
     await _settle(tester);
-    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(Oito2NavigationRail), findsOneWidget);
     expect(find.byType(Oito2MasterDetailPage), findsNothing);
   });
 

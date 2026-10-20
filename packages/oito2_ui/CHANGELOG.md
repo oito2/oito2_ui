@@ -63,6 +63,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2PageIndicatorLayout` (`fixed`, `stepped`, `bounded`) for `Oito2PageIndicator.layout`.
 - `Oito2Autocomplete`: suggestions from an `Oito2ListCollection`, filtered ignoring case and accents, with highlighted matches, keyboard selection and a live region announcing the number of results.
 - `Oito2Localizations.noResults` and `resultCount`.
+- `Oito2NavigationRail` and `Oito2NavigationRailItem`:
+  - three `Oito2NavigationRailStyle`s (compact with tooltips, labelled, extended), with an animated width;
+  - a rounded selection pill, the keyboard focus ring and selectable-button semantics;
+  - scrolling with undershoot shadows, keeping the selected destination in view.
+- `Oito2NavigationPage` uses `Oito2NavigationRail`: a compact rail on narrow pointer layouts (the bottom bar stays for narrow touch layouts), labelled up to the extended breakpoint. `railStyle` forces a style; the Material `labelType` parameter is gone.
+- `Oito2MasterListView`, the master list of `Oito2MasterDetailPage`, now public. It scrolls the selected tile into view, even one far below.
+- `Oito2NavigationPageThemeData` and `Oito2MasterDetailThemeData` theme extensions, registered by `Oito2Theme`, for the breakpoints, pane sizes, spacing, colors and separator. The page parameters now default to them.
 - `Oito2Localizations` with English and Brazilian Portuguese strings for the window controls, pane resizing, split button menus, chip bar arrows, page indicators and segmented entries; English is the fallback when its delegate isn't registered. `Oito2WindowControlLabels` and the widgets' label parameters now only override these strings.
 
 ### Changed

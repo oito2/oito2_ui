@@ -15,41 +15,23 @@
 
 import 'package:material_ui/material_ui.dart';
 
+import '../theme/extensions/navigation_themes.dart';
+import 'navigation_rail.dart';
 import 'page_controller.dart';
 
-/// A destination of an [Oito2NavigationPage].
-@immutable
-class Oito2NavigationItem {
-  /// Creates a navigation item.
-  const Oito2NavigationItem({
-    required this.icon,
-    required this.label,
-    this.selectedIcon,
-    this.tooltip,
-  });
-
-  /// The icon, usually an [Icon].
-  final Widget icon;
-
-  /// The icon shown while selected; defaults to [icon].
-  final Widget? selectedIcon;
-
-  /// The destination name, shown as a label and announced to assistive
-  /// technologies.
-  final String label;
-
-  /// The tooltip; defaults to [label] where labels are hidden.
-  final String? tooltip;
-}
-
-/// Top-level navigation between pages that adapts to the available width.
+/// Top-level navigation between pages that adapts to the available width
+/// and the input.
 ///
-/// Below [compactBreakpoint] wide, the destinations are a bottom
-/// [NavigationBar]. Otherwise they are a [NavigationRail] at the start
-/// side, extended with labels beside the icons at or above
-/// [extendedBreakpoint] when given; the rail scrolls when its items don't
-/// fit the height. Both use the theme's chrome colors through
-/// `Oito2Theme`. The selected page fades in when it changes.
+/// - On touch platforms below [compactBreakpoint] wide, the destinations
+///   are a bottom [NavigationBar].
+/// - Otherwise they are an [Oito2NavigationRail] at the start side:
+///   compact (icons only) below [compactBreakpoint] on pointer platforms,
+///   labelled up to [extendedBreakpoint], and extended (labels beside the
+///   icons) from it. [railStyle] forces one style.
+///
+/// Breakpoints, the rail color and padding and the separator default to
+/// the theme's [Oito2NavigationPageThemeData]. The selected page fades in
+/// when it changes.
 class Oito2NavigationPage extends StatefulWidget {
   /// Creates a navigation page.
   const Oito2NavigationPage({
@@ -61,9 +43,9 @@ class Oito2NavigationPage extends StatefulWidget {
     this.onSelected,
     this.leading,
     this.trailing,
-    this.compactBreakpoint = 600,
+    this.compactBreakpoint,
     this.extendedBreakpoint,
-    this.labelType = NavigationRailLabelType.all,
+    this.railStyle,
   });
 
   /// The destinations, in order.
@@ -87,15 +69,16 @@ class Oito2NavigationPage extends StatefulWidget {
   /// A widget below the rail destinations.
   final Widget? trailing;
 
-  /// The width below which the destinations move to a bottom bar.
-  final double compactBreakpoint;
+  /// The width below which touch layouts use a bottom bar and pointer
+  /// layouts a compact rail; defaults to the theme, then 600.
+  final double? compactBreakpoint;
 
-  /// The width at which the rail shows labels beside the icons; null
-  /// keeps it compact.
+  /// The width at which the rail shows labels beside the icons; defaults
+  /// to the theme, where null never extends it.
   final double? extendedBreakpoint;
 
-  /// How the compact rail shows labels.
-  final NavigationRailLabelType labelType;
+  /// Forces a rail style instead of choosing it by width.
+  final Oito2NavigationRailStyle? railStyle;
 
   @override
   State<Oito2NavigationPage> createState() => _Oito2NavigationPageState();
@@ -155,10 +138,16 @@ class _Oito2NavigationPageState extends State<Oito2NavigationPage> {
       ),
     );
 
+    final theme = Oito2NavigationPageThemeData.maybeOf(context);
+    final compact = widget.compactBreakpoint ?? theme?.compactBreakpoint ?? 600;
+    final extended = widget.extendedBreakpoint ?? theme?.extendedBreakpoint;
+    final touch =
+        Theme.of(context).materialTapTargetSize == MaterialTapTargetSize.padded;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        if (width < widget.compactBreakpoint) {
+        if (touch && width < compact && widget.railStyle == null) {
           return Column(
             children: [
               Expanded(child: page),
@@ -178,39 +167,29 @@ class _Oito2NavigationPageState extends State<Oito2NavigationPage> {
             ],
           );
         }
-        final extended =
-            widget.extendedBreakpoint != null &&
-            width >= widget.extendedBreakpoint!;
-        final rail = NavigationRail(
-          selectedIndex: index,
-          onDestinationSelected: _select,
-          extended: extended,
-          labelType: extended ? NavigationRailLabelType.none : widget.labelType,
-          leading: widget.leading,
-          trailing: widget.trailing,
-          destinations: [
-            for (final item in widget.items)
-              NavigationRailDestination(
-                icon: Tooltip(
-                  message: item.tooltip ?? item.label,
-                  child: item.icon,
-                ),
-                selectedIcon: item.selectedIcon,
-                label: Text(item.label),
-              ),
-          ],
-        );
+        final style =
+            widget.railStyle ??
+            (width < compact
+                ? Oito2NavigationRailStyle.compact
+                : extended != null && width >= extended
+                ? Oito2NavigationRailStyle.labelledExtended
+                : Oito2NavigationRailStyle.labelled);
         return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: IntrinsicHeight(child: rail),
-                ),
-              ),
+            Oito2NavigationRail(
+              items: widget.items,
+              selectedIndex: index,
+              onDestinationSelected: _select,
+              style: style,
+              leading: widget.leading,
+              trailing: widget.trailing,
+              backgroundColor: theme?.railColor,
+              padding:
+                  theme?.railPadding ?? const EdgeInsets.symmetric(vertical: 8),
             ),
-            const VerticalDivider(width: 1),
+            if (theme?.includeSeparator ?? true)
+              const VerticalDivider(width: 1),
             Expanded(child: page),
           ],
         );
