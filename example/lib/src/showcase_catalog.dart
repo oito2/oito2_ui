@@ -19,6 +19,7 @@ import 'package:oito2_ui/oito2_ui.dart';
 import 'pages/angle_slider_page.dart';
 import 'pages/animated_icon_page.dart';
 import 'pages/autocomplete_page.dart';
+import 'pages/avatar_page.dart';
 import 'pages/banner_page.dart';
 import 'pages/border_container_page.dart';
 import 'pages/calendar_page.dart';
@@ -33,6 +34,7 @@ import 'pages/color_picker_page.dart';
 import 'pages/colors_page.dart';
 import 'pages/commands_page.dart';
 import 'pages/context_menu_page.dart';
+import 'pages/copy_button_page.dart';
 import 'pages/date_time_entry_page.dart';
 import 'pages/diagonal_clip_page.dart';
 import 'pages/dialog_title_bar_page.dart';
@@ -40,6 +42,7 @@ import 'pages/draggable_page.dart';
 import 'pages/editable_label_page.dart';
 import 'pages/expandable_page.dart';
 import 'pages/expansion_panel_page.dart';
+import 'pages/floating_panel_page.dart';
 import 'pages/focus_border_page.dart';
 import 'pages/format_page.dart';
 import 'pages/foundation_page.dart';
@@ -48,8 +51,10 @@ import 'pages/highlighted_text_page.dart';
 import 'pages/hover_card_page.dart';
 import 'pages/icon_button_page.dart';
 import 'pages/info_page.dart';
+import 'pages/json_tree_view_page.dart';
 import 'pages/list_box_page.dart';
 import 'pages/list_tile_page.dart';
+import 'pages/marquee_page.dart';
 import 'pages/master_detail_page.dart';
 import 'pages/material_page.dart';
 import 'pages/navigation_page.dart';
@@ -57,6 +62,7 @@ import 'pages/navigation_rail_page.dart';
 import 'pages/number_entry_page.dart';
 import 'pages/option_button_page.dart';
 import 'pages/page_indicator_page.dart';
+import 'pages/pagination_page.dart';
 import 'pages/paned_view_page.dart';
 import 'pages/password_field_page.dart';
 import 'pages/pin_entry_page.dart';
@@ -73,18 +79,23 @@ import 'pages/segmented_entry_page.dart';
 import 'pages/selectable_container_page.dart';
 import 'pages/sheet_page.dart';
 import 'pages/split_button_page.dart';
+import 'pages/splitter_page.dart';
+import 'pages/steps_page.dart';
 import 'pages/swap_page.dart';
 import 'pages/switch_button_page.dart';
 import 'pages/switch_page.dart';
 import 'pages/tab_bar_page.dart';
+import 'pages/table_of_contents_page.dart';
 import 'pages/tags_field_page.dart';
 import 'pages/tile_page.dart';
+import 'pages/timer_page.dart';
 import 'pages/title_bar_page.dart';
 import 'pages/toast_page.dart';
 import 'pages/toggle_button_page.dart';
 import 'pages/toggle_list_tile_page.dart';
 import 'pages/tokens_page.dart';
 import 'pages/tour_page.dart';
+import 'pages/tree_view_page.dart';
 import 'pages/typography_page.dart';
 import 'pages/undershoot_page.dart';
 import 'pages/watermark_page.dart';
@@ -169,6 +180,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const AutocompletePage()),
   ),
   ShowcasePage(
+    title: 'Oito2Avatar',
+    icon: LucideIcons.circle_user_round,
+    source: 'avatar_page.dart',
+    builder: _page(const AvatarPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2Banner',
     icon: LucideIcons.panel_top,
     source: 'banner_page.dart',
@@ -241,6 +258,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const ContextMenuPage()),
   ),
   ShowcasePage(
+    title: 'Oito2CopyButton',
+    icon: LucideIcons.copy,
+    source: 'copy_button_page.dart',
+    builder: _page(const CopyButtonPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2DateTimeEntry',
     icon: LucideIcons.calendar_clock,
     source: 'date_time_entry_page.dart',
@@ -283,6 +306,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const ExpansionPanelPage()),
   ),
   ShowcasePage(
+    title: 'Oito2FloatingPanel',
+    icon: LucideIcons.app_window,
+    source: 'floating_panel_page.dart',
+    builder: _page(const FloatingPanelPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2FocusBorder',
     icon: LucideIcons.focus,
     source: 'focus_border_page.dart',
@@ -313,6 +342,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const InfoPage()),
   ),
   ShowcasePage(
+    title: 'Oito2JsonTreeView',
+    icon: LucideIcons.braces,
+    source: 'json_tree_view_page.dart',
+    builder: _page(const JsonTreeViewPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2ListBox',
     icon: LucideIcons.list,
     source: 'list_box_page.dart',
@@ -323,6 +358,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.rows_3,
     source: 'list_tile_page.dart',
     builder: _page(const ListTilePage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Marquee',
+    icon: LucideIcons.text_cursor_input,
+    source: 'marquee_page.dart',
+    builder: _page(const MarqueePage()),
   ),
   ShowcasePage(
     title: 'Oito2MasterDetailPage',
@@ -359,6 +400,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.ellipsis,
     source: 'page_indicator_page.dart',
     builder: _page(const PageIndicatorPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Pagination',
+    icon: LucideIcons.chevrons_left_right_ellipsis,
+    source: 'pagination_page.dart',
+    builder: _page(const PaginationPage()),
   ),
   ShowcasePage(
     title: 'Oito2PanedView',
@@ -463,6 +510,18 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const SplitButtonPage()),
   ),
   ShowcasePage(
+    title: 'Oito2Splitter',
+    icon: LucideIcons.columns_3,
+    source: 'splitter_page.dart',
+    builder: _page(const SplitterPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Steps',
+    icon: LucideIcons.list_ordered,
+    source: 'steps_page.dart',
+    builder: _page(const StepsPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2Swap',
     icon: LucideIcons.repeat_2,
     source: 'swap_page.dart',
@@ -487,6 +546,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const TabBarPage()),
   ),
   ShowcasePage(
+    title: 'Oito2TableOfContents',
+    icon: LucideIcons.table_of_contents,
+    source: 'table_of_contents_page.dart',
+    builder: _page(const TableOfContentsPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2TagsField',
     icon: LucideIcons.tags,
     source: 'tags_field_page.dart',
@@ -497,6 +562,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.layout_list,
     source: 'tile_page.dart',
     builder: _page(const TilePage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2TimerText',
+    icon: LucideIcons.timer,
+    source: 'timer_page.dart',
+    builder: _page(const TimerPage()),
   ),
   ShowcasePage(
     title: 'Oito2TitleBar',
@@ -521,6 +592,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.route,
     source: 'tour_page.dart',
     builder: _page(const TourPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2TreeView',
+    icon: LucideIcons.folder_tree,
+    source: 'tree_view_page.dart',
+    builder: _page(const TreeViewPage()),
   ),
   ShowcasePage(
     title: 'Oito2Watermark',

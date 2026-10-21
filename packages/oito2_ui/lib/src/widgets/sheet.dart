@@ -16,7 +16,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
@@ -591,7 +590,7 @@ class _SheetFrameState extends State<_SheetFrame>
       onHorizontalDragEnd: _bottom
           ? null
           : (d) => _onDragEnd(d, forward, window.height),
-      child: _SizeReporter(
+      child: SizeReporter(
         onSize: (size) => _extent = _bottom ? size.height : size.width,
         child: sheet,
       ),
@@ -627,34 +626,5 @@ class _SheetFrameState extends State<_SheetFrame>
         child: sheet,
       ),
     );
-  }
-}
-
-/// Reports the size of [child] after each layout.
-class _SizeReporter extends SingleChildRenderObjectWidget {
-  const _SizeReporter({required this.onSize, super.child});
-
-  final ValueChanged<Size> onSize;
-
-  @override
-  _RenderSizeReporter createRenderObject(BuildContext context) =>
-      _RenderSizeReporter(onSize);
-
-  @override
-  void updateRenderObject(
-    BuildContext context,
-    _RenderSizeReporter renderObject,
-  ) => renderObject.onSize = onSize;
-}
-
-class _RenderSizeReporter extends RenderProxyBox {
-  _RenderSizeReporter(this.onSize);
-
-  ValueChanged<Size> onSize;
-
-  @override
-  void performLayout() {
-    super.performLayout();
-    onSize(size);
   }
 }

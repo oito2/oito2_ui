@@ -204,6 +204,45 @@ abstract class Oito2Localizations {
 
   /// The accessibility label of a week number.
   String weekNumber(int week);
+
+  /// Announced after a copy to the clipboard.
+  String get copied;
+
+  /// The label of a page button, such as "Page 3".
+  String pageNumber(int page);
+
+  /// The label of a page size selector.
+  String get itemsPerPage;
+
+  /// The position of a step, such as "Step 2 of 4".
+  String stepOf(int step, int count);
+
+  /// The state of a finished step.
+  String get stepCompleted;
+
+  /// The state of the current step.
+  String get stepCurrent;
+
+  /// The state of a step that needs attention.
+  String get stepError;
+
+  /// Announced while content loads.
+  String get loading;
+
+  /// An online presence status.
+  String get statusOnline;
+
+  /// An away presence status.
+  String get statusAway;
+
+  /// A busy presence status.
+  String get statusBusy;
+
+  /// An offline presence status.
+  String get statusOffline;
+
+  /// The label of a bubble standing for [count] hidden items.
+  String moreCount(int count);
 }
 
 /// The units of a relative time, from [second] to [year].
@@ -382,6 +421,44 @@ class Oito2LocalizationsEn extends Oito2Localizations {
 
   @override
   String weekNumber(int week) => 'Week $week';
+  @override
+  String get copied => 'Copied';
+
+  @override
+  String pageNumber(int page) => 'Page $page';
+
+  @override
+  String get itemsPerPage => 'Items per page';
+
+  @override
+  String stepOf(int step, int count) => 'Step $step of $count';
+
+  @override
+  String get stepCompleted => 'Completed';
+
+  @override
+  String get stepCurrent => 'Current';
+
+  @override
+  String get stepError => 'Needs attention';
+
+  @override
+  String get loading => 'Loading';
+
+  @override
+  String get statusOnline => 'Online';
+
+  @override
+  String get statusAway => 'Away';
+
+  @override
+  String get statusBusy => 'Busy';
+
+  @override
+  String get statusOffline => 'Offline';
+
+  @override
+  String moreCount(int count) => '$count more';
 }
 
 /// The Brazilian Portuguese [Oito2Localizations].
@@ -547,6 +624,45 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String weekNumber(int week) => 'Semana $week';
+
+  @override
+  String get copied => 'Copiado';
+
+  @override
+  String pageNumber(int page) => 'Página $page';
+
+  @override
+  String get itemsPerPage => 'Itens por página';
+
+  @override
+  String stepOf(int step, int count) => 'Passo $step de $count';
+
+  @override
+  String get stepCompleted => 'Concluído';
+
+  @override
+  String get stepCurrent => 'Atual';
+
+  @override
+  String get stepError => 'Requer atenção';
+
+  @override
+  String get loading => 'Carregando';
+
+  @override
+  String get statusOnline => 'Online';
+
+  @override
+  String get statusAway => 'Ausente';
+
+  @override
+  String get statusBusy => 'Ocupado';
+
+  @override
+  String get statusOffline => 'Offline';
+
+  @override
+  String moreCount(int count) => 'Mais $count';
 }
 
 class _Oito2LocalizationsDelegate

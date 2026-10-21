@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../foundation/contrast.dart';
@@ -128,3 +130,58 @@ InputDecoration bareInputDecoration({String? hintText}) => InputDecoration(
   contentPadding: EdgeInsets.zero,
   constraints: const BoxConstraints(),
 );
+
+/// Reports the size of [child] after each layout.
+class SizeReporter extends SingleChildRenderObjectWidget {
+  /// Creates a size reporter.
+  const SizeReporter({super.key, required this.onSize, super.child});
+
+  /// Called with the child size after each layout.
+  final ValueChanged<Size> onSize;
+
+  @override
+  RenderSizeReporter createRenderObject(BuildContext context) =>
+      RenderSizeReporter(onSize);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    RenderSizeReporter renderObject,
+  ) => renderObject.onSize = onSize;
+}
+
+/// The render object of [SizeReporter].
+class RenderSizeReporter extends RenderProxyBox {
+  /// Creates the render object.
+  RenderSizeReporter(this.onSize);
+
+  /// Called with the child size after each layout.
+  ValueChanged<Size> onSize;
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    onSize(size);
+  }
+}
+
+/// Tells a double click from two single clicks on the same target without
+/// a double-tap gesture recognizer, which would delay every single click
+/// until the double-click timeout.
+class DoubleClickDetector {
+  Object? _lastTarget;
+  Duration? _lastTime;
+
+  /// Records a click on [target] at [time] and returns whether it
+  /// completes a double click.
+  bool click(Object target, Duration time) {
+    final last = _lastTime;
+    final isDouble =
+        last != null &&
+        _lastTarget == target &&
+        time - last <= kDoubleTapTimeout;
+    _lastTarget = isDouble ? null : target;
+    _lastTime = isDouble ? null : time;
+    return isDouble;
+  }
+}

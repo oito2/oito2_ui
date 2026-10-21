@@ -1,0 +1,188 @@
+// Copyright (C) 2026  oito2
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+import 'dart:async';
+
+import 'package:material_ui/material_ui.dart';
+
+/// A stopwatch, or a countdown when [countdown] is set, that notifies its
+/// listeners every [interval] while it runs.
+///
+/// A countdown stops by itself at zero and calls [onComplete]. Time is
+/// measured from the clock [now] (the system clock by default), so it
+/// stays exact however late the ticks arrive.
+class Oito2TimerController extends ChangeNotifier {
+  /// Creates a timer.
+  Oito2TimerController({
+    this.countdown,
+    this.interval = const Duration(seconds: 1),
+    this.onTick,
+    this.onComplete,
+    DateTime Function()? now,
+  }) : _now = now ?? DateTime.now,
+       assert(interval > Duration.zero);
+
+  /// The length of a countdown, or null for a stopwatch.
+  final Duration? countdown;
+
+  /// How often listeners are notified while the timer runs.
+  final Duration interval;
+
+  /// Called on every tick with [elapsed].
+  final ValueChanged<Duration>? onTick;
+
+  /// Called when a countdown reaches zero.
+  final VoidCallback? onComplete;
+
+  final DateTime Function() _now;
+  DateTime? _startedAt;
+  Duration _offset = Duration.zero;
+
+  Duration get _raw =>
+      _offset +
+      (_startedAt == null ? Duration.zero : _now().difference(_startedAt!));
+  Timer? _timer;
+  bool _completed = false;
+
+  /// The time run so far, up to [countdown].
+  Duration get elapsed {
+    final elapsed = _raw;
+    final countdown = this.countdown;
+    return countdown != null && elapsed > countdown ? countdown : elapsed;
+  }
+
+  /// The time left of a countdown, or null for a stopwatch.
+  Duration? get remaining => countdown == null ? null : countdown! - elapsed;
+
+  /// Whether the timer is running.
+  bool get isRunning => _startedAt != null;
+
+  /// Whether a countdown has reached zero.
+  bool get isCompleted => _completed;
+
+  /// Starts or resumes the timer.
+  void start() {
+    if (isRunning || _completed) return;
+    _startedAt = _now();
+    _timer = Timer.periodic(interval, (_) => _tick());
+    notifyListeners();
+  }
+
+  /// Pauses the timer.
+  void pause() {
+    if (!isRunning) return;
+    _offset = _raw;
+    _startedAt = null;
+    _timer?.cancel();
+    _timer = null;
+    notifyListeners();
+  }
+
+  /// Stops the timer and sets it back to zero.
+  void reset() {
+    _startedAt = null;
+    _timer?.cancel();
+    _timer = null;
+    _offset = Duration.zero;
+    _completed = false;
+    notifyListeners();
+  }
+
+  /// Sets the timer back to zero and starts it.
+  void restart() {
+    reset();
+    start();
+  }
+
+  void _tick() {
+    final countdown = this.countdown;
+    if (countdown != null && _raw >= countdown) {
+      _startedAt = null;
+      _offset = countdown;
+      _timer?.cancel();
+      _timer = null;
+      _completed = true;
+      onTick?.call(elapsed);
+      notifyListeners();
+      onComplete?.call();
+      return;
+    }
+    onTick?.call(elapsed);
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+}
+
+/// Formats [duration] as `m:ss`, or `h:mm:ss` from an hour, with tenths
+/// of a second when [tenths] is set.
+String oito2FormatDuration(Duration duration, {bool tenths = false}) {
+  final negative = duration.isNegative;
+  final d = duration.abs();
+  String two(int n) => n.toString().padLeft(2, '0');
+  final hours = d.inHours;
+  final minutes = d.inMinutes % 60;
+  final seconds = d.inSeconds % 60;
+  final base = hours > 0
+      ? '$hours:${two(minutes)}:${two(seconds)}'
+      : '$minutes:${two(seconds)}';
+  final fraction = tenths ? '.${(d.inMilliseconds % 1000) ~/ 100}' : '';
+  return '${negative ? '-' : ''}$base$fraction';
+}
+
+/// The time of an [Oito2TimerController] as text: the remaining time of a
+/// countdown or the elapsed time of a stopwatch, in tabular figures so the
+/// digits don't shift.
+class Oito2TimerText extends StatelessWidget {
+  /// Creates a timer text.
+  const Oito2TimerText({
+    super.key,
+    required this.controller,
+    this.style,
+    this.tenths = false,
+  });
+
+  /// The timer shown.
+  final Oito2TimerController controller;
+
+  /// The text style.
+  final TextStyle? style;
+
+  /// Whether tenths of a second show.
+  final bool tenths;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final time = controller.remaining ?? controller.elapsed;
+        // Rounds a countdown up, so it shows 0:00 only at the end.
+        final shown = controller.remaining != null && !tenths
+            ? Duration(seconds: (time.inMilliseconds / 1000).ceil())
+            : time;
+        return Text(
+          oito2FormatDuration(shown, tenths: tenths),
+          style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()])
+              .merge(style),
+        );
+      },
+    );
+  }
+}

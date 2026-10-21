@@ -15,6 +15,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
@@ -89,6 +90,7 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
   String? _active;
   String _typed = '';
   Timer? _typeTimer;
+  final _clicks = DoubleClickDetector();
 
   Oito2ListCollection<T> get _collection => widget.collection;
   Oito2SelectionController get _selection => widget.controller;
@@ -248,10 +250,15 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
       button: true,
       onTap: disabled ? null : () => _click(value),
       child: InkWell(
-        onTap: disabled ? null : () => _click(value),
-        onDoubleTap: disabled || widget.onActivate == null
+        onTap: disabled ? null : () {},
+        onTapUp: disabled
             ? null
-            : () => widget.onActivate!(item),
+            : (details) {
+                _click(value);
+                final time =
+                    SchedulerBinding.instance.currentSystemFrameTimeStamp;
+                if (_clicks.click(value, time)) widget.onActivate?.call(item);
+              },
         canRequestFocus: false,
         borderRadius: Oito2Radius.smallAll,
         child: Container(

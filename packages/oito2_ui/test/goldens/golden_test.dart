@@ -857,6 +857,195 @@ class _PickersScene extends StatelessWidget {
   }
 }
 
+/// Pagination, steps, avatars, a copy field and a timer.
+class _DisplayScene extends StatelessWidget {
+  const _DisplayScene();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(Oito2Spacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: Oito2Spacing.lg,
+          children: [
+            Oito2Pagination(page: 5, pageCount: 12, onChanged: (_) {}),
+            Oito2Steps(
+              current: 1,
+              onStepTapped: (_) {},
+              steps: const [
+                Oito2Step(title: 'Account', description: 'Your e-mail'),
+                Oito2Step(title: 'Profile'),
+                Oito2Step(title: 'Payment', hasError: true),
+                Oito2Step(title: 'Done'),
+              ],
+            ),
+            Row(
+              spacing: Oito2Spacing.md,
+              children: [
+                const Oito2Avatar(
+                  name: 'Ana Souza',
+                  status: Oito2AvatarStatus.online,
+                ),
+                const Oito2Avatar(
+                  name: 'Bruno Lima',
+                  shape: Oito2AvatarShape.square,
+                  status: Oito2AvatarStatus.busy,
+                ),
+                const Oito2Avatar(),
+                Oito2AvatarGroup(
+                  max: 3,
+                  avatars: [
+                    for (final name in [
+                      'Ana Souza',
+                      'Bruno Lima',
+                      'Caio',
+                      'Dani',
+                      'Eva',
+                    ])
+                      Oito2Avatar(name: name, size: 32),
+                  ],
+                ),
+                Oito2TimerText(
+                  controller: Oito2TimerController(
+                    countdown: const Duration(minutes: 4, seconds: 30),
+                  ),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ],
+            ),
+            const SizedBox(
+              width: 320,
+              child: Oito2CopyField(
+                value: 'https://oito2.github.io/oito2_ui/',
+                labelText: 'Link',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A checkable tree, a JSON tree, a splitter and a table of contents.
+class _DataScene extends StatelessWidget {
+  const _DataScene();
+
+  @override
+  Widget build(BuildContext context) {
+    final files = Oito2TreeCollection<void>.fromPaths(const [
+      'lib/main.dart',
+      'lib/src/app.dart',
+      'lib/src/home.dart',
+      'test/app_test.dart',
+      'README.md',
+    ]);
+    final controller = Oito2TreeController(
+      expanded: files.branchValues,
+      selected: const ['lib/src/app.dart'],
+      checked: const ['lib/main.dart', 'lib/src/app.dart'],
+    );
+    final scroll = ScrollController();
+    final keys = [GlobalKey(), GlobalKey(), GlobalKey()];
+    return Scaffold(
+      body: Oito2Splitter(
+        panes: [
+          Oito2SplitterPane(
+            initialFraction: 0.34,
+            child: Oito2TreeView(
+              collection: files,
+              controller: controller,
+              checkable: true,
+            ),
+          ),
+          Oito2SplitterPane(
+            child: Oito2Splitter(
+              axis: Axis.vertical,
+              panes: [
+                const Oito2SplitterPane(
+                  child: Oito2JsonTreeView(
+                    expandDepth: 2,
+                    data: {
+                      'name': 'oito2_ui',
+                      'version': '0.1.0',
+                      'stars': 42,
+                      'published': false,
+                      'license': null,
+                      'tags': ['flutter', 'ui'],
+                    },
+                  ),
+                ),
+                Oito2SplitterPane(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 140,
+                        child: Oito2TableOfContents(
+                          controller: scroll,
+                          entries: [
+                            Oito2TocEntry(title: 'Install', target: keys[0]),
+                            Oito2TocEntry(
+                              title: 'Linux',
+                              target: keys[1],
+                              depth: 1,
+                            ),
+                            Oito2TocEntry(title: 'Usage', target: keys[2]),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView(
+                          controller: scroll,
+                          children: [
+                            for (var i = 0; i < 3; i++)
+                              SizedBox(
+                                key: keys[i],
+                                height: 120,
+                                child: Text('Section $i'),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A floating panel over a page.
+class _FloatingPanelScene extends StatelessWidget {
+  const _FloatingPanelScene();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          const Center(child: Text('Page content')),
+          Oito2FloatingPanel(
+            title: 'Inspector',
+            initialRect: const Rect.fromLTWH(40, 30, 300, 200),
+            onClose: () {},
+            child: const Padding(
+              padding: EdgeInsets.all(Oito2Spacing.md),
+              child: Text('Width: 320\nHeight: 240\nOpacity: 100%'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// A carousel and the page indicator layouts.
 class _CarouselScene extends StatelessWidget {
   const _CarouselScene();
@@ -1059,6 +1248,40 @@ void main() {
         name: 'pickers_$name',
         colors: colors,
         size: const Size(860, 460),
+      );
+    });
+  }
+
+  for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
+    testWidgets('display in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _DisplayScene(),
+        name: 'display_$name',
+        colors: colors,
+        size: const Size(640, 360),
+      );
+    });
+
+    testWidgets('data views in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _DataScene(),
+        name: 'data_views_$name',
+        colors: colors,
+        size: const Size(720, 420),
+      );
+    });
+  }
+
+  for (final name in ['light', 'dark']) {
+    testWidgets('floating panel in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _FloatingPanelScene(),
+        name: 'floating_panel_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(480, 300),
       );
     });
   }

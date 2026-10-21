@@ -13,9 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'dart:async';
-
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
@@ -27,7 +24,7 @@ import 'highlighter.dart';
 /// The colors come from the theme's [Oito2SyntaxTheme], or from the oito2
 /// base scheme of the current brightness when the theme has none. Long
 /// lines scroll horizontally instead of wrapping.
-class Oito2CodeBlock extends StatefulWidget {
+class Oito2CodeBlock extends StatelessWidget {
   /// Creates a code block.
   const Oito2CodeBlock({
     super.key,
@@ -89,30 +86,6 @@ class Oito2CodeBlock extends StatefulWidget {
   );
 
   @override
-  State<Oito2CodeBlock> createState() => _Oito2CodeBlockState();
-}
-
-class _Oito2CodeBlockState extends State<Oito2CodeBlock> {
-  bool _copied = false;
-  Timer? _timer;
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _copy() async {
-    await Clipboard.setData(ClipboardData(text: widget.code));
-    if (!mounted) return;
-    setState(() => _copied = true);
-    _timer?.cancel();
-    _timer = Timer(const Duration(milliseconds: 1500), () {
-      if (mounted) setState(() => _copied = false);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final palette =
@@ -121,15 +94,14 @@ class _Oito2CodeBlockState extends State<Oito2CodeBlock> {
                 ? Oito2ColorTheme.dark()
                 : Oito2ColorTheme.light())
             .syntax;
-    final style = Oito2CodeBlock.defaultTextStyle.merge(widget.textStyle);
-    final span = (widget.highlighter ?? Oito2Highlighter.instance).highlight(
-      widget.code,
-      language: widget.language,
+    final style = Oito2CodeBlock.defaultTextStyle.merge(textStyle);
+    final span = (highlighter ?? Oito2Highlighter.instance).highlight(
+      code,
+      language: language,
       palette: palette,
       style: style,
     );
-    final lineCount = '\n'.allMatches(widget.code).length + 1;
-    final localizations = MaterialLocalizations.of(context);
+    final lineCount = '\n'.allMatches(code).length + 1;
 
     return Oito2BorderContainer(
       color: theme.colorScheme.surfaceContainer,
@@ -138,11 +110,11 @@ class _Oito2CodeBlockState extends State<Oito2CodeBlock> {
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: widget.padding,
+            padding: padding,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (widget.showLineNumbers) ...[
+                if (showLineNumbers) ...[
                   ExcludeSemantics(
                     child: Text(
                       [for (var i = 1; i <= lineCount; i++) '$i'].join('\n'),
@@ -153,20 +125,16 @@ class _Oito2CodeBlockState extends State<Oito2CodeBlock> {
                   const SizedBox(width: Oito2Spacing.lg),
                 ],
                 SelectableText.rich(span),
-                if (widget.showCopyButton)
+                if (showCopyButton)
                   const SizedBox(width: Oito2Sizes.buttonHeight),
               ],
             ),
           ),
-          if (widget.showCopyButton)
+          if (showCopyButton)
             PositionedDirectional(
               top: Oito2Spacing.xs,
               end: Oito2Spacing.xs,
-              child: IconButton(
-                tooltip: localizations.copyButtonLabel,
-                onPressed: _copy,
-                icon: Icon(_copied ? LucideIcons.check : LucideIcons.copy),
-              ),
+              child: Oito2CopyButton(text: code),
             ),
         ],
       ),

@@ -92,9 +92,22 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2ColorPicker`, `Oito2ColorPickerButton` and `Oito2ColorFormat`: saturation and brightness area, hue and opacity sliders, hex/RGB/HSL fields and swatches, inline or in a popover; `oito2ColorToHex` and `oito2ColorFromHex`.
 - `Oito2Calendar` and `Oito2DatePicker`: a month grid with single or range selection, ISO week numbers (`oito2IsoWeekNumber`) and keyboard grid navigation, and a field that opens it in a popover.
 - `Oito2Localizations` strings for the password, number, code, rating, tag, color and week labels.
+- `Oito2TreeView` and `Oito2TreeController`: a virtualized tree over `Oito2TreeCollection` with keyboard navigation, single or multiple selection, cascading check boxes, filtering, inline renaming, type-ahead and lazy loading.
+- `Oito2JsonTreeView` and `oito2JsonTree`: decoded JSON as a tree with JSON paths and syntax colors.
+- `Oito2Pagination` and `oito2PaginationItems`: page buttons with ellipses, previous and next, a page size selector and a compact form.
+- `Oito2Steps` and `Oito2Step`: a horizontal or vertical step indicator with completed, current and error states and linear or free navigation.
+- `Oito2Splitter` and `Oito2SplitterPane`: any number of resizable, collapsible and nestable panes with limits and keyboard control.
+- `Oito2TableOfContents` and `Oito2TocEntry`: a scroll-spy list of a scroll view's sections.
+- `Oito2FloatingPanel`: a movable, resizable, minimizable and maximizable in-app window with the oito2 title bar.
+- `Oito2Avatar`, `Oito2AvatarGroup`, `Oito2AvatarStatus`, `Oito2AvatarShape` and `oito2Initials`: pictures with initial and icon fallbacks, presence status and grouping.
+- `Oito2CopyButton` and `Oito2CopyField`: copy to the clipboard with "Copied" feedback.
+- `Oito2Marquee`: continuous horizontal or vertical scrolling that pauses on hover and focus and stays still when animations are off.
+- `Oito2TimerController`, `Oito2TimerText` and `oito2FormatDuration`: a stopwatch or countdown with ticks and completion.
+- `Oito2Localizations` strings for the copy, page, step, loading, presence and "more" labels.
 
 ### Changed
 
+- `Oito2ListBox` reacts to a click at once: double clicks are told apart without delaying single clicks.
 - `Oito2DateEntry` opens an `Oito2Calendar` in a popover instead of the Material date picker dialog.
 - `Oito2Contrast.foregroundFor` returns black or white by the higher contrast ratio instead of a 0.5 luminance threshold.
 - Single-line text fields, with or without prefix and suffix icons, `Oito2SearchField`, the date and time entries, segmented buttons and chips are as tall as the buttons: 34 pixels on pointer platforms and 40 on touch platforms. Helper and error text sit below that height. `DropdownMenu` keeps its own height, because its trailing button can't be sized from the theme.
