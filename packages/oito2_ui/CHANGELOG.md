@@ -104,6 +104,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2Marquee`: continuous horizontal or vertical scrolling that pauses on hover and focus and stays still when animations are off.
 - `Oito2TimerController`, `Oito2TimerText` and `oito2FormatDuration`: a stopwatch or countdown with ticks and completion.
 - `Oito2Localizations` strings for the copy, page, step, loading, presence and "more" labels.
+- `Oito2Localizations` strings for the `oito2_ui_extras` components: QR code, signature, crop and navigation labels.
 
 ### Changed
 

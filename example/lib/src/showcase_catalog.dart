@@ -50,6 +50,7 @@ import 'pages/freedesktop_icons_page.dart';
 import 'pages/highlighted_text_page.dart';
 import 'pages/hover_card_page.dart';
 import 'pages/icon_button_page.dart';
+import 'pages/image_cropper_page.dart';
 import 'pages/info_page.dart';
 import 'pages/json_tree_view_page.dart';
 import 'pages/list_box_page.dart';
@@ -57,6 +58,7 @@ import 'pages/list_tile_page.dart';
 import 'pages/marquee_page.dart';
 import 'pages/master_detail_page.dart';
 import 'pages/material_page.dart';
+import 'pages/navigation_menu_page.dart';
 import 'pages/navigation_page.dart';
 import 'pages/navigation_rail_page.dart';
 import 'pages/number_entry_page.dart';
@@ -70,6 +72,7 @@ import 'pages/placeholder_icon_page.dart';
 import 'pages/popover_page.dart';
 import 'pages/popup_menu_page.dart';
 import 'pages/progress_page.dart';
+import 'pages/qr_code_page.dart';
 import 'pages/radio_button_page.dart';
 import 'pages/radio_page.dart';
 import 'pages/rating_page.dart';
@@ -78,6 +81,7 @@ import 'pages/section_page.dart';
 import 'pages/segmented_entry_page.dart';
 import 'pages/selectable_container_page.dart';
 import 'pages/sheet_page.dart';
+import 'pages/signature_pad_page.dart';
 import 'pages/split_button_page.dart';
 import 'pages/splitter_page.dart';
 import 'pages/steps_page.dart';
@@ -104,6 +108,9 @@ import 'pages/watermark_page.dart';
 enum ShowcaseGroup {
   /// One page per oito2_ui widget.
   components('Components'),
+
+  /// The optional components of the oito2_ui_extras package.
+  extras('Extras'),
 
   /// Collections, formatting and keyboard commands.
   utilities('Utilities'),
@@ -604,6 +611,34 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.stamp,
     source: 'watermark_page.dart',
     builder: _page(const WatermarkPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2ImageCropper',
+    icon: LucideIcons.crop,
+    source: 'image_cropper_page.dart',
+    group: ShowcaseGroup.extras,
+    builder: _page(const ImageCropperPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2NavigationMenu',
+    icon: LucideIcons.panel_top,
+    source: 'navigation_menu_page.dart',
+    group: ShowcaseGroup.extras,
+    builder: _page(const NavigationMenuPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2QrCode',
+    icon: LucideIcons.qr_code,
+    source: 'qr_code_page.dart',
+    group: ShowcaseGroup.extras,
+    builder: _page(const QrCodePage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2SignaturePad',
+    icon: LucideIcons.signature,
+    source: 'signature_pad_page.dart',
+    group: ShowcaseGroup.extras,
+    builder: _page(const SignaturePadPage()),
   ),
   ShowcasePage(
     title: 'Collections',

@@ -40,7 +40,8 @@ jobs:
         run: |
           for dir in packages/oito2_ui packages/oito2_ui_window \
                      packages/oito2_ui_settings packages/oito2_ui_syntax \
-                     packages/oito2_ui_themes example; do
+                     packages/oito2_ui_themes packages/oito2_ui_extras \
+                     example; do
             echo "::group::$dir"
             (cd "$dir" && flutter test)
             echo "::endgroup::"
@@ -143,7 +144,8 @@ jobs:
         run: |
           for dir in packages/oito2_ui packages/oito2_ui_window \
                      packages/oito2_ui_settings packages/oito2_ui_syntax \
-                     packages/oito2_ui_themes example; do
+                     packages/oito2_ui_themes packages/oito2_ui_extras \
+                     example; do
             echo "::group::$dir"
             (cd "$dir" && flutter test --exclude-tags golden)
             echo "::endgroup::"

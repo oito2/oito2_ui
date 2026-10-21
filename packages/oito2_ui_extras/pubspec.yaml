@@ -1,0 +1,22 @@
+name: oito2_ui_extras
+description: "Optional oito2_ui components with heavier or niche needs: QR codes, a signature pad, an image cropper and a website-style navigation menu."
+version: 0.1.0
+homepage: https://oito2.github.io/oito2_ui/
+repository: https://github.com/oito2/oito2_ui/tree/main/packages/oito2_ui_extras
+issue_tracker: https://github.com/oito2/oito2_ui/issues
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  material_ui: ^1.7.0
+  oito2_ui: ^0.1.0
+  qr: ^4.0.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

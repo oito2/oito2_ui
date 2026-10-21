@@ -243,6 +243,51 @@ abstract class Oito2Localizations {
 
   /// The label of a bubble standing for [count] hidden items.
   String moreCount(int count);
+
+  /// The accessibility label of a QR code.
+  String get qrCode;
+
+  /// Shown when data doesn't fit in a QR code.
+  String get qrTooLong;
+
+  /// The accessibility label of a signature pad.
+  String get signature;
+
+  /// The placeholder of an empty signature pad.
+  String get signHere;
+
+  /// The state of a signature pad with strokes.
+  String get signed;
+
+  /// The state of something with no content.
+  String get empty;
+
+  /// The button that undoes the last change.
+  String get undo;
+
+  /// The button that removes all content.
+  String get clear;
+
+  /// The accessibility label of an image cropper.
+  String get imageCropper;
+
+  /// The button that turns an image a quarter left.
+  String get rotateLeft;
+
+  /// The button that turns an image a quarter right.
+  String get rotateRight;
+
+  /// The button that mirrors an image.
+  String get flipHorizontally;
+
+  /// The button that enlarges a view.
+  String get zoomIn;
+
+  /// The button that shrinks a view.
+  String get zoomOut;
+
+  /// The button that restores the initial state.
+  String get reset;
 }
 
 /// The units of a relative time, from [second] to [year].
@@ -459,6 +504,50 @@ class Oito2LocalizationsEn extends Oito2Localizations {
 
   @override
   String moreCount(int count) => '$count more';
+  @override
+  String get qrCode => 'QR code';
+
+  @override
+  String get qrTooLong => 'Too much data for a QR code';
+
+  @override
+  String get signature => 'Signature';
+
+  @override
+  String get signHere => 'Sign here';
+
+  @override
+  String get signed => 'Signed';
+
+  @override
+  String get empty => 'Empty';
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get clear => 'Clear';
+
+  @override
+  String get imageCropper => 'Image cropper';
+
+  @override
+  String get rotateLeft => 'Rotate left';
+
+  @override
+  String get rotateRight => 'Rotate right';
+
+  @override
+  String get flipHorizontally => 'Flip horizontally';
+
+  @override
+  String get zoomIn => 'Zoom in';
+
+  @override
+  String get zoomOut => 'Zoom out';
+
+  @override
+  String get reset => 'Reset';
 }
 
 /// The Brazilian Portuguese [Oito2Localizations].
@@ -663,6 +752,51 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String moreCount(int count) => 'Mais $count';
+
+  @override
+  String get qrCode => 'Código QR';
+
+  @override
+  String get qrTooLong => 'Dados demais para um código QR';
+
+  @override
+  String get signature => 'Assinatura';
+
+  @override
+  String get signHere => 'Assine aqui';
+
+  @override
+  String get signed => 'Assinado';
+
+  @override
+  String get empty => 'Vazio';
+
+  @override
+  String get undo => 'Desfazer';
+
+  @override
+  String get clear => 'Limpar';
+
+  @override
+  String get imageCropper => 'Recorte de imagem';
+
+  @override
+  String get rotateLeft => 'Girar à esquerda';
+
+  @override
+  String get rotateRight => 'Girar à direita';
+
+  @override
+  String get flipHorizontally => 'Espelhar horizontalmente';
+
+  @override
+  String get zoomIn => 'Ampliar';
+
+  @override
+  String get zoomOut => 'Reduzir';
+
+  @override
+  String get reset => 'Redefinir';
 }
 
 class _Oito2LocalizationsDelegate

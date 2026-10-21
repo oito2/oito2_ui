@@ -11,6 +11,7 @@ workspace:
   - packages/oito2_ui_settings
   - packages/oito2_ui_syntax
   - packages/oito2_ui_themes
+  - packages/oito2_ui_extras
   - example
 
 dev_dependencies:
