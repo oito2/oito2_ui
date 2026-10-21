@@ -16,10 +16,11 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-/// Shows every style of the oito2 text theme.
-class TypographyPage extends StatelessWidget {
-  /// Creates the typography page.
-  const TypographyPage({super.key});
+/// The Fonts section of the Material theme page: every style of the
+/// oito2 text theme.
+class ThemeFontsView extends StatelessWidget {
+  /// Creates the fonts section.
+  const ThemeFontsView({super.key});
 
   @override
   Widget build(BuildContext context) {

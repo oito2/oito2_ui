@@ -138,7 +138,7 @@ void main() {
   });
 
   testWidgets('the scheme menu applies a preset', (tester) async {
-    await pumpShowcase(tester, slug: 'colors');
+    await pumpShowcase(tester, slug: 'theme');
     await tester.tap(find.byTooltip('Color scheme'));
     await _settle(tester);
     await tester.tap(find.widgetWithText(MenuItemButton, 'dracula'));
@@ -191,7 +191,9 @@ void main() {
   });
 
   testWidgets('Material dialogs use the chrome dialog tone', (tester) async {
-    await pumpShowcase(tester, slug: 'material');
+    await pumpShowcase(tester, slug: 'theme');
+    await tester.tap(find.text('Containers').last);
+    await _settle(tester);
     await tester.scrollUntilVisible(
       find.text('Open dialog'),
       200,
@@ -264,4 +266,41 @@ void main() {
     await _settle(tester);
     expect(find.text('A success message.'), findsNothing);
   });
+
+  for (final (name, size, options) in [
+    ('wide', const Size(1400, 1000), const ShowcaseOptions()),
+    (
+      'narrow',
+      const Size(600, 900),
+      const ShowcaseOptions(themeMode: ThemeMode.dark, compactMode: true),
+    ),
+  ]) {
+    testWidgets('every Material theme section builds, $name', (tester) async {
+      await pumpShowcase(tester, slug: 'theme', size: size, options: options);
+      for (final label in [
+        'Colors',
+        'Controls',
+        'Text fields',
+        'Containers',
+        'Fonts',
+        'Tokens',
+        'Home',
+      ]) {
+        final navigation = find.byType(
+          name == 'narrow' ? NavigationBar : NavigationRail,
+        );
+        await tester.tap(
+          find.descendant(of: navigation, matching: find.text(label)),
+        );
+        await _settle(tester);
+        expect(tester.takeException(), isNull, reason: label);
+        expect(find.widgetWithText(AppBar, label), findsOneWidget);
+      }
+      if (name == 'narrow') {
+        expect(find.byType(NavigationBar), findsOneWidget);
+      } else {
+        expect(find.byType(NavigationRail), findsOneWidget);
+      }
+    });
+  }
 }

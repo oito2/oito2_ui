@@ -67,12 +67,18 @@ class ShowcaseApp extends StatefulWidget {
 
 class _ShowcaseAppState extends State<ShowcaseApp> {
   late final _controller = ShowcaseController(widget.initialOptions);
-  late final String _initialSlug =
-      widget.initialSlug ??
-      WidgetsBinding.instance.platformDispatcher.defaultRouteName.replaceFirst(
-        RegExp('^/'),
-        '',
-      );
+  late final String _initialSlug;
+
+  @override
+  void initState() {
+    super.initState();
+    // Reads the launch route before the navigator reports its own '/' to
+    // the browser, which replaces the address the slug comes from.
+    _initialSlug =
+        widget.initialSlug ??
+        WidgetsBinding.instance.platformDispatcher.defaultRouteName
+            .replaceFirst(RegExp('^/'), '');
+  }
 
   @override
   void dispose() {

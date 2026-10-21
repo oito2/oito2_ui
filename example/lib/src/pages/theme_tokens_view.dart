@@ -18,10 +18,11 @@ import 'package:oito2_ui/oito2_ui.dart';
 
 import '../widgets/showcase_widgets.dart';
 
-/// Shows the color, radius, spacing and size tokens.
-class TokensPage extends StatelessWidget {
-  /// Creates the tokens page.
-  const TokensPage({super.key});
+/// The Tokens section of the Material theme page: the color, radius,
+/// spacing and size tokens.
+class ThemeTokensView extends StatelessWidget {
+  /// Creates the tokens section.
+  const ThemeTokensView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -142,6 +143,23 @@ class TokensPage extends StatelessWidget {
                     style: textTheme.bodySmall,
                   ),
                 ],
+              ),
+          ],
+        ),
+        ShowcaseSection(
+          'Elevation',
+          children: [
+            for (final level in const [0.0, 1.0, 3.0, 6.0, 8.0, 12.0])
+              Material(
+                elevation: level,
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                shadowColor: Theme.of(context).colorScheme.shadow,
+                borderRadius: Oito2Radius.mediumAll,
+                child: SizedBox(
+                  width: 88,
+                  height: 64,
+                  child: Center(child: Text('${level.toStringAsFixed(0)} dp')),
+                ),
               ),
           ],
         ),

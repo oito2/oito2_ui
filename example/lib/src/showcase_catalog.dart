@@ -31,7 +31,6 @@ import 'pages/code_block_page.dart';
 import 'pages/collections_page.dart';
 import 'pages/color_disk_page.dart';
 import 'pages/color_picker_page.dart';
-import 'pages/colors_page.dart';
 import 'pages/commands_page.dart';
 import 'pages/context_menu_page.dart';
 import 'pages/copy_button_page.dart';
@@ -57,7 +56,6 @@ import 'pages/list_box_page.dart';
 import 'pages/list_tile_page.dart';
 import 'pages/marquee_page.dart';
 import 'pages/master_detail_page.dart';
-import 'pages/material_page.dart';
 import 'pages/navigation_menu_page.dart';
 import 'pages/navigation_page.dart';
 import 'pages/navigation_rail_page.dart';
@@ -91,16 +89,15 @@ import 'pages/switch_page.dart';
 import 'pages/tab_bar_page.dart';
 import 'pages/table_of_contents_page.dart';
 import 'pages/tags_field_page.dart';
+import 'pages/theme_page.dart';
 import 'pages/tile_page.dart';
 import 'pages/timer_page.dart';
 import 'pages/title_bar_page.dart';
 import 'pages/toast_page.dart';
 import 'pages/toggle_button_page.dart';
 import 'pages/toggle_list_tile_page.dart';
-import 'pages/tokens_page.dart';
 import 'pages/tour_page.dart';
 import 'pages/tree_view_page.dart';
-import 'pages/typography_page.dart';
 import 'pages/undershoot_page.dart';
 import 'pages/watermark_page.dart';
 
@@ -115,8 +112,8 @@ enum ShowcaseGroup {
   /// Collections, formatting and keyboard commands.
   utilities('Utilities'),
 
-  /// The design tokens, colors, typography and the themed Material
-  /// widgets.
+  /// The Material theme sample, with the colors, fonts and tokens, and
+  /// the platform foundation.
   theme('Theme');
 
   const ShowcaseGroup(this.label);
@@ -669,38 +666,17 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const FreedesktopIconsPage()),
   ),
   ShowcasePage(
+    title: 'Material theme',
+    icon: LucideIcons.palette,
+    source: 'theme_page.dart',
+    group: ShowcaseGroup.theme,
+    builder: (context, colors) => ThemePage(colors: colors),
+  ),
+  ShowcasePage(
     title: 'Foundation',
     icon: LucideIcons.monitor_smartphone,
     source: 'foundation_page.dart',
     group: ShowcaseGroup.theme,
     builder: _page(const FoundationPage()),
-  ),
-  ShowcasePage(
-    title: 'Tokens',
-    icon: LucideIcons.ruler,
-    source: 'tokens_page.dart',
-    group: ShowcaseGroup.theme,
-    builder: _page(const TokensPage()),
-  ),
-  ShowcasePage(
-    title: 'Colors',
-    icon: LucideIcons.swatch_book,
-    source: 'colors_page.dart',
-    group: ShowcaseGroup.theme,
-    builder: (context, colors) => ColorsPage(colors: colors),
-  ),
-  ShowcasePage(
-    title: 'Typography',
-    icon: LucideIcons.type,
-    source: 'typography_page.dart',
-    group: ShowcaseGroup.theme,
-    builder: _page(const TypographyPage()),
-  ),
-  ShowcasePage(
-    title: 'Material components',
-    icon: LucideIcons.layout_grid,
-    source: 'material_page.dart',
-    group: ShowcaseGroup.theme,
-    builder: _page(const MaterialComponentsPage()),
   ),
 ];

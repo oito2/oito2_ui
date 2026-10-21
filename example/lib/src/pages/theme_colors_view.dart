@@ -28,11 +28,12 @@ Future<void> greet(List<String> names) async {
   print('Hello, ${names.take(limit)}');
 }''';
 
-/// Shows every color of the active scheme: Material roles, semantic
-/// colors, chrome and syntax highlighting.
-class ColorsPage extends StatelessWidget {
-  /// Creates the colors page for [colors].
-  const ColorsPage({super.key, required this.colors});
+/// The Colors section of the Material theme page: every color of the
+/// active scheme, its Material roles, semantic colors, chrome and syntax
+/// highlighting, with contrast ratios.
+class ThemeColorsView extends StatelessWidget {
+  /// Creates the colors section for [colors].
+  const ThemeColorsView({super.key, required this.colors});
 
   /// The active scheme.
   final Oito2ColorTheme colors;
