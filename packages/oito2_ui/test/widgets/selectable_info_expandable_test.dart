@@ -87,6 +87,50 @@ void main() {
     });
   });
 
+  testWidgets('Oito2Banner.tile lays out its parts and reports hovering', (
+    tester,
+  ) async {
+    final hovers = <bool>[];
+    await pumpOito2(
+      tester,
+      Center(
+        child: SizedBox(
+          width: 320,
+          child: Oito2Banner.tile(
+            icon: const Icon(LucideIcons.sun, size: 48),
+            title: const Text('Weather'),
+            subtitle: const Text('Sunny all week'),
+            tint: const Color(0xFFE91E63),
+            onHover: hovers.add,
+          ),
+        ),
+      ),
+    );
+    final icon = tester.getRect(find.byType(Icon));
+    expect(icon.right, lessThan(tester.getRect(find.text('Weather')).left));
+    expect(
+      tester.getRect(find.text('Sunny all week')).top,
+      greaterThan(tester.getRect(find.text('Weather')).bottom),
+    );
+    final material = tester.widget<Material>(
+      find
+          .descendant(
+            of: find.byType(Oito2Banner),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    expect(material.color, isNot(colors.colorScheme.surface));
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(tester.getCenter(find.text('Weather')));
+    await tester.pump();
+    await mouse.moveTo(Offset.zero);
+    await tester.pump();
+    expect(hovers, [true, false]);
+  });
+
   testWidgets('Oito2Banner strengthens its border on hover', (tester) async {
     await pumpOito2(
       tester,

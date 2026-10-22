@@ -18,14 +18,33 @@ import 'package:oito2_ui/oito2_ui.dart';
 
 import '../widgets/showcase_widgets.dart';
 
-/// Shows [Oito2BorderContainer] with its default and custom colors.
-class BorderContainerPage extends StatelessWidget {
+/// Shows [Oito2BorderContainer] with its default and custom colors, the
+/// tinted variations in the status colors, and how they grow with long
+/// text.
+class BorderContainerPage extends StatefulWidget {
   /// Creates the border container page.
   const BorderContainerPage({super.key});
 
   @override
+  State<BorderContainerPage> createState() => _BorderContainerPageState();
+}
+
+class _BorderContainerPageState extends State<BorderContainerPage> {
+  /// How many characters of the sample text the containers show.
+  double _length = 80;
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final semantic = Oito2SemanticColors.maybeOf(context);
+    final text = Text(_lorem.characters.take(_length.round()).toString());
+    final tints = [
+      ('Accent', scheme.primary),
+      ('Success', semantic?.success ?? scheme.primary),
+      ('Warning', semantic?.warning ?? scheme.primary),
+      ('Error', scheme.error),
+      ('Info', semantic?.info ?? scheme.primary),
+    ];
     return ShowcasePageBody(
       children: [
         ShowcaseSection(
@@ -46,7 +65,54 @@ class BorderContainerPage extends StatelessWidget {
             ),
           ],
         ),
+        ShowcaseSection(
+          'Tinted, with growing text',
+          children: [
+            SizedBox(
+              width: 560,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: Oito2Spacing.md,
+                children: [
+                  Row(
+                    children: [
+                      const Text('Text length'),
+                      Expanded(
+                        child: Slider(
+                          min: 1,
+                          max: _lorem.length.toDouble(),
+                          value: _length,
+                          label: '${_length.round()}',
+                          onChanged: (value) => setState(() => _length = value),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Oito2BorderContainer(
+                    padding: const EdgeInsets.all(Oito2Spacing.md),
+                    child: text,
+                  ),
+                  for (final (name, tint) in tints)
+                    Oito2BorderContainer.tinted(
+                      tint: tint,
+                      padding: const EdgeInsets.all(Oito2Spacing.md),
+                      child: Text('$name: ${text.data}'),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
 }
+
+const _lorem =
+    'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do '
+    'eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim '
+    'ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut '
+    'aliquip ex ea commodo consequat. Duis aute irure dolor in '
+    'reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla '
+    'pariatur. Excepteur sint occaecat cupidatat non proident, sunt in '
+    'culpa qui officia deserunt mollit anim id est laborum.';

@@ -396,3 +396,9 @@ Duration motionDuration(BuildContext context, Duration duration) =>
     (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
     ? Duration.zero
     : duration;
+
+/// [height] as a button's minimum height, offset by the theme's visual
+/// density, which buttons apply on top of their minimum, so the button
+/// ends up [height] tall.
+double densityOffsetHeight(BuildContext context, double height) =>
+    height - Theme.of(context).visualDensity.baseSizeAdjustment.dy;

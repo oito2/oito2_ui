@@ -192,6 +192,36 @@ void main() {
       expect(find.bySemanticsLabel('More options'), findsOneWidget);
     });
 
+    testWidgets('both parts are as tall as a button', (tester) async {
+      for (final variant in Oito2SplitButtonVariant.values) {
+        await pumpOito2(
+          tester,
+          Center(
+            child: Oito2SplitButton(
+              variant: variant,
+              onPressed: () {},
+              menuChildren: const [],
+              child: const Text('Save'),
+            ),
+          ),
+        );
+        for (final part in [
+          find.text('Save'),
+          find.byIcon(LucideIcons.chevron_down),
+        ]) {
+          final button = find.ancestor(
+            of: part,
+            matching: find.byWidgetPredicate((w) => w is ButtonStyleButton),
+          );
+          expect(
+            tester.getSize(button.first).height,
+            Oito2Sizes.buttonHeight,
+            reason: variant.name,
+          );
+        }
+      }
+    });
+
     testWidgets('variants use the matching button', (tester) async {
       for (final (variant, type) in [
         (Oito2SplitButtonVariant.filled, FilledButton),
@@ -262,7 +292,7 @@ void main() {
     expect(taps, 1);
   });
 
-  testWidgets('Oito2ColorDisk shows a readable check when selected', (
+  testWidgets('Oito2ColorDisk rings itself in its color when selected', (
     tester,
   ) async {
     final handle = tester.ensureSemantics();
@@ -279,8 +309,16 @@ void main() {
         ),
       ),
     );
-    final check = tester.widget<Icon>(find.byIcon(LucideIcons.check));
-    expect(check.color, const Color(0xFF000000));
+    expect(find.byIcon(LucideIcons.check), findsNothing);
+    final ring = tester.widget<Container>(
+      find.descendant(
+        of: find.byType(Oito2ColorDisk),
+        matching: find.byType(Container),
+      ),
+    );
+    final border = (ring.decoration! as BoxDecoration).border! as Border;
+    expect(border.top.color, yellow);
+    expect(tester.getSize(find.byType(Container).last).width, 28);
     expect(
       tester.getSemantics(find.byType(Oito2ColorDisk)),
       matchesSemantics(
@@ -310,6 +348,27 @@ void main() {
       ])
         Text(name),
     ];
+
+    testWidgets('chips are pills; the check mark is optional', (tester) async {
+      Widget bar({required bool check}) => SizedBox(
+        width: 360,
+        child: Oito2ChoiceChipBar(
+          labels: labels,
+          isSelected: [for (var i = 0; i < labels.length; i++) i == 0],
+          onSelected: (_) {},
+          showCheckmark: check,
+        ),
+      );
+      await pumpOito2(tester, bar(check: true));
+      final chip = tester.widget<ChoiceChip>(find.byType(ChoiceChip).first);
+      expect(chip.shape, isA<StadiumBorder>());
+      expect(chip.showCheckmark, isTrue);
+      await pumpOito2(tester, bar(check: false));
+      expect(
+        tester.widget<ChoiceChip>(find.byType(ChoiceChip).first).showCheckmark,
+        isFalse,
+      );
+    });
 
     testWidgets('selects chips and shows arrows only when overflowing', (
       tester,

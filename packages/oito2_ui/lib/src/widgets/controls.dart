@@ -17,7 +17,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
-import '../foundation/contrast.dart';
 import '../tokens/geometry.dart';
 import 'toggles.dart';
 import 'widget_helpers.dart';
@@ -226,13 +225,19 @@ class Oito2SplitButton extends StatelessWidget {
   /// [Oito2Localizations.moreOptions].
   final String? menuLabel;
 
-  ButtonStyle _shape(BorderRadius radius, {EdgeInsetsGeometry? padding}) {
+  ButtonStyle _shape(
+    BorderRadius radius,
+    double minimumHeight, {
+    EdgeInsetsGeometry? padding,
+  }) {
     return ButtonStyle(
       shape: WidgetStatePropertyAll(
         RoundedRectangleBorder(borderRadius: radius),
       ),
       padding: padding == null ? null : WidgetStatePropertyAll(padding),
-      minimumSize: const WidgetStatePropertyAll(Size(0, 0)),
+      // Narrow parts are allowed; the height stays the theme's button
+      // height.
+      minimumSize: WidgetStatePropertyAll(Size(0, minimumHeight)),
     );
   }
 
@@ -260,6 +265,11 @@ class Oito2SplitButton extends StatelessWidget {
   Widget build(BuildContext context) {
     const radius = Radius.circular(Oito2Radius.medium);
     final enabled = onPressed != null;
+    final minimumHeight =
+        Theme.of(context).filledButtonTheme.style?.minimumSize
+            ?.resolve(const {})
+            ?.height ??
+        0;
     final direction = Directionality.of(context);
     final startRadius = direction == TextDirection.ltr
         ? const BorderRadius.horizontal(left: radius)
@@ -270,7 +280,7 @@ class Oito2SplitButton extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _button(_shape(startRadius), onPressed, child),
+        _button(_shape(startRadius, minimumHeight), onPressed, child),
         const SizedBox(width: 1),
         MenuAnchor(
           menuChildren: menuChildren,
@@ -279,6 +289,7 @@ class Oito2SplitButton extends StatelessWidget {
             child: _button(
               _shape(
                 endRadius,
+                minimumHeight,
                 padding: const EdgeInsets.symmetric(
                   horizontal: Oito2Spacing.sm,
                 ),
@@ -376,9 +387,9 @@ class Oito2OptionButton extends StatelessWidget {
 
 /// A round color swatch that can be selected, as in accent color pickers.
 ///
-/// The selected disk shows a check mark in black or white, whichever
-/// contrasts more with [color], and a ring in the text-safe primary tone.
-class Oito2ColorDisk extends StatelessWidget {
+/// A ring in [color] itself surrounds the selected disk, and a fainter one
+/// shows while the pointer hovers it or the keyboard focus is on it.
+class Oito2ColorDisk extends StatefulWidget {
   /// Creates a color disk.
   const Oito2ColorDisk({
     super.key,
@@ -386,7 +397,7 @@ class Oito2ColorDisk extends StatelessWidget {
     required this.selected,
     required this.onPressed,
     required this.label,
-    this.size = 32,
+    this.size = 20,
   });
 
   /// The swatch color.
@@ -401,46 +412,63 @@ class Oito2ColorDisk extends StatelessWidget {
   /// The color name for assistive technologies and the tooltip.
   final String label;
 
-  /// The disk diameter.
+  /// The disk diameter, without its ring.
   final double size;
 
   @override
+  State<Oito2ColorDisk> createState() => _Oito2ColorDiskState();
+}
+
+class _Oito2ColorDiskState extends State<Oito2ColorDisk> {
+  bool _hovered = false;
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
-    final ring = semanticColorsOf(context).primaryText;
+    final keyboard =
+        FocusManager.instance.highlightMode == FocusHighlightMode.traditional;
+    final ringAlpha = widget.selected
+        ? 1.0
+        : _hovered || (_focused && keyboard)
+        ? 0.5
+        : 0.0;
+    const ring = Oito2Sizes.focusBorderWidth;
+    const gap = 2.0;
     return Semantics(
       button: true,
-      selected: selected,
-      label: label,
+      selected: widget.selected,
+      label: widget.label,
       excludeSemantics: true,
-      onTap: onPressed,
+      onTap: widget.onPressed,
       child: Tooltip(
-        message: label,
+        message: widget.label,
         excludeFromSemantics: true,
         child: Material(
           type: MaterialType.transparency,
           child: InkWell(
-            onTap: onPressed,
+            onTap: widget.onPressed,
+            onHover: (value) => setState(() => _hovered = value),
+            onFocusChange: (value) => setState(() => _focused = value),
             customBorder: const CircleBorder(),
+            overlayColor: const WidgetStatePropertyAll(Color(0x00000000)),
             child: Container(
-              width: size + 8,
-              height: size + 8,
-              padding: const EdgeInsets.all(2),
+              width: widget.size + 2 * (ring + gap),
+              height: widget.size + 2 * (ring + gap),
+              padding: const EdgeInsets.all(gap),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: selected ? ring : const Color(0x00000000),
-                  width: Oito2Sizes.focusBorderWidth,
+                  color: widget.color.withValues(
+                    alpha: widget.color.a * ringAlpha,
+                  ),
+                  width: ring,
                 ),
               ),
               child: DecoratedBox(
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                child: selected
-                    ? Icon(
-                        LucideIcons.check,
-                        size: size * 0.55,
-                        color: Oito2Contrast.foregroundFor(color),
-                      )
-                    : null,
+                decoration: BoxDecoration(
+                  color: widget.color,
+                  shape: BoxShape.circle,
+                ),
               ),
             ),
           ),

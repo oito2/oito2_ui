@@ -18,17 +18,42 @@ import 'package:oito2_ui/oito2_ui.dart';
 
 import '../widgets/showcase_widgets.dart';
 
-/// Shows [Oito2DiagonalClip] splitting a preview between two styles.
+/// Shows [Oito2DiagonalClip] cutting each of the four corners, and two
+/// clips combined into a split square.
 class DiagonalClipPage extends StatelessWidget {
   /// Creates the diagonal clip page.
   const DiagonalClipPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    Widget sample(Oito2DiagonalCorner corner) => Column(
+      mainAxisSize: MainAxisSize.min,
+      spacing: Oito2Spacing.sm,
+      children: [
+        SizedBox.square(
+          dimension: 96,
+          child: Oito2BorderContainer(
+            color: scheme.surfaceContainerHigh,
+            child: Oito2DiagonalClip(
+              corner: corner,
+              child: ColoredBox(color: scheme.primary),
+            ),
+          ),
+        ),
+        Text(corner.name),
+      ],
+    );
     return ShowcasePageBody(
       children: [
         ShowcaseSection(
-          'Diagonal clip',
+          'Corners',
+          children: [
+            for (final corner in Oito2DiagonalCorner.values) sample(corner),
+          ],
+        ),
+        ShowcaseSection(
+          'Two clips combined',
           children: [
             SizedBox.square(
               dimension: 160,

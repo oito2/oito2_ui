@@ -116,6 +116,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2InfoType.labelIn` and `Oito2Localizations` strings for the message kinds, date ranges, the hexadecimal color field and removing a tag.
 - `Oito2AvatarGroup.shape` and `semanticLabel`; `Oito2RadioButton.toggleable`; `Oito2TabBar.tabHeight`.
 - The bundled Inter font's license shows in the app's license page.
+- `Oito2Banner.tile` (icon, title and subtitle), `Oito2Banner.onHover` for content that changes on hover, and `Oito2Banner.tint`.
+- `Oito2BorderContainer.tinted`: a border and a translucent fill in one color, such as a status color.
+- `Oito2ChoiceChipBar.showCheckmark`, to mark the selection with the fill only.
+- `Oito2DialogTitleBar.leading`, such as an icon or an `Oito2AnimatedIcon` before the title.
 
 ### Changed
 
@@ -143,6 +147,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2Rating` aligns values to its step and takes the focus on a click.
 - `Oito2TagsField` keeps a single tag refused as its delimiter is typed in the field, as with Enter.
 - `Oito2OptionButton` asserts that a button showing only an icon has a `label`.
+- `Oito2ChoiceChipBar` chips are pill-shaped.
+- `Oito2ColorDisk` is smaller (20 pixels by default) and marks the selection with a ring in its own color instead of a check mark; hover and keyboard focus show a fainter ring.
 
 ### Fixed
 
@@ -203,3 +209,4 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2Expandable`, `Oito2NavigationPage`, `Oito2ChoiceChipBar`, `Oito2PageIndicator` and `Oito2ScrollViewUndershoot` skip their animations when animations are disabled.
 - `Oito2Toaster` disposes its overlay entries and reports errors from `promise`'s `success` and `error` builders.
 - Progress indicators and animated icons repaint without rebuilding, the popover reuses its content between anchor layouts, and focus borders rebuild only when they could show.
+- `Oito2SplitButton` and the `Oito2Pagination` page buttons are as tall as the other buttons again.

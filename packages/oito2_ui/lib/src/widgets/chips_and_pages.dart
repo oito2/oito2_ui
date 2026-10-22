@@ -31,7 +31,10 @@ enum Oito2ChoiceChipBarStyle {
   wrap,
 }
 
-/// A bar of [ChoiceChip]s for picking one or more filters.
+/// A bar of pill-shaped [ChoiceChip]s for picking one or more filters.
+///
+/// A selected chip shows the secondary container fill and, with
+/// [showCheckmark], a check mark before its label.
 ///
 /// In the [Oito2ChoiceChipBarStyle.row] style the chips scroll
 /// horizontally, and arrow buttons and a soft edge shadow appear only on
@@ -48,6 +51,7 @@ class Oito2ChoiceChipBar extends StatefulWidget {
     this.scrollStep = 200,
     this.previousLabel,
     this.nextLabel,
+    this.showCheckmark = true,
   }) : assert(labels.length == isSelected.length);
 
   /// The chip labels, usually [Text]s.
@@ -75,6 +79,10 @@ class Oito2ChoiceChipBar extends StatefulWidget {
   /// The accessibility label of the forward arrow; defaults to
   /// [Oito2Localizations.scrollForward].
   final String? nextLabel;
+
+  /// Whether a selected chip shows a check mark; without it only the fill
+  /// marks the selection.
+  final bool showCheckmark;
 
   @override
   State<Oito2ChoiceChipBar> createState() => _Oito2ChoiceChipBarState();
@@ -131,6 +139,8 @@ class _Oito2ChoiceChipBarState extends State<Oito2ChoiceChipBar> {
       ChoiceChip(
         label: widget.labels[i],
         selected: widget.isSelected[i],
+        showCheckmark: widget.showCheckmark,
+        shape: const StadiumBorder(),
         onSelected: widget.onSelected == null
             ? null
             : (_) => widget.onSelected!(i),

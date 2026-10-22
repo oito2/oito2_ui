@@ -485,6 +485,28 @@ void main() {
       expect(find.text('Preferences'), findsNothing);
     });
 
+    testWidgets('shows a leading icon before the title', (tester) async {
+      await tester.pumpWidget(
+        Oito2SystemScope(
+          settings: Oito2SystemSettings.fallback(_linux),
+          child: MaterialApp(
+            theme: Oito2Theme.light(platform: _linux),
+            home: Scaffold(
+              body: Oito2DialogTitleBar(
+                leading: const Oito2AnimatedIcon(Oito2AnimatedIcons.ok),
+                title: const Text('Saved'),
+                onClose: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final icon = tester.getRect(find.byType(Oito2AnimatedIcon));
+      final title = tester.getRect(find.text('Saved'));
+      expect(icon.right, lessThanOrEqualTo(title.left));
+    });
+
     testWidgets('falls back to the GNOME style without system buttons', (
       tester,
     ) async {

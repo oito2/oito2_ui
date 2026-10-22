@@ -147,6 +147,15 @@ void main() {
       expect(find.text('20'), findsOneWidget);
     });
 
+    testWidgets('page buttons are as tall as a button', (tester) async {
+      await pumpPager(tester);
+      final button = find.ancestor(
+        of: find.text('10'),
+        matching: find.byType(TextButton),
+      );
+      expect(tester.getSize(button).height, Oito2Sizes.buttonHeight);
+    });
+
     testWidgets('narrow widths show the compact form', (tester) async {
       await pumpPager(tester, width: 300);
       expect(find.text('Page 5 of 10'), findsOneWidget);

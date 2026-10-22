@@ -39,6 +39,27 @@ void main() {
     expect(shape.side.color, colors.colorScheme.outlineVariant);
   });
 
+  testWidgets('Oito2BorderContainer.tinted fills and outlines in its tint', (
+    tester,
+  ) async {
+    const tint = Color(0xFF2EC27E);
+    await pumpOito2(
+      tester,
+      Oito2BorderContainer.tinted(tint: tint, child: const Text('x')),
+    );
+    final material = tester.widget<Material>(
+      find
+          .descendant(
+            of: find.byType(Oito2BorderContainer),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    final shape = material.shape! as RoundedRectangleBorder;
+    expect(material.color, tint.withValues(alpha: 0.1));
+    expect(shape.side.color, tint);
+  });
+
   testWidgets('Oito2BorderContainer hosts ink effects of its children', (
     tester,
   ) async {

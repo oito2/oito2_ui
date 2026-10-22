@@ -33,10 +33,12 @@ class _InteractiveSurface extends StatefulWidget {
     required this.borderRadius,
     required this.padding,
     this.selectedColor,
+    this.onHover,
   });
 
   final Widget child;
   final VoidCallback? onTap;
+  final ValueChanged<bool>? onHover;
   final bool selected;
   final Color? color;
   final Color borderColor;
@@ -70,34 +72,43 @@ class _InteractiveSurfaceState extends State<_InteractiveSurface> {
               : widget.borderColor);
     final borderWidth = widget.selected ? Oito2Sizes.focusBorderWidth : 1.0;
 
+    void hover(bool value) {
+      setState(() => _hovered = value);
+      widget.onHover?.call(value);
+    }
+
+    // The pointer is tracked even without onTap, so onHover always runs.
     return Semantics(
       container: true,
       button: interactive,
       selected: widget.selected,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        decoration: BoxDecoration(
-          borderRadius: widget.borderRadius,
-          border: _focused
-              ? Border.all(
-                  color: indicator,
-                  width: Oito2Sizes.focusBorderWidth,
-                  strokeAlign: BorderSide.strokeAlignOutside,
-                )
-              : null,
-        ),
-        child: Material(
-          color: background ?? const Color(0x00000000),
-          shape: RoundedRectangleBorder(
+      child: MouseRegion(
+        onEnter: (_) => hover(true),
+        onExit: (_) => hover(false),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          decoration: BoxDecoration(
             borderRadius: widget.borderRadius,
-            side: BorderSide(color: borderColor, width: borderWidth),
+            border: _focused
+                ? Border.all(
+                    color: indicator,
+                    width: Oito2Sizes.focusBorderWidth,
+                    strokeAlign: BorderSide.strokeAlignOutside,
+                  )
+                : null,
           ),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: widget.onTap,
-            onHover: (value) => setState(() => _hovered = value),
-            onFocusChange: (value) => setState(() => _focused = value),
-            child: Padding(padding: widget.padding, child: widget.child),
+          child: Material(
+            color: background ?? const Color(0x00000000),
+            shape: RoundedRectangleBorder(
+              borderRadius: widget.borderRadius,
+              side: BorderSide(color: borderColor, width: borderWidth),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: widget.onTap,
+              onFocusChange: (value) => setState(() => _focused = value),
+              child: Padding(padding: widget.padding, child: widget.child),
+            ),
           ),
         ),
       ),
@@ -158,16 +169,46 @@ class Oito2SelectableContainer extends StatelessWidget {
 
 /// A card-like clickable surface for promoting content, such as an app in
 /// a store grid. Hovering strengthens its border.
+///
+/// [Oito2Banner.tile] lays out an icon, a title and a subtitle. [onHover]
+/// tells when the pointer enters and leaves, so the content can change
+/// on hover, and [tint] washes the background with a color.
 class Oito2Banner extends StatelessWidget {
-  /// Creates a banner.
+  /// Creates a banner around [child].
   const Oito2Banner({
     super.key,
     required this.child,
     this.onTap,
+    this.onHover,
     this.selected = false,
     this.color,
+    this.tint,
     this.padding = const EdgeInsets.all(Oito2Spacing.lg),
   });
+
+  /// Creates a banner with [icon] before a [title] and an optional
+  /// [subtitle].
+  Oito2Banner.tile({
+    Key? key,
+    required Widget title,
+    Widget? subtitle,
+    Widget? icon,
+    VoidCallback? onTap,
+    ValueChanged<bool>? onHover,
+    bool selected = false,
+    Color? color,
+    Color? tint,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(Oito2Spacing.lg),
+  }) : this(
+         key: key,
+         onTap: onTap,
+         onHover: onHover,
+         selected: selected,
+         color: color,
+         tint: tint,
+         padding: padding,
+         child: _BannerTile(title: title, subtitle: subtitle, icon: icon),
+       );
 
   /// The content.
   final Widget child;
@@ -175,11 +216,18 @@ class Oito2Banner extends StatelessWidget {
   /// Called when the banner is activated.
   final VoidCallback? onTap;
 
+  /// Called with true when the pointer enters the banner and false when
+  /// it leaves.
+  final ValueChanged<bool>? onHover;
+
   /// Whether the banner is selected.
   final bool selected;
 
   /// The background; defaults to the scheme surface.
   final Color? color;
+
+  /// A color blended lightly over the background.
+  final Color? tint;
 
   /// Space around the content.
   final EdgeInsetsGeometry padding;
@@ -187,15 +235,63 @@ class Oito2Banner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final base = color ?? scheme.surface;
+    final tint = this.tint;
     return _InteractiveSurface(
       onTap: onTap,
+      onHover: onHover,
       selected: selected,
-      color: color ?? scheme.surface,
+      color: tint == null
+          ? base
+          : Color.alphaBlend(tint.withValues(alpha: 0.08), base),
       borderColor: scheme.outlineVariant,
       hoverBorderColor: scheme.outline,
       borderRadius: Oito2Radius.largeAll,
       padding: padding,
       child: child,
+    );
+  }
+}
+
+/// The icon, title and subtitle of an [Oito2Banner.tile].
+class _BannerTile extends StatelessWidget {
+  const _BannerTile({required this.title, this.subtitle, this.icon});
+
+  final Widget title;
+  final Widget? subtitle;
+  final Widget? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final subtitle = this.subtitle;
+    final icon = this.icon;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: Oito2Spacing.lg,
+      children: [
+        ?icon,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            spacing: Oito2Spacing.xs,
+            children: [
+              DefaultTextStyle.merge(
+                style: theme.textTheme.titleMedium,
+                child: title,
+              ),
+              if (subtitle != null)
+                DefaultTextStyle.merge(
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  child: subtitle,
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

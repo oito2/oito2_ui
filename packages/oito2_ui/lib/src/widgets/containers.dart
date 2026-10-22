@@ -37,6 +37,24 @@ class Oito2BorderContainer extends StatelessWidget {
     this.clipBehavior = Clip.antiAlias,
   });
 
+  /// Creates a container tinted with [tint]: a [tint] border over a fill
+  /// of [tint] at [opacity], such as a status color for a highlighted
+  /// note.
+  Oito2BorderContainer.tinted({
+    super.key,
+    required Color tint,
+    double opacity = 0.1,
+    this.child,
+    this.padding,
+    this.margin,
+    this.width,
+    this.height,
+    this.borderRadius = Oito2Radius.largeAll,
+    this.clipBehavior = Clip.antiAlias,
+  }) : assert(opacity >= 0 && opacity <= 1),
+       color = tint.withValues(alpha: tint.a * opacity),
+       borderColor = tint;
+
   /// The content.
   final Widget? child;
 

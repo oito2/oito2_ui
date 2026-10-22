@@ -479,10 +479,20 @@ class Oito2WindowTitleBar extends StatelessWidget
 class Oito2DialogTitleBar extends StatelessWidget
     implements PreferredSizeWidget {
   /// Creates a dialog title bar.
-  const Oito2DialogTitleBar({super.key, this.title, this.onClose, this.labels});
+  const Oito2DialogTitleBar({
+    super.key,
+    this.title,
+    this.leading,
+    this.onClose,
+    this.labels,
+  });
 
   /// The dialog title, usually a [Text].
   final Widget? title;
+
+  /// A widget before the title, such as an [Icon] or an animated
+  /// `Oito2AnimatedIcon` that tells what the dialog is about.
+  final Widget? leading;
 
   /// Called when the close button is pressed; defaults to popping the
   /// current route.
@@ -509,6 +519,7 @@ class Oito2DialogTitleBar extends StatelessWidget
     const close = [Oito2WindowButton.close];
     return Oito2TitleBar(
       title: title,
+      leading: leading,
       controlStyle: style,
       buttonLayout: closeLeading
           ? const Oito2WindowButtonLayout(leading: close)

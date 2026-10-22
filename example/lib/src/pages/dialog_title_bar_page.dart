@@ -23,7 +23,7 @@ class DialogTitleBarPage extends StatelessWidget {
   /// Creates the dialog title bar page.
   const DialogTitleBarPage({super.key});
 
-  void _openDialog(BuildContext context) {
+  void _openDialog(BuildContext context, {Widget? leading, String? title}) {
     showDialog<void>(
       context: context,
       builder: (context) => Dialog(
@@ -33,7 +33,10 @@ class DialogTitleBarPage extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Oito2DialogTitleBar(title: Text('Preferences')),
+              Oito2DialogTitleBar(
+                leading: leading,
+                title: Text(title ?? 'Preferences'),
+              ),
               Padding(
                 padding: const EdgeInsets.all(Oito2Spacing.xl),
                 child: Text(
@@ -59,6 +62,22 @@ class DialogTitleBarPage extends StatelessWidget {
             OutlinedButton(
               onPressed: () => _openDialog(context),
               child: const Text('Open dialog'),
+            ),
+            OutlinedButton(
+              onPressed: () => _openDialog(
+                context,
+                leading: const Icon(LucideIcons.settings),
+                title: 'Settings',
+              ),
+              child: const Text('With an icon'),
+            ),
+            OutlinedButton(
+              onPressed: () => _openDialog(
+                context,
+                leading: const Oito2AnimatedIcon(Oito2AnimatedIcons.ok),
+                title: 'Saved',
+              ),
+              child: const Text('With an animated icon'),
             ),
           ],
         ),

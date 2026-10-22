@@ -242,7 +242,7 @@ class _PageButton extends StatelessWidget {
       child: TextButton(
         onPressed: onPressed,
         style: TextButton.styleFrom(
-          minimumSize: Size(height, height),
+          minimumSize: Size(height, densityOffsetHeight(context, height)),
           padding: const EdgeInsets.symmetric(horizontal: Oito2Spacing.sm),
           backgroundColor: current ? fill.fill : null,
           foregroundColor: current ? fill.onFill : scheme.onSurface,
