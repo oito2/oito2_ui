@@ -13,8 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../foundation/contrast.dart';
@@ -168,20 +172,227 @@ class RenderSizeReporter extends RenderProxyBox {
 /// Tells a double click from two single clicks on the same target without
 /// a double-tap gesture recognizer, which would delay every single click
 /// until the double-click timeout.
+///
+/// A click completes a double click when it lands on the same target as
+/// the previous one before [kDoubleTapTimeout] runs out. The timeout runs
+/// on a [Timer], so it follows real time whether or not frames are drawn.
 class DoubleClickDetector {
-  Object? _lastTarget;
-  Duration? _lastTime;
+  Object? _pending;
+  Timer? _timer;
 
-  /// Records a click on [target] at [time] and returns whether it
-  /// completes a double click.
-  bool click(Object target, Duration time) {
-    final last = _lastTime;
-    final isDouble =
-        last != null &&
-        _lastTarget == target &&
-        time - last <= kDoubleTapTimeout;
-    _lastTarget = isDouble ? null : target;
-    _lastTime = isDouble ? null : time;
-    return isDouble;
+  /// Records a click on [target] and returns whether it completes a double
+  /// click.
+  bool click(Object target) {
+    if (_timer != null && _pending == target) {
+      cancel();
+      return true;
+    }
+    _timer?.cancel();
+    _pending = target;
+    _timer = Timer(kDoubleTapTimeout, cancel);
+    return false;
+  }
+
+  /// Forgets the pending click and stops its timeout.
+  void cancel() {
+    _timer?.cancel();
+    _timer = null;
+    _pending = null;
   }
 }
+
+/// A focus node that the widget gives or, when it gives none, the state
+/// owns.
+///
+/// [onEffectiveFocusChange] listens to the node in use and follows it when
+/// the widget starts or stops giving one, or gives another. An owned node
+/// that the widget replaces is disposed after the frame, and the one still
+/// owned with the state.
+mixin OwnedFocusNodeMixin<W extends StatefulWidget> on State<W> {
+  FocusNode? _ownedFocusNode;
+  late FocusNode _listenedFocusNode;
+
+  /// The node [widget] gives, if any.
+  FocusNode? get widgetFocusNode;
+
+  /// Creates the node owned while the widget gives none.
+  FocusNode createOwnedFocusNode() => FocusNode();
+
+  /// Called when the node in use gains or loses focus.
+  void onEffectiveFocusChange() {}
+
+  /// The node in use: the widget's, or the one this state owns.
+  FocusNode get effectiveFocusNode =>
+      widgetFocusNode ?? (_ownedFocusNode ??= createOwnedFocusNode());
+
+  @override
+  void initState() {
+    super.initState();
+    _listenedFocusNode = effectiveFocusNode
+      ..addListener(onEffectiveFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(W oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final current = effectiveFocusNode;
+    if (identical(current, _listenedFocusNode)) return;
+    _listenedFocusNode.removeListener(onEffectiveFocusChange);
+    _listenedFocusNode = current..addListener(onEffectiveFocusChange);
+    final owned = _ownedFocusNode;
+    if (owned != null && !identical(owned, current)) {
+      _ownedFocusNode = null;
+      // The node may still be attached until this frame rebuilds.
+      WidgetsBinding.instance.addPostFrameCallback((_) => owned.dispose());
+    }
+  }
+
+  @override
+  void dispose() {
+    _listenedFocusNode.removeListener(onEffectiveFocusChange);
+    _ownedFocusNode?.dispose();
+    super.dispose();
+  }
+}
+
+/// A controller that the widget gives or, when it gives none, the state
+/// owns.
+///
+/// [onControllerChange] listens to the controller in use and follows it
+/// when the widget starts or stops giving one, or gives another, after
+/// which [didChangeController] runs. An owned controller that the widget
+/// replaces is disposed after the frame, and the one still owned with the
+/// state.
+mixin OwnedControllerMixin<W extends StatefulWidget, C extends ChangeNotifier>
+    on State<W> {
+  C? _ownedController;
+  late C _listenedController;
+
+  /// The controller [widget] gives, if any.
+  C? get widgetController;
+
+  /// Creates the controller owned while the widget gives none.
+  C createOwnedController();
+
+  /// Called when the controller in use notifies its listeners.
+  void onControllerChange() {}
+
+  /// Called after the controller in use changed from [previous].
+  void didChangeController(C previous) {}
+
+  /// The controller in use: the widget's, or the one this state owns.
+  C get effectiveController =>
+      widgetController ?? (_ownedController ??= createOwnedController());
+
+  @override
+  void initState() {
+    super.initState();
+    _listenedController = effectiveController..addListener(onControllerChange);
+  }
+
+  @override
+  void didUpdateWidget(W oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final current = effectiveController;
+    final previous = _listenedController;
+    if (identical(current, previous)) return;
+    previous.removeListener(onControllerChange);
+    _listenedController = current..addListener(onControllerChange);
+    final owned = _ownedController;
+    if (owned != null && !identical(owned, current)) {
+      _ownedController = null;
+      // Widgets below may still listen to it until this frame rebuilds.
+      WidgetsBinding.instance.addPostFrameCallback((_) => owned.dispose());
+    }
+    didChangeController(previous);
+  }
+
+  @override
+  void dispose() {
+    _listenedController.removeListener(onControllerChange);
+    _ownedController?.dispose();
+    super.dispose();
+  }
+}
+
+/// The chevron pointing toward the end of [context]'s reading direction
+/// when [forward], and toward its start otherwise.
+IconData directionalChevron(BuildContext context, {required bool forward}) {
+  final rtl = Directionality.of(context) == TextDirection.rtl;
+  return forward != rtl ? LucideIcons.chevron_right : LucideIcons.chevron_left;
+}
+
+/// The arrow keys that move toward the start ([back]) and the end
+/// ([forward]) of [context]'s reading direction.
+({LogicalKeyboardKey back, LogicalKeyboardKey forward}) readingArrowsOf(
+  BuildContext context,
+) {
+  final rtl = Directionality.of(context) == TextDirection.rtl;
+  return rtl
+      ? (
+          back: LogicalKeyboardKey.arrowRight,
+          forward: LogicalKeyboardKey.arrowLeft,
+        )
+      : (
+          back: LogicalKeyboardKey.arrowLeft,
+          forward: LogicalKeyboardKey.arrowRight,
+        );
+}
+
+/// Scrolls the scroll view around [item] to center it, unless it is
+/// already fully visible.
+///
+/// The scroll animates for [duration], or jumps when it is null or
+/// animations are disabled. Returns false when [item] isn't laid out in a
+/// scroll view.
+bool revealCentered(BuildContext item, {Duration? duration}) {
+  final box = item.findRenderObject();
+  if (box == null || !box.attached) return false;
+  final viewport = RenderAbstractViewport.maybeOf(box);
+  final position = Scrollable.maybeOf(item)?.position;
+  if (viewport == null || position == null) return false;
+  final atTop = viewport.getOffsetToReveal(box, 0).offset;
+  final atBottom = viewport.getOffsetToReveal(box, 1).offset;
+  if (position.pixels >= atBottom && position.pixels <= atTop) return true;
+  final target = viewport
+      .getOffsetToReveal(box, 0.5)
+      .offset
+      .clamp(position.minScrollExtent, position.maxScrollExtent);
+  final reduced = MediaQuery.maybeDisableAnimationsOf(item) ?? false;
+  if (duration != null && !reduced) {
+    position.animateTo(target, duration: duration, curve: Curves.easeInOut);
+  } else {
+    position.jumpTo(target);
+  }
+  return true;
+}
+
+/// The value of a check box after a tap: unchecked becomes checked, and
+/// checked becomes mixed with [tristate] or unchecked otherwise; mixed
+/// becomes unchecked.
+bool? nextCheckValue(bool? value, {required bool tristate}) => switch (value) {
+  false => true,
+  true => tristate ? null : false,
+  null => false,
+};
+
+/// Activates the radio of [value] in a group showing [groupValue]: selects
+/// it, or clears the group when it is already selected and [toggleable].
+void activateRadio<T>(
+  T value,
+  T? groupValue,
+  ValueChanged<T?> onChanged, {
+  bool toggleable = false,
+}) {
+  if (value != groupValue) {
+    onChanged(value);
+  } else if (toggleable) {
+    onChanged(null);
+  }
+}
+
+/// [duration], or zero when [context] asks to reduce motion.
+Duration motionDuration(BuildContext context, Duration duration) =>
+    (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
+    ? Duration.zero
+    : duration;

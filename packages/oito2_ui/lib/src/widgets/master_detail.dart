@@ -13,7 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
@@ -77,7 +76,9 @@ class Oito2MasterDetailPage extends StatefulWidget {
   /// Builds the detail page of an item, usually an [Oito2DetailPage].
   final IndexedWidgetBuilder pageBuilder;
 
-  /// Builds the content shown when there are no items.
+  /// Builds the content shown when there are no items, in place of the
+  /// list: [masterBar] and [masterFooter] stay, so a search that matches
+  /// nothing can still be cleared.
   final WidgetBuilder? emptyBuilder;
 
   /// The item selected at start, when no [controller] is given.
@@ -113,52 +114,55 @@ class Oito2MasterDetailPage extends StatefulWidget {
   State<Oito2MasterDetailPage> createState() => _Oito2MasterDetailPageState();
 }
 
-class _Oito2MasterDetailPageState extends State<Oito2MasterDetailPage> {
-  Oito2PageController? _ownController;
+class _Oito2MasterDetailPageState extends State<Oito2MasterDetailPage>
+    with OwnedControllerMixin<Oito2MasterDetailPage, Oito2PageController> {
   final _navigatorKey = GlobalKey<NavigatorState>();
 
-  Oito2PageController get _controller =>
-      widget.controller ?? (_ownController ??= _createController());
+  @override
+  Oito2PageController? get widgetController => widget.controller;
 
-  Oito2PageController _createController() => Oito2PageController(
+  @override
+  Oito2PageController createOwnedController() => Oito2PageController(
     length: widget.length!,
     initialIndex: widget.initialIndex ?? -1,
   );
 
   @override
-  void initState() {
-    super.initState();
-    _controller.addListener(_onChanged);
-  }
+  void onControllerChange() => _onChanged();
+
+  Oito2PageController get _controller => effectiveController;
 
   @override
   void didUpdateWidget(Oito2MasterDetailPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final oldController = oldWidget.controller ?? _ownController;
-    if (oldController != _controller) {
-      oldController?.removeListener(_onChanged);
-      _controller.addListener(_onChanged);
-    }
     if (widget.controller == null && widget.length != null) {
       _controller.length = widget.length!;
     }
   }
 
-  @override
-  void dispose() {
-    _controller.removeListener(_onChanged);
-    _ownController?.dispose();
-    super.dispose();
-  }
-
   void _onChanged() => setState(() {});
+
+  /// Selects the first item, which the side-by-side layout shows when
+  /// nothing is selected, so the controller tells what is on screen.
+  void _selectShownSoon() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_controller.hasSelection && _controller.length > 0) {
+        _controller.index = 0;
+      }
+    });
+  }
 
   void _select(int index) {
     _controller.index = index;
     widget.onSelected?.call(index);
   }
 
-  Widget _master(BuildContext context, double width, int selected) {
+  Widget _master(
+    BuildContext context,
+    double width,
+    int selected, {
+    Widget? content,
+  }) {
     final theme = Oito2MasterDetailThemeData.maybeOf(context);
     final bar = widget.masterBar;
     final footer = widget.masterFooter;
@@ -168,15 +172,17 @@ class _Oito2MasterDetailPageState extends State<Oito2MasterDetailPage> {
         children: [
           ?bar,
           Expanded(
-            child: Oito2MasterListView(
-              length: _controller.length,
-              selectedIndex: selected,
-              availableWidth: width,
-              padding: theme?.listPadding,
-              tileSpacing: theme?.tileSpacing,
-              onTap: _select,
-              builder: widget.tileBuilder,
-            ),
+            child:
+                content ??
+                Oito2MasterListView(
+                  length: _controller.length,
+                  selectedIndex: selected,
+                  availableWidth: width,
+                  padding: theme?.listPadding,
+                  tileSpacing: theme?.tileSpacing,
+                  onTap: _select,
+                  builder: widget.tileBuilder,
+                ),
           ),
           ?footer,
         ],
@@ -187,7 +193,14 @@ class _Oito2MasterDetailPageState extends State<Oito2MasterDetailPage> {
   @override
   Widget build(BuildContext context) {
     if (_controller.length == 0) {
-      return widget.emptyBuilder?.call(context) ?? const SizedBox.shrink();
+      final empty =
+          widget.emptyBuilder?.call(context) ?? const SizedBox.shrink();
+      if (widget.masterBar == null && widget.masterFooter == null) return empty;
+      // Keeps the pane bar and footer around the empty content.
+      return LayoutBuilder(
+        builder: (context, constraints) =>
+            _master(context, constraints.maxWidth, -1, content: empty),
+      );
     }
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -195,6 +208,7 @@ class _Oito2MasterDetailPageState extends State<Oito2MasterDetailPage> {
         final width = constraints.maxWidth;
         if (width >= (widget.breakpoint ?? theme?.breakpoint ?? 620)) {
           final index = _controller.hasSelection ? _controller.index : 0;
+          if (!_controller.hasSelection) _selectShownSoon();
           return Oito2PanedView(
             initialPaneSize: widget.paneSize ?? theme?.paneSize ?? 280,
             minPaneSize: widget.minPaneSize ?? theme?.minPaneSize ?? 180,
@@ -211,22 +225,27 @@ class _Oito2MasterDetailPageState extends State<Oito2MasterDetailPage> {
           );
         }
         final index = _controller.index;
-        return Navigator(
-          key: _navigatorKey,
-          pages: [
-            MaterialPage<void>(
-              key: const ValueKey('master'),
-              child: _master(context, width, index),
-            ),
-            if (index >= 0)
+        // The system back button returns from the page to the master
+        // before it leaves the enclosing route.
+        return NavigatorPopHandler<void>(
+          onPopWithResult: (_) => _navigatorKey.currentState?.maybePop(),
+          child: Navigator(
+            key: _navigatorKey,
+            pages: [
               MaterialPage<void>(
-                key: ValueKey(index),
-                child: widget.pageBuilder(context, index),
+                key: const ValueKey('master'),
+                child: _master(context, width, index),
               ),
-          ],
-          onDidRemovePage: (page) {
-            if (page.key != const ValueKey('master')) _controller.index = -1;
-          },
+              if (index >= 0)
+                MaterialPage<void>(
+                  key: ValueKey(index),
+                  child: widget.pageBuilder(context, index),
+                ),
+            ],
+            onDidRemovePage: (page) {
+              if (page.key != const ValueKey('master')) _controller.index = -1;
+            },
+          ),
         );
       },
     );
@@ -280,7 +299,12 @@ class Oito2MasterListView extends StatefulWidget {
 
 class _Oito2MasterListViewState extends State<Oito2MasterListView> {
   final _scroll = ScrollController();
-  final _selectedKey = GlobalKey();
+
+  /// One key per built tile, kept while the selection moves, so the focused
+  /// tile keeps its element and its focus.
+  final Map<int, GlobalKey> _tileKeys = {};
+
+  GlobalKey _keyFor(int index) => _tileKeys.putIfAbsent(index, GlobalKey.new);
 
   @override
   void initState() {
@@ -291,6 +315,7 @@ class _Oito2MasterListViewState extends State<Oito2MasterListView> {
   @override
   void didUpdateWidget(Oito2MasterListView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _tileKeys.removeWhere((index, _) => index >= widget.length);
     if (oldWidget.selectedIndex != widget.selectedIndex) _revealSoon();
   }
 
@@ -322,8 +347,8 @@ class _Oito2MasterListViewState extends State<Oito2MasterListView> {
       }
       return;
     }
-    final tile = _selectedKey.currentContext?.findRenderObject();
-    if (tile == null) {
+    final tile = _tileKeys[widget.selectedIndex]?.currentContext;
+    if (tile == null || tile.findRenderObject() == null) {
       if (retries == 0 || widget.length == 0) return;
       final extent = position.maxScrollExtent + position.viewportDimension;
       final estimate = extent / widget.length * widget.selectedIndex;
@@ -338,24 +363,10 @@ class _Oito2MasterListViewState extends State<Oito2MasterListView> {
       );
       return;
     }
-    final viewport = RenderAbstractViewport.of(tile);
-    final atTop = viewport.getOffsetToReveal(tile, 0).offset;
-    final atBottom = viewport.getOffsetToReveal(tile, 1).offset;
-    if (position.pixels >= atBottom && position.pixels <= atTop) return;
-    final target = viewport
-        .getOffsetToReveal(tile, 0.5)
-        .offset
-        .clamp(position.minScrollExtent, position.maxScrollExtent);
-    final reduced = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    if (animate && !reduced) {
-      _scroll.animateTo(
-        target,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      _scroll.jumpTo(target);
-    }
+    revealCentered(
+      tile,
+      duration: animate ? const Duration(milliseconds: 200) : null,
+    );
   }
 
   @override
@@ -369,7 +380,7 @@ class _Oito2MasterListViewState extends State<Oito2MasterListView> {
         itemBuilder: (context, index) {
           final selected = index == widget.selectedIndex;
           return Padding(
-            key: selected ? _selectedKey : null,
+            key: _keyFor(index),
             padding: EdgeInsets.only(top: index == 0 ? 0 : spacing),
             child: Oito2MasterTileScope(
               index: index,

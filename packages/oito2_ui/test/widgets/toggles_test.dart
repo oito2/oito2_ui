@@ -18,8 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-
-import 'test_app.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 /// Pumps [builder] with a value that the built widget updates through the
 /// given setter.
@@ -57,6 +56,34 @@ void main() {
       );
       await tester.tap(find.byType(Oito2Checkbox));
       expect(values, [true]);
+    });
+
+    testWidgets('the checked node also carries the tap action', (tester) async {
+      final handle = tester.ensureSemantics();
+      final values = <bool?>[];
+      await pumpOito2(
+        tester,
+        Center(
+          child: Oito2Checkbox(
+            value: false,
+            onChanged: values.add,
+            semanticLabel: 'Wi-Fi',
+          ),
+        ),
+      );
+      final node = _semanticsOf(tester, find.byType(Oito2Checkbox));
+      expect(
+        node,
+        isSemantics(
+          label: 'Wi-Fi',
+          hasCheckedState: true,
+          isChecked: false,
+          hasTapAction: true,
+        ),
+      );
+      tester.semantics.tap(find.semantics.byLabel('Wi-Fi'));
+      expect(values, [true]);
+      handle.dispose();
     });
 
     testWidgets('a tristate box cycles unchecked, checked, mixed', (

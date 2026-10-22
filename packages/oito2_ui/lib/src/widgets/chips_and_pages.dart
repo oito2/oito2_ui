@@ -15,7 +15,6 @@
 
 import 'dart:math' as math;
 
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
@@ -113,14 +112,18 @@ class _Oito2ChoiceChipBarState extends State<Oito2ChoiceChipBar> {
 
   void _scrollBy(double delta) {
     final position = _controller.position;
-    _controller.animateTo(
-      (position.pixels + delta).clamp(
-        position.minScrollExtent,
-        position.maxScrollExtent,
-      ),
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
+    final target = (position.pixels + delta).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
     );
+    final duration = motionDuration(context, const Duration(milliseconds: 200));
+    duration == Duration.zero
+        ? _controller.jumpTo(target)
+        : _controller.animateTo(
+            target,
+            duration: duration,
+            curve: Curves.easeOut,
+          );
   }
 
   List<Widget> _chips() => [
@@ -146,16 +149,13 @@ class _Oito2ChoiceChipBarState extends State<Oito2ChoiceChipBar> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _update();
     });
-    final rtl = Directionality.of(context) == TextDirection.rtl;
     Widget arrow(bool forward) => IconButton(
       tooltip: forward
           ? widget.nextLabel ?? Oito2Localizations.of(context).scrollForward
           : widget.previousLabel ?? Oito2Localizations.of(context).scrollBack,
       onPressed: () =>
           _scrollBy(forward ? widget.scrollStep : -widget.scrollStep),
-      icon: Icon(
-        forward != rtl ? LucideIcons.chevron_right : LucideIcons.chevron_left,
-      ),
+      icon: Icon(directionalChevron(context, forward: forward)),
     );
     return NotificationListener<ScrollMetricsNotification>(
       onNotification: (_) {
@@ -292,7 +292,10 @@ class Oito2PageIndicator extends StatelessWidget {
                         vertical: math.max(0, (24 - dotSize) / 2),
                       ),
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
+                        duration: motionDuration(
+                          context,
+                          const Duration(milliseconds: 200),
+                        ),
                         curve: Curves.easeOut,
                         width: i == page ? selectedWidth : dotSize,
                         height: dotSize,

@@ -46,11 +46,12 @@ enum Oito2AvatarShape {
 }
 
 /// The initials of [name]: the first letters of its first and last words,
-/// in upper case.
+/// in upper case. A letter is a whole user-perceived character, so
+/// decomposed accents and emoji sequences stay intact.
 String oito2Initials(String name) {
   final words = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
   if (words.isEmpty) return '';
-  String first(String word) => String.fromCharCode(word.runes.first);
+  String first(String word) => word.characters.first;
   final letters = words.length == 1
       ? first(words.first)
       : first(words.first) + first(words.last);
@@ -208,6 +209,9 @@ class Oito2Avatar extends StatelessWidget {
 
 /// [avatars] in an overlapping row, showing at most [max] and a "+N"
 /// bubble for the rest.
+///
+/// The ring around each avatar and the bubble follow [shape], which
+/// should match the avatars'.
 class Oito2AvatarGroup extends StatelessWidget {
   /// Creates an avatar group.
   const Oito2AvatarGroup({
@@ -216,7 +220,10 @@ class Oito2AvatarGroup extends StatelessWidget {
     this.max = 4,
     this.size = 32,
     this.overlap = 0.3,
-  }) : assert(max > 0);
+    this.shape = Oito2AvatarShape.circle,
+    this.semanticLabel,
+  }) : assert(max > 0),
+       assert(overlap >= 0 && overlap < 1);
 
   /// The avatars, usually [Oito2Avatar]s of the same [size].
   final List<Widget> avatars;
@@ -227,8 +234,16 @@ class Oito2AvatarGroup extends StatelessWidget {
   /// The avatar size, used for the spacing and the bubble.
   final double size;
 
-  /// The fraction of each avatar covered by the next one.
+  /// The fraction of each avatar covered by the next one, from 0 up to,
+  /// but not including, 1.
   final double overlap;
+
+  /// The shape of the avatars.
+  final Oito2AvatarShape shape;
+
+  /// The accessibility label of the whole group, such as "Project
+  /// members".
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -237,9 +252,15 @@ class Oito2AvatarGroup extends StatelessWidget {
     final shown = avatars.take(max).toList();
     final hidden = avatars.length - shown.length;
     final ring = theme.scaffoldBackgroundColor;
+    final circle = shape == Oito2AvatarShape.circle;
+    BoxDecoration decoration(Color color, double extent) => BoxDecoration(
+      color: color,
+      shape: circle ? BoxShape.circle : BoxShape.rectangle,
+      borderRadius: circle ? null : BorderRadius.circular(extent * 0.22),
+    );
     Widget ringed(Widget child) => Container(
       padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(color: ring, shape: BoxShape.circle),
+      decoration: decoration(ring, size + 4),
       child: child,
     );
     final items = [
@@ -253,10 +274,7 @@ class Oito2AvatarGroup extends StatelessWidget {
               width: size,
               height: size,
               alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: scheme.surfaceContainerHighest,
-                shape: BoxShape.circle,
-              ),
+              decoration: decoration(scheme.surfaceContainerHighest, size),
               child: Text(
                 '+$hidden',
                 style: theme.textTheme.labelMedium?.copyWith(
@@ -269,7 +287,7 @@ class Oito2AvatarGroup extends StatelessWidget {
         ),
     ];
     final step = (size + 4) * (1 - overlap);
-    return SizedBox(
+    final group = SizedBox(
       height: size + 4,
       width: step * (items.length - 1) + size + 4,
       child: Stack(
@@ -279,5 +297,9 @@ class Oito2AvatarGroup extends StatelessWidget {
         ],
       ),
     );
+    final label = semanticLabel;
+    return label == null
+        ? group
+        : Semantics(container: true, label: label, child: group);
   }
 }

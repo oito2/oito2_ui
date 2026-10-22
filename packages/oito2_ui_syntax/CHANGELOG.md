@@ -14,4 +14,9 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2CodeBlock`: selectable code block on the scheme container surface, with optional line numbers and a copy button.
 - `Oito2CodeBlock`'s copy button is the core `Oito2CopyButton`: a check mark and a "Copied" tooltip after copying, announced to assistive technologies.
 - Bundled JetBrains Mono variable font (regular and italic, SIL Open Font License), used by `Oito2CodeBlock` so code stays monospaced on every platform, including the web.
+- The bundled JetBrains Mono font's license shows in the app's license page.
 
+### Fixed
+
+- `Oito2Highlighter` and `Oito2CodeBlock` accept language aliases and any letter case (`js`, `ts`, `sh`, `yml`, `py`, `Dart`); `Oito2Highlighter.supports` tells whether a name or alias is registered.
+- `Oito2CodeBlock` highlights again only when its code, language, palette, style or highlighter change, and `Oito2Highlighter` reuses the token styles of recent palettes.

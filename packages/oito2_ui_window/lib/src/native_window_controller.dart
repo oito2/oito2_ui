@@ -13,7 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -51,19 +54,36 @@ class Oito2NativeWindowController
   @override
   ValueListenable<Oito2WindowState> get state => _state;
 
+  bool _disposed = false;
+
+  /// Counts state changes, so a refresh that a window event overtakes
+  /// doesn't overwrite it.
+  int _generation = 0;
+
   /// Reads the maximized, full-screen and focus state from the window.
+  ///
+  /// The last known state stays when the window can't be queried, when a
+  /// window event arrives meanwhile, or after [dispose].
   Future<void> refresh() async {
-    final isMaximized = await _manager.isMaximized();
-    final isFullScreen = await _manager.isFullScreen();
-    final isActive = await _manager.isFocused();
-    _state.value = _state.value.copyWith(
-      isMaximized: isMaximized,
-      isFullScreen: isFullScreen,
-      isActive: isActive,
-    );
+    final generation = ++_generation;
+    try {
+      final isMaximized = await _manager.isMaximized();
+      final isFullScreen = await _manager.isFullScreen();
+      final isActive = await _manager.isFocused();
+      if (_disposed || generation != _generation) return;
+      _state.value = _state.value.copyWith(
+        isMaximized: isMaximized,
+        isFullScreen: isFullScreen,
+        isActive: isActive,
+      );
+    } on PlatformException {
+      return;
+    }
   }
 
   void _update(Oito2WindowState Function(Oito2WindowState state) change) {
+    if (_disposed) return;
+    _generation++;
     _state.value = change(_state.value);
   }
 
@@ -92,6 +112,7 @@ class Oito2NativeWindowController
 
   /// Stops listening to window events and releases [state].
   void dispose() {
+    _disposed = true;
     _manager.removeListener(this);
     _state.dispose();
   }
@@ -117,7 +138,5 @@ class Oito2NativeWindowController
       _update((s) => s.copyWith(isFullScreen: false));
 
   @override
-  void onWindowRestore() {
-    refresh();
-  }
+  void onWindowRestore() => unawaited(refresh());
 }

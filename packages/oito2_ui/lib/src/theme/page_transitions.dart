@@ -32,26 +32,92 @@ class Oito2DesktopPageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    final curved = CurvedAnimation(
-      parent: animation,
+    return _DesktopPageTransition(
+      animation: animation,
+      secondaryAnimation: secondaryAnimation,
+      child: child,
+    );
+  }
+}
+
+/// Builds [Oito2DesktopPageTransitionsBuilder]'s transition, creating its
+/// curves once and disposing them with the route.
+class _DesktopPageTransition extends StatefulWidget {
+  const _DesktopPageTransition({
+    required this.animation,
+    required this.secondaryAnimation,
+    required this.child,
+  });
+
+  final Animation<double> animation;
+  final Animation<double> secondaryAnimation;
+  final Widget child;
+
+  @override
+  State<_DesktopPageTransition> createState() => _DesktopPageTransitionState();
+}
+
+class _DesktopPageTransitionState extends State<_DesktopPageTransition> {
+  late CurvedAnimation _incoming;
+  late CurvedAnimation _outgoing;
+
+  @override
+  void initState() {
+    super.initState();
+    _curve();
+  }
+
+  @override
+  void didUpdateWidget(_DesktopPageTransition oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.animation != widget.animation ||
+        oldWidget.secondaryAnimation != widget.secondaryAnimation) {
+      _dispose();
+      _curve();
+    }
+  }
+
+  @override
+  void dispose() {
+    _dispose();
+    super.dispose();
+  }
+
+  void _curve() {
+    _incoming = CurvedAnimation(
+      parent: widget.animation,
       curve: Curves.easeOutCubic,
       reverseCurve: Curves.easeInCubic,
     );
+    _outgoing = CurvedAnimation(
+      parent: widget.secondaryAnimation,
+      curve: Curves.easeIn,
+    );
+  }
+
+  void _dispose() {
+    _incoming.dispose();
+    _outgoing.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final direction = Directionality.of(context) == TextDirection.rtl
         ? -1.0
         : 1.0;
     return FadeTransition(
-      opacity: ReverseAnimation(
-        CurvedAnimation(parent: secondaryAnimation, curve: Curves.easeIn),
-      ),
+      opacity: ReverseAnimation(_outgoing),
       child: FadeTransition(
-        opacity: curved,
+        opacity: _incoming,
         child: SlideTransition(
           position: Tween<Offset>(
-            begin: Offset(slideFraction * direction, 0),
+            begin: Offset(
+              Oito2DesktopPageTransitionsBuilder.slideFraction * direction,
+              0,
+            ),
             end: Offset.zero,
-          ).animate(curved),
-          child: child,
+          ).animate(_incoming),
+          child: widget.child,
         ),
       ),
     );

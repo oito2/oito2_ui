@@ -14,6 +14,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:flutter_lucide/flutter_lucide.dart';
+
+import 'dart:math' as math;
+
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
@@ -89,24 +92,44 @@ class Oito2Steps extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: Oito2Spacing.lg,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var i = 0; i < steps.length; i++) ...[
-                if (i > 0)
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        top: 14,
-                        left: Oito2Spacing.sm,
-                        right: Oito2Spacing.sm,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Each header gets at most an equal share of the width, so
+              // long titles wrap and fade instead of overflowing.
+              final headerWidth = math.min(
+                _maxHeaderWidth,
+                constraints.maxWidth / steps.length,
+              );
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var i = 0; i < steps.length; i++) ...[
+                    if (i > 0)
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            top: 14,
+                            left: Oito2Spacing.sm,
+                            right: Oito2Spacing.sm,
+                          ),
+                          child: _Connector(
+                            done: i <= current,
+                            vertical: false,
+                          ),
+                        ),
                       ),
-                      child: _Connector(done: i <= current, vertical: false),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: headerWidth),
+                      child: _StepHeader(
+                        index: i,
+                        steps: this,
+                        vertical: false,
+                      ),
                     ),
-                  ),
-                _StepHeader(index: i, steps: this, vertical: false),
-              ],
-            ],
+                  ],
+                ],
+              );
+            },
           ),
           ?content,
         ],
@@ -117,52 +140,46 @@ class Oito2Steps extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var i = 0; i < steps.length; i++)
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  width: 28,
-                  child: Column(
-                    children: [
-                      _Indicator(index: i, steps: this),
-                      if (i < steps.length - 1)
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: Oito2Spacing.xs,
-                            ),
-                            child: _Connector(
-                              done: i < current,
-                              vertical: true,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+          Stack(
+            children: [
+              if (i < steps.length - 1)
+                PositionedDirectional(
+                  start: 0,
+                  width: _indicatorSize,
+                  top: _indicatorSize + Oito2Spacing.xs,
+                  bottom: Oito2Spacing.xs,
+                  child: _Connector(done: i < current, vertical: true),
                 ),
-                const SizedBox(width: Oito2Spacing.md),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: Oito2Spacing.lg),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: Oito2Spacing.sm,
-                      children: [
-                        _StepHeader(index: i, steps: this, vertical: true),
-                        if (i == current && steps[i].content != null)
-                          steps[i].content!,
-                      ],
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _Indicator(index: i, steps: this),
+                  const SizedBox(width: Oito2Spacing.md),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: Oito2Spacing.lg),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: Oito2Spacing.sm,
+                        children: [
+                          _StepHeader(index: i, steps: this, vertical: true),
+                          if (i == current && steps[i].content != null)
+                            steps[i].content!,
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ),
       ],
     );
   }
 }
+
+const _indicatorSize = 28.0;
+const _maxHeaderWidth = 160.0;
 
 enum _StepState { upcoming, current, completed, error }
 
@@ -193,8 +210,8 @@ class _Indicator extends StatelessWidget {
       _StepState.upcoming => (null, scheme.outline, scheme.onSurfaceVariant),
     };
     return Container(
-      width: 28,
-      height: 28,
+      width: _indicatorSize,
+      height: _indicatorSize,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: background,
@@ -276,6 +293,8 @@ class _StepHeader extends StatelessWidget {
         Text(
           step.title,
           textAlign: vertical ? TextAlign.start : TextAlign.center,
+          maxLines: vertical ? null : 2,
+          overflow: vertical ? null : TextOverflow.ellipsis,
           style: theme.textTheme.titleSmall?.copyWith(
             color: state == _StepState.upcoming
                 ? scheme.onSurfaceVariant
@@ -288,6 +307,8 @@ class _StepHeader extends StatelessWidget {
           Text(
             description,
             textAlign: vertical ? TextAlign.start : TextAlign.center,
+            maxLines: vertical ? null : 2,
+            overflow: vertical ? null : TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
               color: scheme.onSurfaceVariant,
             ),

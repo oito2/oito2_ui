@@ -15,7 +15,6 @@
 
 import 'dart:async';
 
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
@@ -111,6 +110,9 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
       widget.controller.addListener(_refresh);
     }
     if (_active != null && !_collection.has(_active)) _active = null;
+    if (!identical(oldWidget.collection, widget.collection)) {
+      _keys.removeWhere((value, _) => !_collection.has(value));
+    }
   }
 
   @override
@@ -118,6 +120,7 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
     _selection.removeListener(_refresh);
     _focusNode.dispose();
     _typeTimer?.cancel();
+    _clicks.cancel();
     super.dispose();
   }
 
@@ -255,9 +258,7 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
             ? null
             : (details) {
                 _click(value);
-                final time =
-                    SchedulerBinding.instance.currentSystemFrameTimeStamp;
-                if (_clicks.click(value, time)) widget.onActivate?.call(item);
+                if (_clicks.click(value)) widget.onActivate?.call(item);
               },
         canRequestFocus: false,
         borderRadius: Oito2Radius.smallAll,

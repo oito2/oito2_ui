@@ -17,19 +17,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-/// The Linux desktop platform used by widget tests.
+/// The Linux desktop platform used by widget and golden tests.
 const testPlatform = Oito2Platform(
   targetPlatform: TargetPlatform.linux,
   isWeb: false,
 );
 
-/// Pumps [child] inside the oito2 theme of [colors] (the light base scheme
-/// by default) on a [size] logical-pixel view.
+/// Pumps [child] on a [size] logical-pixel view inside the oito2 theme of
+/// [colors] (the light base scheme by default), or inside [theme] when
+/// given.
+///
+/// The child sits in a [Scaffold] unless [scaffold] is false, under
+/// [textDirection].
 Future<void> pumpOito2(
   WidgetTester tester,
   Widget child, {
   Size size = const Size(1000, 800),
   Oito2ColorTheme? colors,
+  ThemeData? theme,
   TextDirection textDirection = TextDirection.ltr,
   bool scaffold = true,
 }) async {
@@ -38,10 +43,12 @@ Future<void> pumpOito2(
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     MaterialApp(
-      theme: Oito2Theme.fromColors(
-        colors ?? Oito2ColorTheme.light(),
-        platform: testPlatform,
-      ),
+      theme:
+          theme ??
+          Oito2Theme.fromColors(
+            colors ?? Oito2ColorTheme.light(),
+            platform: testPlatform,
+          ),
       home: Directionality(
         textDirection: textDirection,
         child: scaffold ? Scaffold(body: child) : child,

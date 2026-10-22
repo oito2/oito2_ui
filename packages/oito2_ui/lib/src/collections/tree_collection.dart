@@ -84,13 +84,17 @@ typedef Oito2TreeEntry<T> = ({
 @immutable
 class Oito2TreeCollection<T> {
   /// Creates a tree with the top-level [roots].
+  ///
+  /// Throws an [ArgumentError] when two nodes share a value.
   Oito2TreeCollection(Iterable<Oito2TreeNode<T>> roots)
     : roots = List.unmodifiable(roots) {
     void index(List<Oito2TreeNode<T>> nodes, List<int> path, String? parent) {
       for (var i = 0; i < nodes.length; i++) {
         final node = nodes[i];
         final nodePath = List<int>.unmodifiable([...path, i]);
-        assert(!_paths.containsKey(node.value), 'Duplicate "${node.value}"');
+        if (_paths.containsKey(node.value)) {
+          throw ArgumentError.value(node.value, 'roots', 'Duplicate value');
+        }
         _paths[node.value] = nodePath;
         _parents[node.value] = parent;
         index(node.children ?? const [], nodePath, node.value);
@@ -239,6 +243,18 @@ class Oito2TreeCollection<T> {
     return result;
   }
 
+  /// The values of the leaves below [value], or [value] itself when it is
+  /// a leaf; empty for an unknown value.
+  List<String> leavesOf(String value) {
+    final node = find(value);
+    if (node == null) return const [];
+    if (!node.isBranch) return [value];
+    return [
+      for (final v in descendantsOf(value))
+        if (!(find(v)?.isBranch ?? false)) v,
+    ];
+  }
+
   /// The enabled visible node after [value] for the [expanded] branches,
   /// or null at the end.
   String? nextVisible(String value, Set<String> expanded) =>
@@ -283,11 +299,16 @@ class Oito2TreeCollection<T> {
 
   /// A tree with [nodes] inserted among the children of [parentValue] (the
   /// top level when null) at [index], or at the end when [index] is null.
+  ///
+  /// Throws an [ArgumentError] when [parentValue] isn't in the tree.
   Oito2TreeCollection<T> insert(
     String? parentValue,
     List<Oito2TreeNode<T>> nodes, {
     int? index,
   }) {
+    if (parentValue != null && !has(parentValue)) {
+      throw ArgumentError.value(parentValue, 'parentValue', 'Unknown node');
+    }
     List<Oito2TreeNode<T>> into(List<Oito2TreeNode<T>> list) {
       final copy = [...list];
       copy.insertAll(index ?? copy.length, nodes);
@@ -314,20 +335,30 @@ class Oito2TreeCollection<T> {
 
   /// A tree with the nodes in [values] moved, in tree order, among the
   /// children of [parentValue] (the top level when null) at [index], or
-  /// at the end when [index] is null.
+  /// at the end when [index] is null. [index] counts the children left
+  /// after the moved nodes are taken out.
+  ///
+  /// Throws an [ArgumentError] when [parentValue] isn't in the tree, or is
+  /// one of the moved nodes or a descendant of one.
   Oito2TreeCollection<T> move(
     Iterable<String> values,
     String? parentValue, {
     int? index,
   }) {
     final set = values.toSet();
-    assert(
-      parentValue == null ||
-          !set.any(
-            (v) => v == parentValue || ancestorsOf(parentValue).contains(v),
-          ),
-      'A node cannot move into itself',
-    );
+    if (parentValue != null) {
+      if (!has(parentValue)) {
+        throw ArgumentError.value(parentValue, 'parentValue', 'Unknown node');
+      }
+      if (set.contains(parentValue) ||
+          ancestorsOf(parentValue).any(set.contains)) {
+        throw ArgumentError.value(
+          parentValue,
+          'parentValue',
+          'A node cannot move into itself or its descendants',
+        );
+      }
+    }
     final moved = [
       for (final e in flatten())
         if (set.contains(e.node.value) &&

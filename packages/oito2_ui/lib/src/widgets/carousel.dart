@@ -24,6 +24,7 @@ import '../tokens/geometry.dart';
 import 'chips_and_pages.dart';
 import 'icon_buttons.dart';
 import 'utilities.dart';
+import 'widget_helpers.dart';
 
 /// Controls an [Oito2Carousel]: the current page, page changes and
 /// automatic scrolling.
@@ -120,32 +121,52 @@ class Oito2Carousel extends StatefulWidget {
   State<Oito2Carousel> createState() => _Oito2CarouselState();
 }
 
-class _Oito2CarouselState extends State<Oito2Carousel> {
-  Oito2CarouselController? _ownController;
+class _Oito2CarouselState extends State<Oito2Carousel>
+    with OwnedControllerMixin<Oito2Carousel, Oito2CarouselController> {
   Timer? _timer;
   bool _hovered = false;
   bool _focused = false;
   late int _page = _controller.initialPage;
 
-  Oito2CarouselController get _controller =>
-      widget.controller ?? (_ownController ??= Oito2CarouselController());
+  @override
+  Oito2CarouselController? get widgetController => widget.controller;
+
+  @override
+  Oito2CarouselController createOwnedController() => Oito2CarouselController();
+
+  Oito2CarouselController get _controller => effectiveController;
+
+  bool? _reduced;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _schedule();
+    final reduced = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    if (reduced != _reduced) {
+      _reduced = reduced;
+      _schedule();
+    }
   }
 
+  /// Restarts the timer only when what it depends on changes, so a parent
+  /// that rebuilds often doesn't keep postponing the next page.
   @override
   void didUpdateWidget(Oito2Carousel oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if ((oldWidget.children.length < 2) != (widget.children.length < 2)) {
+      _schedule();
+    }
+  }
+
+  @override
+  void didChangeController(Oito2CarouselController previous) {
+    _page = _controller.currentPage;
     _schedule();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    _ownController?.dispose();
     super.dispose();
   }
 

@@ -60,12 +60,6 @@ class Oito2CheckButton extends StatelessWidget {
   /// Space around the row.
   final EdgeInsetsGeometry padding;
 
-  bool? get _next => switch (value) {
-    false => true,
-    true => tristate ? null : false,
-    null => false,
-  };
-
   @override
   Widget build(BuildContext context) {
     final onChanged = this.onChanged;
@@ -78,7 +72,9 @@ class Oito2CheckButton extends StatelessWidget {
       title: title,
       subtitle: subtitle,
       padding: padding,
-      onToggled: onChanged == null ? null : () => onChanged(_next),
+      onToggled: onChanged == null
+          ? null
+          : () => onChanged(nextCheckValue(value, tristate: tristate)),
     );
   }
 }
@@ -97,6 +93,7 @@ class Oito2RadioButton<T> extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.padding = _rowPadding,
+    this.toggleable = false,
   });
 
   /// The value this button represents.
@@ -107,6 +104,10 @@ class Oito2RadioButton<T> extends StatelessWidget {
 
   /// Called with [value] when selected; null disables the button.
   final ValueChanged<T?>? onChanged;
+
+  /// Whether activating the selected button clears the group, calling
+  /// [onChanged] with null.
+  final bool toggleable;
 
   /// The label.
   final Widget title;
@@ -125,11 +126,19 @@ class Oito2RadioButton<T> extends StatelessWidget {
         value: value,
         groupValue: groupValue,
         onChanged: onChanged,
+        toggleable: toggleable,
       ),
       title: title,
       subtitle: subtitle,
       padding: padding,
-      onToggled: onChanged == null ? null : () => onChanged(value),
+      onToggled: onChanged == null
+          ? null
+          : () => activateRadio(
+              value,
+              groupValue,
+              onChanged,
+              toggleable: toggleable,
+            ),
     );
   }
 }
@@ -293,12 +302,19 @@ class Oito2SplitButton extends StatelessWidget {
 class Oito2OptionButton extends StatelessWidget {
   /// Creates an option button showing [child], with an optional
   /// [label] used as tooltip and accessibility label.
+  ///
+  /// An [Icon] child needs a [label], since an icon alone has no name for
+  /// assistive technologies.
   const Oito2OptionButton({
     super.key,
     required this.onPressed,
     required this.child,
     this.label,
-  }) : color = null;
+  }) : color = null,
+       assert(
+         label != null || child is! Icon,
+         'An option button showing only an icon needs a label.',
+       );
 
   /// Creates an option button showing a [color] swatch, named by [label].
   const Oito2OptionButton.color({

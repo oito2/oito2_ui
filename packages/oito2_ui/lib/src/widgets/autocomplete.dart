@@ -17,10 +17,10 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../collections/list_collection.dart';
-import '../collections/text_folding.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'options_view.dart';
+import 'widget_helpers.dart';
 
 /// A text field that suggests items of a [collection] as the user types,
 /// as a combobox.
@@ -78,50 +78,61 @@ class Oito2Autocomplete<T extends Object> extends StatefulWidget {
 }
 
 class _Oito2AutocompleteState<T extends Object>
-    extends State<Oito2Autocomplete<T>> {
-  TextEditingController? _ownController;
-  FocusNode? _ownFocusNode;
-
-  TextEditingController get _controller =>
-      widget.controller ??
-      (_ownController ??= TextEditingController(
-        text: switch (widget.collection.find(widget.initialValue)) {
-          final item? => widget.collection.labelOf(item),
-          null => '',
-        },
-      ));
-
-  FocusNode get _focusNode =>
-      widget.focusNode ?? (_ownFocusNode ??= FocusNode());
+    extends State<Oito2Autocomplete<T>>
+    with
+        OwnedFocusNodeMixin,
+        OwnedControllerMixin<Oito2Autocomplete<T>, TextEditingController> {
+  @override
+  TextEditingController? get widgetController => widget.controller;
 
   @override
-  void initState() {
-    super.initState();
-    _controller.addListener(_onText);
-    _focusNode.addListener(_onText);
-  }
+  TextEditingController createOwnedController() => TextEditingController(
+    text: switch (widget.collection.find(widget.initialValue)) {
+      final item? => widget.collection.labelOf(item),
+      null => '',
+    },
+  );
 
   @override
-  void dispose() {
-    _controller.removeListener(_onText);
-    _focusNode.removeListener(_onText);
-    _ownController?.dispose();
-    _ownFocusNode?.dispose();
-    super.dispose();
+  void onControllerChange() => _onText();
+
+  @override
+  FocusNode? get widgetFocusNode => widget.focusNode;
+
+  @override
+  void onEffectiveFocusChange() => _onText();
+
+  TextEditingController get _controller => effectiveController;
+
+  FocusNode get _focusNode => effectiveFocusNode;
+
+  @override
+  void didUpdateWidget(Oito2Autocomplete<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.showAllWhenEmpty != widget.showAllWhenEmpty) {
+      _lastQuery = null;
+    }
   }
 
   void _onText() => setState(() {});
 
+  Oito2ListCollection<T>? _optionsSource;
+  String? _lastQuery;
+  List<T> _lastOptions = const [];
+
+  /// The items matching [text], reused while the text and the collection
+  /// stay the same.
   List<T> _options(String text) {
     final collection = widget.collection;
-    if (text.isEmpty && !widget.showAllWhenEmpty) return const [];
-    final needle = foldText(text);
-    return [
-      for (final item in collection.items)
-        if (!collection.isDisabled(item) &&
-            foldText(collection.labelOf(item)).contains(needle))
-          item,
-    ];
+    if (identical(_optionsSource, collection) && text == _lastQuery) {
+      return _lastOptions;
+    }
+    _optionsSource = collection;
+    _lastQuery = text;
+    if (text.isEmpty && !widget.showAllWhenEmpty) {
+      return _lastOptions = const [];
+    }
+    return _lastOptions = collection.suggestions(text);
   }
 
   @override

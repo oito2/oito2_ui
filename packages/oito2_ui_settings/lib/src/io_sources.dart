@@ -17,19 +17,36 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui' show Color;
 
+import 'package:dbus/dbus.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:gsettings/gsettings.dart';
+import 'package:path/path.dart' as p;
 import 'package:system_theme/system_theme.dart';
 
 import 'sources.dart';
 
-/// Reads GSettings through dconf over D-Bus, keeping one connection per
-/// schema.
+/// Reads GSettings through dconf over D-Bus, sharing one session and one
+/// system bus connection between every schema it reads.
+///
+/// The connections stay open until [close]; a process with an open
+/// connection may not exit.
 class Oito2DconfGSettingsSource implements Oito2GSettingsSource {
+  /// Creates a source on [sessionBus] and [systemBus], or on connections of
+  /// its own when they are null.
+  Oito2DconfGSettingsSource({DBusClient? sessionBus, DBusClient? systemBus})
+    : _ownsBuses = sessionBus == null && systemBus == null,
+      _sessionBus = sessionBus ?? DBusClient.session(),
+      _systemBus = systemBus ?? DBusClient.system();
+
+  final bool _ownsBuses;
+  final DBusClient _sessionBus;
+  final DBusClient _systemBus;
   final Map<String, GSettings> _schemas = {};
 
-  GSettings _schema(String name) => _schemas.putIfAbsent(name, () {
-    return GSettings(name);
-  });
+  GSettings _schema(String name) => _schemas.putIfAbsent(
+    name,
+    () => GSettings(name, sessionBus: _sessionBus, systemBus: _systemBus),
+  );
 
   @override
   Future<Object?> read(String schema, String key) async {
@@ -41,16 +58,37 @@ class Oito2DconfGSettingsSource implements Oito2GSettingsSource {
     }
   }
 
+  /// Changes to [schema]'s keys; quiet when the schema isn't installed.
+  ///
+  /// `GSettings` loads the schema when its stream gets a listener, and a
+  /// missing schema fails outside the stream, so the subscription runs in
+  /// a zone that keeps that failure from escaping.
   @override
-  Stream<void> changes(String schema) =>
-      _schema(schema).keysChanged.handleError((Object _) {});
+  Stream<void> changes(String schema) {
+    late final StreamController<void> controller;
+    StreamSubscription<Object?>? subscription;
+    controller = StreamController<void>(
+      onListen: () => runZonedGuarded(() {
+        subscription = _schema(schema).keysChanged
+            .listen((_) => controller.add(null), onError: (Object _) {});
+      }, (_, _) {}),
+      onCancel: () => subscription?.cancel(),
+    );
+    return controller.stream;
+  }
 
-  /// Closes every D-Bus connection.
+  /// Closes every schema and, when the source opened them, both bus
+  /// connections.
+  @override
   Future<void> close() async {
     for (final schema in _schemas.values) {
       await schema.close();
     }
     _schemas.clear();
+    if (_ownsBuses) {
+      await _sessionBus.close();
+      await _systemBus.close();
+    }
   }
 }
 
@@ -70,13 +108,16 @@ class Oito2HomeConfigFileSource implements Oito2ConfigFileSource {
     final xdg = environment['XDG_CONFIG_HOME'];
     if (xdg != null && xdg.isNotEmpty) return Oito2HomeConfigFileSource(xdg);
     final home = environment['HOME'] ?? '';
-    return Oito2HomeConfigFileSource(home.isEmpty ? '' : '$home/.config');
+    return Oito2HomeConfigFileSource(
+      home.isEmpty ? '' : p.join(home, '.config'),
+    );
   }
 
   /// The configuration directory.
   final String configHome;
 
-  File _file(String relativePath) => File('$configHome/$relativePath');
+  File _file(String relativePath) =>
+      File(p.normalize(p.join(configHome, relativePath)));
 
   @override
   Future<String?> read(String relativePath) async {
@@ -95,9 +136,16 @@ class Oito2HomeConfigFileSource implements Oito2ConfigFileSource {
     final file = _file(relativePath);
     final directory = file.parent;
     if (!directory.existsSync()) return const Stream.empty();
+    // Matches writes in place and atomic replacements, where a temporary
+    // file is renamed onto the watched path.
+    bool touches(FileSystemEvent event) =>
+        p.equals(event.path, file.path) ||
+        (event is FileSystemMoveEvent &&
+            event.destination != null &&
+            p.equals(event.destination!, file.path));
     return directory
         .watch()
-        .where((event) => event.path == file.path)
+        .where(touches)
         .map((_) {})
         .handleError((Object _) {});
   }
@@ -106,35 +154,36 @@ class Oito2HomeConfigFileSource implements Oito2ConfigFileSource {
 /// Reads the accent color through `system_theme`: the Windows, macOS and
 /// Android system accent, or the GTK theme's selection color on Linux.
 ///
-/// `system_theme` reports its fallback color when the platform has no
-/// accent; this source sets a fully transparent fallback before the shared
-/// [SystemTheme.accentColor] is first used, and also treats the package's
-/// default fallback as missing, so neither is mistaken for a real accent.
+/// It reads through its own `system_theme` color with a fully transparent
+/// default, which stands for a missing accent, so the package's global
+/// fallback stays untouched and every real accent color counts.
 class Oito2SystemThemeAccentSource implements Oito2AccentSource {
-  /// Creates the source and configures the `system_theme` fallback.
-  Oito2SystemThemeAccentSource() {
-    SystemTheme.fallbackColor = _missing;
-  }
+  /// Creates the source.
+  Oito2SystemThemeAccentSource();
 
   static const _missing = Color(0x00000000);
+
+  /// The accent read on demand; its default marks a missing accent.
+  final SystemAccentColor _accent = SystemAccentColor(_missing);
 
   @override
   Future<Color?> read() async {
     try {
-      final accent = SystemTheme.accentColor;
-      await accent.load();
-      final color = accent.accent;
-      final isFallback =
-          color.a == 0 ||
-          color.toARGB32() == SystemTheme.kDefaultFallbackColor.toARGB32();
-      return isFallback ? null : color;
+      await _accent.load();
+      final color = _accent.accent;
+      return color.a == 0 ? null : color;
     } on Object {
       return null;
     }
   }
 
+  /// Changes arrive only where `system_theme` streams them (Windows and
+  /// macOS); elsewhere the stream is empty.
   @override
   Stream<void> changes() {
+    if (!defaultTargetPlatform.supportsListeningToAccentColorChanges) {
+      return const Stream.empty();
+    }
     try {
       return SystemTheme.onChange.map((_) {}).handleError((Object _) {});
     } on Object {

@@ -153,21 +153,26 @@ class ShowcaseFrame extends StatefulWidget {
 }
 
 class _ShowcaseFrameState extends State<ShowcaseFrame> {
-  late double _width = widget.initialWidth;
+  static const _minWidth = 360.0;
+  static const _maxWidth = 900.0;
+
+  // The slider only takes values within its range.
+  late double _width = widget.initialWidth.clamp(_minWidth, _maxWidth);
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
+        // Wraps on narrow screens instead of overflowing.
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             SizedBox(
               width: 320,
               child: Slider(
-                min: 360,
-                max: 900,
+                min: _minWidth,
+                max: _maxWidth,
                 divisions: 27,
                 value: _width,
                 label: '${_width.round()}',

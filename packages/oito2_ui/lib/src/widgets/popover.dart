@@ -13,11 +13,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
 import 'anchored_panel.dart';
+import 'widget_helpers.dart';
 
 export 'anchored_panel.dart' show Oito2PopoverAlignment, Oito2PopoverPlacement;
 
@@ -64,7 +66,7 @@ class _PopoverScope extends InheritedWidget {
 
   @override
   bool updateShouldNotify(_PopoverScope oldWidget) =>
-      oldWidget.groups != groups;
+      !listEquals(oldWidget.groups, groups);
 }
 
 /// A non-modal panel anchored to a widget, such as a picker or a short
@@ -147,39 +149,40 @@ class Oito2Popover extends StatefulWidget {
   State<Oito2Popover> createState() => _Oito2PopoverState();
 }
 
-class _Oito2PopoverState extends State<Oito2Popover> {
+class _Oito2PopoverState extends State<Oito2Popover>
+    with OwnedControllerMixin<Oito2Popover, Oito2PopoverController> {
   final _portal = OverlayPortalController();
   final _scope = FocusScopeNode(debugLabel: 'Oito2Popover');
-  Oito2PopoverController? _ownController;
   FocusNode? _previousFocus;
   List<Object> _parentGroups = const [];
 
-  Oito2PopoverController get _controller =>
-      widget.controller ?? (_ownController ??= Oito2PopoverController());
+  @override
+  Oito2PopoverController? get widgetController => widget.controller;
+
+  @override
+  Oito2PopoverController createOwnedController() => Oito2PopoverController();
+
+  @override
+  void onControllerChange() => _sync();
+
+  Oito2PopoverController get _controller => effectiveController;
 
   @override
   void initState() {
     super.initState();
-    _controller.addListener(_sync);
     if (_controller.isOpen) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
     }
   }
 
   @override
-  void didUpdateWidget(Oito2Popover oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.controller != widget.controller) {
-      (oldWidget.controller ?? _ownController)?.removeListener(_sync);
-      _controller.addListener(_sync);
-      _sync();
-    }
+  void didChangeController(Oito2PopoverController previous) {
+    // Showing or hiding the overlay isn't allowed during a build.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_sync);
-    _ownController?.dispose();
     _scope.dispose();
     super.dispose();
   }
@@ -224,10 +227,13 @@ class _Oito2PopoverState extends State<Oito2Popover> {
       info.childPaintTransform,
       Offset.zero & info.childSize,
     );
-    Widget content = Padding(
-      padding: widget.padding,
-      child: widget.popoverBuilder(context, _controller),
-    );
+    // The panel lays out again whenever the anchor moves; the content is
+    // built once per build of the popover and reused in between.
+    if (_contentBuild != _builds) {
+      _contentBuild = _builds;
+      _content = widget.popoverBuilder(context, _controller);
+    }
+    Widget content = Padding(padding: widget.padding, child: _content);
     content = Semantics(
       container: true,
       explicitChildNodes: true,
@@ -272,8 +278,14 @@ class _Oito2PopoverState extends State<Oito2Popover> {
     );
   }
 
+  /// Counts the builds of the popover, which rebuild the panel content.
+  int _builds = 0;
+  int _contentBuild = -1;
+  Widget? _content;
+
   @override
   Widget build(BuildContext context) {
+    _builds++;
     _parentGroups = _PopoverScope.groupsOf(context);
     return OverlayPortal.overlayChildLayoutBuilder(
       controller: _portal,

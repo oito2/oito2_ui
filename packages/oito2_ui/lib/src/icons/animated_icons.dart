@@ -402,16 +402,10 @@ class _Oito2AnimatedIconState extends State<Oito2AnimatedIcon>
     final size = widget.size ?? iconTheme.size ?? 24;
     final color =
         widget.color ?? iconTheme.color ?? Oito2NeutralPalette.light.onSurface;
-    final icon = AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) => CustomPaint(
-        size: Size.square(size),
-        painter: _AnimatedIconPainter(
-          widget.data.painter,
-          _controller.value,
-          color,
-        ),
-      ),
+    // The painter repaints with the animation, without rebuilding.
+    final icon = CustomPaint(
+      size: Size.square(size),
+      painter: _AnimatedIconPainter(widget.data.painter, _controller, color),
     );
     final label = widget.semanticLabel;
     return label == null
@@ -421,17 +415,18 @@ class _Oito2AnimatedIconState extends State<Oito2AnimatedIcon>
 }
 
 class _AnimatedIconPainter extends CustomPainter {
-  _AnimatedIconPainter(this.draw, this.progress, this.color);
+  _AnimatedIconPainter(this.draw, this.progress, this.color)
+    : super(repaint: progress);
 
   final Oito2AnimatedIconPainter draw;
-  final double progress;
+  final Animation<double> progress;
   final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
     canvas.scale(size.width / 24, size.height / 24);
-    draw(canvas, progress, Paint()..color = color);
+    draw(canvas, progress.value, Paint()..color = color);
     canvas.restore();
   }
 

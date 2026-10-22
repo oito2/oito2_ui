@@ -42,8 +42,7 @@ class Oito2ShortcutLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final target = platform ?? theme.platform;
-    final apple =
-        target == TargetPlatform.macOS || target == TargetPlatform.iOS;
+    final apple = oito2UsesCommandKey(target);
     final style = theme.textTheme.labelSmall?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
     );
@@ -165,9 +164,7 @@ class _Oito2ShortcutRecorderState extends State<Oito2ShortcutRecorder> {
 
   /// Stores the platform's primary modifier as [Oito2KeyChord.primary].
   Oito2KeyChord _withPrimary(Oito2KeyChord chord) {
-    final platform = Theme.of(context).platform;
-    final apple =
-        platform == TargetPlatform.macOS || platform == TargetPlatform.iOS;
+    final apple = oito2UsesCommandKey(Theme.of(context).platform);
     final isPrimary = apple ? chord.meta : chord.control;
     if (!isPrimary) return chord;
     return Oito2KeyChord(

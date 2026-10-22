@@ -22,6 +22,7 @@ import '../tokens/geometry.dart';
 import 'controls.dart';
 import 'popover.dart';
 import 'utilities.dart';
+import 'widget_helpers.dart';
 
 /// The text format of an [Oito2ColorPicker]'s fields.
 enum Oito2ColorFormat {
@@ -114,12 +115,20 @@ class _Oito2ColorPickerState extends State<Oito2ColorPicker> {
     }
   }
 
+  /// Shows and reports [hsv]; a field committed after the picker closed
+  /// still reports its color.
   void _set(HSVColor hsv) {
-    setState(() => _hsv = hsv);
+    if (mounted) setState(() => _hsv = hsv);
     widget.onChanged(hsv.toColor());
   }
 
-  void _setColor(Color color) => _set(HSVColor.fromColor(color));
+  /// Sets [color], keeping the current hue, or [hue] when given, for grays,
+  /// which have no hue of their own.
+  void _setColor(Color color, {double? hue}) {
+    final next = HSVColor.fromColor(color);
+    final gray = next.saturation == 0 || next.value == 0;
+    _set(gray ? next.withHue(hue ?? _hsv.hue) : next);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -382,12 +391,7 @@ class _ChannelSlider extends StatelessWidget {
   Widget build(BuildContext context) {
     final rtl = Directionality.of(context) == TextDirection.rtl;
     void by(double delta) => onChanged((value + delta).clamp(0.0, 1.0));
-    final forward = rtl
-        ? LogicalKeyboardKey.arrowLeft
-        : LogicalKeyboardKey.arrowRight;
-    final back = rtl
-        ? LogicalKeyboardKey.arrowRight
-        : LogicalKeyboardKey.arrowLeft;
+    final (:back, :forward) = readingArrowsOf(context);
     return Semantics(
       slider: true,
       label: label,
@@ -518,7 +522,7 @@ class _ColorFields extends StatelessWidget {
   final HSVColor hsv;
   final Oito2ColorFormat format;
   final bool showAlpha;
-  final ValueChanged<Color> onColor;
+  final void Function(Color color, {double? hue}) onColor;
 
   @override
   Widget build(BuildContext context) {
@@ -526,7 +530,8 @@ class _ColorFields extends StatelessWidget {
     switch (format) {
       case Oito2ColorFormat.hex:
         return _CommitField(
-          label: 'Hex',
+          key: const ValueKey('Hex'),
+          label: Oito2Localizations.of(context).hexColor,
           text: oito2ColorToHex(color, withAlpha: showAlpha),
           onCommit: (text) {
             final parsed = oito2ColorFromHex(text);
@@ -540,6 +545,9 @@ class _ColorFields extends StatelessWidget {
         Widget field(String label, String semantic, int value, int index) =>
             Expanded(
               child: _CommitField(
+                // One element per channel, so switching formats replaces
+                // the field and applies its pending text.
+                key: ValueKey(label),
                 label: label,
                 semanticLabel: semantic,
                 text: '$value',
@@ -576,9 +584,11 @@ class _ColorFields extends StatelessWidget {
           String semantic,
           int value,
           int max,
-          HSLColor Function(double) apply,
-        ) => Expanded(
+          HSLColor Function(double) apply, {
+          bool hueField = false,
+        }) => Expanded(
           child: _CommitField(
+            key: ValueKey(label),
             label: label,
             semanticLabel: semantic,
             text: '$value',
@@ -586,7 +596,8 @@ class _ColorFields extends StatelessWidget {
             onCommit: (text) {
               final n = int.tryParse(text);
               if (n == null) return false;
-              onColor(apply(n.clamp(0, max).toDouble()).toColor());
+              final value = n.clamp(0, max).toDouble();
+              onColor(apply(value).toColor(), hue: hueField ? value : hue);
               return true;
             },
           ),
@@ -594,7 +605,14 @@ class _ColorFields extends StatelessWidget {
         return Row(
           spacing: Oito2Spacing.xs,
           children: [
-            field('H', strings.hue, hue.round(), 360, hsl.withHue),
+            field(
+              'H',
+              strings.hue,
+              hue.round(),
+              360,
+              hsl.withHue,
+              hueField: true,
+            ),
             field(
               'S',
               strings.saturation,
@@ -619,6 +637,7 @@ class _ColorFields extends StatelessWidget {
 /// and shows [text] again when [onCommit] rejects it.
 class _CommitField extends StatefulWidget {
   const _CommitField({
+    super.key,
     required this.label,
     required this.text,
     required this.onCommit,
@@ -654,6 +673,19 @@ class _CommitFieldState extends State<_CommitField> {
     if (!_focusNode.hasFocus && _controller.text != widget.text) {
       _controller.text = widget.text;
     }
+  }
+
+  /// Applies text typed without Enter when the field goes away, such as
+  /// when the format changes or the popover closes, after the frame that
+  /// removes it.
+  @override
+  void deactivate() {
+    final text = _controller.text;
+    if (_focusNode.hasFocus && text != widget.text) {
+      final commit = widget.onCommit;
+      WidgetsBinding.instance.addPostFrameCallback((_) => commit(text));
+    }
+    super.deactivate();
   }
 
   @override

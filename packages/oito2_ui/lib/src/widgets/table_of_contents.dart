@@ -13,6 +13,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
@@ -47,6 +50,11 @@ class Oito2TocEntry {
 /// [activationOffset] pixels below the top of the viewport, or the last
 /// section when the view is scrolled to the end. [controller] must be the
 /// controller of the scroll view that holds the [Oito2TocEntry.target]s.
+///
+/// In a lazily built scroll view, only built headings are measured: while
+/// none is built the current section stays as it was, and picking a
+/// section whose heading isn't built only calls [onSelected], which can
+/// scroll there.
 class Oito2TableOfContents extends StatefulWidget {
   /// Creates a table of contents.
   const Oito2TableOfContents({
@@ -80,23 +88,30 @@ class _Oito2TableOfContentsState extends State<Oito2TableOfContents> {
   @override
   void initState() {
     super.initState();
-    widget.controller.addListener(_update);
+    widget.controller.addListener(_scheduleUpdate);
     SchedulerBinding.instance.addPostFrameCallback((_) => _update());
   }
 
   @override
   void didUpdateWidget(Oito2TableOfContents oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.controller != widget.controller) {
-      oldWidget.controller.removeListener(_update);
-      widget.controller.addListener(_update);
+    final controllerChanged = oldWidget.controller != widget.controller;
+    if (controllerChanged) {
+      oldWidget.controller.removeListener(_scheduleUpdate);
+      widget.controller.addListener(_scheduleUpdate);
     }
-    SchedulerBinding.instance.addPostFrameCallback((_) => _update());
+    // Measuring the headings costs a layout query each, so it runs again
+    // only when what it depends on changes.
+    if (controllerChanged ||
+        oldWidget.activationOffset != widget.activationOffset ||
+        !listEquals(oldWidget.entries, widget.entries)) {
+      _scheduleUpdate();
+    }
   }
 
   @override
   void dispose() {
-    widget.controller.removeListener(_update);
+    widget.controller.removeListener(_scheduleUpdate);
     super.dispose();
   }
 
@@ -110,19 +125,43 @@ class _Oito2TableOfContentsState extends State<Oito2TableOfContents> {
     return viewport.getOffsetToReveal(box, 0).offset;
   }
 
+  bool _updateScheduled = false;
+
+  /// Measures the headings after the next layout, once per frame, so a
+  /// jump that builds new headings sees them laid out.
+  void _scheduleUpdate() {
+    if (_updateScheduled) return;
+    _updateScheduled = true;
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _updateScheduled = false;
+      _update();
+    });
+  }
+
   void _update() {
     if (!mounted || !widget.controller.hasClients) return;
     final position = widget.controller.position;
-    var active = 0;
+    var active = -1;
     if (position.hasContentDimensions &&
         position.pixels >= position.maxScrollExtent - 1 &&
         position.maxScrollExtent > 0) {
       active = widget.entries.length - 1;
     } else {
+      var firstBelow = -1;
       for (var i = 0; i < widget.entries.length; i++) {
         final offset = _offsetOf(widget.entries[i]);
         if (offset == null) continue;
-        if (offset <= position.pixels + widget.activationOffset) active = i;
+        if (offset <= position.pixels + widget.activationOffset) {
+          active = i;
+        } else if (firstBelow < 0) {
+          firstBelow = i;
+        }
+      }
+      // Without a built heading above the activation line, the section
+      // before the first built heading below it is the current one.
+      if (active < 0) {
+        if (firstBelow < 0) return;
+        active = math.max(firstBelow - 1, 0);
       }
     }
     if (active != _active) setState(() => _active = active);

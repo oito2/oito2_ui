@@ -105,6 +105,17 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2TimerController`, `Oito2TimerText` and `oito2FormatDuration`: a stopwatch or countdown with ticks and completion.
 - `Oito2Localizations` strings for the copy, page, step, loading, presence and "more" labels.
 - `Oito2Localizations` strings for the `oito2_ui_extras` components: QR code, signature, crop and navigation labels.
+- `onErrorChanged` on `Oito2DateEntry`, `Oito2TimeEntry` and `Oito2DateTimeEntry`: called with the error message when the text stops parsing and with null when it parses again, since `onChanged` keeps the last valid value.
+- `Oito2TitleBar.preferredSizeOf`: the title bar size in a context's theme, for a `PreferredSize` in a `Scaffold`.
+- `oito2UsesCommandKey`: whether a platform's primary shortcut modifier is Command.
+- `Oito2ListCollection.suggestions` (enabled matches of a query, leaving out given labels) and `Oito2TreeCollection.leavesOf`.
+- `Oito2TreeController.setExpandedValues`.
+- `Oito2SyntaxTheme.of`: the theme's syntax palette, or the base scheme's for its brightness.
+- `Oito2ColorTheme.fromRoles` takes `highContrast`.
+- `Oito2Sizes.progressHeight`, shared by Material's and oito2's linear progress bars.
+- `Oito2InfoType.labelIn` and `Oito2Localizations` strings for the message kinds, date ranges, the hexadecimal color field and removing a tag.
+- `Oito2AvatarGroup.shape` and `semanticLabel`; `Oito2RadioButton.toggleable`; `Oito2TabBar.tabHeight`.
+- The bundled Inter font's license shows in the app's license page.
 
 ### Changed
 
@@ -116,4 +127,79 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2SearchField.prefixIcon` replaces the default search icon.
 - `Oito2WindowTitleBar.buttonSides` (`Oito2WindowButtonSides`) shows only the leading or trailing window buttons of the system layout, for split title bars over a sidebar and a content area; `backgroundColor` and `border` style the bar on desktop and the web.
 - The `Oito2NavigationPage` rail scrolls when its destinations don't fit the height.
+- Buttons are at least the control height instead of exactly it, so their labels grow with a large text scale; menu items keep the control height.
+- `Oito2Expandable` with `onChanged` is controlled: activating the header only reports the requested state, and the content follows `isExpanded`. Without `onChanged` it toggles itself.
+- `Oito2TreeCollection.insert` and `move` throw an `ArgumentError` for an unknown parent, and `move` also for moving a node into itself or its descendants.
+- `Oito2DateEntry` accepts any character, so locales whose compact dates have letters or native digits (`bg`, `ar`) can be typed; the parser validates the text.
+- `Oito2NumberEntry` accepts the digits, signs and separators of the locale, such as `−` in Swedish and Persian digits.
+- `Oito2TimerController` measures time with a monotonic clock by default, so a change to the system time doesn't move it.
+- Shortcuts use the theme's platform for the primary modifier, like the labels that show them, and clashing commands are reported on every rebuild instead of only the first.
+- `Oito2ListCollection` and `Oito2TreeCollection` throw an `ArgumentError` for duplicate values, and `reorder` throws a `RangeError` outside the items.
+- Text folding for search ignores combining accents and spells out `ß`, `æ` and `œ`; highlights stay aligned with the original text.
+- `Oito2Theme` and `Oito2ColorTheme` return the same instance for the same inputs.
+- Linear progress bars in the Material theme are 6 pixels thick, like `Oito2LinearProgressIndicator`.
+- `Oito2MasterDetailPage` selects the first item when the side-by-side layout shows it with nothing selected.
+- `Oito2AngleSlider.onChangeEnd` also runs after a tap, each key press and assistive-technology adjustments.
+- `Oito2Rating` aligns values to its step and takes the focus on a click.
+- `Oito2TagsField` keeps a single tag refused as its delimiter is typed in the field, as with Enter.
+- `Oito2OptionButton` asserts that a button showing only an icon has a `label`.
 
+### Fixed
+
+- `Oito2TreeView`: Shift+click or Shift+arrow no longer throws when the anchor node is hidden (its branch closed, filtered out or removed).
+- `Oito2TreeView` and `Oito2ListBox`: a double click is detected on a real 300 ms timeout instead of frame times, so two slow clicks no longer activate an item.
+- `oito2IsoWeekNumber` and the `Oito2Calendar` week column: week numbers are right in time zones with daylight saving time.
+- `Oito2TimeEntry.parseTime` reads a day-period marker before the time (`오후 9:30`, `下午 9:30`), so the entry accepts the times it shows in Korean and Chinese.
+- `Oito2Popover` and `Oito2Tour`: switching to a controller that is already open no longer fails while building.
+- `Oito2Splitter`: collapsing a pane after the number of panes changed no longer throws.
+- `Oito2FloatingPanel`: minimizing a maximized panel shrinks it to its title bar.
+- `Oito2NavigationRail` and the `Oito2MasterDetailPage` list keep the keyboard focus on the item selected with Enter or Space.
+- `Oito2MasterDetailPage`: with no items, `masterBar` and `masterFooter` stay around `emptyBuilder`, so a search that matches nothing can be cleared.
+- `Oito2Format.bytes` moves to the next unit when rounding reaches it (`999999` reads `1 MB`), and `relativeTime` reads 6.5 days and more as a week.
+- `Oito2AsyncListController`: a failed first page stops paging and exposes its `stackTrace`.
+- `Oito2Commands`: an inner command hides the outer shortcut of the same id.
+- The command palette scrolls the highlighted command into view.
+- `oito2JsonTree` and `Oito2JsonTreeView` show values JSON can't encode, such as `NaN` or a `DateTime`, instead of throwing.
+- The indeterminate `Oito2CircularProgressIndicator` turns smoothly, without a half-turn jump every cycle.
+- `Oito2TreeView`: a failed `onLoadChildren` is reported, the branch closes, and opening it again retries.
+- `Oito2Steps`: vertical steps hold content built by a `LayoutBuilder`, and long horizontal titles wrap and fade instead of overflowing.
+- `Oito2Pagination` arrows point the reading direction in right-to-left layouts.
+- `Oito2TableOfContents` measures headings after layout and keeps the current section while no heading is built in a lazy list.
+- `Oito2TimerController` completes a countdown on time between ticks and does nothing when started after `dispose`.
+- `Oito2DateEntry`, `Oito2TimeEntry`, `Oito2Autocomplete` and `Oito2SegmentedEntry` follow a new focus node, controller or number of segments.
+- `Oito2Checkbox`, `Oito2Radio` and `Oito2Switch` carry their tap action on the node with their state, and `Oito2CheckedMenuItem` and `Oito2MultiSelectMenuItem` report their checked state on the item, for screen readers.
+- `Oito2ColorPicker` keeps the hue for grays, also when typed in the HSL fields.
+- `showOito2Sheet`: a sheet starts off screen on its first frame, `Oito2Sheet.close` animates a modal sheet out, and a non-modal sheet closes with the route that opened it.
+- `Oito2MasterDetailPage`: the system back button returns from the page to the list.
+- `Oito2HoverCard` closes with Escape when it was opened by the pointer and the focus is elsewhere.
+- `Oito2PanedView` moves on the first drag or key after the window shrank below its pane size.
+- `Oito2ScrollViewUndershoot` ignores scroll views nested inside its child.
+- `Oito2NavigationPage` keeps the page state when the layout switches between the bottom bar and the rail.
+- `Oito2Tour` hides the page from assistive technologies while it shows, returns the focus when it ends, and offers Next on a step that waits for a tap on a target that isn't on screen.
+- `Oito2Carousel` keeps its automatic scrolling while its parent rebuilds, and releases its own controller when given one.
+- Toasts, sheets and the desktop page transition create their animation curves once instead of on every build.
+- `Oito2Marquee` moves its content without rebuilding it every frame.
+- `Oito2TreeView` filters and computes the check box states once per build.
+- `Oito2Autocomplete` filters its collection once per query.
+- `Oito2PanedView`'s divider reports itself as a slider to assistive technologies, like `Oito2Splitter`'s.
+- `Oito2SegmentedEntry`: the arrow keys follow the reading direction in right-to-left layouts.
+- Widgets that create their own focus node or controller release it when the app starts giving one, and follow a new one given: `Oito2NumberEntry`, `Oito2PasswordField`, `Oito2PinEntry`, `Oito2EditableLabel`, `Oito2TagsField`, `Oito2SearchField`, `Oito2Popover`, `Oito2MasterDetailPage`, `Oito2NavigationPage` and `Oito2Carousel`.
+- The command palette keeps the scope and declaration order among equally good matches.
+- `Oito2SelectionController.replace`, `selectAll` and `setSelectedValues` notify only on a change, and `setSelectedValues` moves the Shift anchor.
+- `Oito2TreeView` keeps the active row and the list padding fully in view.
+- `Oito2JsonTreeView` opens new data to `expandDepth` again.
+- `Oito2Pagination` keeps the page size selector in the compact form and rejects negative counts.
+- `oito2Initials` keeps decomposed accents and emoji sequences whole.
+- `Oito2ListTile` rows without `onTap` declare no enabled or selected state to screen readers, and `Oito2InfoBox` and toasts name their kind.
+- `Oito2FreedesktopIcons.byName` ignores `-rtl` and `-ltr` and falls back to shorter names, as the specification does.
+- `Oito2ColorPicker` applies a value typed without Enter when the format changes or the picker closes.
+- `Oito2Calendar` follows a selection and limits changed from outside, and previews a range from the keyboard focus.
+- `Oito2PinEntry` counts characters as seen, so an emoji fills one cell of a text code.
+- `Oito2NumberEntry` keeps the text being typed when the locale changes.
+- `Oito2PanedView` and `Oito2Splitter` clip their panes instead of overflowing when the minimum sizes don't fit.
+- `showOito2Sheet`: a side sheet fits a window narrower than its margin, and a non-modal sheet's future completes when its overlay goes away.
+- `Oito2ContextMenuRegion`: nested regions keep the browser menu off until the pointer leaves the outermost.
+- `Oito2FloatingPanel` keeps the content state while minimized.
+- `Oito2Expandable`, `Oito2NavigationPage`, `Oito2ChoiceChipBar`, `Oito2PageIndicator` and `Oito2ScrollViewUndershoot` skip their animations when animations are disabled.
+- `Oito2Toaster` disposes its overlay entries and reports errors from `promise`'s `success` and `error` builders.
+- Progress indicators and animated icons repaint without rebuilding, the popover reuses its content between anchor layouts, and focus borders rebuild only when they could show.

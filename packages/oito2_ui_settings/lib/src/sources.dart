@@ -24,6 +24,9 @@ abstract interface class Oito2GSettingsSource {
 
   /// Emits whenever a key in [schema] changes.
   Stream<void> changes(String schema);
+
+  /// Releases the connections the source holds.
+  Future<void> close();
 }
 
 /// Reads text files from the user's configuration directory
@@ -61,4 +64,8 @@ class Oito2EmptySource
   /// Never emits.
   @override
   Stream<void> changes([String? target]) => const Stream.empty();
+
+  /// Holds nothing to release.
+  @override
+  Future<void> close() async {}
 }

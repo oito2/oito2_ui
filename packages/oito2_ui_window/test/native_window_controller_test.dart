@@ -13,10 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-import 'package:oito2_ui_window/src/native_window_controller.dart';
+import 'package:oito2_ui_window/oito2_ui_window.dart';
 import 'package:window_manager/window_manager.dart';
 
 const _channel = MethodChannel('window_manager');
@@ -130,6 +132,50 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(calls, contains('isMaximized'));
     expect(controller.state.value.isMaximized, isTrue);
+  });
+
+  test('a failed refresh keeps the last state', () async {
+    final controller = await attach();
+    messenger.setMockMethodCallHandler(_channel, (call) async {
+      throw PlatformException(code: 'unavailable');
+    });
+    await expectLater(controller.refresh(), completes);
+    expect(controller.state.value.isActive, isTrue);
+  });
+
+  test('a refresh that ends after dispose changes nothing', () async {
+    final controller = await Oito2NativeWindowController.attach(
+      windowManager,
+      canShowMenu: true,
+    );
+    final gate = Completer<void>();
+    messenger.setMockMethodCallHandler(_channel, (call) async {
+      await gate.future;
+      return false;
+    });
+    final refresh = controller.refresh();
+    controller.dispose();
+    gate.complete();
+    await expectLater(refresh, completes);
+  });
+
+  test('a window event overtakes a refresh in flight', () async {
+    final controller = await attach();
+    final gate = Completer<void>();
+    messenger.setMockMethodCallHandler(_channel, (call) async {
+      await gate.future;
+      return false;
+    });
+    final refresh = controller.refresh();
+    await sendEvent('maximize');
+    gate.complete();
+    await refresh;
+    expect(controller.state.value.isMaximized, isTrue);
+  });
+
+  test('without the window plugin, initialization returns null', () async {
+    messenger.setMockMethodCallHandler(_channel, null);
+    expect(await Oito2Window.ensureInitialized(), isNull);
   });
 
   test('dispose stops listening to window events', () async {

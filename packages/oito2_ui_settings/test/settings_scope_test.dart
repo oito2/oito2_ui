@@ -86,4 +86,46 @@ void main() {
   test('Oito2Settings.reader targets the given platform', () {
     expect(Oito2Settings.reader(platform: _linux).platform, _linux);
   });
+
+  testWidgets('leaves a reader it was given open', (tester) async {
+    final gsettings = FakeGSettings();
+    final reader = Oito2SystemSettingsReader(
+      platform: _linux,
+      environment: const {'XDG_CURRENT_DESKTOP': 'GNOME'},
+      gsettings: gsettings,
+      debounce: Duration.zero,
+    );
+    await tester.pumpWidget(
+      Oito2SystemSettingsScope(reader: reader, child: const SizedBox()),
+    );
+    await tester.pumpWidget(const SizedBox());
+    expect(gsettings.closed, isFalse);
+  });
+
+  testWidgets('follows a new reader', (tester) async {
+    Oito2SystemSettingsReader reader(Color color) => Oito2SystemSettingsReader(
+      platform: _linux,
+      environment: const {'XDG_CURRENT_DESKTOP': 'KDE'},
+      accent: FakeAccent(color),
+      debounce: Duration.zero,
+    );
+    Oito2SystemSettings? seen;
+    Widget build(Oito2SystemSettingsReader reader) => Oito2SystemSettingsScope(
+      reader: reader,
+      child: Builder(
+        builder: (context) {
+          seen = Oito2SystemScope.of(context);
+          return const SizedBox();
+        },
+      ),
+    );
+    await tester.pumpWidget(build(reader(const Color(0xFF111111))));
+    await tester.pump();
+    await tester.pump();
+    expect(seen!.accentColor, const Color(0xFF111111));
+    await tester.pumpWidget(build(reader(const Color(0xFF222222))));
+    await tester.pump();
+    await tester.pump();
+    expect(seen!.accentColor, const Color(0xFF222222));
+  });
 }

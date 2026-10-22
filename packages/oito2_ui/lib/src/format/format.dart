@@ -85,6 +85,15 @@ class Oito2Format {
       value /= base;
       unit++;
     }
+    // Moves to the next unit when rounding would show the base itself,
+    // such as "1,000 kB".
+    final factor = math.pow(10, unit == 0 ? 0 : fractionDigits);
+    if (unit > 0 &&
+        unit < names.length - 1 &&
+        (value * factor).round() / factor >= base) {
+      value /= base;
+      unit++;
+    }
     final format = NumberFormat.decimalPattern(locale)
       ..maximumFractionDigits = unit == 0 ? 0 : fractionDigits;
     return '$sign${format.format(value)} ${names[unit]}';
@@ -106,7 +115,8 @@ class Oito2Format {
     final (count, unit) = switch (seconds) {
       < 45 * 60 => (math.max(1, (seconds / 60).round()), Oito2TimeUnit.minute),
       < 22 * 3600 => ((seconds / 3600).round(), Oito2TimeUnit.hour),
-      < 7 * 86400 => ((seconds / 86400).round(), Oito2TimeUnit.day),
+      // Six and a half days round to a week, not to "7 days".
+      < 13 * 43200 => ((seconds / 86400).round(), Oito2TimeUnit.day),
       < 30 * 86400 => ((seconds / (7 * 86400)).round(), Oito2TimeUnit.week),
       < 365 * 86400 => (
         math.max(1, (seconds / (30 * 86400)).round()),

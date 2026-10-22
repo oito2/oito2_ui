@@ -13,16 +13,23 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/semantics.dart' show SemanticsBinding;
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_settings/oito2_ui_settings.dart';
 import 'package:oito2_ui_window/oito2_ui_window.dart';
 
 import 'src/showcase_options.dart';
+import 'src/showcase_router.dart';
 import 'src/showcase_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // On the web the semantics tree is built only on request; the showcase
+  // always builds it, so screen readers and accessibility checkers see the
+  // page without the "Enable accessibility" button.
+  if (kIsWeb) SemanticsBinding.instance.ensureSemantics();
   final windowController = await Oito2Window.ensureInitialized(
     title: 'oito2_ui',
     size: const Size(1280, 820),
@@ -43,7 +50,9 @@ class ShowcaseApp extends StatefulWidget {
   /// of the closest [Oito2SystemScope].
   ///
   /// [initialSlug] selects the first page; it defaults to the page named in
-  /// the launch route, such as `#/check-button` on the web.
+  /// the launch route, such as `#/check-button` on the web. The address
+  /// follows the selected page afterwards, and an address change selects
+  /// its page.
   const ShowcaseApp({
     super.key,
     this.windowController,
@@ -67,39 +76,54 @@ class ShowcaseApp extends StatefulWidget {
 
 class _ShowcaseAppState extends State<ShowcaseApp> {
   late final _controller = ShowcaseController(widget.initialOptions);
-  late final String _initialSlug;
+  final _location = ShowcaseLocation();
+  late final _routeInformation = PlatformRouteInformationProvider(
+    initialRouteInformation: RouteInformation(
+      uri: Uri.parse(
+        widget.initialSlug != null
+            ? '/${widget.initialSlug}'
+            : WidgetsBinding.instance.platformDispatcher.defaultRouteName,
+      ),
+    ),
+  );
+  late final _router = ShowcaseRouterDelegate(
+    location: _location,
+    builder: (context) => ShowcaseShell(
+      controller: _controller,
+      colors: _options.colorsFor(Theme.of(context).brightness, _system),
+      location: _location,
+    ),
+  );
 
-  @override
-  void initState() {
-    super.initState();
-    // Reads the launch route before the navigator reports its own '/' to
-    // the browser, which replaces the address the slug comes from.
-    _initialSlug =
-        widget.initialSlug ??
-        WidgetsBinding.instance.platformDispatcher.defaultRouteName
-            .replaceFirst(RegExp('^/'), '');
-  }
+  // The options and system settings of the latest build, read by the
+  // router's page builder.
+  late ShowcaseOptions _options;
+  late Oito2SystemSettings _system;
 
   @override
   void dispose() {
+    _router.dispose();
+    _routeInformation.dispose();
+    _location.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final system = Oito2SystemScope.of(context);
+    final system = _system = Oito2SystemScope.of(context);
     return Oito2WindowScope(
       controller: widget.windowController,
       child: ValueListenableBuilder<ShowcaseOptions>(
         valueListenable: _controller,
         builder: (context, options, _) {
+          _options = options;
           final platform = options.platformFor(system.platform);
           ThemeData theme(Brightness brightness) => Oito2Theme.fromColors(
             options.colorsFor(brightness, system),
             platform: platform,
           );
-          return MaterialApp(
+          return MaterialApp.router(
             title: 'oito2_ui',
             debugShowCheckedModeBanner: false,
             theme: theme(Brightness.light),
@@ -111,19 +135,14 @@ class _ShowcaseAppState extends State<ShowcaseApp> {
               ...GlobalMaterialLocalizations.delegates,
             ],
             supportedLocales: Oito2Localizations.supportedLocales,
-            initialRoute: '/',
+            routeInformationProvider: _routeInformation,
+            routeInformationParser: const ShowcaseRouteParser(),
+            routerDelegate: _router,
             builder: (context, child) => Directionality(
               textDirection: options.rtl
                   ? TextDirection.rtl
                   : Directionality.of(context),
               child: Oito2Toaster(child: child!),
-            ),
-            home: Builder(
-              builder: (context) => ShowcaseShell(
-                controller: _controller,
-                colors: options.colorsFor(Theme.of(context).brightness, system),
-                initialSlug: _initialSlug,
-              ),
             ),
           );
         },

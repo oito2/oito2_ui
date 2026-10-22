@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:async';
 import 'dart:ui' show Color;
 
 import 'package:flutter/foundation.dart';
@@ -299,6 +300,21 @@ void main() {
       expect(first.windowButtonLayout.leading, [_close]);
     });
 
+    test('drops a read that a newer one overtakes', () async {
+      final gate = Completer<void>();
+      final accent = _GatedAccent(gate.future, const Color(0xFF111111));
+      final reader = _reader(accent: accent);
+      final events = <Oito2SystemSettings>[];
+      final subscription = reader.watch().listen(events.add);
+      addTearDown(subscription.cancel);
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      accent.change(const Color(0xFF222222));
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      gate.complete();
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(events.last.accentColor, const Color(0xFF222222));
+    });
+
     test('emits again only when a change alters the settings', () async {
       final gsettings = FakeGSettings({'$_gnomeWm/button-layout': 'close:'});
       final reader = _reader(gsettings: gsettings);
@@ -344,4 +360,31 @@ void main() {
       expect(files.isWatched(_kwinrc), isFalse);
     });
   });
+
+  test('close releases the GSettings connections', () async {
+    final gsettings = FakeGSettings();
+    final reader = _reader(gsettings: gsettings);
+    await reader.read();
+    await reader.close();
+    expect(gsettings.closed, isTrue);
+  });
+}
+
+/// An accent source whose first read waits for [gate] and returns the
+/// color it had when the read started.
+class _GatedAccent extends FakeAccent {
+  _GatedAccent(this.gate, super.color);
+
+  final Future<void> gate;
+  bool _first = true;
+
+  @override
+  Future<Color?> read() async {
+    final value = color;
+    if (_first) {
+      _first = false;
+      await gate;
+    }
+    return value;
+  }
 }

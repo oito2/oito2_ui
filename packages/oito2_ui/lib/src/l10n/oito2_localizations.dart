@@ -226,6 +226,30 @@ abstract class Oito2Localizations {
   /// The state of a step that needs attention.
   String get stepError;
 
+  /// How to remove a focused tag, for assistive technologies.
+  String get removeTagHint;
+
+  /// The prefix of the hexadecimal color field.
+  String get hexColor;
+
+  /// A range of two formatted dates, such as '3/1/2026 – 3/7/2026'.
+  String dateRange(String start, String end);
+
+  /// Label of an information message for assistive technologies.
+  String get infoInformation;
+
+  /// Label of a success message for assistive technologies.
+  String get infoSuccess;
+
+  /// Label of a warning message for assistive technologies.
+  String get infoWarning;
+
+  /// Label of an error message for assistive technologies.
+  String get infoDanger;
+
+  /// Label of an important message for assistive technologies.
+  String get infoImportant;
+
   /// Announced while content loads.
   String get loading;
 
@@ -488,6 +512,30 @@ class Oito2LocalizationsEn extends Oito2Localizations {
   String get stepError => 'Needs attention';
 
   @override
+  String get removeTagHint => 'Press Delete to remove';
+
+  @override
+  String get hexColor => 'Hex';
+
+  @override
+  String dateRange(String start, String end) => '$start – $end';
+
+  @override
+  String get infoInformation => 'Information';
+
+  @override
+  String get infoSuccess => 'Success';
+
+  @override
+  String get infoWarning => 'Warning';
+
+  @override
+  String get infoDanger => 'Error';
+
+  @override
+  String get infoImportant => 'Important';
+
+  @override
   String get loading => 'Loading';
 
   @override
@@ -734,6 +782,30 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String get stepError => 'Requer atenção';
+
+  @override
+  String get removeTagHint => 'Pressione Delete para remover';
+
+  @override
+  String get hexColor => 'Hex';
+
+  @override
+  String dateRange(String start, String end) => '$start – $end';
+
+  @override
+  String get infoInformation => 'Informação';
+
+  @override
+  String get infoSuccess => 'Sucesso';
+
+  @override
+  String get infoWarning => 'Aviso';
+
+  @override
+  String get infoDanger => 'Erro';
+
+  @override
+  String get infoImportant => 'Importante';
 
   @override
   String get loading => 'Carregando';

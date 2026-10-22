@@ -102,9 +102,11 @@ class ShowcaseOptions {
   /// The resolved colors for [brightness] with the [system] accent and
   /// contrast preferences.
   Oito2ColorTheme colorsFor(Brightness brightness, Oito2SystemSettings system) {
-    if (preset case final preset?) return preset.colors;
-    final color = accentFor(system);
     final contrast = highContrast || system.highContrast;
+    if (preset case final preset?) {
+      return Oito2ColorTheme.fromRoles(preset.roles, highContrast: contrast);
+    }
+    final color = accentFor(system);
     return brightness == Brightness.dark
         ? Oito2ColorTheme.dark(accent: color, highContrast: contrast)
         : Oito2ColorTheme.light(accent: color, highContrast: contrast);
@@ -137,6 +139,30 @@ class ShowcaseOptions {
       density: density ?? this.density,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is ShowcaseOptions &&
+      other.themeMode == themeMode &&
+      other.preset == preset &&
+      other.accent == accent &&
+      other.highContrast == highContrast &&
+      other.compactMode == compactMode &&
+      other.rtl == rtl &&
+      other.locale == locale &&
+      other.density == density;
+
+  @override
+  int get hashCode => Object.hash(
+    themeMode,
+    preset,
+    accent,
+    highContrast,
+    compactMode,
+    rtl,
+    locale,
+    density,
+  );
 }
 
 /// Holds the showcase options and notifies listeners when they change.

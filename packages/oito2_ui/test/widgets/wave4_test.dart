@@ -17,8 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-
-import 'test_app.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 final _cities = Oito2ListCollection(const [
   'Belo Horizonte',
@@ -88,6 +87,25 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
       expect(controller.currentPage, 0);
+    });
+
+    testWidgets('auto-scroll advances while the parent rebuilds', (
+      tester,
+    ) async {
+      final controller = Oito2CarouselController(
+        autoScroll: true,
+        autoScrollInterval: const Duration(seconds: 2),
+      );
+      addTearDown(controller.dispose);
+      for (var i = 0; i < 5; i++) {
+        await pumpOito2(
+          tester,
+          Oito2Carousel(controller: controller, children: _slides(2)),
+        );
+        await tester.pump(const Duration(milliseconds: 500));
+      }
+      await tester.pumpAndSettle();
+      expect(controller.currentPage, 1);
     });
 
     testWidgets('auto-scroll stays still when animations are disabled', (
@@ -230,6 +248,36 @@ void main() {
       await tester.enterText(find.byType(TextField), 'zz');
       await tester.pumpAndSettle();
       expect(find.bySemanticsLabel('No results'), findsOneWidget);
+    });
+
+    testWidgets('follows a swapped controller', (tester) async {
+      final first = TextEditingController();
+      final second = TextEditingController();
+      final firstFocus = FocusNode();
+      final secondFocus = FocusNode();
+      addTearDown(first.dispose);
+      addTearDown(second.dispose);
+      addTearDown(firstFocus.dispose);
+      addTearDown(secondFocus.dispose);
+      Widget build(TextEditingController controller, FocusNode focusNode) =>
+          SizedBox(
+            width: 300,
+            child: Oito2Autocomplete<String>(
+              collection: _cities,
+              controller: controller,
+              focusNode: focusNode,
+            ),
+          );
+      await pumpOito2(tester, build(first, firstFocus));
+      await pumpOito2(tester, build(second, secondFocus));
+      await tester.tap(find.byType(TextField));
+      second.text = 'sa';
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('2 results'), findsOneWidget);
+      await pumpOito2(tester, const SizedBox());
+      first.text = 'b';
+      firstFocus.requestFocus();
+      expect(tester.takeException(), isNull);
     });
   });
 }

@@ -18,7 +18,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../collections/list_collection.dart';
-import '../collections/text_folding.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'options_view.dart';
@@ -86,13 +85,16 @@ class Oito2TagsField extends StatefulWidget {
   State<Oito2TagsField> createState() => _Oito2TagsFieldState();
 }
 
-class _Oito2TagsFieldState extends State<Oito2TagsField> {
+class _Oito2TagsFieldState extends State<Oito2TagsField>
+    with OwnedFocusNodeMixin {
   final _controller = TextEditingController();
   final List<FocusNode> _tagNodes = [];
-  FocusNode? _ownFocusNode;
   bool _hasFocus = false;
 
-  FocusNode get _input => widget.focusNode ?? (_ownFocusNode ??= FocusNode());
+  @override
+  FocusNode? get widgetFocusNode => widget.focusNode;
+
+  FocusNode get _input => effectiveFocusNode;
 
   bool get _enabled => widget.onChanged != null;
 
@@ -104,18 +106,38 @@ class _Oito2TagsFieldState extends State<Oito2TagsField> {
     for (final node in _tagNodes) {
       node.dispose();
     }
-    _ownFocusNode?.dispose();
     _controller.dispose();
     super.dispose();
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _syncNodes();
+  }
+
+  @override
+  void didUpdateWidget(Oito2TagsField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncNodes();
+  }
+
+  /// Keeps one focus node per tag. Removed nodes are disposed after the
+  /// frame, once the chips that used them are gone.
   void _syncNodes() {
     while (_tagNodes.length < widget.tags.length) {
       _tagNodes.add(FocusNode(debugLabel: 'Oito2TagsField tag'));
     }
+    final removed = <FocusNode>[];
     while (_tagNodes.length > widget.tags.length) {
-      _tagNodes.removeLast().dispose();
+      removed.add(_tagNodes.removeLast());
     }
+    if (removed.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final node in removed) {
+        node.dispose();
+      }
+    });
   }
 
   bool _accepts(String tag, List<String> tags) =>
@@ -124,18 +146,29 @@ class _Oito2TagsFieldState extends State<Oito2TagsField> {
       (widget.maxTags == null || tags.length < widget.maxTags!) &&
       (widget.validator?.call(tag) ?? true);
 
-  /// Adds the accepted tags of [raw] and reports whether any was added.
-  bool _add(Iterable<String> raw) {
-    if (!_enabled) return false;
+  /// Adds the accepted tags of [raw] and returns the refused texts, which
+  /// stay in the field.
+  List<String> _add(Iterable<String> raw) {
+    if (!_enabled) return [...raw];
     final tags = [...widget.tags];
+    final refused = <String>[];
     for (final text in raw) {
       final tag = text.trim();
-      if (_accepts(tag, tags)) tags.add(tag);
+      if (_accepts(tag, tags)) {
+        tags.add(tag);
+      } else if (tag.isNotEmpty) {
+        refused.add(tag);
+      }
     }
-    if (tags.length == widget.tags.length) return false;
-    widget.onChanged!(tags);
-    return true;
+    if (tags.length > widget.tags.length) widget.onChanged!(tags);
+    return refused;
   }
+
+  /// Puts [text] in the field with the caret at its end.
+  void _setText(String text) => _controller.value = TextEditingValue(
+    text: text,
+    selection: TextSelection.collapsed(offset: text.length),
+  );
 
   void _remove(int index) {
     if (!_enabled) return;
@@ -154,12 +187,18 @@ class _Oito2TagsFieldState extends State<Oito2TagsField> {
     final pattern = RegExp(widget.delimiters.map(RegExp.escape).join('|'));
     if (widget.delimiters.isEmpty || !text.contains(pattern)) return;
     final parts = text.split(pattern);
-    _add(parts.take(parts.length - 1));
-    _controller.text = parts.last;
+    final refused = _add(parts.take(parts.length - 1));
+    // A single tag refused as its delimiter is typed stays to be fixed, as
+    // with Enter; refused repeats of a pasted list are dropped.
+    _setText(
+      parts.length == 2 && refused.isNotEmpty
+          ? refused.single + parts.last
+          : parts.last,
+    );
   }
 
   void _submit() {
-    if (_add([_controller.text])) _controller.clear();
+    if (_add([_controller.text]).isEmpty) _controller.clear();
     _input.requestFocus();
   }
 
@@ -169,10 +208,7 @@ class _Oito2TagsFieldState extends State<Oito2TagsField> {
     }
     final selection = _controller.selection;
     final atStart = selection.isCollapsed && selection.baseOffset == 0;
-    final rtl = Directionality.of(context) == TextDirection.rtl;
-    final back = rtl
-        ? LogicalKeyboardKey.arrowRight
-        : LogicalKeyboardKey.arrowLeft;
+    final back = readingArrowsOf(context).back;
     final key = event.logicalKey;
     if (_tagNodes.isNotEmpty &&
         atStart &&
@@ -189,14 +225,8 @@ class _Oito2TagsFieldState extends State<Oito2TagsField> {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
-    final rtl = Directionality.of(context) == TextDirection.rtl;
     final key = event.logicalKey;
-    final back = rtl
-        ? LogicalKeyboardKey.arrowRight
-        : LogicalKeyboardKey.arrowLeft;
-    final forward = rtl
-        ? LogicalKeyboardKey.arrowLeft
-        : LogicalKeyboardKey.arrowRight;
+    final (:back, :forward) = readingArrowsOf(context);
     if (key == LogicalKeyboardKey.backspace ||
         key == LogicalKeyboardKey.delete) {
       _remove(index);
@@ -218,14 +248,7 @@ class _Oito2TagsFieldState extends State<Oito2TagsField> {
   List<String> _options(String text) {
     final suggestions = widget.suggestions;
     if (suggestions == null || text.trim().isEmpty) return const [];
-    final needle = foldText(text.trim());
-    return [
-      for (final item in suggestions.items)
-        if (!suggestions.isDisabled(item) &&
-            !widget.tags.contains(suggestions.labelOf(item)) &&
-            foldText(suggestions.labelOf(item)).contains(needle))
-          item,
-    ];
+    return suggestions.suggestions(text.trim(), exclude: widget.tags.toSet());
   }
 
   Widget _tag(int index) {
@@ -240,6 +263,7 @@ class _Oito2TagsFieldState extends State<Oito2TagsField> {
         onKeyEvent: (_, event) => _onTagKey(index, event),
         child: Semantics(
           label: tag,
+          hint: _enabled ? strings.removeTagHint : null,
           child: Container(
             padding: EdgeInsetsDirectional.only(
               start: Oito2Spacing.sm,
@@ -325,7 +349,6 @@ class _Oito2TagsFieldState extends State<Oito2TagsField> {
 
   @override
   Widget build(BuildContext context) {
-    _syncNodes();
     final suggestions = widget.suggestions;
     Widget input;
     if (suggestions == null) {

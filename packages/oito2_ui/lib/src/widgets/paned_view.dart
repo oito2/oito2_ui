@@ -15,12 +15,11 @@
 
 import 'dart:math' as math;
 
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
-import 'widget_helpers.dart';
+import 'resize_handle.dart';
 
 /// The side of an [Oito2PanedView] its pane is placed on.
 enum Oito2PaneSide {
@@ -100,14 +99,15 @@ class Oito2PanedView extends StatefulWidget {
 class _Oito2PanedViewState extends State<Oito2PanedView> {
   late double _size = widget.initialPaneSize;
   double _available = 0;
-  bool _focused = false;
-  bool _hovered = false;
 
   double _clamp(double value) {
     final max = math.max(widget.minPaneSize, _available - widget.minPageSize);
     return value.clamp(widget.minPaneSize, max).toDouble();
   }
 
+  /// Sets the pane size to [value] within the limits; callers start from
+  /// the clamped size, so a pane wider than the window allows moves on
+  /// the first step.
   void _resize(double value) {
     final next = _clamp(value);
     if (next == _size) return;
@@ -124,33 +124,9 @@ class _Oito2PanedViewState extends State<Oito2PanedView> {
     Oito2PaneSide.end => direction == TextDirection.rtl,
   };
 
-  KeyEventResult _onKey(FocusNode node, KeyEvent event, bool forward) {
-    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
-      return KeyEventResult.ignored;
-    }
-    final vertical = widget.paneSide.isVertical;
-    final decrease = vertical
-        ? LogicalKeyboardKey.arrowUp
-        : LogicalKeyboardKey.arrowLeft;
-    final increase = vertical
-        ? LogicalKeyboardKey.arrowDown
-        : LogicalKeyboardKey.arrowRight;
-    final step = widget.keyboardStep;
-    if (event.logicalKey == increase) {
-      _resize(_size + (forward ? step : -step));
-      return KeyEventResult.handled;
-    }
-    if (event.logicalKey == decrease) {
-      _resize(_size + (forward ? -step : step));
-      return KeyEventResult.handled;
-    }
-    return KeyEventResult.ignored;
-  }
-
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final indicator = semanticColorsOf(context).primaryText;
     final vertical = widget.paneSide.isVertical;
     final direction = Directionality.of(context);
     final forward = _growsForward(direction);
@@ -163,56 +139,23 @@ class _Oito2PanedViewState extends State<Oito2PanedView> {
         final divider = Container(
           width: vertical ? null : 1,
           height: vertical ? 1 : null,
-          color: _focused || _hovered ? indicator : scheme.outlineVariant,
+          color: scheme.outlineVariant,
         );
 
-        Widget handle = divider;
-        if (widget.resizable) {
-          handle = Semantics(
-            label:
-                widget.resizeLabel ?? Oito2Localizations.of(context).resizePane,
-            value: '${size.round()}',
-            increasedValue: '${_clamp(size + widget.keyboardStep).round()}',
-            decreasedValue: '${_clamp(size - widget.keyboardStep).round()}',
-            onIncrease: () => _resize(size + widget.keyboardStep),
-            onDecrease: () => _resize(size - widget.keyboardStep),
-            child: Focus(
-              onFocusChange: (value) => setState(() => _focused = value),
-              onKeyEvent: (node, event) => _onKey(node, event, forward),
-              child: MouseRegion(
-                cursor: vertical
-                    ? SystemMouseCursors.resizeUpDown
-                    : SystemMouseCursors.resizeLeftRight,
-                onEnter: (_) => setState(() => _hovered = true),
-                onExit: (_) => setState(() => _hovered = false),
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onHorizontalDragUpdate: vertical
-                      ? null
-                      : (d) => _resize(
-                          _size + (forward ? d.delta.dx : -d.delta.dx),
-                        ),
-                  onVerticalDragUpdate: vertical
-                      ? (d) => _resize(
-                          _size + (forward ? d.delta.dy : -d.delta.dy),
-                        )
-                      : null,
-                  child: SizedBox(
-                    width: vertical ? double.infinity : Oito2Spacing.sm,
-                    height: vertical ? Oito2Spacing.sm : double.infinity,
-                    child: Center(
-                      child: SizedBox(
-                        width: vertical ? double.infinity : (_focused ? 2 : 1),
-                        height: vertical ? (_focused ? 2 : 1) : double.infinity,
-                        child: divider,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }
+        final step = widget.keyboardStep;
+        final handle = ResizeHandle(
+          axis: vertical ? Axis.vertical : Axis.horizontal,
+          keyboardStep: step,
+          onMove: (delta) =>
+              _resize(_clamp(_size) + (forward ? delta : -delta)),
+          semanticLabel:
+              widget.resizeLabel ?? Oito2Localizations.of(context).resizePane,
+          value: '${size.round()}',
+          increasedValue: '${_clamp(size + step).round()}',
+          decreasedValue: '${_clamp(size - step).round()}',
+          onIncrease: () => _resize(size + step),
+          onDecrease: () => _resize(size - step),
+        );
 
         final pane = SizedBox(
           width: vertical ? null : size,
@@ -230,7 +173,7 @@ class _Oito2PanedViewState extends State<Oito2PanedView> {
         // pane is on the left or top, and before it otherwise.
         final dividerStart = forward ? size : _available - size - 1;
         final handleStart = dividerStart + 0.5 - Oito2Spacing.sm / 2;
-        return Stack(
+        final content = Stack(
           children: [
             Flex(
               direction: vertical ? Axis.vertical : Axis.horizontal,
@@ -246,6 +189,20 @@ class _Oito2PanedViewState extends State<Oito2PanedView> {
                 child: handle,
               ),
           ],
+        );
+        // A pane wider than the space keeps its minimum size and the end is
+        // clipped, instead of overflowing.
+        final needed = size + 1;
+        if (needed <= _available) return content;
+        return ClipRect(
+          child: OverflowBox(
+            alignment: AlignmentDirectional.topStart,
+            minWidth: vertical ? null : needed,
+            maxWidth: vertical ? null : needed,
+            minHeight: vertical ? needed : null,
+            maxHeight: vertical ? needed : null,
+            child: content,
+          ),
         );
       },
     );

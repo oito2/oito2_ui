@@ -111,7 +111,13 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
   /// The bottom border; defaults to the theme.
   final BorderSide? border;
 
-  /// The bar height; defaults to [Oito2Sizes.titleBarHeight].
+  /// The bar height; defaults to the [Oito2TitleBarThemeData] height, then
+  /// [Oito2Sizes.titleBarHeight].
+  ///
+  /// [preferredSize] has no context to read the theme from, so a
+  /// [Scaffold] gives the bar [Oito2Sizes.titleBarHeight] unless [height]
+  /// is set. To follow a themed height there, wrap the bar in a
+  /// [PreferredSize] sized by [preferredSizeOf].
   final double? height;
 
   /// Whether dragging the bar moves the window.
@@ -123,6 +129,23 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
         ? 0
         : height ?? Oito2Sizes.titleBarHeight,
   );
+
+  /// The size of a title bar with [style] and [height] in [context]'s
+  /// theme: zero tall when hidden, otherwise [height], the theme height or
+  /// [Oito2Sizes.titleBarHeight].
+  static Size preferredSizeOf(
+    BuildContext context, {
+    Oito2TitleBarStyle? style,
+    double? height,
+  }) {
+    final barTheme = Oito2TitleBarThemeData.of(context);
+    if ((style ?? barTheme.style) == Oito2TitleBarStyle.hidden) {
+      return const Size.fromHeight(0);
+    }
+    return Size.fromHeight(
+      height ?? barTheme.height ?? Oito2Sizes.titleBarHeight,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

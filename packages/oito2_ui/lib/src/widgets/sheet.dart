@@ -99,19 +99,30 @@ Future<T?> showOito2Sheet<T>(
   }
   final completer = Completer<T?>();
   late final OverlayEntry entry;
+  void finish(T? result) {
+    if (completer.isCompleted) return;
+    entry.remove();
+    entry.dispose();
+    completer.complete(result);
+  }
+
   entry = OverlayEntry(
     builder: (_) => _NonModalSheetHost<T>(
       builder: builder,
       config: config,
       duration: duration,
-      onClosed: (result) {
-        entry.remove();
-        entry.dispose();
-        completer.complete(result);
+      onClosed: finish,
+      // The overlay went away with the sheet still open, such as when the
+      // app's view closes: only the future completes.
+      onGone: () {
+        if (!completer.isCompleted) completer.complete(null);
       },
     ),
   );
   Overlay.of(context, rootOverlay: true).insert(entry);
+  // The sheet lives in the root overlay, so it closes when the route that
+  // opened it goes away.
+  ModalRoute.of(context)?.completed.whenComplete(() => finish(null));
   return completer.future;
 }
 
@@ -253,14 +264,15 @@ class _Oito2SheetRoute<T> extends PopupRoute<T> {
   ) {
     return _SheetScope(
       close: (result) {
-        if (isActive) navigator?.removeRoute(this, result as T?);
+        if (!isActive) return;
+        // The current route pops with its exit animation.
+        isCurrent
+            ? navigator?.pop<T>(result as T?)
+            : navigator?.removeRoute(this, result as T?);
       },
       child: _SheetFrame(
         config: config,
-        entrance: CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-        ),
+        entrance: animation,
         onDismiss: () {
           if (isCurrent) navigator?.pop();
         },
@@ -276,12 +288,14 @@ class _NonModalSheetHost<T> extends StatefulWidget {
     required this.config,
     required this.duration,
     required this.onClosed,
+    required this.onGone,
   });
 
   final WidgetBuilder builder;
   final _SheetConfig config;
   final Duration duration;
   final ValueChanged<T?> onClosed;
+  final VoidCallback onGone;
 
   @override
   State<_NonModalSheetHost<T>> createState() => _NonModalSheetHostState<T>();
@@ -294,9 +308,11 @@ class _NonModalSheetHostState<T> extends State<_NonModalSheetHost<T>>
     duration: widget.duration,
   )..forward();
   bool _closing = false;
+  bool _closed = false;
 
   @override
   void dispose() {
+    if (!_closed) widget.onGone();
     _controller.dispose();
     super.dispose();
   }
@@ -304,7 +320,13 @@ class _NonModalSheetHostState<T> extends State<_NonModalSheetHost<T>>
   Future<void> _close(Object? result) async {
     if (_closing) return;
     _closing = true;
-    await _controller.reverse();
+    try {
+      await _controller.reverse().orCancel;
+    } on TickerCanceled {
+      // Disposed during the exit animation; dispose completes the future.
+      return;
+    }
+    _closed = true;
     widget.onClosed(result as T?);
   }
 
@@ -314,10 +336,7 @@ class _NonModalSheetHostState<T> extends State<_NonModalSheetHost<T>>
       close: _close,
       child: _SheetFrame(
         config: widget.config,
-        entrance: CurvedAnimation(
-          parent: _controller,
-          curve: Curves.easeOutCubic,
-        ),
+        entrance: _controller,
         onDismiss: () => _close(null),
         child: Builder(builder: widget.builder),
       ),
@@ -351,6 +370,7 @@ class _SheetFrameState extends State<_SheetFrame>
   /// The drag distance toward the sheet's edge, in pixels.
   double _drag = 0;
   double _extent = 0;
+  late CurvedAnimation _entrance = _curve(widget.entrance);
   late final AnimationController _settle = AnimationController.unbounded(
     vsync: this,
   )..addListener(() => setState(() => _drag = _settle.value));
@@ -359,8 +379,21 @@ class _SheetFrameState extends State<_SheetFrame>
   bool get _bottom => _config.side == Oito2SheetSide.bottom;
   List<double>? get _snaps => _config.snapPoints;
 
+  static CurvedAnimation _curve(Animation<double> parent) =>
+      CurvedAnimation(parent: parent, curve: Curves.easeOutCubic);
+
+  @override
+  void didUpdateWidget(_SheetFrame oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.entrance != widget.entrance) {
+      _entrance.dispose();
+      _entrance = _curve(widget.entrance);
+    }
+  }
+
   @override
   void dispose() {
+    _entrance.dispose();
     _settle.dispose();
     super.dispose();
   }
@@ -550,7 +583,7 @@ class _SheetFrameState extends State<_SheetFrame>
             : const BorderRadius.horizontal(left: radius);
         alignment = left ? Alignment.centerLeft : Alignment.centerRight;
         box = BoxConstraints.tightFor(
-          width: math.min(_config.size ?? 360, window.width - 48),
+          width: math.max(0, math.min(_config.size ?? 360, window.width - 48)),
           height: window.height,
         );
     }
@@ -612,16 +645,24 @@ class _SheetFrameState extends State<_SheetFrame>
     return Align(
       alignment: alignment,
       child: AnimatedBuilder(
-        animation: widget.entrance,
+        animation: _entrance,
         builder: (context, child) {
-          final hidden = (1 - widget.entrance.value) * _extent;
-          final snapOffset = _snapOffset(window.height);
-          final travel = math.max(0.0, hidden + _drag + snapOffset);
+          // The entrance moves by a fraction of the sheet's own size, which
+          // needs no measured extent, so the first frame is already hidden.
+          final hidden = 1 - _entrance.value;
+          final fraction = switch (side) {
+            Oito2SheetSide.bottom => Offset(0, hidden),
+            _ => Offset(forward ? hidden : -hidden, 0),
+          };
+          final travel = math.max(0.0, _drag + _snapOffset(window.height));
           final offset = switch (side) {
             Oito2SheetSide.bottom => Offset(0, travel),
             _ => Offset(forward ? travel : -travel, 0),
           };
-          return Transform.translate(offset: offset, child: child);
+          return Transform.translate(
+            offset: offset,
+            child: FractionalTranslation(translation: fraction, child: child),
+          );
         },
         child: sheet,
       ),

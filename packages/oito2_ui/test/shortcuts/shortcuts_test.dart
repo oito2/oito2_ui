@@ -17,8 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-
-import '../widgets/test_app.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 void main() {
   group('Oito2Shortcut', () {
@@ -119,6 +118,53 @@ void main() {
       expect(runs, ['palette']);
     });
 
+    testWidgets('the primary modifier follows the theme platform', (
+      tester,
+    ) async {
+      final runs = <String>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(platform: TargetPlatform.macOS),
+          home: Oito2Commands(
+            commands: [
+              Oito2Command(
+                id: 'palette',
+                label: 'Open the command palette',
+                shortcut: Oito2Shortcut.parse('Mod+K'),
+                onInvoke: () => runs.add('palette'),
+              ),
+            ],
+            child: const Focus(autofocus: true, child: SizedBox()),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      expect(runs, isEmpty);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+      expect(runs, ['palette']);
+    });
+
+    testWidgets('clashing commands given on a rebuild are reported', (
+      tester,
+    ) async {
+      Widget build(List<Oito2Command> commands) =>
+          Oito2Commands(commands: commands, child: const SizedBox());
+      Oito2Command command(String id) => Oito2Command(
+        id: id,
+        label: id,
+        shortcut: Oito2Shortcut.parse('Mod+K'),
+        onInvoke: () {},
+      );
+      await pumpOito2(tester, build([command('a')]));
+      await pumpOito2(tester, build([command('a'), command('b')]));
+      expect(tester.takeException(), isFlutterError);
+    });
+
     testWidgets('runs a sequence pressed in time', (tester) async {
       final runs = await pumpCommands(tester);
       await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
@@ -173,6 +219,44 @@ void main() {
         [for (final c in Oito2Commands.availableAt(inner)) c.label],
         ['Save file', 'Quit'],
       );
+    });
+
+    testWidgets('an inner command hides the outer shortcut of its id', (
+      tester,
+    ) async {
+      final runs = <String>[];
+      await pumpOito2(
+        tester,
+        Oito2Commands(
+          commands: [
+            Oito2Command(
+              id: 'save',
+              label: 'Save all',
+              shortcut: Oito2Shortcut.parse('Ctrl+Shift+S'),
+              onInvoke: () => runs.add('outer'),
+            ),
+          ],
+          child: Oito2Commands(
+            commands: [
+              Oito2Command(
+                id: 'save',
+                label: 'Save file',
+                shortcut: Oito2Shortcut.parse('Ctrl+S'),
+                enabled: false,
+                onInvoke: () => runs.add('inner'),
+              ),
+            ],
+            child: const Focus(autofocus: true, child: SizedBox()),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      expect(runs, isEmpty);
     });
 
     test('reports clashing and prefix shortcuts', () {
@@ -355,6 +439,83 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.search);
       await tester.pumpAndSettle();
       expect(runs, ['search']);
+    });
+
+    testWidgets('keeps the declaration order among equal matches', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showOito2CommandPalette(
+              context,
+              commands: [
+                for (var i = 0; i < 60; i++)
+                  Oito2Command(
+                    id: 'c$i',
+                    label: 'Command ${i.toString().padLeft(2, '0')}',
+                    onInvoke: () {},
+                  ),
+              ],
+            ),
+            child: const Text('Commands'),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Commands'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'mand');
+      await tester.pump();
+      final shown = [
+        for (final tile in tester.widgetList<ListTile>(find.byType(ListTile)))
+          ((tile.title! as Oito2HighlightedText).text),
+      ];
+      expect(shown, [...shown]..sort());
+    });
+
+    testWidgets('keeps the highlighted command in view', (tester) async {
+      await pumpOito2(
+        tester,
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showOito2CommandPalette(
+              context,
+              commands: [
+                for (var i = 0; i < 30; i++)
+                  Oito2Command(id: 'c$i', label: 'Command $i', onInvoke: () {}),
+              ],
+            ),
+            child: const Text('Commands'),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Commands'));
+      await tester.pumpAndSettle();
+      final list = tester.getRect(find.byType(ListView));
+      bool shown(String label) {
+        final finder = find.text(label);
+        if (finder.evaluate().isEmpty) return false;
+        final rect = tester.getRect(finder);
+        return rect.top >= list.top && rect.bottom <= list.bottom;
+      }
+
+      for (var i = 0; i < 12; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.pump();
+        await tester.pump();
+      }
+      expect(shown('Command 12'), isTrue);
+      for (var i = 0; i < 12; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pump();
+        await tester.pump();
+      }
+      expect(shown('Command 0'), isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      await tester.pump();
+      expect(shown('Command 29'), isTrue);
     });
 
     testWidgets('shows a message when nothing matches', (tester) async {

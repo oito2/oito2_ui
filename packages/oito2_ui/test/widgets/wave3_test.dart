@@ -17,8 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-
-import 'test_app.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 final _desktops = Oito2ListCollection(
   const [
@@ -139,6 +138,34 @@ void main() {
       expect(find.text('KDE Plasma'), findsOneWidget);
     });
 
+    testWidgets('the selected item is checked on its tappable node', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpOito2(
+        tester,
+        Center(
+          child: Oito2Select(
+            collection: _desktops,
+            value: 'kde',
+            onChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.tap(find.text('KDE Plasma'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSemantics(find.text('KDE Plasma').last),
+        isSemantics(
+          label: 'KDE Plasma',
+          hasCheckedState: true,
+          isChecked: true,
+          hasTapAction: true,
+        ),
+      );
+      handle.dispose();
+    });
+
     testWidgets('shows the placeholder without a value', (tester) async {
       await pumpOito2(
         tester,
@@ -176,6 +203,18 @@ void main() {
         isSemantics(isButton: true, isSelected: true, hasSelectedState: true),
       );
       expect(tester.getSize(find.byType(Oito2ListTile)).height, 52);
+    });
+
+    testWidgets('a static row declares no enabled or selected state', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpOito2(tester, const Oito2ListTile(titleText: 'Version'));
+      expect(
+        tester.getSemantics(find.text('Version')),
+        isSemantics(hasEnabledState: false, hasSelectedState: false),
+      );
+      handle.dispose();
     });
 
     testWidgets('a disabled tile ignores taps and focus', (tester) async {

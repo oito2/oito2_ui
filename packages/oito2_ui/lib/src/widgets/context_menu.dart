@@ -66,12 +66,21 @@ class _Oito2ContextMenuRegionState extends State<Oito2ContextMenuRegion> {
     super.dispose();
   }
 
+  /// The regions under the pointer that turned the browser menu off. The
+  /// menu is a page-wide setting, so it comes back only when the last of
+  /// them, such as the outer one of nested regions, lets it go.
+  static int _browserMenuHolds = 0;
+
   void _setBrowserMenu({required bool enabled}) {
     if (!kIsWeb || _browserMenuOff != enabled) return;
     _browserMenuOff = !enabled;
-    enabled
-        ? BrowserContextMenu.enableContextMenu()
-        : BrowserContextMenu.disableContextMenu();
+    if (enabled) {
+      _browserMenuHolds--;
+      if (_browserMenuHolds == 0) BrowserContextMenu.enableContextMenu();
+    } else {
+      _browserMenuHolds++;
+      if (_browserMenuHolds == 1) BrowserContextMenu.disableContextMenu();
+    }
   }
 
   void _open([Offset? position]) {

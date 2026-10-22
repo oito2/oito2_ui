@@ -20,10 +20,15 @@ import 'component_context.dart';
 
 /// The shape, size, padding and text style shared by every text button
 /// variant.
+///
+/// Buttons are at least [ComponentThemeContext.controlHeight] tall and grow
+/// when the label needs more room, such as under a large text scale. The
+/// minimum height offsets the visual density, which the button applies on
+/// top of it.
 ButtonStyle _baseButtonStyle(ComponentThemeContext c, {BorderSide? side}) {
+  final density = c.platform.visualDensity.baseSizeAdjustment;
   return ButtonStyle(
-    minimumSize: WidgetStatePropertyAll(Size(64, c.controlHeight)),
-    fixedSize: WidgetStatePropertyAll(Size.fromHeight(c.controlHeight)),
+    minimumSize: WidgetStatePropertyAll(Size(64, c.controlHeight - density.dy)),
     padding: const WidgetStatePropertyAll(
       EdgeInsets.symmetric(horizontal: Oito2Spacing.lg),
     ),

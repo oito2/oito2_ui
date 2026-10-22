@@ -22,8 +22,8 @@ migrate_working_dir/
 #.vscode/
 
 # Flutter/Dart/Pub related
-# Libraries should not include pubspec.lock, per https://dart.dev/guides/libraries/private-files#pubspeclock.
-pubspec.lock
+# The workspace root pubspec.lock is committed: it pins the showcase app
+# and the golden tests. Pub writes no lock file in the member packages.
 **/doc/api/
 .dart_tool/
 .flutter-plugins-dependencies

@@ -160,6 +160,7 @@ class _Oito2TourState extends State<Oito2Tour> with TickerProviderStateMixin {
   Rect? _target;
   Rect? _from;
   int? _shownIndex;
+  FocusNode? _previousFocus;
 
   Oito2TourController get _controller => widget.controller;
 
@@ -178,7 +179,8 @@ class _Oito2TourState extends State<Oito2Tour> with TickerProviderStateMixin {
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_sync);
       widget.controller.addListener(_sync);
-      _sync();
+      // Showing or hiding the overlay isn't allowed during a build.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
     }
   }
 
@@ -198,6 +200,10 @@ class _Oito2TourState extends State<Oito2Tour> with TickerProviderStateMixin {
         _watching = false;
         _shownIndex = null;
         setState(() {});
+        // The focus goes back to where it was before the tour.
+        final previous = _previousFocus;
+        _previousFocus = null;
+        if (previous?.context?.mounted ?? false) previous!.requestFocus();
         widget.onFinished?.call(_controller.completed);
       }
       return;
@@ -218,7 +224,10 @@ class _Oito2TourState extends State<Oito2Tour> with TickerProviderStateMixin {
         duration: _move.duration!,
       );
     }
-    if (!_portal.isShowing) _portal.show();
+    if (!_portal.isShowing) {
+      _previousFocus = FocusManager.instance.primaryFocus;
+      _portal.show();
+    }
     if (!_watching) {
       _watching = true;
       _watch(++_watchRun);
@@ -280,6 +289,8 @@ class _Oito2TourState extends State<Oito2Tour> with TickerProviderStateMixin {
     final last = index == _controller.steps.length - 1;
     final rtl = Directionality.of(context) == TextDirection.rtl;
     final description = step.description;
+    // A step waits for a tap only while its target is on screen to tap.
+    final waits = step.waitForTap && _target != null;
     return FocusScope(
       key: ValueKey(index),
       autofocus: true,
@@ -325,7 +336,7 @@ class _Oito2TourState extends State<Oito2Tour> with TickerProviderStateMixin {
                       IconButton(
                         tooltip: strings.tourSkip,
                         onPressed: _controller.skip,
-                        autofocus: step.waitForTap,
+                        autofocus: waits,
                         icon: const Icon(LucideIcons.x, size: 16),
                       ),
                     ],
@@ -357,7 +368,7 @@ class _Oito2TourState extends State<Oito2Tour> with TickerProviderStateMixin {
                           onPressed: _controller.previous,
                           child: Text(strings.tourBack),
                         ),
-                      if (!step.waitForTap)
+                      if (!waits)
                         FilledButton(
                           autofocus: true,
                           onPressed: _controller.next,
@@ -386,59 +397,62 @@ class _Oito2TourState extends State<Oito2Tour> with TickerProviderStateMixin {
       style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurface),
       child: _buildCard(context, index, step),
     );
-    return AnimatedBuilder(
-      key: _layerKey,
-      animation: _move,
-      builder: (context, _) {
-        final hole = _displayed;
-        final target = _target;
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            Listener(
-              behavior: HitTestBehavior.translucent,
-              onPointerUp: _onPointerUp,
-              child: CustomPaint(
-                painter: _SpotlightPainter(
-                  hole: hole,
-                  color: scheme.scrim.withValues(alpha: 0.5),
-                ),
-              ),
-            ),
-            if (target == null)
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 320),
-                  child: Material(
-                    color: scheme.surfaceContainer,
-                    elevation: 4,
-                    shadowColor: scheme.shadow,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: Oito2Radius.mediumAll,
-                      side: BorderSide(color: scheme.outlineVariant),
-                    ),
-                    child: card,
+    // The content under the tour is hidden from assistive technologies.
+    return BlockSemantics(
+      child: AnimatedBuilder(
+        key: _layerKey,
+        animation: _move,
+        builder: (context, _) {
+          final hole = _displayed;
+          final target = _target;
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              Listener(
+                behavior: HitTestBehavior.translucent,
+                onPointerUp: _onPointerUp,
+                child: CustomPaint(
+                  painter: _SpotlightPainter(
+                    hole: hole,
+                    color: scheme.scrim.withValues(alpha: 0.5),
                   ),
                 ),
-              )
-            else
-              AnchoredPanel(
-                anchor: target,
-                placement: step.placement,
-                alignment: Oito2PopoverAlignment.center,
-                textDirection: Directionality.of(context),
-                color: scheme.surfaceContainer,
-                borderColor: scheme.outlineVariant,
-                shadowColor: scheme.shadow,
-                gap: 2,
-                arrowSize: const Size(14, 7),
-                maxWidth: 320,
-                radius: Oito2Radius.medium,
-                child: card,
               ),
-          ],
-        );
-      },
+              if (target == null)
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 320),
+                    child: Material(
+                      color: scheme.surfaceContainer,
+                      elevation: 4,
+                      shadowColor: scheme.shadow,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: Oito2Radius.mediumAll,
+                        side: BorderSide(color: scheme.outlineVariant),
+                      ),
+                      child: card,
+                    ),
+                  ),
+                )
+              else
+                AnchoredPanel(
+                  anchor: target,
+                  placement: step.placement,
+                  alignment: Oito2PopoverAlignment.center,
+                  textDirection: Directionality.of(context),
+                  color: scheme.surfaceContainer,
+                  borderColor: scheme.outlineVariant,
+                  shadowColor: scheme.shadow,
+                  gap: 2,
+                  arrowSize: const Size(14, 7),
+                  maxWidth: 320,
+                  radius: Oito2Radius.medium,
+                  child: card,
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 

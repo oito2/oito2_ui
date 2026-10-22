@@ -15,7 +15,9 @@
 
 import 'dart:async';
 
-import 'package:flutter/scheduler.dart';
+import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
@@ -75,6 +77,16 @@ class Oito2TreeController extends ChangeNotifier {
     if (changed) notifyListeners();
   }
 
+  /// Opens exactly the branches in [values] and closes the others.
+  void setExpandedValues(Iterable<String> values) {
+    final next = values.toSet();
+    if (setEquals(next, _expanded)) return;
+    _expanded
+      ..clear()
+      ..addAll(next);
+    notifyListeners();
+  }
+
   /// Opens every branch of [collection].
   void expandAll(Oito2TreeCollection<Object?> collection) {
     _expanded.addAll(collection.branchValues);
@@ -116,10 +128,7 @@ class Oito2TreeController extends ChangeNotifier {
   bool? checkStateOf(Oito2TreeCollection<Object?> collection, String value) {
     final node = collection.find(value);
     if (node == null || !node.isBranch) return _checked.contains(value);
-    final leaves = [
-      for (final v in collection.descendantsOf(value))
-        if (!(collection.find(v)?.isBranch ?? false)) v,
-    ];
+    final leaves = collection.leavesOf(value);
     if (leaves.isEmpty) return false;
     final count = leaves.where(_checked.contains).length;
     return count == 0 ? false : (count == leaves.length ? true : null);
@@ -128,14 +137,8 @@ class Oito2TreeController extends ChangeNotifier {
   /// Checks [value], or every leaf of a branch, unless already fully
   /// checked, in which case it unchecks them.
   void toggleChecked(Oito2TreeCollection<Object?> collection, String value) {
-    final node = collection.find(value);
-    if (node == null) return;
-    final leaves = node.isBranch
-        ? [
-            for (final v in collection.descendantsOf(value))
-              if (!(collection.find(v)?.isBranch ?? false)) v,
-          ]
-        : [value];
+    if (!collection.has(value)) return;
+    final leaves = collection.leavesOf(value);
     final check = checkStateOf(collection, value) != true;
     check ? _checked.addAll(leaves) : _checked.removeAll(leaves);
     notifyListeners();
@@ -206,6 +209,10 @@ class Oito2TreeView<T> extends StatefulWidget {
 
   /// Loads the children of an empty branch the first time it opens; the
   /// app adds them to [collection].
+  ///
+  /// When the future fails, the error is reported through
+  /// [FlutterError.reportError] and the branch closes; opening it again
+  /// retries the load.
   final Future<void> Function(Oito2TreeNode<T> node)? onLoadChildren;
 
   /// Called with a node and its new label after a rename.
@@ -271,6 +278,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     _focusNode.dispose();
     _scroll.dispose();
     _typeTimer?.cancel();
+    _clicks.cancel();
     super.dispose();
   }
 
@@ -288,10 +296,57 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     _refresh();
   }
 
+  Oito2TreeCollection<T>? _filtered;
+  String? _filteredQuery;
+  Oito2TreeCollection<T>? _filteredSource;
+
+  /// The check state of every node, filled once per build when the tree is
+  /// checkable.
+  final Map<String, bool?> _checkStates = {};
+
   List<Oito2TreeEntry<T>> _computeEntries() {
     if (!_filtering) return widget.collection.visible(_controller.expanded);
-    final filtered = widget.collection.search(widget.query.trim());
+    final query = widget.query.trim();
+    var filtered = _filtered;
+    if (filtered == null ||
+        _filteredQuery != query ||
+        !identical(_filteredSource, widget.collection)) {
+      filtered = _filtered = widget.collection.search(query);
+      _filteredQuery = query;
+      _filteredSource = widget.collection;
+    }
     return filtered.visible(filtered.branchValues.toSet());
+  }
+
+  /// Fills [_checkStates] in one pass: a branch is checked when all of its
+  /// leaves are, unchecked when none or it has no leaves, and mixed
+  /// otherwise.
+  void _computeCheckStates() {
+    _checkStates.clear();
+    if (!widget.checkable) return;
+    (int, int) visit(Oito2TreeNode<T> node) {
+      final children = node.children;
+      if (children == null) {
+        final checked = _controller.checkStateOf(widget.collection, node.value);
+        _checkStates[node.value] = checked;
+        return (checked == true ? 1 : 0, 1);
+      }
+      var checked = 0;
+      var leaves = 0;
+      for (final child in children) {
+        final (c, l) = visit(child);
+        checked += c;
+        leaves += l;
+      }
+      _checkStates[node.value] = leaves == 0 || checked == 0
+          ? false
+          : checked == leaves
+          ? true
+          : null;
+      return (checked, leaves);
+    }
+
+    widget.collection.roots.forEach(visit);
   }
 
   int _indexOf(String? value) =>
@@ -299,15 +354,26 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
 
   double get _rowHeight => widget.rowHeight ?? controlHeightOf(context);
 
+  /// The space above the first row and below the last one.
+  static const _listPadding = Oito2Spacing.xs;
+
+  /// Scrolls the row at [index] fully into view, with the list padding
+  /// around it.
   void _reveal(int index) {
     if (!_scroll.hasClients || index < 0) return;
-    final top = index * _rowHeight;
+    final top = _listPadding + index * _rowHeight;
     final bottom = top + _rowHeight;
     final position = _scroll.position;
-    if (top < position.pixels) {
-      _scroll.jumpTo(top);
-    } else if (bottom > position.pixels + position.viewportDimension) {
-      _scroll.jumpTo(bottom - position.viewportDimension);
+    if (top - _listPadding < position.pixels) {
+      _scroll.jumpTo(math.max(0.0, top - _listPadding));
+    } else if (bottom + _listPadding >
+        position.pixels + position.viewportDimension) {
+      _scroll.jumpTo(
+        math.min(
+          position.maxScrollExtent,
+          bottom + _listPadding - position.viewportDimension,
+        ),
+      );
     }
   }
 
@@ -318,8 +384,13 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
       _controller.setSelected([value]);
       _anchor = value;
     } else if (mode == Oito2SelectionMode.multiple && extend) {
-      final from = _indexOf(_anchor ?? value);
       final to = _indexOf(value);
+      var from = _indexOf(_anchor);
+      // Falls back to the target when the anchor is no longer shown.
+      if (from < 0) {
+        from = to;
+        _anchor = value;
+      }
       final range = from <= to
           ? _entries.sublist(from, to + 1)
           : _entries.sublist(to, from + 1);
@@ -343,13 +414,28 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
         !_loaded.contains(node.value) &&
         !_loading.contains(node.value)) {
       setState(() => _loading.add(node.value));
+      var loaded = false;
       try {
         await load(node);
+        loaded = true;
+      } catch (error, stack) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stack,
+            library: 'oito2_ui',
+            context: ErrorDescription('while loading tree children'),
+          ),
+        );
       } finally {
         if (mounted) {
           setState(() {
             _loading.remove(node.value);
-            _loaded.add(node.value);
+            if (loaded) {
+              _loaded.add(node.value);
+            } else {
+              _controller.setExpanded(node.value, false);
+            }
           });
         }
       }
@@ -382,7 +468,6 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     final keyboard = HardwareKeyboard.instance;
     final shift = keyboard.isShiftPressed;
     final command = keyboard.isControlPressed || keyboard.isMetaPressed;
-    final rtl = Directionality.of(context) == TextDirection.rtl;
     final key = event.logicalKey;
     final index = _indexOf(_active);
     final current = index < 0 ? null : _entries[index];
@@ -394,12 +479,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
       return null;
     }
 
-    final openKey = rtl
-        ? LogicalKeyboardKey.arrowLeft
-        : LogicalKeyboardKey.arrowRight;
-    final closeKey = rtl
-        ? LogicalKeyboardKey.arrowRight
-        : LogicalKeyboardKey.arrowLeft;
+    final (back: closeKey, forward: openKey) = readingArrowsOf(context);
     if (key == LogicalKeyboardKey.arrowDown) {
       final next = current == null ? step(-1, 1) : step(index, 1);
       if (next != null) _activate(next, extend: shift);
@@ -515,9 +595,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
         : selected
         ? scheme.onSecondaryContainer
         : scheme.onSurface;
-    final checkState = widget.checkable
-        ? _controller.checkStateOf(widget.collection, value)
-        : false;
+    final bool? checkState = widget.checkable ? _checkStates[value] : false;
     final rtl = Directionality.of(context) == TextDirection.rtl;
 
     final disclosure = SizedBox(
@@ -586,13 +664,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
         behavior: HitTestBehavior.opaque,
         onTapUp: (details) {
           _tap(node);
-          if (!node.disabled &&
-              _clicks.click(
-                value,
-                SchedulerBinding.instance.currentSystemFrameTimeStamp,
-              )) {
-            _primary(node);
-          }
+          if (!node.disabled && _clicks.click(value)) _primary(node);
         },
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: Oito2Spacing.xs),
@@ -645,7 +717,9 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
   @override
   Widget build(BuildContext context) {
     _entries = _computeEntries();
+    _computeCheckStates();
     if (_active != null && _indexOf(_active) < 0) _active = null;
+    if (_anchor != null && _indexOf(_anchor) < 0) _anchor = null;
     return Semantics(
       label: widget.semanticLabel,
       container: true,
@@ -657,7 +731,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
         child: ListView.builder(
           controller: _scroll,
           itemExtent: _rowHeight,
-          padding: const EdgeInsets.symmetric(vertical: Oito2Spacing.xs),
+          padding: const EdgeInsets.symmetric(vertical: _listPadding),
           itemCount: _entries.length,
           itemBuilder: (context, index) => _row(context, _entries[index]),
         ),

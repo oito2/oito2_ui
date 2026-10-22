@@ -17,8 +17,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Whether [platform] uses Command, rather than Control, as the primary
-/// shortcut modifier.
-bool _isApple(TargetPlatform platform) =>
+/// shortcut modifier: macOS and iOS.
+bool oito2UsesCommandKey(TargetPlatform platform) =>
     platform == TargetPlatform.macOS || platform == TargetPlatform.iOS;
 
 /// One key press of a shortcut: a [key] with modifiers.
@@ -76,7 +76,7 @@ class Oito2KeyChord {
   /// [platform].
   Oito2KeyChord resolve(TargetPlatform platform) {
     if (!primary) return this;
-    final apple = _isApple(platform);
+    final apple = oito2UsesCommandKey(platform);
     return Oito2KeyChord(
       key,
       control: control || !apple,
@@ -94,7 +94,7 @@ class Oito2KeyChord {
   /// symbols, in the platform order, then the key.
   List<String> parts(TargetPlatform platform) {
     final chord = resolve(platform);
-    final apple = _isApple(platform);
+    final apple = oito2UsesCommandKey(platform);
     return [
       if (chord.control) apple ? '⌃' : 'Ctrl',
       if (chord.alt) apple ? '⌥' : 'Alt',
@@ -106,31 +106,36 @@ class Oito2KeyChord {
 
   /// The chord as text on [platform], such as `Ctrl+Shift+K` or `⇧⌘K`.
   String label(TargetPlatform platform) =>
-      parts(platform).join(_isApple(platform) ? '' : '+');
+      parts(platform).join(oito2UsesCommandKey(platform) ? '' : '+');
 
   /// The display name of [key] on [platform].
   static String keyLabel(LogicalKeyboardKey key, TargetPlatform platform) {
-    final apple = _isApple(platform);
-    final special = <LogicalKeyboardKey, (String, String)>{
-      LogicalKeyboardKey.enter: ('Enter', '↩'),
-      LogicalKeyboardKey.escape: ('Esc', '⎋'),
-      LogicalKeyboardKey.backspace: ('Backspace', '⌫'),
-      LogicalKeyboardKey.delete: ('Delete', '⌦'),
-      LogicalKeyboardKey.tab: ('Tab', '⇥'),
-      LogicalKeyboardKey.space: ('Space', 'Space'),
-      LogicalKeyboardKey.arrowUp: ('↑', '↑'),
-      LogicalKeyboardKey.arrowDown: ('↓', '↓'),
-      LogicalKeyboardKey.arrowLeft: ('←', '←'),
-      LogicalKeyboardKey.arrowRight: ('→', '→'),
-      LogicalKeyboardKey.pageUp: ('PgUp', '⇞'),
-      LogicalKeyboardKey.pageDown: ('PgDn', '⇟'),
-      LogicalKeyboardKey.home: ('Home', '↖'),
-      LogicalKeyboardKey.end: ('End', '↘'),
-    }[key];
-    if (special != null) return apple ? special.$2 : special.$1;
+    final special = _specialLabels[key];
+    if (special != null) {
+      return oito2UsesCommandKey(platform) ? special.$2 : special.$1;
+    }
     final label = key.keyLabel;
     return label.length == 1 ? label.toUpperCase() : label;
   }
+
+  /// The labels of keys named differently than their key label: the text
+  /// form and the Apple symbol.
+  static final Map<LogicalKeyboardKey, (String, String)> _specialLabels = {
+    LogicalKeyboardKey.enter: ('Enter', '↩'),
+    LogicalKeyboardKey.escape: ('Esc', '⎋'),
+    LogicalKeyboardKey.backspace: ('Backspace', '⌫'),
+    LogicalKeyboardKey.delete: ('Delete', '⌦'),
+    LogicalKeyboardKey.tab: ('Tab', '⇥'),
+    LogicalKeyboardKey.space: ('Space', 'Space'),
+    LogicalKeyboardKey.arrowUp: ('↑', '↑'),
+    LogicalKeyboardKey.arrowDown: ('↓', '↓'),
+    LogicalKeyboardKey.arrowLeft: ('←', '←'),
+    LogicalKeyboardKey.arrowRight: ('→', '→'),
+    LogicalKeyboardKey.pageUp: ('PgUp', '⇞'),
+    LogicalKeyboardKey.pageDown: ('PgDn', '⇟'),
+    LogicalKeyboardKey.home: ('Home', '↖'),
+    LogicalKeyboardKey.end: ('End', '↘'),
+  };
 
   static final Map<LogicalKeyboardKey, LogicalKeyboardKey> _sided = {
     LogicalKeyboardKey.numpadEnter: LogicalKeyboardKey.enter,

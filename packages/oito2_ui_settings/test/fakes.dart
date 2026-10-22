@@ -31,11 +31,17 @@ class FakeGSettings implements Oito2GSettingsSource {
   /// When true, every read throws.
   bool broken = false;
 
+  /// Whether [close] was called.
+  bool closed = false;
+
   @override
   Future<Object?> read(String schema, String key) async {
     if (broken) throw StateError('broken');
     return values['$schema/$key'];
   }
+
+  @override
+  Future<void> close() async => closed = true;
 
   @override
   Stream<void> changes(String schema) =>

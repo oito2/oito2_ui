@@ -21,9 +21,12 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  oito2_ui_test_utils: any
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/fonts/inter/OFL.txt
   fonts:
     - family: Inter
       fonts:

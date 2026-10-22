@@ -14,3 +14,16 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Linux desktop support: window button layout for GNOME, Budgie, Pantheon, Unity, Cinnamon, MATE (GSettings), KDE Plasma (`kwinrc`), Xfce (`xfwm4.xml`) and COSMIC; accent from GNOME 47+ `accent-color`, KDE `AccentColor` or the GTK theme; high contrast from GNOME a11y settings, a `HighContrast` GTK theme or a KDE contrast color scheme.
 - System accent on Windows, macOS and Android through `system_theme`; platform high-contrast preference everywhere.
 - `Oito2SystemSettingsReader`, the source interfaces and `Oito2ConfigParsers` for custom sources and testing.
+
+### Changed
+
+- `Oito2GSettingsSource` gains `close()`; `Oito2DconfGSettingsSource` shares one session and one system D-Bus connection between schemas and accepts existing connections.
+- `Oito2SystemSettingsReader.close()` releases the system store connections. `Oito2Settings.load()` releases its reader after reading, `Oito2Settings.watch()` when the subscription is cancelled, and `Oito2SystemSettingsScope` closes the reader it creates.
+
+### Fixed
+
+- Configuration file watching notices files replaced through a temporary file and a rename, as KDE and Xfce save them, and a configuration directory path that ends in a slash.
+- `Oito2SystemSettingsReader.watch` drops a read that a newer one overtakes and emits a failed read as an error instead of leaving it unhandled.
+- `Oito2SystemSettingsScope` follows a new `reader` and keeps the last settings when a read fails.
+- `Oito2SystemThemeAccentSource` no longer changes `system_theme`'s global fallback color, counts every real accent color, and reports no changes where `system_theme` doesn't stream them.
+- `Oito2DconfGSettingsSource.changes` stays quiet for a schema that isn't installed, such as the GNOME schemas on another desktop, instead of raising an unhandled error.

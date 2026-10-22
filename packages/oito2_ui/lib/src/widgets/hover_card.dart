@@ -15,6 +15,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'popover.dart';
@@ -76,9 +77,32 @@ class _Oito2HoverCardState extends State<Oito2HoverCard> {
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onKey);
     _timer?.cancel();
     _controller.dispose();
     super.dispose();
+  }
+
+  /// Closes the open card on Escape wherever the focus is, since opening
+  /// it with the pointer leaves the focus elsewhere.
+  bool _onKey(KeyEvent event) {
+    if (!_controller.isOpen ||
+        event is! KeyDownEvent ||
+        event.logicalKey != LogicalKeyboardKey.escape) {
+      return false;
+    }
+    _timer?.cancel();
+    _controller.close();
+    return true;
+  }
+
+  void _onOpenChanged(bool open) {
+    _timer?.cancel();
+    if (open) {
+      HardwareKeyboard.instance.addHandler(_onKey);
+    } else {
+      HardwareKeyboard.instance.removeHandler(_onKey);
+    }
   }
 
   void _schedule(bool open) {
@@ -99,7 +123,7 @@ class _Oito2HoverCardState extends State<Oito2HoverCard> {
       showArrow: widget.showArrow,
       maxWidth: widget.maxWidth,
       focusOnOpen: false,
-      onOpenChanged: (_) => _timer?.cancel(),
+      onOpenChanged: _onOpenChanged,
       popoverBuilder: (context, _) => MouseRegion(
         onEnter: (_) => _timer?.cancel(),
         onExit: (_) => _schedule(false),

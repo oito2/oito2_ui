@@ -126,17 +126,29 @@ class Oito2SystemSettingsReader {
 
   /// Emits the current settings, then the new settings whenever a source
   /// reports a change that alters them.
+  ///
+  /// A read that a newer one overtakes is dropped, and a failed read is
+  /// emitted as an error.
   Stream<Oito2SystemSettings> watch() {
     late StreamController<Oito2SystemSettings> controller;
     final subscriptions = <StreamSubscription<void>>[];
     Timer? timer;
     Oito2SystemSettings? last;
+    var generation = 0;
 
     Future<void> emit() async {
-      final settings = await read();
-      if (settings != last && !controller.isClosed) {
-        last = settings;
-        controller.add(settings);
+      final current = ++generation;
+      try {
+        final settings = await read();
+        if (current != generation || controller.isClosed) return;
+        if (settings != last) {
+          last = settings;
+          controller.add(settings);
+        }
+      } on Object catch (error, stack) {
+        if (current == generation && !controller.isClosed) {
+          controller.addError(error, stack);
+        }
       }
     }
 
@@ -161,6 +173,10 @@ class Oito2SystemSettingsReader {
     );
     return controller.stream;
   }
+
+  /// Releases the connections the system stores hold, such as the D-Bus
+  /// connections of GSettings. The reader can't be used afterwards.
+  Future<void> close() => gsettings.close();
 
   Iterable<Stream<void>> _changeStreams() sync* {
     yield accent.changes();

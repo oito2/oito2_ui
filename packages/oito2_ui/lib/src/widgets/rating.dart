@@ -71,13 +71,43 @@ class Oito2Rating extends StatefulWidget {
 
 class _Oito2RatingState extends State<Oito2Rating> {
   double? _hover;
+  final _focusNode = FocusNode(debugLabel: 'Oito2Rating');
+  NumberFormat? _wholeFormat;
+  NumberFormat? _halfFormat;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final locale = Localizations.maybeLocaleOf(context)?.toString();
+    _wholeFormat = NumberFormat.decimalPatternDigits(
+      locale: locale,
+      decimalDigits: 0,
+    );
+    _halfFormat = NumberFormat.decimalPatternDigits(
+      locale: locale,
+      decimalDigits: 1,
+    );
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   double get _step => widget.allowHalf ? 0.5 : 1;
 
   bool get _enabled => widget.onChanged != null;
 
+  /// [value] aligned to the rating step, so 3.7 reads 3.5 or 4.
+  double _aligned(double value) => (value / _step).round() * _step;
+
+  /// Steps from the aligned value, so a value between steps moves to the
+  /// next one instead of by a whole step past it.
+  void _stepBy(int steps) => _set(_aligned(widget.value) + steps * _step);
+
   void _set(double value) {
-    final next = value.clamp(0, widget.max).toDouble();
+    final next = _aligned(value).clamp(0, widget.max).toDouble();
     if (next != widget.value) widget.onChanged?.call(next);
   }
 
@@ -93,10 +123,7 @@ class _Oito2RatingState extends State<Oito2Rating> {
   }
 
   String _format(double value) {
-    final format = NumberFormat.decimalPatternDigits(
-      locale: Localizations.maybeLocaleOf(context)?.toString(),
-      decimalDigits: value % 1 == 0 ? 0 : 1,
-    );
+    final format = value % 1 == 0 ? _wholeFormat! : _halfFormat!;
     return Oito2Localizations.of(context)
         .ratingValue(format.format(value), widget.max);
   }
@@ -141,32 +168,26 @@ class _Oito2RatingState extends State<Oito2Rating> {
         child: ExcludeSemantics(child: row),
       );
     }
-    final back = rtl
-        ? LogicalKeyboardKey.arrowRight
-        : LogicalKeyboardKey.arrowLeft;
-    final forward = rtl
-        ? LogicalKeyboardKey.arrowLeft
-        : LogicalKeyboardKey.arrowRight;
+    final (:back, :forward) = readingArrowsOf(context);
     return Semantics(
       slider: true,
       label: widget.semanticLabel,
       value: _format(widget.value),
       increasedValue: _format(
-        (widget.value + step).clamp(0, widget.max).toDouble(),
+        (_aligned(widget.value) + step).clamp(0, widget.max).toDouble(),
       ),
       decreasedValue: _format(
-        (widget.value - step).clamp(0, widget.max).toDouble(),
+        (_aligned(widget.value) - step).clamp(0, widget.max).toDouble(),
       ),
-      onIncrease: () => _set(widget.value + step),
-      onDecrease: () => _set(widget.value - step),
+      onIncrease: () => _stepBy(1),
+      onDecrease: () => _stepBy(-1),
       child: CallbackShortcuts(
         bindings: {
-          SingleActivator(forward): () => _set(widget.value + step),
-          const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
-              _set(widget.value + step),
-          SingleActivator(back): () => _set(widget.value - step),
+          SingleActivator(forward): () => _stepBy(1),
+          const SingleActivator(LogicalKeyboardKey.arrowUp): () => _stepBy(1),
+          SingleActivator(back): () => _stepBy(-1),
           const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
-              _set(widget.value - step),
+              _stepBy(-1),
           const SingleActivator(LogicalKeyboardKey.home): () => _set(0),
           const SingleActivator(LogicalKeyboardKey.end): () =>
               _set(widget.max.toDouble()),
@@ -179,6 +200,7 @@ class _Oito2RatingState extends State<Oito2Rating> {
         child: Oito2FocusBorder(
           borderRadius: BorderRadius.circular(4),
           child: Focus(
+            focusNode: _focusNode,
             child: MouseRegion(
               cursor: SystemMouseCursors.click,
               onHover: (event) =>
@@ -186,6 +208,8 @@ class _Oito2RatingState extends State<Oito2Rating> {
               onExit: (_) => setState(() => _hover = null),
               child: GestureDetector(
                 onTapUp: (details) {
+                  // A click focuses the stars, so the keys work next.
+                  _focusNode.requestFocus();
                   setState(() => _hover = null);
                   _set(_valueAt(details.localPosition.dx));
                 },

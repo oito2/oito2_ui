@@ -127,6 +127,7 @@ class Oito2AsyncListController<T, C> extends ChangeNotifier {
   bool _loading = false;
   bool _loadingMore = false;
   Object? _error;
+  StackTrace? _stackTrace;
   int _generation = 0;
   bool _disposed = false;
 
@@ -147,6 +148,9 @@ class Oito2AsyncListController<T, C> extends ChangeNotifier {
 
   /// The error of the last load, or null when it succeeded.
   Object? get error => _error;
+
+  /// The stack trace of [error], or null.
+  StackTrace? get stackTrace => _stackTrace;
 
   /// Whether more pages remain after a load.
   bool get hasMore => _loaded && _cursor != null;
@@ -183,6 +187,7 @@ class Oito2AsyncListController<T, C> extends ChangeNotifier {
   Future<void> _run({required bool more}) async {
     final generation = ++_generation;
     _error = null;
+    _stackTrace = null;
     if (more) {
       _loadingMore = true;
     } else {
@@ -207,9 +212,16 @@ class Oito2AsyncListController<T, C> extends ChangeNotifier {
       _items = List.unmodifiable(items);
       _cursor = page.cursor;
       _loaded = true;
-    } on Object catch (error) {
+    } on Object catch (error, stackTrace) {
       if (generation != _generation || _disposed) return;
       _error = error;
+      _stackTrace = stackTrace;
+      if (!more) {
+        // A failed first page invalidates the paging of the previous load,
+        // so loadMore can't mix its cursor with the new filter or sort.
+        _cursor = null;
+        _loaded = false;
+      }
     } finally {
       if (generation == _generation && !_disposed) {
         _loading = false;

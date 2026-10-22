@@ -16,8 +16,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-
-import '../widgets/test_app.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 void main() {
   final en = Oito2Format();
@@ -34,10 +33,14 @@ void main() {
       expect(en.bytes(2500000), '2.5 MB');
       expect(pt.bytes(1536), '1,5 kB');
       expect(en.bytes(-2000), '-2 kB');
+      // Rounding that reaches the base moves to the next unit.
+      expect(en.bytes(999999), '1 MB');
+      expect(en.bytes(999949), '999.9 kB');
     });
 
     test('uses IEC units on request', () {
       expect(en.bytes(1024, units: Oito2ByteUnits.iec), '1 KiB');
+      expect(en.bytes(1048575, units: Oito2ByteUnits.iec), '1 MiB');
       expect(
         en.bytes(1536 * 1024, units: Oito2ByteUnits.iec, fractionDigits: 2),
         '1.5 MiB',
@@ -53,6 +56,20 @@ void main() {
 
   group('relative time', () {
     final now = DateTime(2026, 10, 20, 12);
+
+    test('six and a half days read as a week', () {
+      expect(
+        en.relativeTime(
+          now.subtract(const Duration(days: 6, hours: 12)),
+          now: now,
+        ),
+        en.relativeTime(now.subtract(const Duration(days: 7)), now: now),
+      );
+      expect(
+        en.relativeTime(now.subtract(const Duration(days: 6)), now: now),
+        isNot(en.relativeTime(now.subtract(const Duration(days: 7)), now: now)),
+      );
+    });
 
     test('picks the largest fitting unit', () {
       expect(
@@ -142,6 +159,20 @@ void main() {
       expect(ranges, const [
         TextRange(start: 0, end: 6),
         TextRange(start: 17, end: 21),
+      ]);
+    });
+
+    test('matches decomposed accents, ß and dotted capitals in place', () {
+      // "ação" with combining accents, as macOS stores file names.
+      const decomposed = 'ac\u0327a\u0303o';
+      expect(Oito2HighlightedText.matches(decomposed, 'acao'), const [
+        TextRange(start: 0, end: 6),
+      ]);
+      expect(Oito2HighlightedText.matches('Straße', 'strasse'), const [
+        TextRange(start: 0, end: 6),
+      ]);
+      expect(Oito2HighlightedText.matches('İstanbul', 'stan'), const [
+        TextRange(start: 1, end: 5),
       ]);
     });
 

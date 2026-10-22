@@ -13,8 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_syntax/oito2_ui_syntax.dart';
@@ -23,6 +21,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'showcase_catalog.dart';
 import 'showcase_options.dart';
+import 'showcase_router.dart';
 
 /// The width at which the page list and the page sit side by side.
 const _breakpoint = 620.0;
@@ -35,15 +34,16 @@ const _sourceUrl =
 /// navigation rail in compact mode, with the appearance actions in the
 /// title bar.
 ///
-/// The selected page is reflected in the web address as `#/<slug>`, so a
-/// page can be linked to.
+/// The selected page is kept in [location], which the app's router mirrors
+/// in the web address as `#/<slug>`, so a page can be linked to and the
+/// browser's back and forward buttons move between pages.
 class ShowcaseShell extends StatefulWidget {
   /// Creates the shell.
   const ShowcaseShell({
     super.key,
     required this.controller,
     required this.colors,
-    this.initialSlug,
+    required this.location,
   });
 
   /// The showcase options.
@@ -52,8 +52,8 @@ class ShowcaseShell extends StatefulWidget {
   /// The active scheme colors.
   final Oito2ColorTheme colors;
 
-  /// The slug of the page to show first.
-  final String? initialSlug;
+  /// The slug of the page shown, shared with the router.
+  final ShowcaseLocation location;
 
   @override
   State<ShowcaseShell> createState() => _ShowcaseShellState();
@@ -61,7 +61,7 @@ class ShowcaseShell extends StatefulWidget {
 
 class _ShowcaseShellState extends State<ShowcaseShell> {
   late final int _initialIndex = showcasePages.indexWhere(
-    (page) => page.slug == widget.initialSlug,
+    (page) => page.slug == widget.location.value,
   );
   late ShowcasePage _selected =
       showcasePages[_initialIndex < 0 ? 0 : _initialIndex];
@@ -73,6 +73,12 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
     length: showcasePages.length,
     initialIndex: _initialIndex,
   );
+
+  /// The navigation rail selection of the compact layout.
+  late final _railController = Oito2PageController(
+    length: showcasePages.length,
+    initialIndex: _initialIndex < 0 ? 0 : _initialIndex,
+  );
   String _query = '';
   final _searchFocus = FocusNode(debugLabel: 'Page search');
   final _searchController = TextEditingController();
@@ -81,34 +87,63 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
       ? showcasePages
       : [
           for (final page in showcasePages)
-            if (page.title.toLowerCase().contains(_query.toLowerCase())) page,
+            if (page.title.toLowerCase().contains(_query.toLowerCase()) ||
+                page.slug.contains(_query.toLowerCase()))
+              page,
         ];
 
   @override
   void initState() {
     super.initState();
-    _reportPage();
+    widget.location.addListener(_onLocation);
+    widget.controller.addListener(_onOptionsChanged);
+  }
+
+  @override
+  void didUpdateWidget(ShowcaseShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.location != widget.location) {
+      oldWidget.location.removeListener(_onLocation);
+      widget.location.addListener(_onLocation);
+    }
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_onOptionsChanged);
+      widget.controller.addListener(_onOptionsChanged);
+    }
   }
 
   @override
   void dispose() {
+    widget.location.removeListener(_onLocation);
+    widget.controller.removeListener(_onOptionsChanged);
     _searchFocus.dispose();
     _searchController.dispose();
     _listController.dispose();
+    _railController.dispose();
     super.dispose();
   }
 
+  /// Rebuilds the shell when an option it reads, such as the compact
+  /// mode, changes.
+  void _onOptionsChanged() => setState(() {});
+
   void _select(ShowcasePage page) {
     setState(() => _selected = page);
-    _reportPage();
+    _railController.index = showcasePages.indexOf(page);
+    widget.location.value = page.slug;
   }
 
-  void _reportPage() {
-    if (!kIsWeb) return;
-    SystemNavigator.routeInformationUpdated(
-      uri: Uri(path: '/${_selected.slug}'),
-      replace: true,
-    );
+  /// Follows an address change: shows the page it names, or goes back to
+  /// the page list when it names none.
+  void _onLocation() {
+    final slug = widget.location.value;
+    if (slug.isEmpty) {
+      if (_listController.hasSelection) _listController.index = -1;
+      return;
+    }
+    if (slug == _selected.slug && _listController.hasSelection) return;
+    final page = showcasePages.where((p) => p.slug == slug).firstOrNull;
+    if (page != null) _goTo(page);
   }
 
   void _search(String query) {
@@ -195,10 +230,7 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
         id: 'app.source',
         label: 'View the source of this page',
         icon: LucideIcons.file_code,
-        onInvoke: () => showDialog<void>(
-          context: context,
-          builder: (context) => _SourceDialog(page: _selected),
-        ),
+        onInvoke: () => _showSource(_selected),
       ),
       Oito2Command(
         id: 'app.home',
@@ -208,17 +240,23 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
         shortcut: Oito2Shortcut.parse('G H'),
         onInvoke: () => _goTo(showcasePages.first),
       ),
-      for (final page in showcasePages)
-        Oito2Command(
-          id: 'page.${page.slug}',
-          label: 'Go to ${page.title}',
-          group: 'Pages',
-          icon: page.icon,
-          keywords: [page.slug],
-          onInvoke: () => _goTo(page),
-        ),
+      ..._pageCommands,
     ];
   }
+
+  /// One "Go to" command per page, built once: they don't depend on the
+  /// options or the search.
+  late final List<Oito2Command> _pageCommands = [
+    for (final page in showcasePages)
+      Oito2Command(
+        id: 'page.${page.slug}',
+        label: 'Go to ${page.title}',
+        group: 'Pages',
+        icon: page.icon,
+        keywords: [page.slug],
+        onInvoke: () => _goTo(page),
+      ),
+  ];
 
   /// Shows [page], clearing the search so it is in the list.
   void _goTo(ShowcasePage page) {
@@ -236,20 +274,25 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
       icon: const Icon(LucideIcons.command),
       onPressed: _openPalette,
     ),
-    if (source)
-      IconButton(
-        tooltip: 'View source',
-        icon: const Icon(LucideIcons.file_code),
-        onPressed: () => showDialog<void>(
-          context: context,
-          builder: (context) => _SourceDialog(page: _selected),
-        ),
-      ),
+    if (source) _sourceButton(_selected),
     _ThemeModeButton(controller: widget.controller),
     _SchemeMenu(controller: widget.controller),
     if (widget.controller.value.preset == null)
       _HighContrastButton(controller: widget.controller),
   ];
+
+  /// Shows the source of [page] in a dialog.
+  void _showSource(ShowcasePage page) => showDialog<void>(
+    context: context,
+    builder: (context) => _SourceDialog(page: page),
+  );
+
+  /// The title bar button that shows the source of [page].
+  Widget _sourceButton(ShowcasePage page) => IconButton(
+    tooltip: 'View source',
+    icon: const Icon(LucideIcons.file_code),
+    onPressed: () => _showSource(page),
+  );
 
   void _openSettings() => showDialog<void>(
     context: context,
@@ -380,16 +423,7 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
                   platform: platform,
                   leading: canPop ? const Oito2BackButton() : null,
                   title: Text(page.title),
-                  actions: [
-                    IconButton(
-                      tooltip: 'View source',
-                      icon: const Icon(LucideIcons.file_code),
-                      onPressed: () => showDialog<void>(
-                        context: context,
-                        builder: (context) => _SourceDialog(page: page),
-                      ),
-                    ),
-                  ],
+                  actions: [_sourceButton(page)],
                   buttonSides: wide
                       ? Oito2WindowButtonSides.trailing
                       : Oito2WindowButtonSides.both,
@@ -404,7 +438,6 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
   }
 
   Widget _compact(Oito2Platform platform) {
-    final index = showcasePages.indexOf(_selected);
     return Scaffold(
       appBar: Oito2WindowTitleBar(
         platform: platform,
@@ -412,7 +445,7 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
         actions: _actions(source: true),
       ),
       body: Oito2NavigationPage(
-        initialIndex: index,
+        controller: _railController,
         compactBreakpoint: 0,
         extendedBreakpoint: 1000,
         onSelected: (index) => _select(showcasePages[index]),
@@ -442,8 +475,12 @@ class _ThemeModeButton extends StatelessWidget {
   final ShowcaseController controller;
 
   @override
-  Widget build(BuildContext context) {
-    final options = controller.value;
+  Widget build(BuildContext context) => ValueListenableBuilder<ShowcaseOptions>(
+    valueListenable: controller,
+    builder: (context, options, _) => _build(context, options),
+  );
+
+  Widget _build(BuildContext context, ShowcaseOptions options) {
     if (options.preset != null) return const SizedBox.shrink();
     final (icon, label, next) = switch (options.themeMode) {
       ThemeMode.system => (
@@ -469,8 +506,12 @@ class _HighContrastButton extends StatelessWidget {
   final ShowcaseController controller;
 
   @override
-  Widget build(BuildContext context) {
-    final options = controller.value;
+  Widget build(BuildContext context) => ValueListenableBuilder<ShowcaseOptions>(
+    valueListenable: controller,
+    builder: (context, options, _) => _build(context, options),
+  );
+
+  Widget _build(BuildContext context, ShowcaseOptions options) {
     return Oito2IconButton(
       tooltip: 'High contrast',
       isSelected: options.highContrast,
@@ -488,8 +529,12 @@ class _SchemeMenu extends StatelessWidget {
   final ShowcaseController controller;
 
   @override
-  Widget build(BuildContext context) {
-    final options = controller.value;
+  Widget build(BuildContext context) => ValueListenableBuilder<ShowcaseOptions>(
+    valueListenable: controller,
+    builder: (context, options, _) => _build(context, options),
+  );
+
+  Widget _build(BuildContext context, ShowcaseOptions options) {
     final system = Oito2SystemScope.of(context).accentColor;
     Widget check(bool selected) => selected
         ? const Icon(LucideIcons.check)
@@ -535,7 +580,7 @@ class _SchemeMenu extends StatelessWidget {
             leadingIcon: check(options.preset == preset),
             onPressed: () =>
                 controller.update((o) => o.copyWith(preset: preset)),
-            child: Text(preset.name),
+            child: Text(preset.label),
           ),
       ],
       builder: (context, menu, _) => IconButton(
@@ -570,6 +615,28 @@ class _SourceDialogState extends State<_SourceDialog> {
     return lines.skip(start < 0 ? 0 : start).join('\n').trimLeft();
   }
 
+  /// A generic message for a source that didn't load; the details go to
+  /// the debug log.
+  Widget _sourceError(Object error) {
+    debugPrint('Could not load ${widget.page.source}: $error');
+    return const Center(child: Text('Could not load the source.'));
+  }
+
+  /// Opens the source on GitHub, telling the user when no browser opens.
+  Future<void> _openOnGitHub() async {
+    final opened = await launchUrl(
+      Uri.parse('$_sourceUrl${widget.page.source}'),
+    ).catchError((Object _) => false);
+    if (!opened && mounted) {
+      Oito2Toaster.maybeOf(context)?.show(
+        const Oito2Toast(
+          title: 'Could not open the browser',
+          type: Oito2InfoType.warning,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
@@ -596,9 +663,7 @@ class _SourceDialogState extends State<_SourceDialog> {
                       ),
                     ),
                   ),
-                  AsyncSnapshot(:final error?) => Center(
-                    child: Text('Could not load the source: $error'),
-                  ),
+                  AsyncSnapshot(:final error?) => _sourceError(error),
                   _ => const Center(
                     child: Oito2CircularProgressIndicator(
                       semanticsLabel: 'Loading the source',
@@ -614,8 +679,7 @@ class _SourceDialogState extends State<_SourceDialog> {
                 child: TextButton.icon(
                   icon: const Icon(LucideIcons.external_link),
                   label: const Text('Open on GitHub'),
-                  onPressed: () =>
-                      launchUrl(Uri.parse('$_sourceUrl${widget.page.source}')),
+                  onPressed: _openOnGitHub,
                 ),
               ),
             ),

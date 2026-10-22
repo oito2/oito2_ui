@@ -84,35 +84,28 @@ class Oito2PasswordField extends StatefulWidget {
   State<Oito2PasswordField> createState() => _Oito2PasswordFieldState();
 }
 
-class _Oito2PasswordFieldState extends State<Oito2PasswordField> {
-  FocusNode? _ownFocusNode;
+class _Oito2PasswordFieldState extends State<Oito2PasswordField>
+    with OwnedFocusNodeMixin {
   bool _visible = false;
   bool _capsLock = false;
 
-  FocusNode get _focusNode =>
-      widget.focusNode ?? (_ownFocusNode ??= FocusNode());
+  @override
+  FocusNode? get widgetFocusNode => widget.focusNode;
+
+  FocusNode get _focusNode => effectiveFocusNode;
+
+  @override
+  void onEffectiveFocusChange() => _checkCapsLock();
 
   @override
   void initState() {
     super.initState();
-    _focusNode.addListener(_checkCapsLock);
     HardwareKeyboard.instance.addHandler(_onKey);
-  }
-
-  @override
-  void didUpdateWidget(Oito2PasswordField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.focusNode != widget.focusNode) {
-      (oldWidget.focusNode ?? _ownFocusNode)?.removeListener(_checkCapsLock);
-      _focusNode.addListener(_checkCapsLock);
-    }
   }
 
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_onKey);
-    _focusNode.removeListener(_checkCapsLock);
-    _ownFocusNode?.dispose();
     super.dispose();
   }
 

@@ -21,6 +21,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  oito2_ui_test_utils: any
   oito2_ui_syntax: ^0.1.0
 
 flutter:

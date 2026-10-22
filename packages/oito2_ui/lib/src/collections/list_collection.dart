@@ -32,6 +32,8 @@ class Oito2ListCollection<T> {
   /// [labelOf] defaults to [valueOf]. Items are enabled unless
   /// [isDisabled] says otherwise, and ungrouped unless [groupOf] returns
   /// a group name.
+  ///
+  /// Throws an [ArgumentError] when two items share a value.
   Oito2ListCollection(
     Iterable<T> items, {
     String Function(T item)? valueOf,
@@ -42,7 +44,9 @@ class Oito2ListCollection<T> {
        _valueOf = valueOf ?? _defaultValue {
     for (var i = 0; i < this.items.length; i++) {
       final value = _valueOf(this.items[i]);
-      assert(!_indexes.containsKey(value), 'Duplicate value "$value"');
+      if (_indexes.containsKey(value)) {
+        throw ArgumentError.value(value, 'items', 'Duplicate value');
+      }
       _indexes[value] = i;
     }
   }
@@ -66,7 +70,14 @@ class Oito2ListCollection<T> {
   bool get isEmpty => items.isEmpty;
 
   /// The values of every item, in order.
-  List<String> get values => [for (final item in items) valueOf(item)];
+  late final List<String> values = List.unmodifiable([
+    for (final item in items) valueOf(item),
+  ]);
+
+  /// The labels folded by [foldText], in item order.
+  late final List<String> _foldedLabels = [
+    for (final item in items) foldText(labelOf(item)),
+  ];
 
   /// The unique value of [item].
   String valueOf(T item) => _valueOf(item);
@@ -141,8 +152,9 @@ class Oito2ListCollection<T> {
     final needle = foldText(query);
     final start = indexOf(from);
     for (var n = 1; n <= length; n++) {
-      final item = items[(start + n) % length];
-      if (!isDisabled(item) && foldText(labelOf(item)).startsWith(needle)) {
+      final index = (start + n) % length;
+      final item = items[index];
+      if (!isDisabled(item) && _foldedLabels[index].startsWith(needle)) {
         return valueOf(item);
       }
     }
@@ -182,11 +194,32 @@ class Oito2ListCollection<T> {
   /// The items whose label contains [query], ignoring case and accents.
   Oito2ListCollection<T> filter(String query) {
     final needle = foldText(query);
-    return where((item) => foldText(labelOf(item)).contains(needle));
+    return copyWith([
+      for (var i = 0; i < length; i++)
+        if (_foldedLabels[i].contains(needle)) items[i],
+    ]);
+  }
+
+  /// The enabled items whose label contains [query], ignoring case and
+  /// accents, in order, leaving out those whose label is in [exclude]:
+  /// the suggestions for a text typed in a field.
+  List<T> suggestions(String query, {Set<String> exclude = const {}}) {
+    final needle = foldText(query);
+    return [
+      for (var i = 0; i < length; i++)
+        if (!isDisabled(items[i]) &&
+            _foldedLabels[i].contains(needle) &&
+            !exclude.contains(labelOf(items[i])))
+          items[i],
+    ];
   }
 
   /// The collection with the item at [from] moved to [to].
+  ///
+  /// Throws a [RangeError] when either index is outside the items.
   Oito2ListCollection<T> reorder(int from, int to) {
+    RangeError.checkValidIndex(from, items, 'from');
+    RangeError.checkValidIndex(to, items, 'to');
     final list = [...items];
     list.insert(to, list.removeAt(from));
     return copyWith(list);

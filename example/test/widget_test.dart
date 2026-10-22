@@ -20,6 +20,7 @@ import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_example/main.dart';
 import 'package:oito2_ui_example/src/showcase_catalog.dart';
 import 'package:oito2_ui_example/src/showcase_options.dart';
+import 'package:oito2_ui_example/src/showcase_shell.dart' as shell;
 import 'package:oito2_ui_syntax/oito2_ui_syntax.dart';
 import 'package:oito2_ui_themes/oito2_ui_themes.dart';
 
@@ -102,6 +103,33 @@ void main() {
     expect(find.text('Show hidden files'), findsOneWidget);
   });
 
+  testWidgets('a search without results keeps the field to clear it', (
+    tester,
+  ) async {
+    await pumpShowcase(tester);
+    await tester.enterText(find.byType(TextField).first, 'zzzz');
+    await _settle(tester);
+    expect(find.text('Oito2CheckButton'), findsNothing);
+    expect(find.byType(TextField), findsWidgets);
+    await tester.enterText(find.byType(TextField).first, '');
+    await _settle(tester);
+    expect(find.text('Oito2Banner'), findsWidgets);
+  });
+
+  testWidgets('the search also matches page addresses', (tester) async {
+    await pumpShowcase(tester);
+    await tester.enterText(find.byType(TextField).first, 'check-button');
+    await _settle(tester);
+    expect(find.text('Oito2CheckButton'), findsWidgets);
+  });
+
+  test('options with the same values are equal', () {
+    expect(
+      const ShowcaseOptions(rtl: true),
+      const ShowcaseOptions().copyWith(rtl: true),
+    );
+  });
+
   testWidgets('the search field filters the page list', (tester) async {
     await pumpShowcase(tester);
     await tester.enterText(find.byType(TextField).first, 'button');
@@ -141,7 +169,7 @@ void main() {
     await pumpShowcase(tester, slug: 'theme');
     await tester.tap(find.byTooltip('Color scheme'));
     await _settle(tester);
-    await tester.tap(find.widgetWithText(MenuItemButton, 'dracula'));
+    await tester.tap(find.widgetWithText(MenuItemButton, 'Dracula'));
     await _settle(tester);
     final context = tester.element(find.byType(Scaffold).first);
     expect(
@@ -303,4 +331,90 @@ void main() {
       }
     });
   }
+
+  group('addresses', () {
+    /// Sends [location] as the platform does when the address changes, such
+    /// as after editing it or pressing the browser's back button.
+    Future<void> pushAddress(WidgetTester tester, String location) async {
+      final message = const JSONMethodCodec().encodeMethodCall(
+        MethodCall('pushRouteInformation', {
+          'location': location,
+          'state': null,
+        }),
+      );
+      await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+        'flutter/navigation',
+        message,
+        (_) {},
+      );
+      await _settle(tester);
+    }
+
+    testWidgets('an address change selects its page in the same shell', (
+      tester,
+    ) async {
+      await pumpShowcase(tester, slug: 'check-button');
+      await pushAddress(tester, '/watermark');
+      expect(tester.takeException(), isNull);
+      expect(find.byType(shell.ShowcaseShell), findsOneWidget);
+      expect(
+        find.widgetWithText(Oito2WindowTitleBar, 'Oito2Watermark'),
+        findsOneWidget,
+      );
+      await pushAddress(tester, '/check-button');
+      expect(
+        find.widgetWithText(Oito2WindowTitleBar, 'Oito2CheckButton'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('an address change shows its page in compact mode', (
+      tester,
+    ) async {
+      await pumpShowcase(
+        tester,
+        slug: 'watermark',
+        options: const ShowcaseOptions(compactMode: true),
+      );
+      await pushAddress(tester, '/check-button');
+      expect(
+        find.widgetWithText(Oito2WindowTitleBar, 'Oito2CheckButton'),
+        findsOneWidget,
+      );
+      expect(find.text('Show hidden files'), findsOneWidget);
+    });
+
+    testWidgets('an unknown or empty address keeps the app working', (
+      tester,
+    ) async {
+      await pumpShowcase(tester, slug: 'banner');
+      await pushAddress(tester, '/no-such-page');
+      await pushAddress(tester, '/');
+      expect(tester.takeException(), isNull);
+      expect(find.byType(shell.ShowcaseShell), findsOneWidget);
+    });
+
+    testWidgets('picking a page publishes its address', (tester) async {
+      final reported = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.navigation,
+        (call) async {
+          if (call.method == 'routeInformationUpdated') {
+            reported.add((call.arguments as Map)['uri'] as String);
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.navigation,
+          null,
+        ),
+      );
+      await pumpShowcase(tester, slug: 'banner');
+      await tester.tap(find.text('Oito2Carousel').first);
+      await _settle(tester);
+      expect(reported.last, '/carousel');
+    });
+  });
 }

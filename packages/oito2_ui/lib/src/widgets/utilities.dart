@@ -62,7 +62,13 @@ class _Oito2FocusBorderState extends State<Oito2FocusBorder> {
     super.dispose();
   }
 
-  void _onMode(FocusHighlightMode mode) => setState(() => _mode = mode);
+  /// Tracks the highlight mode; only a border that could show, with the
+  /// focus inside, rebuilds when it changes.
+  void _onMode(FocusHighlightMode mode) {
+    if (mode == _mode) return;
+    _mode = mode;
+    if (_hasFocus && widget.focused == null) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -190,7 +196,7 @@ class _Oito2ScrollViewUndershootState extends State<Oito2ScrollViewUndershoot> {
     final shadow = IgnorePointer(
       child: AnimatedOpacity(
         opacity: visible ? 1 : 0,
-        duration: const Duration(milliseconds: 150),
+        duration: motionDuration(context, const Duration(milliseconds: 150)),
         child: Container(
           width: vertical ? null : widget.extent,
           height: vertical ? widget.extent : null,
@@ -227,10 +233,13 @@ class _Oito2ScrollViewUndershootState extends State<Oito2ScrollViewUndershoot> {
 
   @override
   Widget build(BuildContext context) {
+    // Only the direct scroll view counts, not scroll views nested in it.
     return NotificationListener<ScrollMetricsNotification>(
-      onNotification: (notification) => _onMetrics(notification.metrics),
+      onNotification: (notification) =>
+          notification.depth == 0 && _onMetrics(notification.metrics),
       child: NotificationListener<ScrollNotification>(
-        onNotification: (notification) => _onMetrics(notification.metrics),
+        onNotification: (notification) =>
+            notification.depth == 0 && _onMetrics(notification.metrics),
         child: Stack(
           children: [
             widget.child,

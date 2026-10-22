@@ -16,6 +16,7 @@
 import 'dart:io' show Platform;
 import 'dart:ui' show Size;
 
+import 'package:flutter/services.dart' show MissingPluginException;
 import 'package:flutter/widgets.dart' show WidgetsFlutterBinding;
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:window_manager/window_manager.dart';
@@ -34,7 +35,13 @@ Future<Oito2WindowController?> ensureInitialized({
     return null;
   }
   WidgetsFlutterBinding.ensureInitialized();
-  await windowManager.ensureInitialized();
+  try {
+    await windowManager.ensureInitialized();
+  } on MissingPluginException {
+    // The window plugin isn't registered, such as in tests or an embedder
+    // without it: the app runs without window control.
+    return null;
+  }
   final options = WindowOptions(
     title: title,
     size: size,

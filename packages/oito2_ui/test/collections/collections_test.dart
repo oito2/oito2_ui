@@ -94,6 +94,27 @@ void main() {
     });
   });
 
+  group('Oito2ListCollection validation and suggestions', () {
+    test('rejects duplicate values and reorders within range', () {
+      expect(() => Oito2ListCollection(['a', 'a']), throwsArgumentError);
+      expect(
+        () => Oito2ListCollection(['a', 'b']).reorder(0, 5),
+        throwsRangeError,
+      );
+    });
+
+    test('suggests enabled matches, leaving out excluded labels', () {
+      expect(
+        [for (final f in _fruits.suggestions('p')) f.id],
+        ['apple', 'pear', 'plum'],
+      );
+      expect([
+        for (final f in _fruits.suggestions('pe', exclude: {'Pêra'})) f.id,
+      ], isEmpty);
+      expect([for (final f in _fruits.suggestions('BAN')) f.id], isEmpty);
+    });
+  });
+
   group('Oito2SelectionController', () {
     test('single mode replaces and toggles with forceToggle', () {
       final selection = Oito2SelectionController(collection: _fruits);
@@ -188,6 +209,24 @@ void main() {
       selection.clear();
       expect(notified, 2);
     });
+
+    test('replace, select all and set values notify on changes only', () {
+      final selection = Oito2SelectionController(
+        collection: _fruits,
+        mode: Oito2SelectionMode.multiple,
+      );
+      var notified = 0;
+      selection.addListener(() => notified++);
+      selection.replace('apple');
+      selection.replace('apple');
+      selection.selectAll();
+      selection.selectAll();
+      selection.setSelectedValues(['cherry', 'plum']);
+      selection.setSelectedValues(['cherry', 'plum']);
+      expect(notified, 3);
+      selection.click('apple', extend: true);
+      expect(selection.selectedValues, {'apple', 'cherry', 'pear', 'plum'});
+    });
   });
 
   group('Oito2TreeCollection', () {
@@ -207,6 +246,23 @@ void main() {
       expect(tree.find('src/widgets')?.isBranch, isTrue);
       expect(tree.find('src/app.dart')?.isBranch, isFalse);
       expect(tree.find('src/widgets/field.dart')?.label, 'field.dart');
+    });
+
+    test('rejects duplicate values and lists leaves', () {
+      expect(
+        () => Oito2TreeCollection<void>([
+          const Oito2TreeNode(value: 'a'),
+          const Oito2TreeNode(value: 'a'),
+        ]),
+        throwsArgumentError,
+      );
+      expect(tree.leavesOf('src'), [
+        'src/app.dart',
+        'src/widgets/button.dart',
+        'src/widgets/field.dart',
+      ]);
+      expect(tree.leavesOf('README.md'), ['README.md']);
+      expect(tree.leavesOf('missing'), isEmpty);
     });
 
     test('answers parents, siblings, ancestors and depth', () {
@@ -267,6 +323,16 @@ void main() {
       );
       expect(moved.parentOf('README.md'), 'test');
 
+      // Moving into a moved node or a descendant, or into an unknown node,
+      // is refused instead of dropping the nodes.
+      expect(() => tree.move(['src'], 'src/widgets'), throwsArgumentError);
+      expect(() => tree.move(['src'], 'src'), throwsArgumentError);
+      expect(() => tree.move(['README.md'], 'nope'), throwsArgumentError);
+      expect(
+        () => tree.insert('nope', const [Oito2TreeNode(value: 'x')]),
+        throwsArgumentError,
+      );
+
       final replaced = tree.replace(
         'README.md',
         const Oito2TreeNode(value: 'README.md', label: 'Read me'),
@@ -309,6 +375,28 @@ void main() {
       await list.loadMore();
       expect(list.items, hasLength(25));
       expect(list.hasMore, isFalse);
+    });
+
+    test('a failed reload stops paging with the old cursor', () async {
+      var fail = false;
+      final requests = <Oito2AsyncListRequest<int>>[];
+      final list = Oito2AsyncListController<int, int>(
+        load: (request) async {
+          requests.add(request);
+          if (fail) throw StateError('offline');
+          return Oito2AsyncListPage([1, 2], cursor: 2);
+        },
+      );
+      await list.reload();
+      expect(list.hasMore, isTrue);
+      fail = true;
+      await list.setFilterText('x');
+      expect(list.error, isA<StateError>());
+      expect(list.stackTrace, isNotNull);
+      expect(list.hasMore, isFalse);
+      final sent = requests.length;
+      await list.loadMore();
+      expect(requests, hasLength(sent));
     });
 
     test('filter text reloads from the first page', () async {

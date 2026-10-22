@@ -16,6 +16,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart' show NumberFormat;
 import 'package:material_ui/material_ui.dart';
 
 import 'utilities.dart';
@@ -51,7 +52,8 @@ class Oito2AngleSlider extends StatefulWidget {
   /// Called with each new angle; the dial is read-only when null.
   final ValueChanged<double>? onChanged;
 
-  /// Called when a drag ends.
+  /// Called with the final angle when a drag or a tap ends, and after
+  /// each key press or assistive-technology adjustment.
   final ValueChanged<double>? onChangeEnd;
 
   /// The smallest change.
@@ -92,9 +94,45 @@ class _Oito2AngleSliderState extends State<Oito2AngleSlider> {
   double _snap(double degrees) =>
       _wrap((degrees / widget.step).round() * widget.step);
 
+  /// The last value reported, which the parent may not have shown yet.
+  double? _pending;
+
   void _set(double degrees) {
     final next = _snap(degrees);
-    if (next != widget.value) widget.onChanged?.call(next);
+    if (next != (_pending ?? widget.value)) {
+      _pending = next;
+      widget.onChanged?.call(next);
+    }
+  }
+
+  /// Ends a change: a drag, a tap or a key press.
+  void _end() {
+    widget.onChangeEnd?.call(_pending ?? widget.value);
+    _pending = null;
+  }
+
+  /// Sets [degrees] and ends the change at once, for keys and assistive
+  /// technologies.
+  void _setAndEnd(double degrees) {
+    _set(degrees);
+    _end();
+  }
+
+  NumberFormat? _wholeFormat;
+  NumberFormat? _tenthFormat;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final locale = Localizations.maybeLocaleOf(context)?.toString();
+    _wholeFormat = NumberFormat.decimalPatternDigits(
+      locale: locale,
+      decimalDigits: 0,
+    );
+    _tenthFormat = NumberFormat.decimalPatternDigits(
+      locale: locale,
+      decimalDigits: 1,
+    );
   }
 
   void _pointAt(Offset local) {
@@ -105,8 +143,9 @@ class _Oito2AngleSliderState extends State<Oito2AngleSlider> {
     _set(math.atan2(d.dx, -d.dy) * 180 / math.pi);
   }
 
+  /// [degrees] in the locale's number format, with a tenth when it has one.
   String _label(double degrees) =>
-      '${degrees % 1 == 0 ? degrees.toInt() : degrees.toStringAsFixed(1)}°';
+      '${(degrees % 1 == 0 ? _wholeFormat : _tenthFormat)!.format(degrees)}°';
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +184,7 @@ class _Oito2AngleSliderState extends State<Oito2AngleSlider> {
         child: ExcludeSemantics(child: dial),
       );
     }
-    void by(double delta) => _set(widget.value + delta);
+    void by(double delta) => _setAndEnd(widget.value + delta);
     return Semantics(
       slider: true,
       label: widget.semanticLabel,
@@ -168,7 +207,7 @@ class _Oito2AngleSliderState extends State<Oito2AngleSlider> {
               by(widget.pageStep),
           const SingleActivator(LogicalKeyboardKey.pageDown): () =>
               by(-widget.pageStep),
-          const SingleActivator(LogicalKeyboardKey.home): () => _set(0),
+          const SingleActivator(LogicalKeyboardKey.home): () => _setAndEnd(0),
         },
         child: Oito2FocusBorder(
           borderRadius: BorderRadius.circular(widget.size / 2),
@@ -178,9 +217,10 @@ class _Oito2AngleSliderState extends State<Oito2AngleSlider> {
               cursor: SystemMouseCursors.grab,
               child: GestureDetector(
                 onTapDown: (d) => _pointAt(d.localPosition),
+                onTapUp: (_) => _end(),
                 onPanStart: (d) => _pointAt(d.localPosition),
                 onPanUpdate: (d) => _pointAt(d.localPosition),
-                onPanEnd: (_) => widget.onChangeEnd?.call(widget.value),
+                onPanEnd: (_) => _end(),
                 child: ExcludeSemantics(child: dial),
               ),
             ),

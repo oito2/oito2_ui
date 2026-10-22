@@ -18,6 +18,7 @@ import 'package:material_ui/material_ui.dart';
 import '../theme/extensions/navigation_themes.dart';
 import 'navigation_rail.dart';
 import 'page_controller.dart';
+import 'widget_helpers.dart';
 
 /// Top-level navigation between pages that adapts to the available width
 /// and the input.
@@ -84,41 +85,31 @@ class Oito2NavigationPage extends StatefulWidget {
   State<Oito2NavigationPage> createState() => _Oito2NavigationPageState();
 }
 
-class _Oito2NavigationPageState extends State<Oito2NavigationPage> {
-  Oito2PageController? _ownController;
-
-  Oito2PageController get _controller =>
-      widget.controller ??
-      (_ownController ??= Oito2PageController(
-        length: widget.items.length,
-        initialIndex: widget.initialIndex,
-      ));
+class _Oito2NavigationPageState extends State<Oito2NavigationPage>
+    with OwnedControllerMixin<Oito2NavigationPage, Oito2PageController> {
+  @override
+  Oito2PageController? get widgetController => widget.controller;
 
   @override
-  void initState() {
-    super.initState();
-    _controller.addListener(_onChanged);
-  }
+  Oito2PageController createOwnedController() => Oito2PageController(
+    length: widget.items.length,
+    initialIndex: widget.initialIndex,
+  );
+
+  @override
+  void onControllerChange() => _onChanged();
+
+  Oito2PageController get _controller => effectiveController;
 
   @override
   void didUpdateWidget(Oito2NavigationPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final oldController = oldWidget.controller ?? _ownController;
-    if (oldController != _controller) {
-      oldController?.removeListener(_onChanged);
-      _controller.addListener(_onChanged);
-    }
     if (widget.controller == null) {
       _controller.length = widget.items.length;
     }
   }
 
-  @override
-  void dispose() {
-    _controller.removeListener(_onChanged);
-    _ownController?.dispose();
-    super.dispose();
-  }
+  final _pageKey = GlobalKey();
 
   void _onChanged() => setState(() {});
 
@@ -130,11 +121,16 @@ class _Oito2NavigationPageState extends State<Oito2NavigationPage> {
   @override
   Widget build(BuildContext context) {
     final index = _controller.hasSelection ? _controller.index : 0;
-    final page = AnimatedSwitcher(
-      duration: const Duration(milliseconds: 150),
-      child: KeyedSubtree(
-        key: ValueKey(index),
-        child: widget.pageBuilder(context, index),
+    // The global key moves the page between the bar and rail layouts
+    // without losing its state.
+    final page = KeyedSubtree(
+      key: _pageKey,
+      child: AnimatedSwitcher(
+        duration: motionDuration(context, const Duration(milliseconds: 150)),
+        child: KeyedSubtree(
+          key: ValueKey(index),
+          child: widget.pageBuilder(context, index),
+        ),
       ),
     );
 

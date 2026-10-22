@@ -18,7 +18,15 @@
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <!--
+    Every resource comes from this site: the engine is built without the
+    web resources CDN and the fonts are bundled. WebAssembly needs
+    'wasm-unsafe-eval', and the engine adds inline styles. GitHub Pages
+    can't send headers, so frame-ancestors and the other header-only
+    protections aren't available.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="description" content="Interactive showcase of oito2_ui, a Material 3 design system for Flutter apps on Linux, Windows, macOS, iOS, Android and the web.">
   <link rel="canonical" href="https://oito2.github.io/oito2_ui/">
   <meta property="og:title" content="oito2_ui showcase">

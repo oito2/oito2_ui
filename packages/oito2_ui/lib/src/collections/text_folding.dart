@@ -65,18 +65,41 @@ const _accents = {
   'ď': 'd',
   'ğ': 'g',
   'ı': 'i',
+  'ß': 'ss',
+  'æ': 'ae',
+  'œ': 'oe',
 };
 
 /// Returns [text] in lower case without the accents of Latin letters,
-/// keeping one character per input character, so indexes in the result
-/// match indexes in [text].
+/// including the combining accents of decomposed text, and with `ß`, `æ`
+/// and `œ` spelled out.
 ///
 /// Used to compare and search text ignoring case and accents, such as
-/// "Ação" matching "acao".
-String foldText(String text) {
+/// "Ação" matching "acao". [foldTextWithOffsets] also maps the result back
+/// to [text].
+String foldText(String text) => foldTextWithOffsets(text).folded;
+
+/// Folds [text] like [foldText], with the index in [text] of each folded
+/// character: `starts[i]` is where the character that produced
+/// `folded[i]` begins, and a final entry holds `text.length`.
+///
+/// A folded range `start..end` covers `starts[start]..starts[end]` of
+/// [text], with the combining accents that follow it.
+({String folded, List<int> starts}) foldTextWithOffsets(String text) {
   final buffer = StringBuffer();
-  for (final char in text.toLowerCase().split('')) {
-    buffer.write(_accents[char] ?? char);
+  final starts = <int>[];
+  for (var i = 0; i < text.length; i++) {
+    for (final unit in text[i].toLowerCase().split('')) {
+      final code = unit.codeUnitAt(0);
+      // Combining diacritical marks.
+      if (code >= 0x0300 && code <= 0x036F) continue;
+      final folded = _accents[unit] ?? unit;
+      buffer.write(folded);
+      for (var k = 0; k < folded.length; k++) {
+        starts.add(i);
+      }
+    }
   }
-  return buffer.toString();
+  starts.add(text.length);
+  return (folded: buffer.toString(), starts: starts);
 }

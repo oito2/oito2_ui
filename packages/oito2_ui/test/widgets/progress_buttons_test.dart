@@ -16,11 +16,39 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-
-import 'test_app.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 void main() {
   group('Oito2CircularProgressIndicator', () {
+    testWidgets('spins without rebuilding its paint', (tester) async {
+      await pumpOito2(
+        tester,
+        const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Oito2CircularProgressIndicator(),
+              SizedBox(width: 200, child: Oito2LinearProgressIndicator()),
+            ],
+          ),
+        ),
+      );
+      List<CustomPaint> paints() => tester
+          .widgetList<CustomPaint>(
+            find.descendant(
+              of: find.byType(Column),
+              matching: find.byType(CustomPaint),
+            ),
+          )
+          .toList();
+      final before = paints();
+      await tester.pump(const Duration(milliseconds: 100));
+      final after = paints();
+      for (var i = 0; i < before.length; i++) {
+        expect(after[i], same(before[i]));
+      }
+    });
+
     testWidgets('determinate progress reads as a percentage', (tester) async {
       await pumpOito2(
         tester,

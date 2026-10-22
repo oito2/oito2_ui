@@ -21,8 +21,9 @@ import 'package:material_ui/material_ui.dart';
 /// listeners every [interval] while it runs.
 ///
 /// A countdown stops by itself at zero and calls [onComplete]. Time is
-/// measured from the clock [now] (the system clock by default), so it
-/// stays exact however late the ticks arrive.
+/// measured from the clock [now], so it stays exact however late the ticks
+/// arrive; the default clock is monotonic, unaffected by changes to the
+/// system time.
 class Oito2TimerController extends ChangeNotifier {
   /// Creates a timer.
   Oito2TimerController({
@@ -31,8 +32,15 @@ class Oito2TimerController extends ChangeNotifier {
     this.onTick,
     this.onComplete,
     DateTime Function()? now,
-  }) : _now = now ?? DateTime.now,
+  }) : _now = now ?? _monotonicClock(),
        assert(interval > Duration.zero);
+
+  /// A clock that advances with a [Stopwatch] from the current time.
+  static DateTime Function() _monotonicClock() {
+    final origin = DateTime.now();
+    final stopwatch = Stopwatch()..start();
+    return () => origin.add(stopwatch.elapsed);
+  }
 
   /// The length of a countdown, or null for a stopwatch.
   final Duration? countdown;
@@ -54,7 +62,9 @@ class Oito2TimerController extends ChangeNotifier {
       _offset +
       (_startedAt == null ? Duration.zero : _now().difference(_startedAt!));
   Timer? _timer;
+  Timer? _completion;
   bool _completed = false;
+  bool _disposed = false;
 
   /// The time run so far, up to [countdown].
   Duration get elapsed {
@@ -72,12 +82,22 @@ class Oito2TimerController extends ChangeNotifier {
   /// Whether a countdown has reached zero.
   bool get isCompleted => _completed;
 
-  /// Starts or resumes the timer.
+  /// Starts or resumes the timer; does nothing once disposed.
   void start() {
-    if (isRunning || _completed) return;
+    if (_disposed || isRunning || _completed) return;
     _startedAt = _now();
     _timer = Timer.periodic(interval, (_) => _tick());
+    // A countdown also ticks exactly when it reaches zero.
+    final left = remaining;
+    if (left != null) _completion = Timer(left, _tick);
     notifyListeners();
+  }
+
+  void _cancelTimers() {
+    _timer?.cancel();
+    _timer = null;
+    _completion?.cancel();
+    _completion = null;
   }
 
   /// Pauses the timer.
@@ -85,16 +105,14 @@ class Oito2TimerController extends ChangeNotifier {
     if (!isRunning) return;
     _offset = _raw;
     _startedAt = null;
-    _timer?.cancel();
-    _timer = null;
+    _cancelTimers();
     notifyListeners();
   }
 
   /// Stops the timer and sets it back to zero.
   void reset() {
     _startedAt = null;
-    _timer?.cancel();
-    _timer = null;
+    _cancelTimers();
     _offset = Duration.zero;
     _completed = false;
     notifyListeners();
@@ -111,8 +129,7 @@ class Oito2TimerController extends ChangeNotifier {
     if (countdown != null && _raw >= countdown) {
       _startedAt = null;
       _offset = countdown;
-      _timer?.cancel();
-      _timer = null;
+      _cancelTimers();
       _completed = true;
       onTick?.call(elapsed);
       notifyListeners();
@@ -125,7 +142,8 @@ class Oito2TimerController extends ChangeNotifier {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _disposed = true;
+    _cancelTimers();
     super.dispose();
   }
 }

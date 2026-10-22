@@ -19,4 +19,5 @@
 /// window on Linux, Windows and macOS.
 library;
 
+export 'src/native_window_controller.dart' show Oito2NativeWindowController;
 export 'src/oito2_window.dart';

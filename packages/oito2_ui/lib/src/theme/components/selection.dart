@@ -119,12 +119,12 @@ ProgressIndicatorThemeData buildProgressIndicatorTheme(
     color: c.indicator,
     linearTrackColor: c.scheme.surfaceContainerHighest,
     circularTrackColor: const Color(0x00000000),
-    linearMinHeight: 4,
+    linearMinHeight: Oito2Sizes.progressHeight,
     borderRadius: const BorderRadius.all(Radius.circular(2)),
   );
 }
 
-/// Chips: the medium radius, an `outlineVariant` border and the
+/// Chips: the medium radius, an `outline` border and the
 /// secondary container when selected.
 ///
 /// A chip is 32 pixels tall plus its label's vertical padding, its

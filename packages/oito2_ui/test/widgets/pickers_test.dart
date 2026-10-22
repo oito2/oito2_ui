@@ -18,8 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-
-import 'test_app.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 /// Hosts a value and rebuilds [builder] when it changes, so controlled
 /// widgets behave as in an app.
@@ -80,6 +79,94 @@ void main() {
             ),
           ),
         );
+
+    for (final (locale, text, value) in const [
+      (Locale('sv'), '\u22123', -3.0),
+      (Locale('fa'), '\u06F7', 7.0),
+    ]) {
+      testWidgets('accepts the signs and digits of $locale', (tester) async {
+        final values = <double>[];
+        await tester.pumpWidget(
+          MaterialApp(
+            locale: locale,
+            localizationsDelegates: GlobalMaterialLocalizations.delegates,
+            supportedLocales: [locale],
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 220,
+                  child: Oito2NumberEntry(
+                    value: 0,
+                    min: -10,
+                    max: 10,
+                    onChanged: values.add,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.enterText(find.byType(TextField), text);
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pump();
+        expect(values.last, value);
+      });
+    }
+
+    testWidgets('accepts the group separator of de_CH', (tester) async {
+      final values = <double>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('de', 'CH'),
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          supportedLocales: const [Locale('de', 'CH')],
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 220,
+                child: Oito2NumberEntry(
+                  value: 0,
+                  max: 5000,
+                  onChanged: values.add,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(TextField), "1'234");
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        "1'234",
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(values.last, 1234);
+    });
+
+    testWidgets('a locale change keeps the text being typed', (tester) async {
+      Widget build(Locale locale) => MaterialApp(
+        locale: locale,
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        supportedLocales: const [Locale('en'), Locale('pt')],
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 220,
+              child: Oito2NumberEntry(value: 5, onChanged: (_) {}),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpWidget(build(const Locale('en')));
+      await tester.enterText(find.byType(TextField), '12');
+      await tester.pumpWidget(build(const Locale('pt')));
+      await tester.pump();
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        '12',
+      );
+    });
 
     testWidgets('the buttons step and stop at the limits', (tester) async {
       await pumpEntry(tester);
@@ -198,6 +285,25 @@ void main() {
       expect(field.autofillHints, [AutofillHints.oneTimeCode]);
     });
 
+    testWidgets('an emoji fills one cell of a text code', (tester) async {
+      final completed = <String>[];
+      await pumpOito2(
+        tester,
+        Center(
+          child: Oito2PinEntry(
+            length: 3,
+            numeric: false,
+            onCompleted: completed.add,
+          ),
+        ),
+      );
+      await tester.tap(find.byType(Oito2PinEntry));
+      await tester.enterText(find.byType(TextField), 'a\u{1F600}b');
+      await tester.pump();
+      expect(find.text('\u{1F600}'), findsOneWidget);
+      expect(completed, ['a\u{1F600}b']);
+    });
+
     testWidgets('a pasted code fills every cell and masking hides it', (
       tester,
     ) async {
@@ -302,6 +408,20 @@ void main() {
       );
     });
 
+    testWidgets('a refused tag stays in the field with the caret at its end', (
+      tester,
+    ) async {
+      await pumpTags(tester, initial: ['dart']);
+      await tester.enterText(find.byType(TextField), 'dart,');
+      await tester.pump();
+      final controller = tester
+          .widget<TextField>(find.byType(TextField))
+          .controller!;
+      expect(controller.text, 'dart');
+      expect(controller.selection, const TextSelection.collapsed(offset: 4));
+      expect(_hostValue<List<String>>(tester), ['dart']);
+    });
+
     testWidgets('max tags stops adding', (tester) async {
       await pumpTags(tester, maxTags: 2);
       await tester.enterText(find.byType(TextField), 'a,b,c,');
@@ -358,6 +478,26 @@ void main() {
             ),
           ),
         );
+
+    testWidgets('a value between steps steps to the next one', (tester) async {
+      await pumpOito2(
+        tester,
+        Center(
+          child: _Host<double>(
+            initial: 3.7,
+            builder: (value, set) =>
+                Oito2Rating(value: value, onChanged: set, allowHalf: true),
+          ),
+        ),
+      );
+      final row = tester.getRect(find.byType(Row).last);
+      await tester.tapAt(Offset(row.left + 24 * 4 + 18, row.center.dy));
+      await tester.pumpAndSettle();
+      expect(_hostValue<double>(tester), 5);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pump();
+      expect(_hostValue<double>(tester), 4.5);
+    });
 
     testWidgets('a tap picks a star, a half with allowHalf', (tester) async {
       await pumpRating(tester);
@@ -417,6 +557,29 @@ void main() {
       await _key(tester, LogicalKeyboardKey.pageUp);
       expect(_hostValue<double>(tester), 14);
     });
+
+    testWidgets('a tap and each key press end the change', (tester) async {
+      final ends = <double>[];
+      await pumpOito2(
+        tester,
+        Center(
+          child: _Host<double>(
+            initial: 0,
+            builder: (value, set) => Oito2AngleSlider(
+              value: value,
+              onChanged: set,
+              onChangeEnd: ends.add,
+              size: 100,
+            ),
+          ),
+        ),
+      );
+      final rect = tester.getRect(find.byType(Oito2AngleSlider));
+      await tester.tapAt(rect.centerRight - const Offset(5, 0));
+      await tester.pump();
+      await _key(tester, LogicalKeyboardKey.arrowUp);
+      expect(ends, [90, 91]);
+    });
   });
 
   group('Oito2ListBox', () {
@@ -473,6 +636,25 @@ void main() {
       await _key(tester, LogicalKeyboardKey.enter);
       expect(activated, ['Blueberry']);
       expect(find.text('B'), findsOneWidget);
+    });
+
+    testWidgets('a double click activates; two slow clicks do not', (
+      tester,
+    ) async {
+      final activated = <String>[];
+      await pumpList(
+        tester,
+        Oito2SelectionMode.single,
+        onActivate: activated.add,
+      );
+      await tester.tap(find.text('Date'));
+      await tester.pump(const Duration(seconds: 2));
+      await tester.tap(find.text('Date'));
+      await tester.pump();
+      expect(activated, isEmpty);
+      await tester.tap(find.text('Date'));
+      await tester.pump(const Duration(milliseconds: 80));
+      expect(activated, ['Date']);
     });
 
     testWidgets('typeahead jumps to matching labels', (tester) async {
@@ -559,6 +741,51 @@ void main() {
       expect(_hostValue<Color>(tester).toARGB32(), 0xFF2EC27E);
     });
 
+    testWidgets('grays keep the hue, also typed in HSL', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpOito2(
+        tester,
+        Center(
+          child: _Host<Color>(
+            initial: const Color(0xFF3584E4),
+            builder: (value, set) => Oito2ColorPicker(
+              value: value,
+              onChanged: set,
+              swatches: const [Color(0xFF808080)],
+            ),
+          ),
+        ),
+      );
+      final hue = find.bySemanticsLabel('Hue');
+      final before = tester.getSemantics(hue).value;
+      await tester.tap(find.bySemanticsLabel('#808080'));
+      await tester.pump();
+      expect(tester.getSemantics(hue).value, before);
+      await tester.tap(find.text('HSL'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).at(0), '120');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      await tester.enterText(find.byType(TextField).at(1), '50');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(
+        HSVColor.fromColor(_hostValue<Color>(tester)).hue,
+        closeTo(120, 1),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('typed text applies when the format changes', (tester) async {
+      await pumpPicker(tester);
+      await tester.tap(find.text('RGB'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).at(0), '0');
+      await tester.tap(find.text('HSL'));
+      await tester.pumpAndSettle();
+      expect(_hostValue<Color>(tester).toARGB32(), 0xFF0084E4);
+    });
+
     testWidgets('the sliders move by keyboard', (tester) async {
       final handle = tester.ensureSemantics();
       await pumpPicker(tester);
@@ -593,11 +820,32 @@ void main() {
   });
 
   group('Oito2Calendar', () {
+    testWidgets('shows the month of a date selected from outside', (
+      tester,
+    ) async {
+      Widget build(DateTime date) => Center(
+        child: Oito2Calendar(
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+          selectedDate: date,
+          onDateSelected: (_) {},
+        ),
+      );
+      await pumpOito2(tester, build(DateTime(2026, 3, 15)));
+      expect(find.text('March 2026'), findsOneWidget);
+      await pumpOito2(tester, build(DateTime(2027, 8, 2)));
+      expect(find.text('August 2027'), findsOneWidget);
+    });
+
     test('ISO week numbers', () {
       expect(oito2IsoWeekNumber(DateTime(2026, 1, 1)), 1);
       expect(oito2IsoWeekNumber(DateTime(2027, 1, 1)), 53);
       expect(oito2IsoWeekNumber(DateTime(2024, 12, 30)), 1);
       expect(oito2IsoWeekNumber(DateTime(2026, 10, 20)), 43);
+      // Dates in daylight-saving time, where a day difference in local time
+      // is an hour short.
+      expect(oito2IsoWeekNumber(DateTime(2026, 3, 12)), 11);
+      expect(oito2IsoWeekNumber(DateTime(2026, 7, 1)), 27);
     });
 
     Future<void> pumpCalendar(

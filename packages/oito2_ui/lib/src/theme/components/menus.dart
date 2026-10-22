@@ -53,12 +53,16 @@ MenuBarThemeData buildMenuBarTheme(ComponentThemeContext c) {
   );
 }
 
-/// Menu items: control height on pointer platforms, the small radius and
-/// the medium body text.
+/// Menu items: at least the control height, offsetting the visual density
+/// the item applies on top of it, the small radius and the medium body
+/// text.
 MenuButtonThemeData buildMenuButtonTheme(ComponentThemeContext c) {
+  final density = c.platform.visualDensity.baseSizeAdjustment;
   return MenuButtonThemeData(
     style: ButtonStyle(
-      minimumSize: WidgetStatePropertyAll(Size(64, c.controlHeight)),
+      minimumSize: WidgetStatePropertyAll(
+        Size(64, c.controlHeight - density.dy),
+      ),
       padding: const WidgetStatePropertyAll(
         EdgeInsets.symmetric(horizontal: Oito2Spacing.md),
       ),

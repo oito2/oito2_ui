@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
@@ -24,7 +26,7 @@ import 'highlighter.dart';
 /// The colors come from the theme's [Oito2SyntaxTheme], or from the oito2
 /// base scheme of the current brightness when the theme has none. Long
 /// lines scroll horizontally instead of wrapping.
-class Oito2CodeBlock extends StatelessWidget {
+class Oito2CodeBlock extends StatefulWidget {
   /// Creates a code block.
   const Oito2CodeBlock({
     super.key,
@@ -86,21 +88,46 @@ class Oito2CodeBlock extends StatelessWidget {
   );
 
   @override
+  State<Oito2CodeBlock> createState() => _Oito2CodeBlockState();
+}
+
+class _Oito2CodeBlockState extends State<Oito2CodeBlock> {
+  @override
+  void initState() {
+    super.initState();
+    _registerFontLicense();
+  }
+
+  Object? _key;
+  TextSpan? _span;
+
+  /// The highlighted code, computed again only when an input changes.
+  TextSpan _highlighted(Oito2SyntaxPalette palette, TextStyle style) {
+    final highlighter = widget.highlighter ?? Oito2Highlighter.instance;
+    final key = (widget.code, widget.language, palette, style, highlighter);
+    if (key != _key || _span == null) {
+      _key = key;
+      _span = highlighter.highlight(
+        widget.code,
+        language: widget.language,
+        palette: palette,
+        style: style,
+      );
+    }
+    return _span!;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final code = widget.code;
+    final textStyle = widget.textStyle;
+    final showLineNumbers = widget.showLineNumbers;
+    final showCopyButton = widget.showCopyButton;
+    final padding = widget.padding;
     final theme = Theme.of(context);
-    final palette =
-        Oito2SyntaxTheme.maybeOf(context) ??
-        (theme.brightness == Brightness.dark
-                ? Oito2ColorTheme.dark()
-                : Oito2ColorTheme.light())
-            .syntax;
+    final palette = Oito2SyntaxTheme.of(context);
     final style = Oito2CodeBlock.defaultTextStyle.merge(textStyle);
-    final span = (highlighter ?? Oito2Highlighter.instance).highlight(
-      code,
-      language: language,
-      palette: palette,
-      style: style,
-    );
+    final span = _highlighted(palette, style);
     final lineCount = '\n'.allMatches(code).length + 1;
 
     return Oito2BorderContainer(
@@ -140,4 +167,29 @@ class Oito2CodeBlock extends StatelessWidget {
       ),
     );
   }
+}
+
+bool _fontLicenseRegistered = false;
+
+/// Lists the license of the bundled JetBrains Mono font, the SIL Open Font
+/// License, in the app's license page, once.
+void _registerFontLicense() {
+  if (_fontLicenseRegistered) return;
+  _fontLicenseRegistered = true;
+  LicenseRegistry.addLicense(() async* {
+    // An app bundles the file under the package prefix; the package's own
+    // tests bundle it without.
+    for (final key in const [
+      'packages/oito2_ui_syntax/assets/fonts/jetbrains_mono/OFL.txt',
+      'assets/fonts/jetbrains_mono/OFL.txt',
+    ]) {
+      try {
+        final text = await rootBundle.loadString(key);
+        yield LicenseEntryWithLineBreaks(const ['JetBrains Mono'], text);
+        return;
+      } on Object {
+        continue;
+      }
+    }
+  });
 }

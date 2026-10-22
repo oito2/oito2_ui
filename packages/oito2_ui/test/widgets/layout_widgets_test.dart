@@ -17,8 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-
-import 'test_app.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 const _paneKey = ValueKey('pane');
 const _pageKey = ValueKey('page');
@@ -98,10 +97,31 @@ void main() {
       expect(tester.getSize(find.byKey(_paneKey)).width, 284);
     });
 
+    testWidgets('a pane larger than the limit moves on the first key', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        const Oito2PanedView(
+          initialPaneSize: 900,
+          minPaneSize: 200,
+          minPageSize: 400,
+          pane: SizedBox.expand(key: _paneKey),
+          page: SizedBox.expand(key: _pageKey),
+        ),
+      );
+      expect(tester.getSize(find.byKey(_paneKey)).width, 600);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pump();
+      expect(tester.getSize(find.byKey(_paneKey)).width, 584);
+    });
+
     testWidgets('assistive technologies can adjust it', (tester) async {
       final handle = tester.ensureSemantics();
       await pumpOito2(tester, _paned());
       final node = tester.getSemantics(find.bySemanticsLabel('Resize pane'));
+      expect(node, isSemantics(isSlider: true));
       expect(node.value, '300');
       expect(node.increasedValue, '316');
       tester.semantics.increase(find.semantics.byLabel('Resize pane'));
@@ -143,6 +163,26 @@ void main() {
       expect(tester.getSize(find.byKey(_paneKey)).height, 340);
     });
 
+    testWidgets('panes larger than the space are clipped, not overflowed', (
+      tester,
+    ) async {
+      await pumpOito2(tester, SizedBox(width: 150, child: _paned()));
+      expect(tester.takeException(), isNull);
+      await pumpOito2(
+        tester,
+        const SizedBox(
+          width: 300,
+          child: Oito2Splitter(
+            panes: [
+              Oito2SplitterPane(minSize: 250, child: SizedBox.expand()),
+              Oito2SplitterPane(minSize: 250, child: SizedBox.expand()),
+            ],
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('a fixed pane has no handle', (tester) async {
       await pumpOito2(tester, _paned(resizable: false));
       expect(find.bySemanticsLabel('Resize pane'), findsNothing);
@@ -150,6 +190,27 @@ void main() {
   });
 
   group('Oito2MasterDetailPage', () {
+    testWidgets('an empty list keeps the bar and the footer', (tester) async {
+      await pumpOito2(
+        tester,
+        Oito2MasterDetailPage(
+          length: 0,
+          masterBar: const PreferredSize(
+            preferredSize: Size.fromHeight(40),
+            child: TextField(),
+          ),
+          masterFooter: const Text('Footer'),
+          emptyBuilder: (_) => const Text('Nothing here'),
+          tileBuilder: (context, index, selected, width) =>
+              Oito2MasterTile(title: Text('Item $index')),
+          pageBuilder: (context, index) => Text('Detail $index'),
+        ),
+      );
+      expect(find.text('Nothing here'), findsOneWidget);
+      expect(find.byType(TextField), findsOneWidget);
+      expect(find.text('Footer'), findsOneWidget);
+    });
+
     Widget page({Oito2PageController? controller, int? length}) =>
         Oito2MasterDetailPage(
           length: controller == null ? (length ?? 3) : null,
@@ -204,6 +265,31 @@ void main() {
       expect(controller.index, -1);
     });
 
+    testWidgets('the wide layout selects the page it shows', (tester) async {
+      final controller = Oito2PageController(length: 3);
+      await pumpOito2(tester, page(controller: controller), scaffold: false);
+      await tester.pump();
+      expect(controller.index, 0);
+    });
+
+    testWidgets('the system back button returns to the master', (tester) async {
+      final controller = Oito2PageController(length: 3);
+      await pumpOito2(
+        tester,
+        page(controller: controller),
+        size: const Size(400, 700),
+        scaffold: false,
+      );
+      await tester.tap(find.text('Item 1'));
+      await tester.pumpAndSettle();
+      expect(find.text('Body 1'), findsOneWidget);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Body 1'), findsNothing);
+      expect(find.text('Item 1'), findsOneWidget);
+      expect(controller.index, -1);
+    });
+
     testWidgets('the selection survives a layout change', (tester) async {
       final controller = Oito2PageController(length: 3, initialIndex: 2);
       await pumpOito2(tester, page(controller: controller), scaffold: false);
@@ -252,6 +338,20 @@ void main() {
       await tester.tap(find.text('Item 3'));
       await tester.pumpAndSettle();
       expect(tester.getTopLeft(find.text('Item 1')), before);
+    });
+
+    testWidgets('a tile selected by keyboard keeps the focus', (tester) async {
+      await pumpOito2(tester, page(initial: 0), size: const Size(900, 500));
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 3; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+      }
+      final focused = FocusManager.instance.primaryFocus;
+      expect(focused, isNot(isA<FocusScopeNode>()));
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(FocusManager.instance.primaryFocus, same(focused));
     });
 
     testWidgets('the theme sets the breakpoint', (tester) async {
@@ -384,6 +484,39 @@ void main() {
       expect(find.text('Page Search'), findsOneWidget);
     });
 
+    testWidgets('the page keeps its state between bar and rail', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      Future<void> pumpAt(double width) async {
+        tester.view.physicalSize = Size(width, 700);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: Oito2Theme.light(
+              platform: const Oito2Platform(
+                targetPlatform: TargetPlatform.android,
+                isWeb: false,
+              ),
+            ),
+            home: Scaffold(
+              body: Oito2NavigationPage(
+                items: items,
+                pageBuilder: (context, index) => const TextField(),
+              ),
+            ),
+          ),
+        );
+      }
+
+      await pumpAt(400);
+      expect(find.byType(NavigationBar), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'draft');
+      await pumpAt(900);
+      expect(find.byType(Oito2NavigationRail), findsOneWidget);
+      expect(find.text('draft'), findsOneWidget);
+    });
+
     testWidgets('narrow pointer layouts use a compact rail with tooltips', (
       tester,
     ) async {
@@ -447,6 +580,53 @@ void main() {
             .style,
         Oito2NavigationRailStyle.labelledExtended,
       );
+    });
+  });
+
+  group('Oito2NavigationRail', () {
+    testWidgets('a destination selected by keyboard keeps the focus', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        StatefulBuilder(
+          builder: (context, setState) {
+            var selected = 0;
+            return StatefulBuilder(
+              builder: (context, setInner) => Row(
+                children: [
+                  Oito2NavigationRail(
+                    selectedIndex: selected,
+                    onDestinationSelected: (i) => setInner(() => selected = i),
+                    items: const [
+                      Oito2NavigationItem(
+                        icon: Icon(LucideIcons.house),
+                        label: 'Home',
+                      ),
+                      Oito2NavigationItem(
+                        icon: Icon(LucideIcons.star),
+                        label: 'Starred',
+                      ),
+                      Oito2NavigationItem(
+                        icon: Icon(LucideIcons.trash),
+                        label: 'Trash',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      final focused = FocusManager.instance.primaryFocus;
+      expect(focused, isNot(isA<FocusScopeNode>()));
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(FocusManager.instance.primaryFocus, same(focused));
     });
   });
 }

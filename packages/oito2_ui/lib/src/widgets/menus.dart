@@ -151,15 +151,18 @@ class Oito2CheckedMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      checked: checked,
-      inMutuallyExclusiveGroup: true,
-      child: MenuItemButton(
-        onPressed: onPressed,
-        leadingIcon: checked
-            ? const Icon(LucideIcons.check, size: Oito2Sizes.iconSize)
-            : const SizedBox.square(dimension: Oito2Sizes.iconSize),
-        child: child,
+    // The checked state joins the button's own node.
+    return MergeSemantics(
+      child: Semantics(
+        checked: checked,
+        inMutuallyExclusiveGroup: true,
+        child: MenuItemButton(
+          onPressed: onPressed,
+          leadingIcon: checked
+              ? const Icon(LucideIcons.check, size: Oito2Sizes.iconSize)
+              : const SizedBox.square(dimension: Oito2Sizes.iconSize),
+          child: child,
+        ),
       ),
     );
   }
@@ -189,18 +192,27 @@ class Oito2MultiSelectMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onChanged = this.onChanged;
-    return MenuItemButton(
-      closeOnActivate: false,
-      onPressed: onChanged == null ? null : () => onChanged(!checked),
-      leadingIcon: ExcludeFocus(
-        child: IgnorePointer(
-          child: Oito2Checkbox(
-            value: checked,
-            onChanged: onChanged == null ? null : (_) {},
+    // The button's node carries the checked state; the painted check box
+    // adds no node of its own.
+    return MergeSemantics(
+      child: Semantics(
+        checked: checked,
+        child: MenuItemButton(
+          closeOnActivate: false,
+          onPressed: onChanged == null ? null : () => onChanged(!checked),
+          leadingIcon: ExcludeSemantics(
+            child: ExcludeFocus(
+              child: IgnorePointer(
+                child: Oito2Checkbox(
+                  value: checked,
+                  onChanged: onChanged == null ? null : (_) {},
+                ),
+              ),
+            ),
           ),
+          child: child,
         ),
       ),
-      child: child,
     );
   }
 }

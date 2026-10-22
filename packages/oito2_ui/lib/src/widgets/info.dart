@@ -17,6 +17,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../foundation/contrast.dart';
+import '../l10n/oito2_localizations.dart';
 import '../theme/extensions/semantic_colors.dart';
 import '../tokens/geometry.dart';
 import 'widget_helpers.dart';
@@ -42,6 +43,15 @@ enum Oito2InfoType {
 
   /// The icon that represents this kind.
   final IconData icon;
+
+  /// The name of this kind for assistive technologies, such as "Warning".
+  String labelIn(Oito2Localizations strings) => switch (this) {
+    information => strings.infoInformation,
+    success => strings.infoSuccess,
+    warning => strings.infoWarning,
+    danger => strings.infoDanger,
+    important => strings.infoImportant,
+  };
 
   /// The color of this kind in [colors].
   Color colorIn(Oito2SemanticColors colors) => switch (this) {
@@ -125,7 +135,13 @@ class Oito2InfoBox extends StatelessWidget {
           children: [
             IconTheme.merge(
               data: IconThemeData(color: foreground, size: Oito2Sizes.iconSize),
-              child: icon ?? Icon(type.icon),
+              // The kind is read out, not only shown by color and icon.
+              child:
+                  icon ??
+                  Icon(
+                    type.icon,
+                    semanticLabel: type.labelIn(Oito2Localizations.of(context)),
+                  ),
             ),
             const SizedBox(width: Oito2Spacing.md),
             Expanded(

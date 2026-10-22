@@ -61,7 +61,7 @@ class Oito2NavigationMenu extends StatefulWidget {
     this.hoverDelay = const Duration(milliseconds: 150),
     this.panelMaxWidth = 560,
     this.semanticLabel,
-  });
+  }) : assert(selectedIndex == null || selectedIndex >= 0);
 
   /// The items, in order.
   final List<Oito2NavigationMenuItem> items;

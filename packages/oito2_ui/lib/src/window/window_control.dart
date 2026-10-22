@@ -13,11 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import '../l10n/oito2_localizations.dart';
-
 import 'package:material_ui/material_ui.dart';
 
 import '../foundation/window_button_layout.dart';
+import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 
 /// The action and glyph of a window control button.
@@ -114,7 +113,7 @@ class Oito2WindowControl extends StatefulWidget {
   /// Called when the button is activated; null disables it.
   final VoidCallback? onPressed;
 
-  /// The accessibility label; defaults to the English label of [type].
+  /// The accessibility label; defaults to the localized label of [type].
   final String? label;
 
   /// The glyph color; defaults to the theme's `onSurface`.

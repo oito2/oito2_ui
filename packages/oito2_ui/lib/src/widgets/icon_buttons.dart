@@ -16,6 +16,8 @@
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'widget_helpers.dart';
+
 /// A square icon button sized to the oito2 control height: 34 pixels on
 /// pointer platforms and 40 on touch platforms, where the tap target is
 /// padded to 48.
@@ -107,9 +109,8 @@ class Oito2BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rtl = Directionality.of(context) == TextDirection.rtl;
     return Oito2IconButton(
-      icon: Icon(rtl ? LucideIcons.chevron_right : LucideIcons.chevron_left),
+      icon: Icon(directionalChevron(context, forward: false)),
       tooltip: tooltip ?? MaterialLocalizations.of(context).backButtonTooltip,
       onPressed: onPressed ?? () => Navigator.maybePop(context),
     );

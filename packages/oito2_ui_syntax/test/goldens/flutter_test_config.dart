@@ -15,15 +15,9 @@
 
 import 'dart:async';
 
-import 'package:flutter_test/flutter_test.dart';
-
-import 'golden_helpers.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 /// Loads the real fonts and installs the tolerant golden comparator
 /// before the golden tests of this directory run.
-Future<void> testExecutable(FutureOr<void> Function() testMain) async {
-  TestWidgetsFlutterBinding.ensureInitialized();
-  await loadGoldenFonts();
-  installGoldenComparator();
-  await testMain();
-}
+Future<void> testExecutable(FutureOr<void> Function() testMain) =>
+    runGoldenTests(testMain);

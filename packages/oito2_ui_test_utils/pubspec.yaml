@@ -1,0 +1,17 @@
+name: oito2_ui_test_utils
+description: Test helpers shared by the oito2_ui packages; not published.
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+  material_ui: ^1.7.0
+  oito2_ui: ^0.1.0

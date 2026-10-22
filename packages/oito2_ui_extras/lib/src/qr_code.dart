@@ -71,9 +71,9 @@ enum Oito2QrErrorLevel {
 ///
 /// The defaults are black on white, which every scanner reads; custom
 /// colors need strong contrast with the dark color darker. A
-/// [centerImage], such as a logo, covers the middle of the code; the
-/// error level is then raised to at least [Oito2QrErrorLevel.quartile]
-/// so the code still reads. When [data] doesn't fit, [errorBuilder] or a
+/// [centerImage], such as a logo, covers the middle of the modules; the
+/// error level is then [Oito2QrErrorLevel.high], which recovers the most
+/// covered modules, so the code still reads. When [data] doesn't fit, [errorBuilder] or a
 /// message shows instead.
 class Oito2QrCode extends StatelessWidget {
   /// Creates a QR code.
@@ -121,17 +121,41 @@ class Oito2QrCode extends StatelessWidget {
   /// Builds what shows when [data] doesn't fit in a QR code.
   final WidgetBuilder? errorBuilder;
 
+  /// The recently encoded codes, by data and level; null marks data that
+  /// doesn't fit. Reusing them skips the encoding on rebuilds and keeps
+  /// the module list identical, so the code isn't repainted.
+  static final _cache =
+      <
+        (String, Oito2QrErrorLevel),
+        ({int moduleCount, List<List<bool>> modules})?
+      >{};
+
+  static ({int moduleCount, List<List<bool>> modules})? _encode(
+    String data,
+    Oito2QrErrorLevel level,
+  ) {
+    final key = (data, level);
+    if (_cache.containsKey(key)) return _cache[key];
+    if (_cache.length >= 32) _cache.remove(_cache.keys.first);
+    try {
+      return _cache[key] = oito2QrModules(data, errorLevel: level);
+    } on ArgumentError {
+      return _cache[key] = null;
+    }
+  }
+
+  /// The width of the modules, without the quiet zone, for [count]
+  /// modules a side.
+  double _moduleExtent(int count) =>
+      size * count / (count + _QrPainter._quietZone * 2);
+
   @override
   Widget build(BuildContext context) {
     final strings = Oito2Localizations.of(context);
     final image = centerImage;
-    final level = image != null && errorLevel.index < 2
-        ? Oito2QrErrorLevel.quartile
-        : errorLevel;
-    final ({int moduleCount, List<List<bool>> modules}) qr;
-    try {
-      qr = oito2QrModules(data, errorLevel: level);
-    } on ArgumentError {
+    final level = image != null ? Oito2QrErrorLevel.high : errorLevel;
+    final qr = _encode(data, level);
+    if (qr == null) {
       return errorBuilder?.call(context) ??
           SizedBox.square(
             dimension: size,
@@ -163,7 +187,10 @@ class Oito2QrCode extends StatelessWidget {
                 children: [
                   code,
                   SizedBox.square(
-                    dimension: size * centerImageFraction * 0.86,
+                    dimension:
+                        _moduleExtent(qr.moduleCount) *
+                        centerImageFraction *
+                        0.86,
                     child: Image(image: image, fit: BoxFit.contain),
                   ),
                 ],
@@ -187,7 +214,8 @@ class _QrPainter extends CustomPainter {
   final Color background;
   final bool rounded;
 
-  /// The share of the width cleared in the middle for an image, or 0.
+  /// The share of the module area cleared in the middle for an image, or
+  /// 0.
   final double hole;
 
   static const int _quietZone = 4;
@@ -198,12 +226,13 @@ class _QrPainter extends CustomPainter {
     final unit = size.width / (count + _quietZone * 2);
     canvas.drawRect(Offset.zero & size, Paint()..color = background);
     final center = size.center(Offset.zero);
+    // The hole is a share of the modules, without the quiet zone around.
     final clear = hole == 0
         ? Rect.zero
         : Rect.fromCenter(
             center: center,
-            width: size.width * hole,
-            height: size.width * hole,
+            width: unit * count * hole,
+            height: unit * count * hole,
           );
     final path = Path();
     for (var row = 0; row < count; row++) {

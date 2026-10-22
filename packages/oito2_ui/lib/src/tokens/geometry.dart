@@ -101,6 +101,9 @@ abstract final class Oito2Sizes {
   /// Default icon size: 20.
   static const double iconSize = 20;
 
+  /// Thickness of linear progress bars, Material and oito2 alike: 6.
+  static const double progressHeight = 6;
+
   /// Width of the focus border around a focused control: 2.
   static const double focusBorderWidth = 2;
 

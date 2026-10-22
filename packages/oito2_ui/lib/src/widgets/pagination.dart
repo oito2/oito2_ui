@@ -15,7 +15,6 @@
 
 import 'dart:math' as math;
 
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../collections/list_collection.dart';
@@ -38,6 +37,7 @@ List<int?> oito2PaginationItems(
   int siblingCount = 1,
   int boundaryCount = 1,
 }) {
+  assert(siblingCount >= 0 && boundaryCount >= 0);
   if (count <= 0) return const [];
   List<int> range(int start, int end) => [for (var i = start; i <= end; i++) i];
   final startPages = range(1, math.min(boundaryCount, count));
@@ -72,7 +72,7 @@ List<int?> oito2PaginationItems(
 /// with ellipses, and an optional page size selector.
 ///
 /// Narrower than [compactWidth] it shows only the buttons around "Page 3
-/// of 10". Pages count from 1.
+/// of 10", with the page size selector wrapped below. Pages count from 1.
 class Oito2Pagination extends StatelessWidget {
   /// Creates a pagination.
   const Oito2Pagination({
@@ -87,7 +87,8 @@ class Oito2Pagination extends StatelessWidget {
     this.onPageSizeChanged,
     this.compactWidth = 420,
   }) : assert(pageCount >= 1),
-       assert(page >= 1 && page <= pageCount);
+       assert(page >= 1 && page <= pageCount),
+       assert(siblingCount >= 0 && boundaryCount >= 0);
 
   /// The current page, from 1.
   final int page;
@@ -104,7 +105,8 @@ class Oito2Pagination extends StatelessWidget {
   /// The pages always shown at each end.
   final int boundaryCount;
 
-  /// The current page size, for the selector.
+  /// The current page size, for the selector; one of [pageSizes] when
+  /// they are given.
   final int? pageSize;
 
   /// The page sizes offered; the selector shows when it has entries.
@@ -118,6 +120,10 @@ class Oito2Pagination extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    assert(
+      pageSizes.isEmpty || pageSize == null || pageSizes.contains(pageSize),
+      'pageSize must be one of pageSizes.',
+    );
     final material = MaterialLocalizations.of(context);
     final strings = Oito2Localizations.of(context);
     final onChanged = this.onChanged;
@@ -126,14 +132,14 @@ class Oito2Pagination extends StatelessWidget {
       onPressed: onChanged != null && page > 1
           ? () => onChanged(page - 1)
           : null,
-      icon: const Icon(LucideIcons.chevron_left),
+      icon: Icon(directionalChevron(context, forward: false)),
     );
     final next = Oito2IconButton(
       tooltip: material.nextPageTooltip,
       onPressed: onChanged != null && page < pageCount
           ? () => onChanged(page + 1)
           : null,
-      icon: const Icon(LucideIcons.chevron_right),
+      icon: Icon(directionalChevron(context, forward: true)),
     );
     final sizes = pageSizes;
     final sizeSelector = sizes.isEmpty || onPageSizeChanged == null
@@ -142,7 +148,12 @@ class Oito2Pagination extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             spacing: Oito2Spacing.sm,
             children: [
-              Text(strings.itemsPerPage),
+              Flexible(
+                child: Text(
+                  strings.itemsPerPage,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
               SizedBox(
                 width: 96,
                 child: Oito2Select<int>(
@@ -198,7 +209,7 @@ class Oito2Pagination extends StatelessWidget {
               spacing: Oito2Spacing.xxs,
               children: [previous, ...pages, next],
             ),
-            if (!compact) ?sizeSelector,
+            ?sizeSelector,
           ],
         );
       },

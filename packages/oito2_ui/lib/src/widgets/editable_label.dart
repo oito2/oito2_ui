@@ -19,6 +19,7 @@ import 'package:material_ui/material_ui.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'utilities.dart';
+import 'widget_helpers.dart';
 
 /// A text label that turns into a field to rename it, like GNOME's
 /// editable label.
@@ -57,14 +58,16 @@ class Oito2EditableLabel extends StatefulWidget {
   State<Oito2EditableLabel> createState() => _Oito2EditableLabelState();
 }
 
-class _Oito2EditableLabelState extends State<Oito2EditableLabel> {
+class _Oito2EditableLabelState extends State<Oito2EditableLabel>
+    with OwnedFocusNodeMixin {
   final _controller = TextEditingController();
   final _fieldFocus = FocusNode(debugLabel: 'Oito2EditableLabel field');
-  FocusNode? _ownFocusNode;
   bool _editing = false;
 
-  FocusNode get _labelFocus =>
-      widget.focusNode ?? (_ownFocusNode ??= FocusNode());
+  @override
+  FocusNode? get widgetFocusNode => widget.focusNode;
+
+  FocusNode get _labelFocus => effectiveFocusNode;
 
   @override
   void initState() {
@@ -77,7 +80,6 @@ class _Oito2EditableLabelState extends State<Oito2EditableLabel> {
     _fieldFocus
       ..removeListener(_onFieldFocus)
       ..dispose();
-    _ownFocusNode?.dispose();
     _controller.dispose();
     super.dispose();
   }

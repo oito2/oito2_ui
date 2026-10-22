@@ -23,54 +23,39 @@ import 'palettes/nord_palette.dart';
 import 'palettes/rose_pine_palette.dart';
 import 'theme_preset.dart';
 
-/// The role colors of [preset].
-Oito2ColorRoles presetRoles(Oito2ThemePreset preset) => switch (preset) {
-  Oito2ThemePreset.everforestLight => _everforest(
-    Oito2EverforestPalette.light,
-    isDark: false,
-  ),
-  Oito2ThemePreset.everforestDark => _everforest(
-    Oito2EverforestPalette.dark,
-    isDark: true,
-  ),
-  Oito2ThemePreset.rosePine => _rosePine(
-    Oito2RosePinePalette.main,
-    brightness: Brightness.dark,
-  ),
-  Oito2ThemePreset.rosePineMoon => _rosePine(
-    Oito2RosePinePalette.moon,
-    brightness: Brightness.dark,
-  ),
-  Oito2ThemePreset.rosePineDawn => _rosePine(
-    Oito2RosePinePalette.dawn,
-    brightness: Brightness.light,
-  ),
-  Oito2ThemePreset.nordDark => _nordDark(),
-  Oito2ThemePreset.nordLight => _nordLight(),
-  Oito2ThemePreset.dracula => _dracula(),
-  Oito2ThemePreset.alucard => _alucard(),
-  Oito2ThemePreset.catppuccinLatte => _catppuccin(
-    catppuccin.latte,
-    brightness: Brightness.light,
-  ),
-  Oito2ThemePreset.catppuccinFrappe => _catppuccin(
-    catppuccin.frappe,
-    brightness: Brightness.dark,
-  ),
-  Oito2ThemePreset.catppuccinMacchiato => _catppuccin(
-    catppuccin.macchiato,
-    brightness: Brightness.dark,
-  ),
-  Oito2ThemePreset.catppuccinMocha => _catppuccin(
-    catppuccin.mocha,
-    brightness: Brightness.dark,
-  ),
-};
+/// The role colors of [preset], with the brightness the preset declares.
+Oito2ColorRoles presetRoles(Oito2ThemePreset preset) {
+  final b = preset.brightness;
+  return switch (preset) {
+    Oito2ThemePreset.everforestLight => _everforest(
+      Oito2EverforestPalette.light,
+      b,
+    ),
+    Oito2ThemePreset.everforestDark => _everforest(
+      Oito2EverforestPalette.dark,
+      b,
+    ),
+    Oito2ThemePreset.rosePine => _rosePine(Oito2RosePinePalette.main, b),
+    Oito2ThemePreset.rosePineMoon => _rosePine(Oito2RosePinePalette.moon, b),
+    Oito2ThemePreset.rosePineDawn => _rosePine(Oito2RosePinePalette.dawn, b),
+    Oito2ThemePreset.nordDark => _nordDark(b),
+    Oito2ThemePreset.nordLight => _nordLight(b),
+    Oito2ThemePreset.dracula => _dracula(b),
+    Oito2ThemePreset.alucard => _alucard(b),
+    Oito2ThemePreset.catppuccinLatte => _catppuccin(catppuccin.latte, b),
+    Oito2ThemePreset.catppuccinFrappe => _catppuccin(catppuccin.frappe, b),
+    Oito2ThemePreset.catppuccinMacchiato => _catppuccin(
+      catppuccin.macchiato,
+      b,
+    ),
+    Oito2ThemePreset.catppuccinMocha => _catppuccin(catppuccin.mocha, b),
+  };
+}
 
 /// Everforest: every role is official.
-Oito2ColorRoles _everforest(Oito2EverforestPalette p, {required bool isDark}) =>
+Oito2ColorRoles _everforest(Oito2EverforestPalette p, Brightness brightness) =>
     Oito2ColorRoles(
-      brightness: isDark ? Brightness.dark : Brightness.light,
+      brightness: brightness,
       background: p.bgDim,
       card: p.bg0,
       foreground: p.fg,
@@ -78,7 +63,7 @@ Oito2ColorRoles _everforest(Oito2EverforestPalette p, {required bool isDark}) =>
       secondary: p.bg1,
       mutedForeground: p.grey1,
       destructive: p.red,
-      border: isDark ? p.bg2 : p.bg3,
+      border: brightness == Brightness.dark ? p.bg2 : p.bg3,
       success: p.green,
       warning: p.yellow,
       info: p.blue,
@@ -99,40 +84,38 @@ Oito2ColorRoles _everforest(Oito2EverforestPalette p, {required bool isDark}) =>
 
 /// Rosé Pine: every role is official; `overlay` serves as both secondary
 /// surface and border.
-Oito2ColorRoles _rosePine(
-  Oito2RosePinePalette p, {
-  required Brightness brightness,
-}) => Oito2ColorRoles(
-  brightness: brightness,
-  background: p.base,
-  card: p.surface,
-  foreground: p.text,
-  primary: p.pine,
-  secondary: p.overlay,
-  mutedForeground: p.muted,
-  destructive: p.love,
-  border: p.overlay,
-  success: p.foam,
-  warning: p.gold,
-  info: p.iris,
-  syntax: Oito2SyntaxPalette(
-    foreground: p.text,
-    comment: p.muted,
-    keyword: p.pine,
-    string: p.gold,
-    number: p.gold,
-    function: p.rose,
-    type: p.foam,
-    tag: p.foam,
-    attribute: p.iris,
-    constant: p.gold,
-    invalid: p.love,
-  ),
-);
+Oito2ColorRoles _rosePine(Oito2RosePinePalette p, Brightness brightness) =>
+    Oito2ColorRoles(
+      brightness: brightness,
+      background: p.base,
+      card: p.surface,
+      foreground: p.text,
+      primary: p.pine,
+      secondary: p.overlay,
+      mutedForeground: p.muted,
+      destructive: p.love,
+      border: p.overlay,
+      success: p.foam,
+      warning: p.gold,
+      info: p.iris,
+      syntax: Oito2SyntaxPalette(
+        foreground: p.text,
+        comment: p.muted,
+        keyword: p.pine,
+        string: p.gold,
+        number: p.gold,
+        function: p.rose,
+        type: p.foam,
+        tag: p.foam,
+        attribute: p.iris,
+        constant: p.gold,
+        invalid: p.love,
+      ),
+    );
 
 /// Nord, dark: every role is official.
-Oito2ColorRoles _nordDark() => const Oito2ColorRoles(
-  brightness: Brightness.dark,
+Oito2ColorRoles _nordDark(Brightness brightness) => Oito2ColorRoles(
+  brightness: brightness,
   background: Oito2NordPalette.nord0,
   card: Oito2NordPalette.nord1,
   foreground: Oito2NordPalette.nord4,
@@ -161,8 +144,8 @@ Oito2ColorRoles _nordDark() => const Oito2ColorRoles(
 
 /// Nord, light: an unofficial derivation that swaps Polar Night and Snow
 /// Storm and uses `nord10` as primary for contrast on a light background.
-Oito2ColorRoles _nordLight() => const Oito2ColorRoles(
-  brightness: Brightness.light,
+Oito2ColorRoles _nordLight(Brightness brightness) => Oito2ColorRoles(
+  brightness: brightness,
   background: Oito2NordPalette.nord6,
   card: Oito2NordPalette.nord5,
   foreground: Oito2NordPalette.nord0,
@@ -193,10 +176,10 @@ Oito2ColorRoles _nordLight() => const Oito2ColorRoles(
 /// official. Dracula has no third surface layer, so the secondary surface
 /// is derived 12% from `currentLine` toward `foreground`, and the border
 /// 15%.
-Oito2ColorRoles _dracula() {
+Oito2ColorRoles _dracula(Brightness brightness) {
   const p = Oito2DraculaPalette.dracula;
   return Oito2ColorRoles(
-    brightness: Brightness.dark,
+    brightness: brightness,
     background: p.background,
     card: p.currentLine,
     foreground: p.foreground,
@@ -216,10 +199,10 @@ Oito2ColorRoles _dracula() {
 /// second surface layer, so the card is the background itself, the
 /// secondary surface is derived 6% from `background` toward `foreground`,
 /// and the border 15%.
-Oito2ColorRoles _alucard() {
+Oito2ColorRoles _alucard(Brightness brightness) {
   const p = Oito2DraculaPalette.alucard;
   return Oito2ColorRoles(
-    brightness: Brightness.light,
+    brightness: brightness,
     background: p.background,
     card: p.background,
     foreground: p.foreground,
@@ -250,31 +233,30 @@ Oito2SyntaxPalette _draculaSyntax(Oito2DraculaPalette p) => Oito2SyntaxPalette(
 );
 
 /// Catppuccin: every role is official, read from `catppuccin_flutter`.
-Oito2ColorRoles _catppuccin(Flavor f, {required Brightness brightness}) =>
-    Oito2ColorRoles(
-      brightness: brightness,
-      background: f.mantle,
-      card: f.base,
-      foreground: f.text,
-      primary: f.mauve,
-      secondary: f.surface0,
-      mutedForeground: f.overlay0,
-      destructive: f.red,
-      border: f.surface1,
-      success: f.green,
-      warning: f.yellow,
-      info: f.blue,
-      syntax: Oito2SyntaxPalette(
-        foreground: f.text,
-        comment: f.overlay2,
-        keyword: f.mauve,
-        string: f.green,
-        number: f.peach,
-        function: f.blue,
-        type: f.yellow,
-        tag: f.blue,
-        attribute: f.yellow,
-        constant: f.peach,
-        invalid: f.red,
-      ),
-    );
+Oito2ColorRoles _catppuccin(Flavor f, Brightness brightness) => Oito2ColorRoles(
+  brightness: brightness,
+  background: f.mantle,
+  card: f.base,
+  foreground: f.text,
+  primary: f.mauve,
+  secondary: f.surface0,
+  mutedForeground: f.overlay0,
+  destructive: f.red,
+  border: f.surface1,
+  success: f.green,
+  warning: f.yellow,
+  info: f.blue,
+  syntax: Oito2SyntaxPalette(
+    foreground: f.text,
+    comment: f.overlay2,
+    keyword: f.mauve,
+    string: f.green,
+    number: f.peach,
+    function: f.blue,
+    type: f.yellow,
+    tag: f.blue,
+    attribute: f.yellow,
+    constant: f.peach,
+    invalid: f.red,
+  ),
+);

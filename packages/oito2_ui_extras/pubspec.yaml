@@ -20,3 +20,4 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  oito2_ui_test_utils: any

@@ -19,7 +19,6 @@ import 'package:material_ui/material_ui.dart';
 
 import '../collections/tree_collection.dart';
 import '../syntax/syntax_palette.dart';
-import '../theme/color_theme.dart';
 import '../theme/extensions/syntax_theme.dart';
 import 'tree_view.dart';
 
@@ -43,7 +42,9 @@ Oito2TreeCollection<Oito2JsonEntry> oito2JsonTree(
     final entry = (key: key, value: value);
     final label = switch (value) {
       Map() || List() => key,
-      _ => '$key: ${jsonEncode(value)}',
+      String() => '$key: ${jsonEncode(value)}',
+      // Values JSON can't encode, such as NaN or a DateTime, use toString.
+      _ => '$key: $value',
     };
     return Oito2TreeNode(
       value: path,
@@ -120,9 +121,13 @@ class _Oito2JsonTreeViewState extends State<Oito2JsonTreeView> {
   @override
   void didUpdateWidget(Oito2JsonTreeView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!identical(oldWidget.data, widget.data) ||
-        oldWidget.rootLabel != widget.rootLabel) {
-      _tree = _build();
+    final rebuilt =
+        !identical(oldWidget.data, widget.data) ||
+        oldWidget.rootLabel != widget.rootLabel;
+    if (rebuilt) _tree = _build();
+    // New data opens to [expandDepth] again, dropping the old paths.
+    if (rebuilt || oldWidget.expandDepth != widget.expandDepth) {
+      _controller.setExpandedValues(_openUpTo(widget.expandDepth));
     }
   }
 
@@ -134,13 +139,7 @@ class _Oito2JsonTreeViewState extends State<Oito2JsonTreeView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final palette =
-        Oito2SyntaxTheme.maybeOf(context) ??
-        (theme.brightness == Brightness.dark
-                ? Oito2ColorTheme.dark()
-                : Oito2ColorTheme.light())
-            .syntax;
+    final palette = Oito2SyntaxTheme.of(context);
     return Oito2TreeView<Oito2JsonEntry>(
       collection: _tree,
       controller: _controller,

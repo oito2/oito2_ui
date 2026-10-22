@@ -209,17 +209,15 @@ class _Oito2CircularProgressIndicatorState
     return Semantics(
       label: widget.semanticsLabel,
       value: widget.semanticsValue ?? _percent(widget.value),
-      child: AnimatedBuilder(
-        animation: animation,
-        builder: (context, _) => CustomPaint(
-          size: Size.square(widget.size),
-          painter: _CircularPainter(
-            value: widget.value,
-            phase: animation.value,
-            color: style.color,
-            track: style.track,
-            stroke: style.stroke,
-          ),
+      // The painter repaints with the animation, without rebuilding.
+      child: CustomPaint(
+        size: Size.square(widget.size),
+        painter: _CircularPainter(
+          value: widget.value,
+          animation: animation,
+          color: style.color,
+          track: style.track,
+          stroke: style.stroke,
         ),
       ),
     );
@@ -229,14 +227,14 @@ class _Oito2CircularProgressIndicatorState
 class _CircularPainter extends CustomPainter {
   _CircularPainter({
     required this.value,
-    required this.phase,
+    required this.animation,
     required this.color,
     required this.track,
     required this.stroke,
-  });
+  }) : super(repaint: animation);
 
   final double? value;
-  final double phase;
+  final Animation<double> animation;
   final Color color;
   final Color track;
   final double stroke;
@@ -270,9 +268,10 @@ class _CircularPainter extends CustomPainter {
     }
     // The arc turns once per cycle while its length grows and shrinks
     // between a quarter and three quarters of a turn.
+    final phase = animation.value;
     final sweep =
         math.pi * (0.5 + 1.0 * (0.5 - 0.5 * math.cos(2 * math.pi * phase)));
-    final start = top + 2 * math.pi * phase * 1.5;
+    final start = top + 2 * math.pi * phase;
     _paintArc(
       canvas,
       center,
@@ -287,7 +286,7 @@ class _CircularPainter extends CustomPainter {
   @override
   bool shouldRepaint(_CircularPainter old) =>
       old.value != value ||
-      old.phase != phase ||
+      old.animation != animation ||
       old.color != color ||
       old.track != track ||
       old.stroke != stroke;
@@ -364,20 +363,18 @@ class _Oito2LinearProgressIndicatorState
       label: widget.semanticsLabel,
       value: widget.semanticsValue ?? _percent(widget.value),
       child: LayoutBuilder(
-        builder: (context, constraints) => AnimatedBuilder(
-          animation: animation,
-          builder: (context, _) => CustomPaint(
-            size: Size(
-              constraints.hasBoundedWidth ? constraints.maxWidth : 160,
-              style.height,
-            ),
-            painter: _LinearPainter(
-              value: widget.value,
-              phase: Curves.easeInOut.transform(animation.value),
-              color: style.color,
-              track: style.track,
-              rtl: rtl,
-            ),
+        // The painter repaints with the animation, without rebuilding.
+        builder: (context, constraints) => CustomPaint(
+          size: Size(
+            constraints.hasBoundedWidth ? constraints.maxWidth : 160,
+            style.height,
+          ),
+          painter: _LinearPainter(
+            value: widget.value,
+            animation: animation,
+            color: style.color,
+            track: style.track,
+            rtl: rtl,
           ),
         ),
       ),
@@ -388,14 +385,14 @@ class _Oito2LinearProgressIndicatorState
 class _LinearPainter extends CustomPainter {
   _LinearPainter({
     required this.value,
-    required this.phase,
+    required this.animation,
     required this.color,
     required this.track,
     required this.rtl,
-  });
+  }) : super(repaint: animation);
 
   final double? value;
-  final double phase;
+  final Animation<double> animation;
   final Color color;
   final Color track;
   final bool rtl;
@@ -416,7 +413,8 @@ class _LinearPainter extends CustomPainter {
       start = 0;
     } else {
       width = size.width * 0.25;
-      start = (size.width - width) * phase;
+      start =
+          (size.width - width) * Curves.easeInOut.transform(animation.value);
     }
     final left = rtl ? size.width - start - width : start;
     canvas.drawRRect(
@@ -431,7 +429,7 @@ class _LinearPainter extends CustomPainter {
   @override
   bool shouldRepaint(_LinearPainter old) =>
       old.value != value ||
-      old.phase != phase ||
+      old.animation != animation ||
       old.color != color ||
       old.track != track ||
       old.rtl != rtl;

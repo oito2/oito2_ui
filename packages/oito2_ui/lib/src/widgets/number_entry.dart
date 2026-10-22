@@ -92,48 +92,48 @@ class Oito2NumberEntry extends StatefulWidget {
   State<Oito2NumberEntry> createState() => _Oito2NumberEntryState();
 }
 
-class _Oito2NumberEntryState extends State<Oito2NumberEntry> {
+class _Oito2NumberEntryState extends State<Oito2NumberEntry>
+    with OwnedFocusNodeMixin {
   final _controller = TextEditingController();
-  FocusNode? _ownFocusNode;
   NumberFormat? _format;
   double _scrub = 0;
 
-  FocusNode get _focusNode =>
-      widget.focusNode ?? (_ownFocusNode ??= FocusNode());
+  @override
+  FocusNode? get widgetFocusNode => widget.focusNode;
+
+  FocusNode get _focusNode => effectiveFocusNode;
 
   bool get _enabled => widget.onChanged != null;
 
-  @override
-  void initState() {
-    super.initState();
-    _focusNode.addListener(_onFocus);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  /// Builds the number format of the locale and [Oito2NumberEntry.decimals].
+  void _updateFormat() {
     _format = NumberFormat.decimalPatternDigits(
       locale: Localizations.maybeLocaleOf(context)?.toString(),
       decimalDigits: widget.decimals,
     );
-    _show(widget.value);
+  }
+
+  /// Reformats the value when the locale changes, unless the text is being
+  /// edited.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateFormat();
+    if (!_focusNode.hasFocus) _show(widget.value);
   }
 
   @override
   void didUpdateWidget(Oito2NumberEntry oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.focusNode != widget.focusNode) {
-      (oldWidget.focusNode ?? _ownFocusNode)?.removeListener(_onFocus);
-      _focusNode.addListener(_onFocus);
+    final decimalsChanged = oldWidget.decimals != widget.decimals;
+    if (decimalsChanged) _updateFormat();
+    if (decimalsChanged || oldWidget.value != widget.value) {
+      _show(widget.value);
     }
-    if (oldWidget.decimals != widget.decimals) didChangeDependencies();
-    if (oldWidget.value != widget.value) _show(widget.value);
   }
 
   @override
   void dispose() {
-    _focusNode.removeListener(_onFocus);
-    _ownFocusNode?.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -146,6 +146,33 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry> {
         selection: TextSelection.collapsed(offset: text.length),
       );
     }
+  }
+
+  /// Allows ASCII and locale digits, the separators and signs of
+  /// [_format], and white space, which includes the no-break spaces some
+  /// locales group digits with.
+  TextInputFormatter? get _filter {
+    final format = _format;
+    if (format == null) return null;
+    final symbols = format.symbols;
+    final zero = symbols.ZERO_DIGIT.codeUnitAt(0);
+    final allowed = [
+      '0123456789',
+      String.fromCharCodes([for (var i = 0; i < 10; i++) zero + i]),
+      symbols.DECIMAL_SEP,
+      symbols.GROUP_SEP,
+      symbols.MINUS_SIGN,
+      symbols.PLUS_SIGN,
+      '-+',
+    ].join();
+    // Each character is escaped on its own, so a sign such as '-' is
+    // literal inside the character class.
+    final escaped = [
+      for (final c in allowed.runes) '\\u{${c.toRadixString(16)}}',
+    ].join();
+    return FilteringTextInputFormatter.allow(
+      RegExp('[$escaped\\s]', unicode: true),
+    );
   }
 
   double? _parse() {
@@ -178,7 +205,8 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry> {
     _set((_parse() ?? widget.value) + delta);
   }
 
-  void _onFocus() {
+  @override
+  void onEffectiveFocusChange() {
     if (!_focusNode.hasFocus) _commit();
   }
 
@@ -260,9 +288,7 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry> {
             signed: widget.min < 0,
             decimal: widget.decimals > 0,
           ),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,\-+\s ]')),
-          ],
+          inputFormatters: [?_filter],
           onChanged: (_) => setState(() {}),
           onSubmitted: (_) => _commit(),
           decoration: InputDecoration(

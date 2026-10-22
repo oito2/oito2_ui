@@ -27,16 +27,14 @@ import 'widget_helpers.dart';
 /// is parsed into a value, with the error shown only after the field
 /// loses focus or is submitted, so partial input isn't flagged while
 /// typing.
-abstract class _ParsedEntryState<W extends StatefulWidget, T> extends State<W> {
+abstract class _ParsedEntryState<W extends StatefulWidget, T> extends State<W>
+    with OwnedFocusNodeMixin<W> {
   final controller = TextEditingController();
-  FocusNode? _ownFocusNode;
   bool _initialized = false;
   bool _showError = false;
   String? _error;
 
-  FocusNode? get externalFocusNode;
-  FocusNode get focusNode =>
-      externalFocusNode ?? (_ownFocusNode ??= FocusNode());
+  FocusNode get focusNode => effectiveFocusNode;
 
   /// Formats [value] for display.
   String format(T value);
@@ -50,11 +48,9 @@ abstract class _ParsedEntryState<W extends StatefulWidget, T> extends State<W> {
   /// Reports a new value.
   void report(T? value);
 
-  @override
-  void initState() {
-    super.initState();
-    focusNode.addListener(_onFocus);
-  }
+  /// Reports that the text stopped parsing, with the error message, or
+  /// parses again, with null.
+  void reportError(String? error);
 
   @override
   void didChangeDependencies() {
@@ -68,18 +64,18 @@ abstract class _ParsedEntryState<W extends StatefulWidget, T> extends State<W> {
 
   @override
   void dispose() {
-    focusNode.removeListener(_onFocus);
-    _ownFocusNode?.dispose();
     controller.dispose();
     super.dispose();
   }
 
-  void _onFocus() {
+  @override
+  void onEffectiveFocusChange() {
     if (!focusNode.hasFocus) setState(() => _showError = true);
   }
 
   void onTextChanged(String text) {
     final (value, error) = parse(text);
+    if (error != _error) reportError(error);
     setState(() {
       _error = error;
       if (error == null) _showError = false;
@@ -112,6 +108,7 @@ class Oito2DateEntry extends StatefulWidget {
     required this.lastDate,
     this.initialDate,
     this.onChanged,
+    this.onErrorChanged,
     this.selectableDayPredicate,
     this.labelText,
     this.acceptEmpty = true,
@@ -130,7 +127,14 @@ class Oito2DateEntry extends StatefulWidget {
   final DateTime? initialDate;
 
   /// Called with each valid date, or null when the field is emptied.
+  ///
+  /// Invalid text doesn't call it, so the last valid date stays reported;
+  /// [onErrorChanged] tells when the text doesn't parse.
   final ValueChanged<DateTime?>? onChanged;
+
+  /// Called with the error message when the text stops being a valid
+  /// date, and with null when it is valid again.
+  final ValueChanged<String?>? onErrorChanged;
 
   /// Restricts which days are accepted.
   final SelectableDayPredicate? selectableDayPredicate;
@@ -158,7 +162,7 @@ class _Oito2DateEntryState extends _ParsedEntryState<Oito2DateEntry, DateTime> {
   MaterialLocalizations get _l10n => MaterialLocalizations.of(context);
 
   @override
-  FocusNode? get externalFocusNode => widget.focusNode;
+  FocusNode? get widgetFocusNode => widget.focusNode;
 
   @override
   DateTime? get initialValue => widget.initialDate;
@@ -168,6 +172,9 @@ class _Oito2DateEntryState extends _ParsedEntryState<Oito2DateEntry, DateTime> {
 
   @override
   void report(DateTime? value) => widget.onChanged?.call(value);
+
+  @override
+  void reportError(String? error) => widget.onErrorChanged?.call(error);
 
   bool _accepts(DateTime date) =>
       !date.isBefore(DateUtils.dateOnly(widget.firstDate)) &&
@@ -208,9 +215,8 @@ class _Oito2DateEntryState extends _ParsedEntryState<Oito2DateEntry, DateTime> {
         focusNode: focusNode,
         autofocus: widget.autofocus,
         keyboardType: TextInputType.datetime,
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'[0-9./\- ]')),
-        ],
+        // Compact date patterns of some locales hold letters or native
+        // digits, so the parser validates the text instead of a filter.
         onChanged: onTextChanged,
         onSubmitted: onSubmitted,
         decoration: InputDecoration(
@@ -253,6 +259,7 @@ class Oito2TimeEntry extends StatefulWidget {
     super.key,
     this.initialTime,
     this.onChanged,
+    this.onErrorChanged,
     this.labelText,
     this.acceptEmpty = true,
     this.autofocus = false,
@@ -264,7 +271,14 @@ class Oito2TimeEntry extends StatefulWidget {
   final TimeOfDay? initialTime;
 
   /// Called with each valid time, or null when the field is emptied.
+  ///
+  /// Invalid text doesn't call it, so the last valid time stays reported;
+  /// [onErrorChanged] tells when the text doesn't parse.
   final ValueChanged<TimeOfDay?>? onChanged;
+
+  /// Called with the error message when the text stops being a valid
+  /// time, and with null when it is valid again.
+  final ValueChanged<String?>? onErrorChanged;
 
   /// The field label; defaults to the localized "Enter time".
   final String? labelText;
@@ -282,30 +296,37 @@ class Oito2TimeEntry extends StatefulWidget {
   final bool showPickerButton;
 
   /// Parses `H:MM` or `HH:MM` (also with `.` or `h` as separator), with an
-  /// optional AM/PM suffix matching [am] or [pm] (case-insensitive) or the
-  /// letters a/p. Returns null for anything else.
+  /// optional day-period marker before or after the time, as the locale
+  /// writes it (`9:30 PM`, `오후 9:30`): [am] or [pm] (case-insensitive) or
+  /// the letters a/p. Returns null for anything else.
   static TimeOfDay? parseTime(
     String text, {
     String am = 'AM',
     String pm = 'PM',
   }) {
-    final match = RegExp(r'^\s*(\d{1,2})\s*[:.hH]\s*(\d{2})\s*(\S*)\s*$')
-        .firstMatch(text);
+    final match = _timePattern.firstMatch(text);
     if (match == null) return null;
-    var hour = int.parse(match.group(1)!);
-    final minute = int.parse(match.group(2)!);
-    final suffix = match.group(3)!.toLowerCase();
+    final prefix = match.group(1)!.toLowerCase();
+    var hour = int.parse(match.group(2)!);
+    final minute = int.parse(match.group(3)!);
+    final suffix = match.group(4)!.toLowerCase();
     if (minute > 59) return null;
-    if (suffix.isEmpty) {
+    if (prefix.isNotEmpty && suffix.isNotEmpty) return null;
+    final marker = suffix.isNotEmpty ? suffix : prefix;
+    if (marker.isEmpty) {
       return hour > 23 ? null : TimeOfDay(hour: hour, minute: minute);
     }
-    final isAm = suffix == am.toLowerCase() || suffix == 'a' || suffix == 'am';
-    final isPm = suffix == pm.toLowerCase() || suffix == 'p' || suffix == 'pm';
+    final isAm = marker == am.toLowerCase() || marker == 'a' || marker == 'am';
+    final isPm = marker == pm.toLowerCase() || marker == 'p' || marker == 'pm';
     if (!isAm && !isPm) return null;
     if (hour < 1 || hour > 12) return null;
     hour = hour % 12 + (isPm ? 12 : 0);
     return TimeOfDay(hour: hour, minute: minute);
   }
+
+  static final _timePattern = RegExp(
+    r'^\s*(\D*?)\s*(\d{1,2})\s*[:.hH]\s*(\d{2})\s*(\S*)\s*$',
+  );
 
   @override
   State<Oito2TimeEntry> createState() => _Oito2TimeEntryState();
@@ -316,7 +337,7 @@ class _Oito2TimeEntryState
   MaterialLocalizations get _l10n => MaterialLocalizations.of(context);
 
   @override
-  FocusNode? get externalFocusNode => widget.focusNode;
+  FocusNode? get widgetFocusNode => widget.focusNode;
 
   @override
   TimeOfDay? get initialValue => widget.initialTime;
@@ -329,6 +350,9 @@ class _Oito2TimeEntryState
 
   @override
   void report(TimeOfDay? value) => widget.onChanged?.call(value);
+
+  @override
+  void reportError(String? error) => widget.onErrorChanged?.call(error);
 
   @override
   (TimeOfDay?, String?) parse(String text) {
@@ -386,6 +410,7 @@ class Oito2DateTimeEntry extends StatefulWidget {
     required this.lastDate,
     this.initialDateTime,
     this.onChanged,
+    this.onErrorChanged,
     this.dateLabelText,
     this.timeLabelText,
   });
@@ -400,7 +425,14 @@ class Oito2DateTimeEntry extends StatefulWidget {
   final DateTime? initialDateTime;
 
   /// Called with each valid combination, or null without a date.
+  ///
+  /// Invalid text in either field doesn't call it; [onErrorChanged] tells
+  /// when one of them doesn't parse.
   final ValueChanged<DateTime?>? onChanged;
+
+  /// Called with the error message of the date field, or else of the time
+  /// field, when either stops parsing, and with null when both parse.
+  final ValueChanged<String?>? onErrorChanged;
 
   /// The date field label.
   final String? dateLabelText;
@@ -419,6 +451,17 @@ class _Oito2DateTimeEntryState extends State<Oito2DateTimeEntry> {
   late TimeOfDay? _time = widget.initialDateTime == null
       ? null
       : TimeOfDay.fromDateTime(widget.initialDateTime!);
+
+  String? _dateError;
+  String? _timeError;
+  String? _reportedError;
+
+  void _reportError() {
+    final error = _dateError ?? _timeError;
+    if (error == _reportedError) return;
+    _reportedError = error;
+    widget.onErrorChanged?.call(error);
+  }
 
   void _report() {
     final date = _date;
@@ -447,6 +490,10 @@ class _Oito2DateTimeEntryState extends State<Oito2DateTimeEntry> {
               _date = date;
               _report();
             },
+            onErrorChanged: (error) {
+              _dateError = error;
+              _reportError();
+            },
           ),
         ),
         Expanded(
@@ -457,6 +504,10 @@ class _Oito2DateTimeEntryState extends State<Oito2DateTimeEntry> {
             onChanged: (time) {
               _time = time;
               _report();
+            },
+            onErrorChanged: (error) {
+              _timeError = error;
+              _reportError();
             },
           ),
         ),
@@ -524,18 +575,39 @@ class Oito2SegmentedEntry extends StatefulWidget {
 }
 
 class _Oito2SegmentedEntryState extends State<Oito2SegmentedEntry> {
-  late final List<TextEditingController> _controllers = [
-    for (var i = 0; i < widget.segments.length; i++)
-      TextEditingController(
-        text: (widget.initialValues != null && i < widget.initialValues!.length)
-            ? widget.initialValues![i]
-            : '',
-      ),
-  ];
-  late final List<FocusNode> _nodes = [
-    for (var i = 0; i < widget.segments.length; i++)
-      FocusNode(onKeyEvent: (node, event) => _onKey(i, event)),
-  ];
+  final List<TextEditingController> _controllers = [];
+  final List<FocusNode> _nodes = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _syncSegments();
+  }
+
+  @override
+  void didUpdateWidget(Oito2SegmentedEntry oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncSegments();
+  }
+
+  /// Keeps one controller and focus node per segment, adding the missing
+  /// ones and disposing the extra ones.
+  void _syncSegments() {
+    final initial = widget.initialValues;
+    while (_controllers.length < widget.segments.length) {
+      final i = _controllers.length;
+      _controllers.add(
+        TextEditingController(
+          text: initial != null && i < initial.length ? initial[i] : '',
+        ),
+      );
+      _nodes.add(FocusNode(onKeyEvent: (node, event) => _onKey(i, event)));
+    }
+    while (_controllers.length > widget.segments.length) {
+      _controllers.removeLast().dispose();
+      _nodes.removeLast().dispose();
+    }
+  }
 
   @override
   void dispose() {
@@ -569,17 +641,17 @@ class _Oito2SegmentedEntryState extends State<Oito2SegmentedEntry> {
         controller.selection.isCollapsed &&
         controller.selection.end == controller.text.length;
     final key = event.logicalKey;
+    // The segments follow the reading direction, and so do the arrows.
+    final (:back, :forward) = readingArrowsOf(context);
     if (key == LogicalKeyboardKey.backspace && controller.text.isEmpty) {
       _focus(index - 1);
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.arrowLeft && atStart && index > 0) {
+    if (key == back && atStart && index > 0) {
       _focus(index - 1);
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.arrowRight &&
-        atEnd &&
-        index < _nodes.length - 1) {
+    if (key == forward && atEnd && index < _nodes.length - 1) {
       _nodes[index + 1].requestFocus();
       _controllers[index + 1].selection = const TextSelection.collapsed(
         offset: 0,
@@ -598,16 +670,28 @@ class _Oito2SegmentedEntryState extends State<Oito2SegmentedEntry> {
     widget.onChanged?.call([for (final c in _controllers) c.text]);
   }
 
+  /// The measured segment widths, by digit count, for [_widthsKey].
+  final Map<int, double> _widths = {};
+  Object? _widthsKey;
+
   double _segmentWidth(BuildContext context, Oito2EntrySegment segment) {
     final style = Theme.of(context).textTheme.bodyLarge;
-    final painter = TextPainter(
-      text: TextSpan(text: '0' * segment.length, style: style),
-      textDirection: TextDirection.ltr,
-      textScaler: MediaQuery.textScalerOf(context),
-    )..layout();
-    final width = painter.width;
-    painter.dispose();
-    return width + Oito2Spacing.md * 2 + 2;
+    final scaler = MediaQuery.textScalerOf(context);
+    final key = (style, scaler);
+    if (key != _widthsKey) {
+      _widthsKey = key;
+      _widths.clear();
+    }
+    return _widths.putIfAbsent(segment.length, () {
+      final painter = TextPainter(
+        text: TextSpan(text: '0' * segment.length, style: style),
+        textDirection: TextDirection.ltr,
+        textScaler: scaler,
+      )..layout();
+      final width = painter.width;
+      painter.dispose();
+      return width + Oito2Spacing.md * 2 + 2;
+    });
   }
 
   @override

@@ -17,6 +17,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
+import 'widget_helpers.dart';
 
 /// Where [Oito2Expandable] places its expand button.
 enum Oito2ExpandButtonPosition {
@@ -30,9 +31,12 @@ enum Oito2ExpandButtonPosition {
 /// A header that shows or hides [child] when activated.
 ///
 /// The whole header row toggles the content, with keyboard support and the
-/// expanded state exposed to assistive technologies. Pass [isExpanded]
-/// with [onChanged] to control the state from outside; otherwise
-/// [isExpanded] is only the initial state.
+/// expanded state exposed to assistive technologies.
+///
+/// With [onChanged], the state is controlled: activating the header only
+/// calls [onChanged], and the content follows [isExpanded], so the parent
+/// decides whether it changes. Without [onChanged], [isExpanded] is only
+/// the initial state and the header toggles the content itself.
 class Oito2Expandable extends StatefulWidget {
   /// Creates an expandable section.
   const Oito2Expandable({
@@ -58,7 +62,8 @@ class Oito2Expandable extends StatefulWidget {
   /// Whether the content is shown.
   final bool isExpanded;
 
-  /// Called with the new state when the header is activated.
+  /// Called with the requested state when the header is activated; when
+  /// set, the parent applies it through [isExpanded].
   final ValueChanged<bool>? onChanged;
 
   /// Where the expand button sits.
@@ -72,19 +77,26 @@ class Oito2Expandable extends StatefulWidget {
 }
 
 class _Oito2ExpandableState extends State<Oito2Expandable> {
-  late bool _expanded = widget.isExpanded;
+  late bool _ownExpanded = widget.isExpanded;
+
+  bool get _expanded =>
+      widget.onChanged == null ? _ownExpanded : widget.isExpanded;
 
   @override
   void didUpdateWidget(Oito2Expandable oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isExpanded != oldWidget.isExpanded) {
-      _expanded = widget.isExpanded;
+      _ownExpanded = widget.isExpanded;
     }
   }
 
   void _toggle() {
-    setState(() => _expanded = !_expanded);
-    widget.onChanged?.call(_expanded);
+    final onChanged = widget.onChanged;
+    if (onChanged != null) {
+      onChanged(!widget.isExpanded);
+    } else {
+      setState(() => _ownExpanded = !_ownExpanded);
+    }
   }
 
   @override
@@ -92,7 +104,7 @@ class _Oito2ExpandableState extends State<Oito2Expandable> {
     final theme = Theme.of(context);
     final icon = AnimatedRotation(
       turns: _expanded ? 0.5 : 0,
-      duration: const Duration(milliseconds: 200),
+      duration: motionDuration(context, const Duration(milliseconds: 200)),
       child: Icon(
         LucideIcons.chevron_down,
         size: Oito2Sizes.iconSize,
@@ -100,7 +112,19 @@ class _Oito2ExpandableState extends State<Oito2Expandable> {
       ),
     );
     final atStart = widget.buttonPosition == Oito2ExpandButtonPosition.start;
-    final collapsed = widget.collapsedChild;
+    final reduced = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    final collapsedChild = widget.collapsedChild;
+    final body = _expanded
+        ? Padding(
+            padding: EdgeInsets.only(top: widget.gap),
+            child: widget.child,
+          )
+        : collapsedChild == null
+        ? const SizedBox(width: double.infinity)
+        : Padding(
+            padding: EdgeInsets.only(top: widget.gap),
+            child: collapsedChild,
+          );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -134,22 +158,16 @@ class _Oito2ExpandableState extends State<Oito2Expandable> {
           ),
         ),
         ClipRect(
-          child: AnimatedSize(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            alignment: AlignmentDirectional.topStart,
-            child: _expanded
-                ? Padding(
-                    padding: EdgeInsets.only(top: widget.gap),
-                    child: widget.child,
-                  )
-                : collapsed == null
-                ? const SizedBox(width: double.infinity)
-                : Padding(
-                    padding: EdgeInsets.only(top: widget.gap),
-                    child: collapsed,
-                  ),
-          ),
+          // AnimatedSize can't run with a zero duration, so reduced motion
+          // shows the content directly.
+          child: reduced
+              ? body
+              : AnimatedSize(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  alignment: AlignmentDirectional.topStart,
+                  child: body,
+                ),
         ),
       ],
     );

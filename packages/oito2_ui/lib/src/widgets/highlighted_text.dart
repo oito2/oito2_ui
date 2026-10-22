@@ -62,7 +62,7 @@ class Oito2HighlightedText extends StatelessWidget {
   /// The ranges of [text] that match the words of [query], ignoring case
   /// and accents, sorted and merged where they overlap or touch.
   static List<TextRange> matches(String text, String query) {
-    final haystack = foldText(text);
+    final (folded: haystack, :starts) = foldTextWithOffsets(text);
     final ranges = <TextRange>[];
     for (final word in foldText(query).split(RegExp(r'\s+'))) {
       if (word.isEmpty) continue;
@@ -71,7 +71,8 @@ class Oito2HighlightedText extends StatelessWidget {
         i >= 0;
         i = haystack.indexOf(word, i + 1)
       ) {
-        ranges.add(TextRange(start: i, end: i + word.length));
+        // Back to indexes of [text], which may differ in length.
+        ranges.add(TextRange(start: starts[i], end: starts[i + word.length]));
       }
     }
     ranges.sort((a, b) => a.start - b.start);

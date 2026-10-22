@@ -198,7 +198,7 @@ class Oito2ToasterState extends State<Oito2Toaster> {
   /// Shows [toast] and returns its handle.
   Oito2ToastHandle show(Oito2Toast toast) {
     final entry = _ToastEntry(toast);
-    setState(() => _entries.add(entry));
+    _entries.add(entry);
     _layer.markNeedsBuild();
     _syncTimers();
     return Oito2ToastHandle._(this, entry);
@@ -213,14 +213,26 @@ class Oito2ToasterState extends State<Oito2Toaster> {
     required Oito2Toast Function(Object error) error,
   }) {
     final handle = show(loading);
-    future.then(
-      (value) {
-        if (mounted && handle.isActive) handle.update(success(value));
-      },
-      onError: (Object e) {
-        if (mounted && handle.isActive) handle.update(error(e));
-      },
+    // An error thrown by [success] or [error] is reported instead of
+    // escaping as an unhandled asynchronous error.
+    void report(Object exception, StackTrace stack) => FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: exception,
+        stack: stack,
+        library: 'oito2_ui',
+        context: ErrorDescription('while building a promise toast'),
+      ),
     );
+    future
+        .then(
+          (value) {
+            if (mounted && handle.isActive) handle.update(success(value));
+          },
+          onError: (Object e) {
+            if (mounted && handle.isActive) handle.update(error(e));
+          },
+        )
+        .catchError((Object e, StackTrace stack) => report(e, stack));
     return future;
   }
 
@@ -257,9 +269,9 @@ class Oito2ToasterState extends State<Oito2Toaster> {
     _refresh();
   }
 
+  /// Rebuilds the toast layer only; the app content doesn't change.
   void _refresh() {
     if (!mounted) return;
-    setState(() {});
     _layer.markNeedsBuild();
     _syncTimers();
   }
@@ -301,6 +313,11 @@ class Oito2ToasterState extends State<Oito2Toaster> {
   void dispose() {
     for (final entry in _entries) {
       entry.timer?.cancel();
+    }
+    for (final entry in [_content, _layer]) {
+      entry
+        ..remove()
+        ..dispose();
     }
     super.dispose();
   }
@@ -392,6 +409,10 @@ class _ToastViewState extends State<_ToastView>
     vsync: this,
     duration: const Duration(milliseconds: 220),
   );
+  late final CurvedAnimation _curved = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeOutCubic,
+  );
 
   @override
   void didChangeDependencies() {
@@ -415,6 +436,7 @@ class _ToastViewState extends State<_ToastView>
 
   @override
   void dispose() {
+    _curved.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -450,7 +472,12 @@ class _ToastViewState extends State<_ToastView>
         ? Oito2CircularProgressIndicator(size: 18, color: foreground)
         : type == null
         ? null
-        : Icon(type.icon, size: 18, color: _typeColor(type, scheme));
+        : Icon(
+            type.icon,
+            size: 18,
+            color: _typeColor(type, scheme),
+            semanticLabel: type.labelIn(Oito2Localizations.of(context)),
+          );
     final description = toast.description;
 
     Widget content = Material(
@@ -534,10 +561,7 @@ class _ToastViewState extends State<_ToastView>
         child: content,
       ),
     );
-    final curved = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    );
+    final curved = _curved;
     return SizeTransition(
       sizeFactor: curved,
       alignment: widget.fromTop ? Alignment.bottomCenter : Alignment.topCenter,

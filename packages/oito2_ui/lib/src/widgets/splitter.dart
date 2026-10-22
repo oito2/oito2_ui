@@ -19,7 +19,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
-import 'widget_helpers.dart';
+import 'resize_handle.dart';
 
 /// One pane of an [Oito2Splitter].
 @immutable
@@ -105,10 +105,8 @@ class _Oito2SplitterState extends State<Oito2Splitter> {
   late List<bool> _collapsed = [
     for (final pane in widget.panes) pane.initiallyCollapsed,
   ];
-  late final List<double?> _restore = List.filled(widget.panes.length, null);
+  late List<double?> _restore = List.filled(widget.panes.length, null);
   double _available = 0;
-  int? _active;
-  int? _hovered;
 
   List<Oito2SplitterPane> get _panes => widget.panes;
   bool get _horizontal => widget.axis == Axis.horizontal;
@@ -205,29 +203,13 @@ class _Oito2SplitterState extends State<Oito2Splitter> {
     widget.onSizesChanged?.call(List.unmodifiable(_sizes));
   }
 
-  KeyEventResult _onKey(int i, KeyEvent event, bool rtl) {
-    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
-      return KeyEventResult.ignored;
-    }
+  /// Home and End move divider [i] to the limits of its panes.
+  KeyEventResult _onKey(int i, KeyEvent event) {
     final key = event.logicalKey;
-    final grow = _horizontal
-        ? (rtl ? LogicalKeyboardKey.arrowLeft : LogicalKeyboardKey.arrowRight)
-        : LogicalKeyboardKey.arrowDown;
-    final shrink = _horizontal
-        ? (rtl ? LogicalKeyboardKey.arrowRight : LogicalKeyboardKey.arrowLeft)
-        : LogicalKeyboardKey.arrowUp;
-    final step = widget.keyboardStep;
-    if (key == grow) {
-      _move(i, step);
-    } else if (key == shrink) {
-      _move(i, -step);
-    } else if (key == LogicalKeyboardKey.home) {
+    if (key == LogicalKeyboardKey.home) {
       _move(i, _min(i) - _sizes[i]);
     } else if (key == LogicalKeyboardKey.end) {
       _move(i, _sizes[i + 1] - _min(i + 1));
-    } else if (key == LogicalKeyboardKey.enter ||
-        key == LogicalKeyboardKey.space) {
-      _toggle(i);
     } else {
       return KeyEventResult.ignored;
     }
@@ -236,61 +218,23 @@ class _Oito2SplitterState extends State<Oito2Splitter> {
 
   Widget _handle(BuildContext context, int i, bool rtl) {
     final strings = Oito2Localizations.of(context);
-    final highlighted = _active == i || _hovered == i;
-    final indicator = semanticColorsOf(context).primaryText;
-    final percent = _available <= 0
-        ? 0
-        : (_sizes[i] / _available * 100).round();
     String label(double size) =>
         '${(_available <= 0 ? 0 : size / _available * 100).round()}%';
-    return Semantics(
-      slider: true,
-      label: widget.resizeLabel ?? strings.resizePane,
-      value: '$percent%',
-      increasedValue: label(
-        (_sizes[i] + widget.keyboardStep).clamp(_min(i), _max(i)),
-      ),
-      decreasedValue: label(
-        (_sizes[i] - widget.keyboardStep).clamp(_min(i), _max(i)),
-      ),
-      onIncrease: () => _move(i, widget.keyboardStep),
-      onDecrease: () => _move(i, -widget.keyboardStep),
-      child: Focus(
-        onFocusChange: (focused) =>
-            setState(() => _active = focused ? i : null),
-        onKeyEvent: (_, event) => _onKey(i, event, rtl),
-        child: MouseRegion(
-          cursor: _horizontal
-              ? SystemMouseCursors.resizeLeftRight
-              : SystemMouseCursors.resizeUpDown,
-          onEnter: (_) => setState(() => _hovered = i),
-          onExit: (_) => setState(() => _hovered = null),
-          child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            dragStartBehavior: DragStartBehavior.down,
-            onDoubleTap: () => _toggle(i),
-            onHorizontalDragUpdate: _horizontal
-                ? (d) => _move(i, rtl ? -d.delta.dx : d.delta.dx)
-                : null,
-            onVerticalDragUpdate: _horizontal
-                ? null
-                : (d) => _move(i, d.delta.dy),
-            child: SizedBox(
-              width: _horizontal ? Oito2Spacing.sm : double.infinity,
-              height: _horizontal ? double.infinity : Oito2Spacing.sm,
-              child: Center(
-                child: Container(
-                  width: _horizontal ? (_active == i ? 2 : 1) : null,
-                  height: _horizontal ? null : (_active == i ? 2 : 1),
-                  color: highlighted
-                      ? indicator
-                      : Theme.of(context).colorScheme.outlineVariant,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+    final step = widget.keyboardStep;
+    return ResizeHandle(
+      axis: widget.axis,
+      keyboardStep: step,
+      dragStartBehavior: DragStartBehavior.down,
+      // In right-to-left rows the pane before the divider is on its right.
+      onMove: (delta) => _move(i, _horizontal && rtl ? -delta : delta),
+      semanticLabel: widget.resizeLabel ?? strings.resizePane,
+      value: label(_sizes[i]),
+      increasedValue: label((_sizes[i] + step).clamp(_min(i), _max(i))),
+      decreasedValue: label((_sizes[i] - step).clamp(_min(i), _max(i))),
+      onIncrease: () => _move(i, step),
+      onDecrease: () => _move(i, -step),
+      onToggle: () => _toggle(i),
+      onKey: (event) => _onKey(i, event),
     );
   }
 
@@ -299,7 +243,9 @@ class _Oito2SplitterState extends State<Oito2Splitter> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.panes.length != widget.panes.length) {
       _sizes = [];
+      _available = 0;
       _collapsed = [for (final pane in widget.panes) pane.initiallyCollapsed];
+      _restore = List.filled(widget.panes.length, null);
     }
   }
 
@@ -362,7 +308,7 @@ class _Oito2SplitterState extends State<Oito2Splitter> {
             position += 1;
           }
         }
-        return Stack(
+        final content = Stack(
           children: [
             Flex(
               direction: widget.axis,
@@ -371,6 +317,20 @@ class _Oito2SplitterState extends State<Oito2Splitter> {
             ),
             ...handles,
           ],
+        );
+        // When the minimum sizes don't fit, the panes keep them and the
+        // end is clipped, instead of overflowing.
+        final needed = position;
+        if (needed <= extent) return content;
+        return ClipRect(
+          child: OverflowBox(
+            alignment: AlignmentDirectional.topStart,
+            minWidth: _horizontal ? needed : null,
+            maxWidth: _horizontal ? needed : null,
+            minHeight: _horizontal ? null : needed,
+            maxHeight: _horizontal ? null : needed,
+            child: content,
+          ),
         );
       },
     );

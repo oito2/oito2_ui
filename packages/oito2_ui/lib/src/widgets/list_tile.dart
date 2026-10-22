@@ -200,10 +200,12 @@ class Oito2ListTile extends StatelessWidget {
     );
 
     final interactive = onTap != null && enabled;
+    // Static rows declare neither an enabled nor a selected state, which a
+    // screen reader would otherwise read on every row.
     return Semantics(
       button: onTap != null,
-      enabled: enabled,
-      selected: selected,
+      enabled: onTap != null ? enabled : null,
+      selected: selected ? true : null,
       child: Oito2FocusBorder(
         borderRadius: borderRadius,
         child: Material(

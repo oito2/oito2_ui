@@ -17,8 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-
-import 'test_app.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 void main() {
   testWidgets('Oito2FocusBorder shows a ring on keyboard focus only', (
@@ -134,6 +133,45 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -5000));
     await tester.pumpAndSettle();
     expect(opacities(), [1, 0]);
+  });
+
+  testWidgets('Oito2ScrollViewUndershoot ignores nested scroll views', (
+    tester,
+  ) async {
+    await pumpOito2(
+      tester,
+      SizedBox(
+        height: 300,
+        child: Oito2ScrollViewUndershoot(
+          child: ListView(
+            children: [
+              SizedBox(
+                height: 60,
+                child: ListView(
+                  key: const Key('inner'),
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    for (var i = 0; i < 40; i++)
+                      SizedBox(width: 80, child: Text('h$i')),
+                  ],
+                ),
+              ),
+              for (var i = 0; i < 40; i++)
+                SizedBox(height: 40, child: Text('$i')),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    List<double> opacities() => tester
+        .widgetList<AnimatedOpacity>(find.byType(AnimatedOpacity))
+        .map((o) => o.opacity)
+        .toList();
+    expect(opacities(), [0, 1]);
+    await tester.drag(find.byKey(const Key('inner')), const Offset(-5000, 0));
+    await tester.pumpAndSettle();
+    expect(opacities(), [0, 1]);
   });
 
   testWidgets('Oito2DiagonalClip keeps the triangle of its corner', (

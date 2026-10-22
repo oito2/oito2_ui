@@ -44,7 +44,7 @@ class Oito2SearchField extends StatefulWidget {
   /// Controls the text; one is created when null.
   final TextEditingController? controller;
 
-  /// The focus node; one is created when null.
+  /// The focus node of the text field.
   final FocusNode? focusNode;
 
   /// The hint; defaults to the localized "Search".
@@ -72,34 +72,18 @@ class Oito2SearchField extends StatefulWidget {
   State<Oito2SearchField> createState() => _Oito2SearchFieldState();
 }
 
-class _Oito2SearchFieldState extends State<Oito2SearchField> {
-  TextEditingController? _ownController;
-
-  TextEditingController get _controller =>
-      widget.controller ?? (_ownController ??= TextEditingController());
+class _Oito2SearchFieldState extends State<Oito2SearchField>
+    with OwnedControllerMixin<Oito2SearchField, TextEditingController> {
+  @override
+  TextEditingController? get widgetController => widget.controller;
 
   @override
-  void initState() {
-    super.initState();
-    _controller.addListener(_onText);
-  }
+  TextEditingController createOwnedController() => TextEditingController();
 
   @override
-  void didUpdateWidget(Oito2SearchField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final old = oldWidget.controller ?? _ownController;
-    if (old != _controller) {
-      old?.removeListener(_onText);
-      _controller.addListener(_onText);
-    }
-  }
+  void onControllerChange() => _onText();
 
-  @override
-  void dispose() {
-    _controller.removeListener(_onText);
-    _ownController?.dispose();
-    super.dispose();
-  }
+  TextEditingController get _controller => effectiveController;
 
   void _onText() => setState(() {});
 

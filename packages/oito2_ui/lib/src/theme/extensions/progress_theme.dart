@@ -17,6 +17,8 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:material_ui/material_ui.dart';
 
+import '../../tokens/geometry.dart';
+
 /// Colors and sizes of `Oito2CircularProgressIndicator` and
 /// `Oito2LinearProgressIndicator`.
 @immutable
@@ -27,7 +29,7 @@ class Oito2ProgressIndicatorThemeData
     required this.color,
     required this.trackColor,
     this.strokeWidth = 4,
-    this.linearHeight = 6,
+    this.linearHeight = Oito2Sizes.progressHeight,
   });
 
   /// The progress fill.

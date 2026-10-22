@@ -20,8 +20,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui_extras/oito2_ui_extras.dart';
-
-import 'test_app.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 /// A [width] by [height] PNG: left half red, right half blue.
 Future<Uint8List> _png(int width, int height) async {
@@ -61,6 +60,24 @@ void main() {
       );
       expect(high.moduleCount, greaterThan(low.moduleCount));
       expect(() => oito2QrModules('x' * 8000), throwsArgumentError);
+    });
+
+    testWidgets('a rebuild with the same data does not repaint', (
+      tester,
+    ) async {
+      CustomPainter painter() => tester
+          .widget<CustomPaint>(
+            find.descendant(
+              of: find.byType(Oito2QrCode),
+              matching: find.byType(CustomPaint),
+            ),
+          )
+          .painter!;
+      await pumpOito2(tester, const Oito2QrCode(data: 'oito2'));
+      final before = painter();
+      await pumpOito2(tester, const Oito2QrCode(data: 'oito2', size: 160));
+      await pumpOito2(tester, const Oito2QrCode(data: 'oito2'));
+      expect(painter().shouldRepaint(before), isFalse);
     });
 
     testWidgets('paints with a label, or a message when too long', (
@@ -113,6 +130,57 @@ void main() {
       handle.dispose();
     });
 
+    test('strokes are read-only copies', () {
+      final controller = Oito2SignatureController()
+        ..addStroke(const [(position: Offset.zero, width: 2)]);
+      addTearDown(controller.dispose);
+      expect(
+        () => controller.strokes.first.add((position: Offset.zero, width: 1)),
+        throwsUnsupportedError,
+      );
+    });
+
+    testWidgets('draws one stroke at a time, with the primary button', (
+      tester,
+    ) async {
+      final controller = Oito2SignatureController();
+      addTearDown(controller.dispose);
+      await pumpOito2(
+        tester,
+        Center(
+          child: SizedBox(
+            width: 400,
+            child: Oito2SignaturePad(controller: controller),
+          ),
+        ),
+      );
+      final center = tester.getRect(find.byType(Oito2SignaturePad)).center;
+      final first = await tester.startGesture(center, pointer: 1);
+      final second = await tester.startGesture(
+        center + const Offset(0, 40),
+        pointer: 2,
+      );
+      await first.moveBy(const Offset(30, 0));
+      await second.moveBy(const Offset(30, 0));
+      await first.up();
+      await second.up();
+      expect(controller.strokes, hasLength(1));
+      final stroke = controller.strokes.single;
+      expect(
+        stroke.every((p) => p.position.dy == stroke.first.position.dy),
+        isTrue,
+      );
+
+      final right = await tester.startGesture(
+        center,
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryMouseButton,
+      );
+      await right.moveBy(const Offset(30, 0));
+      await right.up();
+      expect(controller.strokes, hasLength(1));
+    });
+
     testWidgets('a drag inside a scroll view draws instead of scrolling', (
       tester,
     ) async {
@@ -161,7 +229,10 @@ void main() {
   });
 
   group('Oito2ImageCropper', () {
-    Future<Oito2CropController> pumpCropper(WidgetTester tester) async {
+    Future<Oito2CropController> pumpCropper(
+      WidgetTester tester, {
+      int? maxDecodedDimension = 4096,
+    }) async {
       final bytes = (await tester.runAsync(() => _png(400, 200)))!;
       final controller = Oito2CropController();
       addTearDown(controller.dispose);
@@ -174,7 +245,11 @@ void main() {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Oito2ImageCropper(image: image, controller: controller),
+                Oito2ImageCropper(
+                  image: image,
+                  controller: controller,
+                  maxDecodedDimension: maxDecodedDimension,
+                ),
                 Oito2CropPreview(controller: controller),
               ],
             ),
@@ -231,6 +306,84 @@ void main() {
       await tester.sendEventToBinding(pointer.scroll(const Offset(0, -200)));
       await tester.pump();
       expect(controller.zoom, greaterThan(1));
+    });
+
+    testWidgets('crops after the cropper is gone', (tester) async {
+      final controller = await pumpCropper(tester);
+      await pumpOito2(tester, const SizedBox());
+      expect(controller.image, isNotNull);
+      final image = await tester.runAsync(controller.crop);
+      expect(tester.takeException(), isNull);
+      expect(image!.width, 200);
+      image.dispose();
+    });
+
+    testWidgets('decodes large images at the bounded size', (tester) async {
+      final controller = await pumpCropper(tester, maxDecodedDimension: 100);
+      expect(controller.image!.width, 100);
+      expect(controller.image!.height, 50);
+    });
+
+    testWidgets('reports an image that fails to load', (tester) async {
+      final errors = <Object>[];
+      final controller = Oito2CropController();
+      addTearDown(controller.dispose);
+      await pumpOito2(
+        tester,
+        SizedBox(
+          width: 400,
+          child: Oito2ImageCropper(
+            image: MemoryImage(Uint8List.fromList([1, 2, 3, 4])),
+            controller: controller,
+            onError: (error, _) => errors.add(error),
+          ),
+        ),
+      );
+      for (var i = 0; i < 10 && errors.isEmpty; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump();
+      }
+      expect(errors, isNotEmpty);
+      expect(controller.image, isNull);
+    });
+
+    testWidgets('a new picture starts with the transform reset', (
+      tester,
+    ) async {
+      final controller = await pumpCropper(tester);
+      controller.rotateRight();
+      expect(controller.quarterTurns, 1);
+      final bytes = (await tester.runAsync(() => _png(300, 300)))!;
+      final next = MemoryImage(bytes);
+      await pumpOito2(
+        tester,
+        Center(
+          child: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Oito2ImageCropper(
+                  image: next,
+                  controller: controller,
+                  maxDecodedDimension: 4096,
+                ),
+                Oito2CropPreview(controller: controller),
+              ],
+            ),
+          ),
+        ),
+      );
+      for (var i = 0; i < 10 && controller.image?.width != 300; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump();
+      }
+      expect(controller.image!.width, 300);
+      expect(controller.quarterTurns, 0);
     });
 
     testWidgets('crops at the image resolution', (tester) async {

@@ -82,44 +82,28 @@ class Oito2PinEntry extends StatefulWidget {
   State<Oito2PinEntry> createState() => _Oito2PinEntryState();
 }
 
-class _Oito2PinEntryState extends State<Oito2PinEntry> {
-  TextEditingController? _ownController;
-  FocusNode? _ownFocusNode;
-
-  TextEditingController get _controller =>
-      widget.controller ?? (_ownController ??= TextEditingController());
-
-  FocusNode get _focusNode =>
-      widget.focusNode ?? (_ownFocusNode ??= FocusNode());
+class _Oito2PinEntryState extends State<Oito2PinEntry>
+    with
+        OwnedFocusNodeMixin,
+        OwnedControllerMixin<Oito2PinEntry, TextEditingController> {
+  @override
+  TextEditingController? get widgetController => widget.controller;
 
   @override
-  void initState() {
-    super.initState();
-    _controller.addListener(_onText);
-    _focusNode.addListener(_refresh);
-  }
+  TextEditingController createOwnedController() => TextEditingController();
 
   @override
-  void didUpdateWidget(Oito2PinEntry oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.controller != widget.controller) {
-      (oldWidget.controller ?? _ownController)?.removeListener(_onText);
-      _controller.addListener(_onText);
-    }
-    if (oldWidget.focusNode != widget.focusNode) {
-      (oldWidget.focusNode ?? _ownFocusNode)?.removeListener(_refresh);
-      _focusNode.addListener(_refresh);
-    }
-  }
+  void onControllerChange() => _onText();
 
   @override
-  void dispose() {
-    _controller.removeListener(_onText);
-    _focusNode.removeListener(_refresh);
-    _ownController?.dispose();
-    _ownFocusNode?.dispose();
-    super.dispose();
-  }
+  FocusNode? get widgetFocusNode => widget.focusNode;
+
+  @override
+  void onEffectiveFocusChange() => _refresh();
+
+  TextEditingController get _controller => effectiveController;
+
+  FocusNode get _focusNode => effectiveFocusNode;
 
   void _refresh() {
     if (mounted) setState(() {});
@@ -138,7 +122,8 @@ class _Oito2PinEntryState extends State<Oito2PinEntry> {
 
   void _onChanged(String text) {
     widget.onChanged?.call(text);
-    if (text.length == widget.length) {
+    // Cells hold user-perceived characters, so an emoji fills one cell.
+    if (text.characters.length == widget.length) {
       widget.onCompleted?.call(text);
       _focusNode.unfocus();
     }
@@ -150,9 +135,9 @@ class _Oito2PinEntryState extends State<Oito2PinEntry> {
     final scheme = theme.colorScheme;
     final semantic = semanticColorsOf(context);
     final height = controlHeightOf(context) + 6;
-    final text = _controller.text;
+    final chars = _controller.text.characters.toList();
     final focused = _focusNode.hasFocus;
-    final active = text.length.clamp(0, widget.length - 1);
+    final active = chars.length.clamp(0, widget.length - 1);
     final style = theme.textTheme.titleLarge?.copyWith(
       color: widget.enabled
           ? scheme.onSurface
@@ -160,7 +145,7 @@ class _Oito2PinEntryState extends State<Oito2PinEntry> {
     );
 
     Widget cell(int index) {
-      final char = index < text.length ? text[index] : '';
+      final char = index < chars.length ? chars[index] : '';
       final isActive = focused && index == active;
       final color = widget.hasError
           ? semantic.errorText

@@ -25,11 +25,11 @@ import 'widget_helpers.dart';
 /// The ISO 8601 week number of [date]: weeks start on Monday and week 1
 /// holds the year's first Thursday.
 int oito2IsoWeekNumber(DateTime date) {
-  final day = DateUtils.dateOnly(date);
-  final thursday = DateUtils.addDaysToDate(day, 4 - day.weekday);
-  final firstOfYear = DateTime(thursday.year);
-  final dayOfYear = thursday.difference(firstOfYear).inDays;
-  return dayOfYear ~/ 7 + 1;
+  // UTC dates have no daylight-saving shifts, so day differences are exact.
+  final day = DateTime.utc(date.year, date.month, date.day);
+  final thursday = day.add(Duration(days: 4 - day.weekday));
+  final firstOfYear = DateTime.utc(thursday.year);
+  return thursday.difference(firstOfYear).inDays ~/ 7 + 1;
 }
 
 /// A month grid that picks a date, or a range of dates when
@@ -118,14 +118,43 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
       widget.selectedDate ?? widget.selectedRange?.start ?? _clamp(today),
     );
     _month = DateTime(initial.year, initial.month);
-    _gridFocus.addListener(() => setState(() {}));
+    _gridFocus.addListener(_onGridFocus);
+  }
+
+  /// Follows a selection or limits changed from outside: the focused day
+  /// moves to the new selection and its month shows, within the limits.
+  @override
+  void didUpdateWidget(Oito2Calendar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final selected = widget.selectedDate ?? widget.selectedRange?.start;
+    final oldSelected =
+        oldWidget.selectedDate ?? oldWidget.selectedRange?.start;
+    var focused = _focused;
+    if (selected != null && !DateUtils.isSameDay(selected, oldSelected)) {
+      focused = DateUtils.dateOnly(selected);
+    }
+    if (widget.firstDate != oldWidget.firstDate ||
+        widget.lastDate != oldWidget.lastDate) {
+      focused = _clamp(focused);
+    }
+    if (focused != _focused) {
+      _focused = focused;
+      _month = DateTime(focused.year, focused.month);
+    }
   }
 
   @override
   void dispose() {
-    _gridFocus.dispose();
+    _gridFocus
+      ..removeListener(_onGridFocus)
+      ..dispose();
     super.dispose();
   }
+
+  void _onGridFocus() => setState(() {});
+
+  /// Today, read once per build so every cell agrees on it.
+  late DateTime _today;
 
   DateTime _clamp(DateTime day) {
     final first = DateUtils.dateOnly(widget.firstDate);
@@ -242,7 +271,10 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
     DateTime? end;
     final pending = _rangeStart;
     if (pending != null) {
-      final other = _hovered ?? pending;
+      // The keyboard previews the range from the focused day, as the
+      // pointer does from the hovered one.
+      final other =
+          _hovered ?? (_gridFocus.hasFocus ? _focused : null) ?? pending;
       start = other.isBefore(pending) ? other : pending;
       end = other.isBefore(pending) ? pending : other;
     } else if (widget.selectedRange != null) {
@@ -270,10 +302,7 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
     final fill = selectedFillOf(context);
     final ring = semanticColorsOf(context).primaryText;
     final enabled = _canPick(day);
-    final today = DateUtils.isSameDay(
-      day,
-      widget.currentDate ?? DateTime.now(),
-    );
+    final today = DateUtils.isSameDay(day, _today);
     final focused =
         _gridFocus.hasFocus &&
         FocusManager.instance.highlightMode == FocusHighlightMode.traditional &&
@@ -365,6 +394,7 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
 
   @override
   Widget build(BuildContext context) {
+    _today = DateUtils.dateOnly(widget.currentDate ?? DateTime.now());
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final l10n = MaterialLocalizations.of(context);
@@ -566,24 +596,43 @@ class _Oito2DatePickerState extends State<Oito2DatePicker> {
     super.dispose();
   }
 
-  String _display(MaterialLocalizations l10n) {
+  String _display() {
+    final l10n = MaterialLocalizations.of(context);
     final range = widget.range;
     if (widget.onRangeChanged != null) {
       return range == null
           ? ''
-          : '${l10n.formatCompactDate(range.start)} – '
-                '${l10n.formatCompactDate(range.end)}';
+          : Oito2Localizations.of(context).dateRange(
+              l10n.formatCompactDate(range.start),
+              l10n.formatCompactDate(range.end),
+            );
     }
     final value = widget.value;
     return value == null ? '' : l10n.formatCompactDate(value);
+  }
+
+  /// Shows the value in the field, outside of build.
+  void _syncText() {
+    final display = _display();
+    if (_text.text != display) _text.text = display;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncText();
+  }
+
+  @override
+  void didUpdateWidget(Oito2DatePicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncText();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = MaterialLocalizations.of(context);
     final enabled = widget.onChanged != null || widget.onRangeChanged != null;
-    final display = _display(l10n);
-    if (_text.text != display) _text.text = display;
     return Oito2Popover(
       controller: _popover,
       focusOnOpen: false,

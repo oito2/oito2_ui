@@ -17,8 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-
-import 'test_app.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 void main() {
   group('Oito2SearchField', () {
@@ -194,6 +193,88 @@ void main() {
       expect(values.last, DateTime(2025));
     });
 
+    testWidgets('reports when the text stops and starts parsing', (
+      tester,
+    ) async {
+      final errors = <String?>[];
+      await pumpOito2(
+        tester,
+        Center(
+          child: SizedBox(
+            width: 300,
+            child: Oito2DateEntry(
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030, 12, 31),
+              onErrorChanged: errors.add,
+            ),
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(TextField), '03/15');
+      await tester.enterText(find.byType(TextField), '03/15/');
+      await tester.enterText(find.byType(TextField), '03/15/2026');
+      expect(errors, ['Invalid format.', null]);
+    });
+
+    testWidgets('shows errors after a swapped focus node loses focus', (
+      tester,
+    ) async {
+      final first = FocusNode();
+      final second = FocusNode();
+      addTearDown(first.dispose);
+      addTearDown(second.dispose);
+      Widget build(FocusNode node) => Center(
+        child: SizedBox(
+          width: 300,
+          child: Oito2DateEntry(
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2030, 12, 31),
+            focusNode: node,
+          ),
+        ),
+      );
+      await pumpOito2(tester, build(first));
+      await pumpOito2(tester, build(second));
+      await tester.enterText(find.byType(TextField), '99/99');
+      expect(second.hasFocus, isTrue);
+      second.unfocus();
+      await tester.pump();
+      expect(find.text('Invalid format.'), findsOneWidget);
+    });
+
+    for (final locale in const [Locale('bg'), Locale('ar', 'EG')]) {
+      testWidgets('reads back the date it formats in $locale', (tester) async {
+        final l10n = await GlobalMaterialLocalizations.delegate.load(locale);
+        final values = <DateTime?>[];
+        await tester.pumpWidget(
+          MaterialApp(
+            locale: locale,
+            localizationsDelegates: GlobalMaterialLocalizations.delegates,
+            supportedLocales: [locale],
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 300,
+                  child: Oito2DateEntry(
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2030, 12, 31),
+                    onChanged: values.add,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        final date = DateTime(2026, 3, 15);
+        await tester.enterText(
+          find.byType(TextField),
+          l10n.formatCompactDate(date),
+        );
+        await tester.pump();
+        expect(values.last, date);
+      });
+    }
+
     testWidgets('an empty field reports null when accepted', (tester) async {
       final values = <DateTime?>[];
       await pumpOito2(tester, entry(values));
@@ -232,6 +313,56 @@ void main() {
   });
 
   group('Oito2TimeEntry', () {
+    test('parseTime reads a day period before the time', () {
+      expect(
+        Oito2TimeEntry.parseTime('오후 9:30', am: '오전', pm: '오후'),
+        const TimeOfDay(hour: 21, minute: 30),
+      );
+      expect(
+        Oito2TimeEntry.parseTime('上午 9:05', am: '上午', pm: '下午'),
+        const TimeOfDay(hour: 9, minute: 5),
+      );
+      expect(Oito2TimeEntry.parseTime('PM 9:30 PM'), isNull);
+    });
+
+    for (final locale in const [
+      Locale('en'),
+      Locale('ko'),
+      Locale('zh'),
+      Locale('fr', 'CA'),
+      Locale('fi'),
+    ]) {
+      testWidgets('reads back the time it formats in $locale', (tester) async {
+        final l10n = await GlobalMaterialLocalizations.delegate.load(locale);
+        final values = <TimeOfDay?>[];
+        tester.view.physicalSize = const Size(800, 600);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(
+          MaterialApp(
+            locale: locale,
+            localizationsDelegates: GlobalMaterialLocalizations.delegates,
+            supportedLocales: [locale],
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 300,
+                  child: Oito2TimeEntry(onChanged: values.add),
+                ),
+              ),
+            ),
+          ),
+        );
+        const time = TimeOfDay(hour: 21, minute: 30);
+        await tester.enterText(
+          find.byType(TextField),
+          l10n.formatTimeOfDay(time),
+        );
+        await tester.pump();
+        expect(values.last, time);
+      });
+    }
+
     test('parseTime accepts 24-hour and 12-hour input', () {
       expect(
         Oito2TimeEntry.parseTime('9:05'),
@@ -330,6 +461,23 @@ void main() {
         onChanged: values.add,
       ),
     );
+
+    testWidgets('follows a change in the number of segments', (tester) async {
+      Widget build(int count) => Center(
+        child: Oito2SegmentedEntry(
+          segments: [
+            for (var i = 0; i < count; i++)
+              const Oito2EntrySegment(length: 2, hint: '00'),
+          ],
+        ),
+      );
+      await pumpOito2(tester, build(2));
+      await pumpOito2(tester, build(4));
+      expect(tester.takeException(), isNull);
+      expect(find.byType(TextField), findsNWidgets(4));
+      await pumpOito2(tester, build(1));
+      expect(find.byType(TextField), findsOneWidget);
+    });
 
     testWidgets('moves to the next segment when one fills up', (tester) async {
       final values = <List<String>>[];

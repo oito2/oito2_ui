@@ -44,4 +44,21 @@ void main() {
       );
     });
   });
+
+  test('presets have display names and a high contrast theme', () {
+    expect(Oito2ThemePreset.catppuccinMocha.label, 'Catppuccin Mocha');
+    expect({
+      for (final preset in Oito2ThemePreset.values) preset.label,
+    }, hasLength(Oito2ThemePreset.values.length));
+    expect(
+      Oito2ThemePreset.nordDark.roles,
+      same(Oito2ThemePreset.nordDark.roles),
+    );
+    final high = Oito2ThemePreset.nordDark.theme(highContrast: true);
+    final normal = Oito2ThemePreset.nordDark.theme();
+    expect(high, isNot(same(normal)));
+    for (final preset in Oito2ThemePreset.values) {
+      expect(preset.roles.brightness, preset.brightness, reason: preset.name);
+    }
+  });
 }

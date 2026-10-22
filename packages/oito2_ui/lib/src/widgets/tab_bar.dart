@@ -72,6 +72,7 @@ class Oito2TabBar extends StatelessWidget implements PreferredSizeWidget {
     this.controller,
     this.onTap,
     this.isScrollable = false,
+    this.tabHeight = Oito2Sizes.touchButtonHeight,
   });
 
   /// The tabs, usually [Oito2Tab]s.
@@ -87,9 +88,13 @@ class Oito2TabBar extends StatelessWidget implements PreferredSizeWidget {
   /// the bar width equally.
   final bool isScrollable;
 
+  /// The height of the tabs that [preferredSize] reserves: the touch
+  /// height by default, which fits every platform. [Oito2Sizes.buttonHeight]
+  /// fits pointer platforms exactly.
+  final double tabHeight;
+
   @override
-  Size get preferredSize =>
-      const Size.fromHeight(Oito2Sizes.touchButtonHeight + 2 * Oito2Spacing.xs);
+  Size get preferredSize => Size.fromHeight(tabHeight + 2 * Oito2Spacing.xs);
 
   @override
   Widget build(BuildContext context) {

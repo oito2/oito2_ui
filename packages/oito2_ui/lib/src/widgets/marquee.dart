@@ -27,6 +27,10 @@ import 'widget_helpers.dart';
 /// stays still at its start when animations are disabled. [fadeEdges]
 /// fades the content at both ends. A child that fits doesn't move.
 /// Assistive technologies read the child once.
+///
+/// While it scrolls, [child] is built twice, side by side, so it must not
+/// hold a [GlobalKey], and each copy keeps its own state: a plain child,
+/// such as text or icons, fits best.
 class Oito2Marquee extends StatefulWidget {
   /// Creates a marquee.
   const Oito2Marquee({
@@ -73,7 +77,9 @@ class _Oito2MarqueeState extends State<Oito2Marquee>
     with SingleTickerProviderStateMixin {
   late final Ticker _ticker = createTicker(_onTick);
   Duration _last = Duration.zero;
-  double _offset = 0;
+
+  /// The scroll offset, updated every frame without rebuilding the strip.
+  final _offset = ValueNotifier<double>(0);
   double _extent = 0;
   double _viewport = 0;
   bool _hovered = false;
@@ -98,6 +104,7 @@ class _Oito2MarqueeState extends State<Oito2Marquee>
   @override
   void dispose() {
     _ticker.dispose();
+    _offset.dispose();
     super.dispose();
   }
 
@@ -110,7 +117,7 @@ class _Oito2MarqueeState extends State<Oito2Marquee>
     }
     if (!_overflows ||
         (MediaQuery.maybeDisableAnimationsOf(context) ?? false)) {
-      _offset = 0;
+      _offset.value = 0;
     }
   }
 
@@ -118,7 +125,7 @@ class _Oito2MarqueeState extends State<Oito2Marquee>
     final dt = (elapsed - _last).inMicroseconds / 1e6;
     _last = elapsed;
     final period = _extent + widget.gap;
-    setState(() => _offset = (_offset + widget.speed * dt) % period);
+    _offset.value = (_offset.value + widget.speed * dt) % period;
   }
 
   void _onSize(Size size) {
@@ -166,11 +173,6 @@ class _Oito2MarqueeState extends State<Oito2Marquee>
             ? (rtl == widget.reverse)
             : !widget.reverse;
         final period = _extent + widget.gap;
-        final shift = !overflows
-            ? 0.0
-            : towardNegative
-            ? -_offset
-            : _offset - period;
         final startAligned = _horizontal && rtl && !overflows
             ? Alignment.centerRight
             : _horizontal
@@ -180,9 +182,20 @@ class _Oito2MarqueeState extends State<Oito2Marquee>
           constrainedAxis: _horizontal ? Axis.vertical : Axis.horizontal,
           alignment: startAligned,
           clipBehavior: Clip.hardEdge,
-          child: Transform.translate(
-            offset: _horizontal ? Offset(shift, 0) : Offset(0, shift),
+          child: ValueListenableBuilder<double>(
+            valueListenable: _offset,
             child: strip,
+            builder: (context, offset, strip) {
+              final shift = !overflows
+                  ? 0.0
+                  : towardNegative
+                  ? -offset
+                  : offset - period;
+              return Transform.translate(
+                offset: _horizontal ? Offset(shift, 0) : Offset(0, shift),
+                child: strip,
+              );
+            },
           ),
         );
         if (widget.fadeEdges && overflows && viewport.isFinite) {

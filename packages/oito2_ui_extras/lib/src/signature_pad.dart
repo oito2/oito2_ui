@@ -34,8 +34,10 @@ class Oito2SignatureController extends ChangeNotifier {
   /// The size of the pad, updated as it lays out.
   Size size = Size.zero;
 
-  /// The strokes, in drawing order.
-  List<List<Oito2SignaturePoint>> get strokes => List.unmodifiable(_strokes);
+  /// The strokes, in drawing order; neither the list nor its strokes can
+  /// be changed.
+  List<List<Oito2SignaturePoint>> get strokes =>
+      List.unmodifiable(_strokes.map(List<Oito2SignaturePoint>.unmodifiable));
 
   /// Whether nothing has been drawn.
   bool get isEmpty => _strokes.isEmpty;
@@ -134,9 +136,12 @@ class Oito2SignatureController extends ChangeNotifier {
     double pixelRatio = 2,
   }) async {
     final image = await toImage(color: color, pixelRatio: pixelRatio);
-    final data = await image.toByteData(format: ui.ImageByteFormat.png);
-    image.dispose();
-    return data?.buffer.asUint8List();
+    try {
+      final data = await image.toByteData(format: ui.ImageByteFormat.png);
+      return data?.buffer.asUint8List();
+    } finally {
+      image.dispose();
+    }
   }
 }
 
@@ -228,6 +233,7 @@ class _Oito2SignaturePadState extends State<Oito2SignaturePad> {
   @override
   void initState() {
     super.initState();
+    _wasEmpty = _controller.isEmpty;
     _controller.addListener(_refresh);
   }
 
@@ -237,6 +243,8 @@ class _Oito2SignaturePadState extends State<Oito2SignaturePad> {
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_refresh);
       widget.controller.addListener(_refresh);
+      _wasEmpty = widget.controller.isEmpty;
+      _pointer = null;
     }
   }
 
@@ -246,9 +254,19 @@ class _Oito2SignaturePadState extends State<Oito2SignaturePad> {
     super.dispose();
   }
 
+  late bool _wasEmpty;
+
+  /// Rebuilds only when the pad turns empty or signed; the painter
+  /// repaints the strokes by itself.
   void _refresh() {
-    if (mounted) setState(() {});
+    if (mounted && _controller.isEmpty != _wasEmpty) {
+      setState(() => _wasEmpty = _controller.isEmpty);
+    }
   }
+
+  /// The pointer drawing the current stroke; others are ignored until it
+  /// lifts.
+  int? _pointer;
 
   double _pressureWidth(PointerEvent event) {
     final range = event.pressureMax - event.pressureMin;
@@ -257,6 +275,12 @@ class _Oito2SignaturePadState extends State<Oito2SignaturePad> {
   }
 
   void _down(PointerDownEvent event) {
+    if (_pointer != null) return;
+    if (event.kind == ui.PointerDeviceKind.mouse &&
+        event.buttons != kPrimaryMouseButton) {
+      return;
+    }
+    _pointer = event.pointer;
     _last = event.localPosition;
     _lastTime = event.timeStamp;
     _width = (widget.minWidth + widget.maxWidth) / 2;
@@ -267,6 +291,7 @@ class _Oito2SignaturePadState extends State<Oito2SignaturePad> {
   }
 
   void _move(PointerMoveEvent event) {
+    if (event.pointer != _pointer) return;
     final last = _last;
     final lastTime = _lastTime;
     if (last == null || lastTime == null) return;
@@ -289,7 +314,9 @@ class _Oito2SignaturePadState extends State<Oito2SignaturePad> {
     ));
   }
 
-  void _up(PointerEvent _) {
+  void _up(PointerEvent event) {
+    if (event.pointer != _pointer) return;
+    _pointer = null;
     _last = null;
     _lastTime = null;
   }
@@ -358,10 +385,7 @@ class _Oito2SignaturePadState extends State<Oito2SignaturePad> {
                         child: MouseRegion(
                           cursor: SystemMouseCursors.precise,
                           child: CustomPaint(
-                            painter: _SignaturePainter(
-                              _controller.strokes,
-                              ink,
-                            ),
+                            painter: _SignaturePainter(_controller, ink),
                           ),
                         ),
                       ),
@@ -396,17 +420,20 @@ class _Oito2SignaturePadState extends State<Oito2SignaturePad> {
   }
 }
 
+/// Paints the strokes of [controller], repainting whenever it changes.
 class _SignaturePainter extends CustomPainter {
-  _SignaturePainter(this.strokes, this.color);
+  _SignaturePainter(this.controller, this.color) : super(repaint: controller);
 
-  final List<List<Oito2SignaturePoint>> strokes;
+  final Oito2SignatureController controller;
   final Color color;
 
   @override
-  void paint(Canvas canvas, Size size) => _paintStrokes(canvas, strokes, color);
+  void paint(Canvas canvas, Size size) =>
+      _paintStrokes(canvas, controller._strokes, color);
 
   @override
-  bool shouldRepaint(_SignaturePainter old) => true;
+  bool shouldRepaint(_SignaturePainter old) =>
+      old.controller != controller || old.color != color;
 }
 
 /// Joins the gesture arena on pointer down and wins it at once, so no

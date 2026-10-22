@@ -16,6 +16,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../syntax/syntax_palette.dart';
+import '../color_theme.dart';
 
 /// Carries the [Oito2SyntaxPalette] that matches a theme's colors.
 @immutable
@@ -27,6 +28,15 @@ class Oito2SyntaxTheme extends ThemeExtension<Oito2SyntaxTheme> {
   /// theme has none.
   static Oito2SyntaxPalette? maybeOf(BuildContext context) =>
       Theme.of(context).extension<Oito2SyntaxTheme>()?.palette;
+
+  /// Returns the syntax palette of the closest [Theme], or the oito2 base
+  /// scheme's palette of the theme's brightness when it has none.
+  static Oito2SyntaxPalette of(BuildContext context) =>
+      maybeOf(context) ??
+      (Theme.of(context).brightness == Brightness.dark
+              ? Oito2ColorTheme.dark()
+              : Oito2ColorTheme.light())
+          .syntax;
 
   /// The syntax colors.
   final Oito2SyntaxPalette palette;

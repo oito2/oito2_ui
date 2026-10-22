@@ -173,9 +173,16 @@ class Oito2SelectionController extends ChangeNotifier {
   void replace(String? value) {
     if (value != null && !canSelect(value)) return;
     _anchor = value;
+    _setSelected([?value]);
+  }
+
+  /// Replaces the selection with [values], notifying only when it changes.
+  void _setSelected(Iterable<String> values) {
+    final next = values.toSet();
+    if (setEquals(next, _selected.toSet())) return;
     _selected
       ..clear()
-      ..addAll([?value]);
+      ..addAll(next);
     notifyListeners();
   }
 
@@ -221,8 +228,7 @@ class Oito2SelectionController extends ChangeNotifier {
   /// Selects every enabled item, in multiple mode.
   void selectAll() {
     if (mode != Oito2SelectionMode.multiple) return;
-    _selected.addAll(_collection.values.where(canSelect));
-    notifyListeners();
+    _setSelected([..._selected, ..._collection.values.where(canSelect)]);
   }
 
   /// Deselects everything.
@@ -233,12 +239,12 @@ class Oito2SelectionController extends ChangeNotifier {
   }
 
   /// Replaces the selection with [values], keeping only the selectable
-  /// ones (and the first of them in single mode).
+  /// ones (and the first of them in single mode). The last of them becomes
+  /// the anchor of Shift ranges.
   void setSelectedValues(Iterable<String> values) {
     final valid = values.where(canSelect).toList();
-    _selected
-      ..clear()
-      ..addAll(mode == Oito2SelectionMode.single ? valid.take(1) : valid);
-    notifyListeners();
+    final next = mode == Oito2SelectionMode.single ? valid.take(1) : valid;
+    _anchor = next.isEmpty ? null : next.last;
+    _setSelected(next);
   }
 }

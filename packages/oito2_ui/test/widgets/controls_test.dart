@@ -16,8 +16,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-
-import 'test_app.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 void main() {
   group('Oito2CheckButton', () {
@@ -135,6 +134,33 @@ void main() {
     await tester.tap(find.text('Dark style'));
     await tester.pump();
     expect(value, isTrue);
+  });
+
+  group('Oito2RadioButton and Oito2OptionButton', () {
+    testWidgets('a toggleable radio button clears its group', (tester) async {
+      final values = <String?>[];
+      await pumpOito2(
+        tester,
+        Center(
+          child: Oito2RadioButton<String>(
+            value: 'a',
+            groupValue: 'a',
+            toggleable: true,
+            onChanged: values.add,
+            title: const Text('Option A'),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Option A'));
+      expect(values, [null]);
+    });
+
+    test('an icon-only option button needs a label', () {
+      expect(
+        () => Oito2OptionButton(onPressed: () {}, child: const Icon(Icons.add)),
+        throwsAssertionError,
+      );
+    });
   });
 
   group('Oito2SplitButton', () {

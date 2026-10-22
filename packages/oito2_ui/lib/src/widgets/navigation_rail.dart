@@ -13,7 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
@@ -244,7 +243,14 @@ class Oito2NavigationRail extends StatefulWidget {
 }
 
 class _Oito2NavigationRailState extends State<Oito2NavigationRail> {
-  final _selectedKey = GlobalKey();
+  /// One key per item, kept while the selection moves, so the focused item
+  /// keeps its element and its focus.
+  final Map<int, GlobalKey> _itemKeys = {};
+
+  GlobalKey _keyFor(int index) => _itemKeys.putIfAbsent(index, GlobalKey.new);
+
+  BuildContext? get _selectedContext =>
+      _itemKeys[widget.selectedIndex]?.currentContext;
 
   @override
   void initState() {
@@ -255,6 +261,7 @@ class _Oito2NavigationRailState extends State<Oito2NavigationRail> {
   @override
   void didUpdateWidget(Oito2NavigationRail oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _itemKeys.removeWhere((index, _) => index >= widget.items.length);
     if (oldWidget.selectedIndex != widget.selectedIndex ||
         oldWidget.style != widget.style) {
       _revealSoon();
@@ -265,21 +272,8 @@ class _Oito2NavigationRailState extends State<Oito2NavigationRail> {
   /// fully visible.
   void _revealSoon() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final item = _selectedKey.currentContext?.findRenderObject();
-      if (!mounted || item == null) return;
-      final viewport = RenderAbstractViewport.maybeOf(item);
-      final position = Scrollable.maybeOf(_selectedKey.currentContext!)
-          ?.position;
-      if (viewport == null || position == null) return;
-      final atTop = viewport.getOffsetToReveal(item, 0).offset;
-      final atBottom = viewport.getOffsetToReveal(item, 1).offset;
-      if (position.pixels >= atBottom && position.pixels <= atTop) return;
-      position.jumpTo(
-        viewport
-            .getOffsetToReveal(item, 0.5)
-            .offset
-            .clamp(position.minScrollExtent, position.maxScrollExtent),
-      );
+      final context = _selectedContext;
+      if (mounted && context != null) revealCentered(context);
     });
   }
 
@@ -321,9 +315,7 @@ class _Oito2NavigationRailState extends State<Oito2NavigationRail> {
                         children: [
                           for (var i = 0; i < items.length; i++)
                             Oito2NavigationRailItem(
-                              key: i == widget.selectedIndex
-                                  ? _selectedKey
-                                  : null,
+                              key: _keyFor(i),
                               item: items[i],
                               selected: i == widget.selectedIndex,
                               style: style,

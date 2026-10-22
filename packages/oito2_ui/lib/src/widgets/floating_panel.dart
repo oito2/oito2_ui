@@ -47,6 +47,7 @@ class _PanelWindow implements Oito2WindowController {
   @override
   Future<void> startDrag() async => _panel._startDrag();
 
+  // Panels have no native window menu.
   @override
   Future<void> showMenu() async {}
 }
@@ -60,7 +61,11 @@ class _PanelWindow implements Oito2WindowController {
 /// bottom edges and corner resize it. Minimizing leaves only the title
 /// bar. With the focus on the title bar the arrow keys move the panel and
 /// Shift with the arrows resizes it. The title bar keeps inside the
-/// stack.
+/// stack. Minimized content keeps its state.
+///
+/// Panels in the same [Stack] keep the stacking order of its children:
+/// clicking a panel doesn't bring it to the front, so the app reorders
+/// the children when it wants that.
 class Oito2FloatingPanel extends StatefulWidget {
   /// Creates a floating panel.
   const Oito2FloatingPanel({
@@ -132,7 +137,14 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
     _move(_pointer - _pointerDown);
   }
 
-  void _toggleMinimized() => setState(() => _minimized = !_minimized);
+  void _toggleMinimized() {
+    setState(() {
+      _minimized = !_minimized;
+      // A minimized panel is never maximized at the same time.
+      if (_minimized) _maximized = false;
+    });
+    _window.state.value = _window.state.value.copyWith(isMaximized: _maximized);
+  }
 
   void _toggleMaximized() {
     setState(() {
@@ -274,7 +286,16 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 bar,
-                if (!_minimized) Expanded(child: widget.child),
+                // Minimizing hides the content without discarding its
+                // state.
+                Expanded(
+                  flex: _minimized ? 0 : 1,
+                  child: Visibility(
+                    visible: !_minimized,
+                    maintainState: true,
+                    child: widget.child,
+                  ),
+                ),
               ],
             ),
           );

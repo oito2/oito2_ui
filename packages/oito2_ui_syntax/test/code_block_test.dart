@@ -18,20 +18,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_syntax/oito2_ui_syntax.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
-const _linux = Oito2Platform(
-  targetPlatform: TargetPlatform.linux,
-  isWeb: false,
-);
-
-Future<void> _pump(WidgetTester tester, Widget child, {ThemeData? theme}) {
-  return tester.pumpWidget(
-    MaterialApp(
-      theme: theme ?? Oito2Theme.dark(platform: _linux),
-      home: Scaffold(body: Center(child: child)),
-    ),
-  );
-}
+Future<void> _pump(WidgetTester tester, Widget child, {ThemeData? theme}) =>
+    pumpOito2(
+      tester,
+      Center(child: child),
+      theme: theme ?? Oito2Theme.dark(platform: testPlatform),
+    );
 
 TextSpan _codeSpan(WidgetTester tester) {
   final text = tester.widget<SelectableText>(find.byType(SelectableText));
@@ -72,6 +66,17 @@ void main() {
       _codeSpan(tester).style!.color,
       Oito2ColorTheme.dark().syntax.foreground,
     );
+  });
+
+  testWidgets('highlights again only when the code changes', (tester) async {
+    final highlighter = _CountingHighlighter();
+    Widget block(String code) =>
+        Oito2CodeBlock(code: code, language: 'dart', highlighter: highlighter);
+    await _pump(tester, block('final x = 1;'));
+    await _pump(tester, block('final x = 1;'));
+    expect(highlighter.calls, 1);
+    await _pump(tester, block('final y = 2;'));
+    expect(highlighter.calls, 2);
   });
 
   testWidgets('shows line numbers outside the semantics tree', (tester) async {
@@ -150,4 +155,27 @@ void main() {
       expect(width('iiii', FontWeight.w700), width('iiii', FontWeight.w400));
     },
   );
+}
+
+/// Counts its highlight calls.
+class _CountingHighlighter extends Oito2Highlighter {
+  int calls = 0;
+
+  @override
+  TextSpan highlight(
+    String code, {
+    required Oito2SyntaxPalette palette,
+    String? language,
+    TextStyle? style,
+    bool autoDetect = false,
+  }) {
+    calls++;
+    return super.highlight(
+      code,
+      palette: palette,
+      language: language,
+      style: style,
+      autoDetect: autoDetect,
+    );
+  }
 }

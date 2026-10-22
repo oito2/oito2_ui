@@ -12,9 +12,11 @@ on:
 permissions:
   contents: read
 
+# Runs of different events don't cancel each other, and only pull request
+# runs give way to a newer push to the same branch.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   # Pinned Flutter release for push and pull request runs.
@@ -22,36 +24,71 @@ env:
 
 jobs:
   checks:
-    name: Format, analyze and test
+    name: Format and analyze
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-      - run: flutter pub get
+      - run: flutter pub get --enforce-lockfile
       - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze
-      - name: Test every package
+
+  test:
+    name: Test ${{ matrix.package }}
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      # Every package reports its result, even when another one fails.
+      fail-fast: false
+      matrix:
+        package:
+          - packages/oito2_ui
+          - packages/oito2_ui_window
+          - packages/oito2_ui_settings
+          - packages/oito2_ui_syntax
+          - packages/oito2_ui_themes
+          - packages/oito2_ui_extras
+          - example
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - name: Test
+        working-directory: ${{ matrix.package }}
+        run: flutter test
+      # Runners use UTC, which has no daylight saving time; date code is
+      # also checked in zones that shift their clocks.
+      - name: Test dates in other time zones
+        if: matrix.package == 'packages/oito2_ui'
+        working-directory: packages/oito2_ui
         run: |
-          for dir in packages/oito2_ui packages/oito2_ui_window \
-                     packages/oito2_ui_settings packages/oito2_ui_syntax \
-                     packages/oito2_ui_themes packages/oito2_ui_extras \
-                     example; do
-            echo "::group::$dir"
-            (cd "$dir" && flutter test)
+          for tz in Europe/Berlin America/New_York; do
+            echo "::group::TZ=$tz"
+            TZ=$tz flutter test test/widgets/pickers_test.dart \
+                                test/widgets/inputs_test.dart
             echo "::endgroup::"
           done
       - name: Upload golden failures
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: golden-failures
-          path: packages/*/test/goldens/failures/
+          name: golden-failures-${{ strategy.job-index }}
+          path: ${{ matrix.package }}/test/goldens/failures/
           if-no-files-found: ignore
 
   build-ubuntu:
@@ -60,8 +97,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "17"
@@ -70,15 +109,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang cmake ninja-build pkg-config \
             libgtk-3-dev liblzma-dev libstdc++-12-dev
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-      - run: flutter pub get
+      - run: flutter pub get --enforce-lockfile
+      # The same build as the published showcase: engine and fonts served
+      # from the site itself, under the GitHub Pages project path.
       - name: Build web
         working-directory: example
-        run: flutter build web --base-href /oito2_ui/
+        run: flutter build web --release --no-web-resources-cdn --base-href /oito2_ui/
+      - name: Check the web build
+        run: dart run tool/check_web_build.dart example/build/web /oito2_ui/
+      - name: Validate the web HTML
+        run: |
+          npm install --no-save --prefix "$RUNNER_TEMP/vnu" vnu-jar@26.10.2
+          java -jar "$RUNNER_TEMP/vnu/node_modules/vnu-jar/build/dist/vnu.jar" \
+            --skip-non-html --errors-only example/build/web
       - name: Build Linux
         working-directory: example
         run: flutter build linux --debug
@@ -92,13 +140,15 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v7
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-      - run: flutter pub get
+      - run: flutter pub get --enforce-lockfile
       - name: Build macOS
         working-directory: example
         run: flutter build macos --debug
@@ -112,41 +162,51 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v7
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-      - run: flutter pub get
+      - run: flutter pub get --enforce-lockfile
       - name: Build Windows
         working-directory: example
         run: flutter build windows --debug
 
   latest-stable:
-    name: Latest Flutter stable and dependencies
+    name: Latest stable, ${{ matrix.package }}
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - packages/oito2_ui
+          - packages/oito2_ui_window
+          - packages/oito2_ui_settings
+          - packages/oito2_ui_syntax
+          - packages/oito2_ui_themes
+          - packages/oito2_ui_extras
+          - example
     steps:
-      - uses: actions/checkout@v7
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           cache: true
       - run: flutter --version
       - name: Resolve the newest allowed dependencies
         run: flutter pub upgrade
-      - run: flutter analyze
+      - name: Analyze
+        working-directory: ${{ matrix.package }}
+        run: flutter analyze
       # Goldens are pinned to the Flutter release above; a newer engine
       # may rasterize differently, so this job skips them.
-      - name: Test every package except goldens
-        run: |
-          for dir in packages/oito2_ui packages/oito2_ui_window \
-                     packages/oito2_ui_settings packages/oito2_ui_syntax \
-                     packages/oito2_ui_themes packages/oito2_ui_extras \
-                     example; do
-            echo "::group::$dir"
-            (cd "$dir" && flutter test --exclude-tags golden)
-            echo "::endgroup::"
-          done
+      - name: Test except goldens
+        working-directory: ${{ matrix.package }}
+        run: flutter test --exclude-tags golden

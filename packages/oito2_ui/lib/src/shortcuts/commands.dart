@@ -17,7 +17,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'shortcut.dart';
 
@@ -144,19 +144,41 @@ class _Oito2CommandsState extends State<Oito2Commands> {
   final List<Oito2KeyChord> _pending = [];
   Timer? _timer;
 
+  /// The platform whose primary modifier the shortcuts use: the theme's,
+  /// like the labels that show them.
+  TargetPlatform get _platform => Theme.of(context).platform;
+
   @override
-  void initState() {
-    super.initState();
-    assert(() {
-      final clashes = Oito2Commands.conflicts(widget.commands);
-      if (clashes.isNotEmpty) {
-        final (a, b) = clashes.first;
-        throw FlutterError(
-          'The shortcuts of the commands "${a.id}" and "${b.id}" clash.',
-        );
-      }
-      return true;
-    }());
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    assert(_debugCheckConflicts());
+  }
+
+  @override
+  void didUpdateWidget(Oito2Commands oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    assert(_debugCheckConflicts());
+  }
+
+  bool _debugCheckConflicts() {
+    final clashes = Oito2Commands.conflicts(
+      widget.commands,
+      platform: _platform,
+    );
+    if (clashes.isNotEmpty) {
+      final (a, b) = clashes.first;
+      // Reported without throwing, so the build that brought the commands
+      // still completes.
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: FlutterError(
+            'The shortcuts of the commands "${a.id}" and "${b.id}" clash.',
+          ),
+          library: 'oito2_ui',
+        ),
+      );
+    }
+    return true;
   }
 
   @override
@@ -191,13 +213,33 @@ class _Oito2CommandsState extends State<Oito2Commands> {
     return result;
   }
 
+  /// The ids of the commands of the scopes between the focus and this
+  /// one, which replace this scope's commands of the same id, even when
+  /// they are disabled.
+  Set<String> _overriddenIds() {
+    final ids = <String>{};
+    final focusContext = FocusManager.instance.primaryFocus?.context;
+    var scope =
+        focusContext
+                ?.getElementForInheritedWidgetOfExactType<_CommandScope>()
+                ?.widget
+            as _CommandScope?;
+    while (scope != null && !identical(scope.commands, widget.commands)) {
+      ids.addAll(scope.commands.map((command) => command.id));
+      scope = scope.parent;
+    }
+    return ids;
+  }
+
   KeyEventResult _match(Oito2KeyChord chord) {
-    final platform = defaultTargetPlatform;
+    final platform = _platform;
     final typing = _textFieldFocused();
     final sequence = Oito2Shortcut([..._pending, chord]);
+    final overridden = _overriddenIds();
     final own = [
       for (final command in widget.commands)
         if (command.enabled &&
+            !overridden.contains(command.id) &&
             command.shortcut != null &&
             (!typing || command.shortcut!.chords.first.hasCommandModifier))
           command,

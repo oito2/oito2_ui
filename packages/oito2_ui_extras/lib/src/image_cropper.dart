@@ -99,23 +99,47 @@ class Oito2CropController extends ChangeNotifier {
 
   /// Restores the zoom, pan, rotation and flip.
   void reset() {
+    _resetTransform();
+    notifyListeners();
+  }
+
+  void _resetTransform() {
     _zoom = 1;
     _offset = Offset.zero;
     _quarterTurns = 0;
     _flipped = false;
-    notifyListeners();
   }
 
-  void _setImage(ui.Image? image) {
-    _image = image;
+  /// Holds a handle of its own to [image], so crops and previews keep
+  /// working after the cropper that loaded it is gone. With [reset], the
+  /// zoom, pan, rotation and flip start over, as for a new picture.
+  void _setImage(ui.Image? image, {bool reset = false}) {
+    _image?.dispose();
+    _image = image?.clone();
+    if (reset) _resetTransform();
     _clampOffset();
     notifyListeners();
   }
 
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _image?.dispose();
+    _image = null;
+    super.dispose();
+  }
+
+  /// Sets the crop box size measured during layout, and tells listeners
+  /// such as [Oito2CropPreview] after the frame, outside of the build.
   void _setBox(Size box) {
     if (box == _box) return;
     _box = box;
     _clampOffset();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_disposed) notifyListeners();
+    });
   }
 
   Size get _turnedImage {
@@ -209,7 +233,10 @@ class Oito2ImageCropper extends StatefulWidget {
     this.height = 320,
     this.showToolbar = true,
     this.semanticLabel,
-  }) : assert(aspectRatio > 0);
+    this.maxDecodedDimension = 4096,
+    this.onError,
+  }) : assert(aspectRatio > 0),
+       assert(maxDecodedDimension == null || maxDecodedDimension > 0);
 
   /// The image to crop.
   final ImageProvider image;
@@ -232,6 +259,15 @@ class Oito2ImageCropper extends StatefulWidget {
   /// The accessibility label; defaults to the localized "Image cropper".
   final String? semanticLabel;
 
+  /// The longest side, in pixels, the image is decoded at; larger images
+  /// are scaled down while decoding, keeping their aspect ratio, to bound
+  /// the memory they take. Null decodes at full size.
+  final int? maxDecodedDimension;
+
+  /// Called when the image fails to load; without it the error is
+  /// reported through [FlutterError.reportError].
+  final void Function(Object error, StackTrace? stackTrace)? onError;
+
   @override
   State<Oito2ImageCropper> createState() => _Oito2ImageCropperState();
 }
@@ -240,7 +276,7 @@ class _Oito2ImageCropperState extends State<Oito2ImageCropper> {
   final _focusNode = FocusNode(debugLabel: 'Oito2ImageCropper');
   ImageStream? _stream;
   ImageInfo? _info;
-  late final _listener = ImageStreamListener(_onImage);
+  late final _listener = ImageStreamListener(_onImage, onError: _onError);
   double _startZoom = 1;
 
   Oito2CropController get _controller => widget.controller;
@@ -263,9 +299,14 @@ class _Oito2ImageCropperState extends State<Oito2ImageCropper> {
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_refresh);
       widget.controller.addListener(_refresh);
+      oldWidget.controller._setImage(null);
       widget.controller._setImage(_info?.image);
     }
-    if (oldWidget.image != widget.image) _resolve();
+    if (oldWidget.image != widget.image) _newPicture = true;
+    if (oldWidget.image != widget.image ||
+        oldWidget.maxDecodedDimension != widget.maxDecodedDimension) {
+      _resolve();
+    }
   }
 
   @override
@@ -282,16 +323,46 @@ class _Oito2ImageCropperState extends State<Oito2ImageCropper> {
   }
 
   void _resolve() {
-    final stream = widget.image.resolve(createLocalImageConfiguration(context));
+    final max = widget.maxDecodedDimension;
+    final provider = max == null
+        ? widget.image
+        : ResizeImage(
+            widget.image,
+            width: max,
+            height: max,
+            policy: ResizeImagePolicy.fit,
+          );
+    final stream = provider.resolve(createLocalImageConfiguration(context));
     if (stream.key == _stream?.key) return;
     _stream?.removeListener(_listener);
     _stream = stream..addListener(_listener);
   }
 
+  /// Whether the next image loaded is a different picture, which starts
+  /// with the transform reset.
+  bool _newPicture = false;
+
   void _onImage(ImageInfo info, bool _) {
     _info?.dispose();
     _info = info;
-    _controller._setImage(info.image);
+    _controller._setImage(info.image, reset: _newPicture);
+    _newPicture = false;
+  }
+
+  void _onError(Object error, StackTrace? stackTrace) {
+    final onError = widget.onError;
+    if (onError != null) {
+      onError(error, stackTrace);
+      return;
+    }
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'oito2_ui_extras',
+        context: ErrorDescription('while loading the image to crop'),
+      ),
+    );
   }
 
   double get _aspect => widget.circle ? 1 : widget.aspectRatio;

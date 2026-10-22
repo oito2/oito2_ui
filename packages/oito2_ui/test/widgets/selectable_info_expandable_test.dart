@@ -18,9 +18,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 import '../support/sample_roles.dart';
-import 'test_app.dart';
 
 BorderSide _side(WidgetTester tester, Finder finder) {
   final material = tester.widget<Material>(
@@ -113,6 +113,21 @@ void main() {
   });
 
   group('info', () {
+    testWidgets('a box names its kind to assistive technologies', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpOito2(
+        tester,
+        const Oito2InfoBox(
+          type: Oito2InfoType.warning,
+          title: Text('Battery low'),
+        ),
+      );
+      expect(find.bySemanticsLabel(RegExp('Warning')), findsOneWidget);
+      handle.dispose();
+    });
+
     final schemes = {
       'light': Oito2ColorTheme.light(),
       'dark': Oito2ColorTheme.dark(),
@@ -201,13 +216,20 @@ void main() {
     testWidgets('toggles its content from the header', (tester) async {
       final handle = tester.ensureSemantics();
       final changes = <bool>[];
+      var expanded = false;
       await pumpOito2(
         tester,
-        Oito2Expandable(
-          header: const Text('Advanced'),
-          collapsedChild: const Text('summary'),
-          onChanged: changes.add,
-          child: const Text('details'),
+        StatefulBuilder(
+          builder: (context, setState) => Oito2Expandable(
+            header: const Text('Advanced'),
+            collapsedChild: const Text('summary'),
+            isExpanded: expanded,
+            onChanged: (value) {
+              changes.add(value);
+              setState(() => expanded = value);
+            },
+            child: const Text('details'),
+          ),
         ),
       );
       expect(find.text('details'), findsNothing);
@@ -258,6 +280,48 @@ void main() {
       await pumpOito2(tester, build(false));
       expect(find.text('details'), findsNothing);
       await pumpOito2(tester, build(true));
+      await tester.pumpAndSettle();
+      expect(find.text('details'), findsOneWidget);
+    });
+
+    testWidgets('a controlled section waits for the parent', (tester) async {
+      final changes = <bool>[];
+      await pumpOito2(
+        tester,
+        Oito2Expandable(
+          header: const Text('Advanced'),
+          onChanged: changes.add,
+          child: const Text('details'),
+        ),
+      );
+      await tester.tap(find.text('Advanced'));
+      await tester.pumpAndSettle();
+      expect(changes, [true]);
+      expect(find.text('details'), findsNothing);
+    });
+
+    testWidgets('opens at once when animations are disabled', (tester) async {
+      await pumpOito2(
+        tester,
+        const MediaQuery(
+          data: MediaQueryData(disableAnimations: true),
+          child: Oito2Expandable(
+            header: Text('Advanced'),
+            child: Text('details'),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Advanced'));
+      await tester.pump();
+      expect(tester.hasRunningAnimations, isFalse);
+    });
+
+    testWidgets('an uncontrolled section toggles itself', (tester) async {
+      await pumpOito2(
+        tester,
+        const Oito2Expandable(header: Text('Advanced'), child: Text('details')),
+      );
+      await tester.tap(find.text('Advanced'));
       await tester.pumpAndSettle();
       expect(find.text('details'), findsOneWidget);
     });

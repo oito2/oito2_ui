@@ -18,8 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-
-import 'test_app.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 Widget _popover({
   Oito2PopoverPlacement placement = Oito2PopoverPlacement.bottom,
@@ -47,6 +46,33 @@ Widget _popover({
 
 void main() {
   group('Oito2Popover', () {
+    testWidgets('switching to an open controller shows the panel', (
+      tester,
+    ) async {
+      final closed = Oito2PopoverController();
+      final open = Oito2PopoverController()..open();
+      addTearDown(closed.dispose);
+      addTearDown(open.dispose);
+      var changes = 0;
+      Widget build(Oito2PopoverController controller) => StatefulBuilder(
+        builder: (context, setState) => Center(
+          child: Oito2Popover(
+            controller: controller,
+            // A parent that rebuilds on every change.
+            onOpenChanged: (_) => setState(() => changes++),
+            builder: (context, _) => const Text('Anchor'),
+            popoverBuilder: (context, _) => const Text('Inside'),
+          ),
+        ),
+      );
+      await pumpOito2(tester, build(closed));
+      await pumpOito2(tester, build(open));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('Inside'), findsOneWidget);
+      expect(changes, 1);
+    });
+
     testWidgets('opens below, takes the focus and closes on Escape', (
       tester,
     ) async {
@@ -188,6 +214,32 @@ void main() {
       await tester.pump();
       expect(find.text('Card'), findsNothing);
     });
+
+    testWidgets('Escape closes a hovered card while focus is elsewhere', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        Column(
+          children: [
+            const TextField(autofocus: true),
+            Oito2HoverCard(
+              cardBuilder: (_) => const Text('Card'),
+              child: const Text('Name'),
+            ),
+          ],
+        ),
+      );
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer(location: const Offset(900, 500));
+      await mouse.moveTo(tester.getCenter(find.text('Name')));
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(find.text('Card'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(find.text('Card'), findsNothing);
+    });
   });
 
   group('showOito2Sheet', () {
@@ -237,6 +289,131 @@ void main() {
       await tester.pumpAndSettle();
       expect(await result, 'saved');
       expect(find.text('Sheet'), findsNothing);
+    });
+
+    testWidgets('the first frame starts off screen', (tester) async {
+      await pumpOito2(
+        tester,
+        Builder(
+          builder: (context) => Center(
+            child: ElevatedButton(
+              onPressed: () => showOito2Sheet<void>(
+                context,
+                builder: (context) =>
+                    const Oito2Sheet(title: Text('Sheet'), child: SizedBox()),
+              ),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pump();
+      expect(tester.getTopLeft(find.byType(Oito2Sheet)).dx, greaterThan(990));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('Oito2Sheet.close animates a modal sheet out', (tester) async {
+      final result = await open(tester);
+      await tester.tap(find.text('Save'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(find.text('Sheet'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.text('Sheet'), findsNothing);
+      expect(await result, 'saved');
+    });
+
+    testWidgets('a non-modal sheet completes when the app goes away', (
+      tester,
+    ) async {
+      late Future<void> result;
+      await pumpOito2(
+        tester,
+        Builder(
+          builder: (context) => Center(
+            child: ElevatedButton(
+              onPressed: () => result = showOito2Sheet<void>(
+                context,
+                modal: false,
+                builder: (context) => Oito2Sheet(
+                  title: const Text('Sheet'),
+                  child: TextButton(
+                    onPressed: () => Oito2Sheet.close<void>(context),
+                    child: const Text('Done'),
+                  ),
+                ),
+              ),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Done'));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpWidget(const SizedBox());
+      await expectLater(result, completes);
+    });
+
+    testWidgets('a side sheet fits a window narrower than its margin', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showOito2Sheet<void>(
+              context,
+              builder: (context) => const SizedBox(),
+            ),
+            child: const Text('Open'),
+          ),
+        ),
+        size: const Size(40, 400),
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a non-modal sheet closes with the route that opened it', (
+      tester,
+    ) async {
+      late Future<void> result;
+      final navigator = GlobalKey<NavigatorState>();
+      await pumpOito2(
+        tester,
+        Navigator(
+          key: navigator,
+          onGenerateRoute: (_) =>
+              MaterialPageRoute<void>(builder: (_) => const Text('Home')),
+        ),
+      );
+      navigator.currentState!.push(
+        MaterialPageRoute<void>(
+          builder: (context) => Center(
+            child: ElevatedButton(
+              onPressed: () => result = showOito2Sheet<void>(
+                context,
+                modal: false,
+                builder: (context) =>
+                    const Oito2Sheet(title: Text('Sheet'), child: SizedBox()),
+              ),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sheet'), findsOneWidget);
+      navigator.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(find.text('Sheet'), findsNothing);
+      await expectLater(result, completes);
     });
 
     testWidgets('a start sheet sits at the left in LTR', (tester) async {
@@ -428,6 +605,23 @@ void main() {
       expect(find.text('3 files uploaded'), findsOneWidget);
     });
 
+    testWidgets('an error building the result toast is reported', (
+      tester,
+    ) async {
+      final toaster = await pumpToaster(tester);
+      toaster.promise<int>(
+        Future.value(1),
+        loading: const Oito2Toast(title: 'Uploading', loading: true),
+        success: (_) => throw StateError('no toast'),
+        error: (_) => const Oito2Toast(title: 'Failed'),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(tester.takeException(), isStateError);
+      toaster.dismissAll();
+      await tester.pump(const Duration(seconds: 1));
+    });
+
     testWidgets('toasts are live regions in a labelled area', (tester) async {
       final handle = tester.ensureSemantics();
       final toaster = await pumpToaster(tester);
@@ -501,6 +695,81 @@ void main() {
   });
 
   group('Oito2Tour', () {
+    testWidgets('switching to a running controller shows its step', (
+      tester,
+    ) async {
+      final idle = Oito2TourController(
+        steps: const [Oito2TourStep(title: 'Idle')],
+      );
+      final running = Oito2TourController(
+        steps: const [Oito2TourStep(title: 'Running')],
+      )..start();
+      addTearDown(idle.dispose);
+      addTearDown(running.dispose);
+      Widget build(Oito2TourController controller) =>
+          Oito2Tour(controller: controller, child: const SizedBox.expand());
+      await pumpOito2(tester, build(idle));
+      await pumpOito2(tester, build(running));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('Running'), findsOneWidget);
+    });
+
+    testWidgets('hides the page from assistive technologies and restores '
+        'the focus', (tester) async {
+      final handle = tester.ensureSemantics();
+      final controller = Oito2TourController(
+        steps: const [Oito2TourStep(title: 'Welcome')],
+      );
+      addTearDown(controller.dispose);
+      final button = FocusNode();
+      addTearDown(button.dispose);
+      await pumpOito2(
+        tester,
+        Oito2Tour(
+          controller: controller,
+          child: Center(
+            child: TextButton(
+              focusNode: button,
+              onPressed: () {},
+              child: const Text('Page action'),
+            ),
+          ),
+        ),
+      );
+      button.requestFocus();
+      await tester.pump();
+      controller.start();
+      await tester.pumpAndSettle();
+      expect(find.semantics.byLabel('Page action'), findsNothing);
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+      expect(button.hasFocus, isTrue);
+      expect(find.semantics.byLabel('Page action'), findsOne);
+      handle.dispose();
+    });
+
+    testWidgets('a waiting step without its target offers Next', (
+      tester,
+    ) async {
+      final controller = Oito2TourController(
+        steps: [
+          Oito2TourStep(
+            target: GlobalKey(),
+            title: 'Missing',
+            waitForTap: true,
+          ),
+        ],
+      )..start();
+      addTearDown(controller.dispose);
+      await pumpOito2(
+        tester,
+        Oito2Tour(controller: controller, child: const SizedBox.expand()),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Done'), findsOneWidget);
+    });
+
     final first = GlobalKey();
     final second = GlobalKey();
 

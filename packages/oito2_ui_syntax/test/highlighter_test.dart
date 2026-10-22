@@ -145,6 +145,19 @@ void main() {
       }
     });
 
+    test('accepts language aliases in any letter case', () {
+      for (final name in ['Dart', 'js', 'ts', 'sh', 'yml', 'py', 'rs']) {
+        expect(highlighter.supports(name), isTrue, reason: name);
+        final span = highlighter.highlight(
+          'x = 1',
+          language: name,
+          palette: palette,
+        );
+        expect(span.children, isNotNull, reason: name);
+      }
+      expect(highlighter.supports('cobol'), isFalse);
+    });
+
     test('returns plain text for unknown languages', () {
       final span = highlighter.highlight(
         'x = 1',

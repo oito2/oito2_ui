@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../foundation/platform_info.dart';
@@ -93,7 +95,20 @@ abstract final class Oito2Theme {
     Oito2ColorTheme colors, {
     Oito2Platform? platform,
   }) {
+    _registerFontLicense();
     final target = platform ?? Oito2Platform.current();
+    final key = (colors, target);
+    final cached = _cache.remove(key);
+    if (cached != null) return _cache[key] = cached;
+    if (_cache.length >= 16) _cache.remove(_cache.keys.first);
+    return _cache[key] = _build(colors, target);
+  }
+
+  /// The themes built recently, by scheme and platform, so rebuilding an
+  /// app with the same inputs returns the same theme.
+  static final Map<(Oito2ColorTheme, Oito2Platform), ThemeData> _cache = {};
+
+  static ThemeData _build(Oito2ColorTheme colors, Oito2Platform target) {
     final scheme = colors.colorScheme;
     final textTheme = Oito2Typography.textTheme(colors.brightness)
         .apply(bodyColor: scheme.onSurface, displayColor: scheme.onSurface);
@@ -188,4 +203,29 @@ abstract final class Oito2Theme {
       tooltipTheme: buildTooltipTheme(c),
     );
   }
+}
+
+bool _fontLicenseRegistered = false;
+
+/// Lists the license of the bundled Inter font, the SIL Open Font
+/// License, in the app's license page, once.
+void _registerFontLicense() {
+  if (_fontLicenseRegistered) return;
+  _fontLicenseRegistered = true;
+  LicenseRegistry.addLicense(() async* {
+    // An app bundles the file under the package prefix; the package's own
+    // tests bundle it without.
+    for (final key in const [
+      'packages/oito2_ui/assets/fonts/inter/OFL.txt',
+      'assets/fonts/inter/OFL.txt',
+    ]) {
+      try {
+        final text = await rootBundle.loadString(key);
+        yield LicenseEntryWithLineBreaks(const ['Inter'], text);
+        return;
+      } on Object {
+        continue;
+      }
+    }
+  });
 }

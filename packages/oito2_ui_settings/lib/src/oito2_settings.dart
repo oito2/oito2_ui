@@ -28,13 +28,34 @@ abstract final class Oito2Settings {
   static Oito2SystemSettingsReader reader({Oito2Platform? platform}) =>
       createReader(platform ?? Oito2Platform.current());
 
-  /// Reads the current system settings once.
-  static Future<Oito2SystemSettings> load({Oito2Platform? platform}) =>
-      reader(platform: platform).read();
+  /// Reads the current system settings once, then releases the reader.
+  static Future<Oito2SystemSettings> load({Oito2Platform? platform}) async {
+    final settingsReader = reader(platform: platform);
+    try {
+      return await settingsReader.read();
+    } finally {
+      await settingsReader.close();
+    }
+  }
 
-  /// Emits the current system settings, then every change.
-  static Stream<Oito2SystemSettings> watch({Oito2Platform? platform}) =>
-      reader(platform: platform).watch();
+  /// Emits the current system settings, then every change; the reader is
+  /// released when the subscription is cancelled.
+  static Stream<Oito2SystemSettings> watch({Oito2Platform? platform}) {
+    final settingsReader = reader(platform: platform);
+    late final StreamController<Oito2SystemSettings> controller;
+    StreamSubscription<Oito2SystemSettings>? subscription;
+    controller = StreamController(
+      onListen: () => subscription = settingsReader.watch().listen(
+        controller.add,
+        onError: controller.addError,
+      ),
+      onCancel: () async {
+        await subscription?.cancel();
+        await settingsReader.close();
+      },
+    );
+    return controller.stream;
+  }
 }
 
 /// Keeps an [Oito2SystemScope] in sync with the operating system.
@@ -70,17 +91,37 @@ class _Oito2SystemSettingsScopeState extends State<Oito2SystemSettingsScope>
     with WidgetsBindingObserver {
   late Oito2SystemSettingsReader _reader;
   late Oito2SystemSettings _settings;
+
+  /// Whether [_reader] was created here, so this state closes it.
+  bool _ownsReader = false;
   StreamSubscription<Oito2SystemSettings>? _subscription;
 
   @override
   void initState() {
     super.initState();
+    _ownsReader = widget.reader == null;
     _reader = widget.reader ?? Oito2Settings.reader();
     _settings =
         widget.initialSettings ??
         Oito2SystemSettings.fallback(_reader.platform);
-    _subscription = _reader.watch().listen(_apply);
+    _listen();
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// Follows [_reader]; a failed read keeps the last settings shown.
+  void _listen() {
+    _subscription = _reader.watch().listen(_apply, onError: (Object _) {});
+  }
+
+  @override
+  void didUpdateWidget(Oito2SystemSettingsScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.reader == widget.reader) return;
+    _subscription?.cancel();
+    if (_ownsReader) _reader.close();
+    _ownsReader = widget.reader == null;
+    _reader = widget.reader ?? Oito2Settings.reader();
+    _listen();
   }
 
   void _apply(Oito2SystemSettings settings) {
@@ -90,13 +131,14 @@ class _Oito2SystemSettingsScopeState extends State<Oito2SystemSettingsScope>
 
   @override
   void didChangeAccessibilityFeatures() {
-    _reader.read().then(_apply);
+    _reader.read().then(_apply, onError: (Object _) {});
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _subscription?.cancel();
+    if (_ownsReader) _reader.close();
     super.dispose();
   }
 

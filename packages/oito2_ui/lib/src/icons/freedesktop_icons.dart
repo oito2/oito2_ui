@@ -661,9 +661,31 @@ enum Oito2FreedesktopIcons {
   };
 
   /// The icon for a specification [name], such as `document-save`, or
-  /// null for a name without a mapping. A trailing `-symbolic` is ignored.
-  static Oito2FreedesktopIcons? byName(String name) =>
-      _byName[name.endsWith('-symbolic')
-          ? name.substring(0, name.length - '-symbolic'.length)
-          : name];
+  /// null when nothing matches.
+  ///
+  /// Trailing `-symbolic`, `-rtl` and `-ltr` suffixes are ignored, and a
+  /// name without a mapping falls back, as the specification does, to the
+  /// name without its last dash-separated part: `folder-documents` to
+  /// `folder`.
+  static Oito2FreedesktopIcons? byName(String name) {
+    var current = name;
+    var trimmed = true;
+    while (trimmed) {
+      trimmed = false;
+      for (final suffix in const ['-symbolic', '-rtl', '-ltr']) {
+        if (current.endsWith(suffix)) {
+          current = current.substring(0, current.length - suffix.length);
+          trimmed = true;
+        }
+      }
+    }
+    while (current.isNotEmpty) {
+      final icon = _byName[current];
+      if (icon != null) return icon;
+      final dash = current.lastIndexOf('-');
+      if (dash < 0) return null;
+      current = current.substring(0, dash);
+    }
+    return null;
+  }
 }

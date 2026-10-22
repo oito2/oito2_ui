@@ -16,8 +16,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-
-import '../widgets/test_app.dart';
+import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 /// Records the progress of every frame an animated icon paints.
 class _Recorder {
@@ -41,6 +40,14 @@ void main() {
         Oito2FreedesktopIcons.documentOpen,
       );
       expect(Oito2FreedesktopIcons.byName('no-such-icon'), isNull);
+      expect(
+        Oito2FreedesktopIcons.byName('go-next-rtl-symbolic'),
+        Oito2FreedesktopIcons.byName('go-next'),
+      );
+      expect(
+        Oito2FreedesktopIcons.byName('document-save-as-template'),
+        Oito2FreedesktopIcons.byName('document-save-as'),
+      );
     });
 
     test('names are unique freedesktop names', () {

@@ -25,46 +25,49 @@ import 'preset_roles.dart';
 /// [Oito2ColorTheme] and [theme] a Material `ThemeData`.
 enum Oito2ThemePreset {
   /// Everforest Light.
-  everforestLight(isDark: false),
+  everforestLight(label: 'Everforest Light', isDark: false),
 
   /// Everforest Dark.
-  everforestDark(isDark: true),
+  everforestDark(label: 'Everforest Dark', isDark: true),
 
   /// Rosé Pine.
-  rosePine(isDark: true),
+  rosePine(label: 'Rosé Pine', isDark: true),
 
   /// Rosé Pine Moon.
-  rosePineMoon(isDark: true),
+  rosePineMoon(label: 'Rosé Pine Moon', isDark: true),
 
   /// Rosé Pine Dawn.
-  rosePineDawn(isDark: false),
+  rosePineDawn(label: 'Rosé Pine Dawn', isDark: false),
 
   /// Nord, dark.
-  nordDark(isDark: true),
+  nordDark(label: 'Nord Dark', isDark: true),
 
   /// Nord, light: an unofficial derivation with Polar Night and Snow Storm
   /// swapped.
-  nordLight(isDark: false),
+  nordLight(label: 'Nord Light', isDark: false),
 
   /// Dracula.
-  dracula(isDark: true),
+  dracula(label: 'Dracula', isDark: true),
 
   /// Alucard, the light variant of Dracula.
-  alucard(isDark: false),
+  alucard(label: 'Alucard', isDark: false),
 
   /// Catppuccin Latte.
-  catppuccinLatte(isDark: false),
+  catppuccinLatte(label: 'Catppuccin Latte', isDark: false),
 
   /// Catppuccin Frappé.
-  catppuccinFrappe(isDark: true),
+  catppuccinFrappe(label: 'Catppuccin Frappé', isDark: true),
 
   /// Catppuccin Macchiato.
-  catppuccinMacchiato(isDark: true),
+  catppuccinMacchiato(label: 'Catppuccin Macchiato', isDark: true),
 
   /// Catppuccin Mocha.
-  catppuccinMocha(isDark: true);
+  catppuccinMocha(label: 'Catppuccin Mocha', isDark: true);
 
-  const Oito2ThemePreset({required this.isDark});
+  const Oito2ThemePreset({required this.label, required this.isDark});
+
+  /// The display name of this preset, such as `Catppuccin Mocha`.
+  final String label;
 
   /// Whether this preset is a dark theme.
   final bool isDark;
@@ -73,13 +76,20 @@ enum Oito2ThemePreset {
   Brightness get brightness => isDark ? Brightness.dark : Brightness.light;
 
   /// The role colors of this preset, as published by its theme family.
-  Oito2ColorRoles get roles => presetRoles(this);
+  Oito2ColorRoles get roles => _roles[this] ??= presetRoles(this);
 
   /// The complete colors of this preset.
   Oito2ColorTheme get colors => Oito2ColorTheme.fromRoles(roles);
 
   /// The oito2 Material theme of this preset for [platform], which
-  /// defaults to [Oito2Platform.current].
-  ThemeData theme({Oito2Platform? platform}) =>
-      Oito2Theme.fromColors(colors, platform: platform);
+  /// defaults to [Oito2Platform.current], with text and outlines raised
+  /// to WCAG AAA when [highContrast] is set.
+  ThemeData theme({Oito2Platform? platform, bool highContrast = false}) =>
+      Oito2Theme.fromColors(
+        Oito2ColorTheme.fromRoles(roles, highContrast: highContrast),
+        platform: platform,
+      );
 }
+
+/// The role colors of each preset, built once.
+final Map<Oito2ThemePreset, Oito2ColorRoles> _roles = {};

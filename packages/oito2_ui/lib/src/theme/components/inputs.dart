@@ -27,7 +27,8 @@ import 'component_context.dart';
 /// height of the buttons, with or without prefix and suffix icons: the
 /// vertical padding centers one line of `bodyLarge` text in that height,
 /// net of the platform's visual density adjustment, and the icon boxes
-/// are as wide as the field is tall, with no minimum height. Helper and error text are laid out below that height.
+/// are as wide as the field is tall, with no minimum height. Helper and
+/// error text are laid out below that height.
 InputDecorationThemeData buildInputDecorationTheme(ComponentThemeContext c) {
   OutlineInputBorder border(Color color, [double width = 1]) =>
       OutlineInputBorder(

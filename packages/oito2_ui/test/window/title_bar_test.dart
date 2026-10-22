@@ -207,6 +207,33 @@ void main() {
       );
     });
 
+    testWidgets('preferredSizeOf follows the theme height and style', (
+      tester,
+    ) async {
+      late BuildContext context;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: Oito2Theme.light(platform: _linux)
+              .copyWith(extensions: const [Oito2TitleBarThemeData(height: 52)]),
+          home: Builder(
+            builder: (c) {
+              context = c;
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      expect(Oito2TitleBar.preferredSizeOf(context).height, 52);
+      expect(Oito2TitleBar.preferredSizeOf(context, height: 40).height, 40);
+      expect(
+        Oito2TitleBar.preferredSizeOf(
+          context,
+          style: Oito2TitleBarStyle.hidden,
+        ).height,
+        0,
+      );
+    });
+
     testWidgets('dims its content while the window is inactive', (
       tester,
     ) async {

@@ -57,14 +57,29 @@ class Oito2ColorTheme {
   /// keeps white text: its lightness is lowered only as far as needed for
   /// white to reach 4.5:1 (7:1 with [highContrast]).
   factory Oito2ColorTheme.light({Color? accent, bool highContrast = false}) =>
-      _base(Brightness.light, accent, highContrast);
+      _cached((Brightness.light, accent, highContrast), () {
+        return _base(Brightness.light, accent, highContrast);
+      });
 
   /// The dark oito2 base scheme: GTK-style neutrals with [accent] as the
   /// primary hue.
   ///
   /// See [Oito2ColorTheme.light] for how [accent] and [highContrast] apply.
   factory Oito2ColorTheme.dark({Color? accent, bool highContrast = false}) =>
-      _base(Brightness.dark, accent, highContrast);
+      _cached((Brightness.dark, accent, highContrast), () {
+        return _base(Brightness.dark, accent, highContrast);
+      });
+
+  /// The schemes built recently, by their inputs, so asking again for the
+  /// same scheme returns it without recomputing the contrast adjustments.
+  static final Map<Object, Oito2ColorTheme> _cache = {};
+
+  static Oito2ColorTheme _cached(Object key, Oito2ColorTheme Function() build) {
+    final cached = _cache.remove(key);
+    if (cached != null) return _cache[key] = cached;
+    if (_cache.length >= 32) _cache.remove(_cache.keys.first);
+    return _cache[key] = build();
+  }
 
   /// A scheme derived from the role colors of a theme family.
   ///
@@ -83,8 +98,14 @@ class Oito2ColorTheme {
   ///   `outlineVariant` is `border`.
   ///
   /// Text, outline, semantic and syntax colors are then adjusted to reach
-  /// WCAG AA against every surface, as for the base scheme.
-  factory Oito2ColorTheme.fromRoles(Oito2ColorRoles roles) {
+  /// WCAG AA against every surface, as for the base scheme, or AAA with
+  /// [highContrast].
+  factory Oito2ColorTheme.fromRoles(
+    Oito2ColorRoles roles, {
+    bool highContrast = false,
+  }) => _cached((roles, highContrast), () => _fromRoles(roles, highContrast));
+
+  static Oito2ColorTheme _fromRoles(Oito2ColorRoles roles, bool highContrast) {
     final isDark = roles.brightness == Brightness.dark;
     final card = roles.card;
     final secondary = roles.secondary;
@@ -94,7 +115,7 @@ class Oito2ColorTheme {
     final container = Color.lerp(card, secondary, 1 / 3)!;
     return _assemble(
       brightness: roles.brightness,
-      highContrast: false,
+      highContrast: highContrast,
       primary: roles.primary,
       onPrimary: Oito2Contrast.foregroundFor(roles.primary),
       error: roles.destructive,

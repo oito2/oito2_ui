@@ -98,14 +98,30 @@ class Oito2Highlighter {
   /// The names of the registered languages.
   final Set<String> languages;
 
+  /// Whether [language] is registered, by name or by one of its aliases
+  /// (such as `js` or `yml`), in any letter case.
+  bool supports(String language) => _highlight.getLanguage(language) != null;
+
+  /// The token styles of recently used palettes, so highlighting doesn't
+  /// rebuild them on every call.
+  static final _themes = <Oito2SyntaxPalette, Map<String, TextStyle>>{};
+
+  static Map<String, TextStyle> _themeFor(Oito2SyntaxPalette palette) {
+    final cached = _themes[palette];
+    if (cached != null) return cached;
+    if (_themes.length >= 16) _themes.remove(_themes.keys.first);
+    return _themes[palette] = Oito2HighlighterTheme.fromPalette(palette);
+  }
+
   /// A shared highlighter with the default languages.
   static final Oito2Highlighter instance = Oito2Highlighter();
 
   /// Returns [code] highlighted as [language] with [palette], on top of
   /// [style] (whose color is replaced by the palette foreground).
   ///
-  /// When [language] isn't registered, or is null and [autoDetect] is
-  /// false, the code is returned unhighlighted in the foreground color.
+  /// [language] is a registered name or alias, in any letter case. When it
+  /// isn't registered, or is null and [autoDetect] is false, the code is
+  /// returned unhighlighted in the foreground color.
   /// With [autoDetect], a null [language] is guessed among the registered
   /// ones.
   TextSpan highlight(
@@ -119,17 +135,17 @@ class Oito2Highlighter {
       color: palette.foreground,
     );
     final HighlightResult result;
-    if (language != null && languages.contains(language)) {
-      result = _highlight.highlight(code: code, language: language);
+    if (language != null && supports(language)) {
+      result = _highlight.highlight(
+        code: code,
+        language: language.toLowerCase(),
+      );
     } else if (language == null && autoDetect) {
       result = _highlight.highlightAuto(code);
     } else {
       return TextSpan(text: code, style: base);
     }
-    final renderer = TextSpanRenderer(
-      base,
-      Oito2HighlighterTheme.fromPalette(palette),
-    );
+    final renderer = TextSpanRenderer(base, _themeFor(palette));
     result.render(renderer);
     return renderer.span ?? TextSpan(text: code, style: base);
   }

@@ -20,8 +20,11 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  oito2_ui_test_utils: any
 
 flutter:
+  assets:
+    - assets/fonts/jetbrains_mono/OFL.txt
   fonts:
     - family: JetBrains Mono
       fonts:

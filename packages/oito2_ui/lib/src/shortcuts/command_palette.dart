@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -56,6 +57,7 @@ class _CommandPaletteState extends State<_CommandPalette> {
   String _query = '';
   int _highlight = 0;
   final _scroll = ScrollController();
+  final _highlightKey = GlobalKey();
 
   @override
   void dispose() {
@@ -63,22 +65,31 @@ class _CommandPaletteState extends State<_CommandPalette> {
     super.dispose();
   }
 
+  /// Each command with its folded label and its folded searchable text,
+  /// computed once.
+  late final List<(Oito2Command, String, String)> _folded = [
+    for (final command in widget.commands)
+      (
+        command,
+        foldText(command.label),
+        foldText(
+          [
+            command.label,
+            command.description ?? '',
+            command.group ?? '',
+            ...command.keywords,
+          ].join(' '),
+        ),
+      ),
+  ];
+
   List<Oito2Command> get _matches {
     final words = foldText(_query)
         .split(RegExp(r'\s+'))
         .where((w) => w.isNotEmpty)
         .toList();
     final scored = <(int, Oito2Command)>[];
-    for (final command in widget.commands) {
-      final label = foldText(command.label);
-      final text = foldText(
-        [
-          command.label,
-          command.description ?? '',
-          command.group ?? '',
-          ...command.keywords,
-        ].join(' '),
-      );
+    for (final (command, label, text) in _folded) {
       if (!words.every(text.contains)) continue;
       final score = words.isEmpty
           ? 1
@@ -89,9 +100,9 @@ class _CommandPaletteState extends State<_CommandPalette> {
           : 2;
       scored.add((score, command));
     }
-    final ordered = [...scored];
-    ordered.sort((a, b) => a.$1 - b.$1);
-    return [for (final (_, command) in ordered) command];
+    // A stable sort keeps the scope and declaration order within a score.
+    mergeSort(scored, compare: (a, b) => a.$1 - b.$1);
+    return [for (final (_, command) in scored) command];
   }
 
   void _run(Oito2Command command) {
@@ -102,6 +113,26 @@ class _CommandPaletteState extends State<_CommandPalette> {
   void _move(int step, int count) {
     if (count == 0) return;
     setState(() => _highlight = (_highlight + step) % count);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reveal(step, count));
+  }
+
+  /// Scrolls the list so the highlighted command is visible; the first and
+  /// last commands scroll to the ends, since they may not be built yet.
+  void _reveal(int step, int count) {
+    if (!mounted || !_scroll.hasClients) return;
+    final position = _scroll.position;
+    if (_highlight == 0) {
+      position.jumpTo(position.minScrollExtent);
+    } else if (_highlight == count - 1) {
+      position.jumpTo(position.maxScrollExtent);
+    } else if (_highlightKey.currentContext case final item?) {
+      Scrollable.ensureVisible(
+        item,
+        alignmentPolicy: step < 0
+            ? ScrollPositionAlignmentPolicy.keepVisibleAtStart
+            : ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+      );
+    }
   }
 
   @override
@@ -165,6 +196,7 @@ class _CommandPaletteState extends State<_CommandPalette> {
                         final group = command.group;
                         final subtitle = [?group, ?description].join(' · ');
                         return ListTile(
+                          key: index == _highlight ? _highlightKey : null,
                           selected: index == _highlight,
                           leading: command.icon == null
                               ? null

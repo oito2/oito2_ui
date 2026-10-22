@@ -103,7 +103,7 @@ class ThemeHomeView extends StatelessWidget {
               for (final (icon, title, subtitle, badge) in const [
                 (LucideIcons.file_text, 'Design review', 'Edited 5 min ago', 2),
                 (LucideIcons.image, 'Showcase screenshots', 'Yesterday', 0),
-                (LucideIcons.git_branch, 'Wave 11', 'Merged', 0),
+                (LucideIcons.git_branch, 'Release 0.2', 'Merged', 0),
               ])
                 ListTile(
                   leading: Icon(icon),

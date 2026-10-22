@@ -135,6 +135,17 @@ class _ToggleState {
 
   /// The opacity of the hover and press overlay.
   double get overlay => pressed ? 0.16 : (hovered ? 0.08 : 0);
+
+  @override
+  bool operator ==(Object other) =>
+      other is _ToggleState &&
+      other.progress == progress &&
+      other.hovered == hovered &&
+      other.pressed == pressed &&
+      other.focused == focused;
+
+  @override
+  int get hashCode => Object.hash(progress, hovered, pressed, focused);
 }
 
 /// Paints a ring of [width] around [rrect], [gap] pixels away from it, as
@@ -253,6 +264,7 @@ class _ToggleWidgetState extends State<_Toggle>
       },
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
+        excludeFromSemantics: true,
         onTapDown: enabled ? (_) => setState(() => _pressed = true) : null,
         onTapCancel: enabled ? () => setState(() => _pressed = false) : null,
         onTapUp: enabled ? (_) => setState(() => _pressed = false) : null,
@@ -260,7 +272,8 @@ class _ToggleWidgetState extends State<_Toggle>
         child: Semantics.fromProperties(
           container: true,
           properties: widget.semantics,
-          child: toggle,
+          // The tap action joins the node that carries the state.
+          child: Semantics(onTap: enabled ? _activate : null, child: toggle),
         ),
       ),
     );
@@ -308,13 +321,6 @@ class Oito2Checkbox extends StatelessWidget {
   /// The accessibility label, when no surrounding label provides one.
   final String? semanticLabel;
 
-  /// The value after a tap.
-  bool? get _next => switch (value) {
-    false => true,
-    true => tristate ? null : false,
-    null => false,
-  };
-
   @override
   Widget build(BuildContext context) {
     final onChanged = this.onChanged;
@@ -325,7 +331,7 @@ class Oito2Checkbox extends StatelessWidget {
     return _Toggle(
       selected: value != false,
       enabled: onChanged != null,
-      onActivate: () => onChanged!(_next),
+      onActivate: () => onChanged!(nextCheckValue(value, tristate: tristate)),
       size: Size.square(target),
       focusNode: focusNode,
       autofocus: autofocus,
@@ -488,13 +494,8 @@ class Oito2Radio<T> extends StatelessWidget {
     return _Toggle(
       selected: _selected,
       enabled: onChanged != null,
-      onActivate: () {
-        if (_selected) {
-          if (toggleable) onChanged!(null);
-        } else {
-          onChanged!(value);
-        }
-      },
+      onActivate: () =>
+          activateRadio(value, groupValue, onChanged!, toggleable: toggleable),
       size: Size.square(target),
       focusNode: focusNode,
       autofocus: autofocus,
@@ -943,7 +944,11 @@ class Oito2CheckboxListTile extends StatelessWidget {
     return _ToggleListTile(
       control: checkbox,
       controlLeading: controlAffinity != Oito2ControlAffinity.trailing,
-      onTap: onChanged == null ? null : () => onChanged(checkbox._next),
+      onTap: onChanged == null
+          ? null
+          : () => onChanged(
+              nextCheckValue(checkbox.value, tristate: checkbox.tristate),
+            ),
       title: title,
       subtitle: subtitle,
       secondary: secondary,
@@ -1009,7 +1014,6 @@ class Oito2RadioListTile<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onChanged = this.onChanged;
-    final selected = value == groupValue;
     return _ToggleListTile(
       control: Oito2Radio<T>(
         value: value,
@@ -1020,13 +1024,12 @@ class Oito2RadioListTile<T> extends StatelessWidget {
       controlLeading: controlAffinity != Oito2ControlAffinity.trailing,
       onTap: onChanged == null
           ? null
-          : () {
-              if (!selected) {
-                onChanged(value);
-              } else if (toggleable) {
-                onChanged(null);
-              }
-            },
+          : () => activateRadio(
+              value,
+              groupValue,
+              onChanged,
+              toggleable: toggleable,
+            ),
       title: title,
       subtitle: subtitle,
       secondary: secondary,

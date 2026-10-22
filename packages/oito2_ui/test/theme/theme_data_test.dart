@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
@@ -180,6 +181,48 @@ void main() {
     });
   });
 
+  testWidgets('the Inter license shows in the license page', (tester) async {
+    Oito2Theme.light(platform: _linux);
+    final packages = await tester.runAsync(() async {
+      final names = <String>{};
+      await for (final entry in LicenseRegistry.licenses) {
+        names.addAll(entry.packages);
+      }
+      return names;
+    });
+    expect(packages, contains('Inter'));
+  });
+
+  group('caching', () {
+    test('the same inputs return the same scheme and theme', () {
+      expect(Oito2ColorTheme.light(), same(Oito2ColorTheme.light()));
+      final roles = sampleRoles['roles light dim']!;
+      expect(
+        Oito2ColorTheme.fromRoles(roles),
+        same(Oito2ColorTheme.fromRoles(roles)),
+      );
+      expect(
+        Oito2Theme.light(platform: _linux),
+        same(Oito2Theme.light(platform: _linux)),
+      );
+    });
+
+    test('fromRoles honors high contrast', () {
+      final roles = sampleRoles['roles light dim']!;
+      final normal = Oito2ColorTheme.fromRoles(roles);
+      final high = Oito2ColorTheme.fromRoles(roles, highContrast: true);
+      expect(high.highContrast, isTrue);
+      expect(
+        Oito2Contrast.ratio(
+          high.colorScheme.onSurfaceVariant,
+          high.colorScheme.surface,
+        ),
+        greaterThanOrEqualTo(Oito2Contrast.textAAA),
+      );
+      expect(normal.highContrast, isFalse);
+    });
+  });
+
   group('platform adaptation', () {
     test('pointer platforms use compact controls without splashes', () {
       for (final platform in [_linux, _windows, _web]) {
@@ -188,8 +231,8 @@ void main() {
         expect(theme.materialTapTargetSize, MaterialTapTargetSize.shrinkWrap);
         expect(theme.splashFactory, NoSplash.splashFactory);
         expect(
-          theme.filledButtonTheme.style!.fixedSize!.resolve(_none),
-          const Size.fromHeight(Oito2Sizes.buttonHeight),
+          theme.filledButtonTheme.style!.minimumSize!.resolve(_none)!.height,
+          Oito2Sizes.buttonHeight - theme.visualDensity.baseSizeAdjustment.dy,
         );
         expect(theme.appBarTheme.toolbarHeight, Oito2Sizes.titleBarHeight);
       }
@@ -201,8 +244,8 @@ void main() {
       expect(theme.materialTapTargetSize, MaterialTapTargetSize.padded);
       expect(theme.splashFactory, isNot(NoSplash.splashFactory));
       expect(
-        theme.filledButtonTheme.style!.fixedSize!.resolve(_none),
-        const Size.fromHeight(Oito2Sizes.touchButtonHeight),
+        theme.filledButtonTheme.style!.minimumSize!.resolve(_none)!.height,
+        Oito2Sizes.touchButtonHeight,
       );
       expect(theme.appBarTheme.toolbarHeight, isNull);
     });
@@ -323,6 +366,38 @@ void main() {
         tester.getSize(find.byType(FilledButton)).height,
         Oito2Sizes.buttonHeight,
       );
+    });
+
+    testWidgets('buttons grow with a large text scale', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: Oito2Theme.light(platform: _linux),
+          home: MediaQuery.withClampedTextScaling(
+            minScaleFactor: 3,
+            maxScaleFactor: 3,
+            child: Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FilledButton(onPressed: () {}, child: const Text('Save')),
+                    MenuItemButton(onPressed: () {}, child: const Text('Open')),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      for (final type in [FilledButton, MenuItemButton]) {
+        final button = tester.getRect(find.byType(type));
+        final label = tester.getRect(
+          find.descendant(of: find.byType(type), matching: find.byType(Text)),
+        );
+        expect(button.height, greaterThan(Oito2Sizes.buttonHeight));
+        expect(label.top, greaterThanOrEqualTo(button.top));
+        expect(label.bottom, lessThanOrEqualTo(button.bottom));
+      }
     });
 
     testWidgets('buttons keep a 48 tap target on touch platforms', (
