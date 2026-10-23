@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -30,7 +30,11 @@ import 'widget_helpers.dart';
 /// It keeps [boundaryCount] pages at each end and [siblingCount] pages on
 /// each side of [page], and always returns the same number of items for a
 /// given [count], so the buttons don't shift as the page changes. An
-/// ellipsis never stands for a single page.
+/// ellipsis never stands for a single page. Pages count from 1, and a
+/// [count] of zero or less gives an empty list.
+///
+/// Throws an [AssertionError] in debug mode when [siblingCount] or
+/// [boundaryCount] is negative.
 List<int?> oito2PaginationItems(
   int page,
   int count, {
@@ -75,6 +79,11 @@ List<int?> oito2PaginationItems(
 /// of 10", with the page size selector wrapped below. Pages count from 1.
 class Oito2Pagination extends StatelessWidget {
   /// Creates a pagination.
+  ///
+  /// Throws an [AssertionError] in debug mode when [pageCount] is less than
+  /// 1, when [page] is outside 1 to [pageCount], or when [siblingCount] or
+  /// [boundaryCount] is negative. Building also asserts that [pageSize] is
+  /// one of [pageSizes] when both are given.
   const Oito2Pagination({
     super.key,
     required this.page,
@@ -217,6 +226,7 @@ class Oito2Pagination extends StatelessWidget {
   }
 }
 
+/// A page number button, filled when it is the [current] page.
 class _PageButton extends StatelessWidget {
   const _PageButton({
     required this.page,

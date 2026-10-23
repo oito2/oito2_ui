@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -44,7 +44,8 @@ enum Oito2InfoType {
   /// The icon that represents this kind.
   final IconData icon;
 
-  /// The name of this kind for assistive technologies, such as "Warning".
+  /// Returns the localized name of this kind from [strings], such as
+  /// "Warning", for assistive technologies.
   String labelIn(Oito2Localizations strings) => switch (this) {
     information => strings.infoInformation,
     success => strings.infoSuccess,
@@ -53,7 +54,7 @@ enum Oito2InfoType {
     important => strings.infoImportant,
   };
 
-  /// The color of this kind in [colors].
+  /// Returns the color of this kind in [colors].
   Color colorIn(Oito2SemanticColors colors) => switch (this) {
     information => colors.info,
     success => colors.success,
@@ -63,9 +64,9 @@ enum Oito2InfoType {
   };
 }
 
-/// Resolves the tinted background and the readable foreground for [type]
-/// over [surface]: the type color at [tint] opacity for the background and
-/// the type color adjusted to reach 4.5:1 on it.
+/// Returns the tinted background and the readable foreground for [type]
+/// over the scheme surface: the type color at [tint] opacity for the
+/// background and the type color adjusted to reach 4.5:1 on it.
 (Color background, Color foreground) _infoColors(
   BuildContext context,
   Oito2InfoType type,
@@ -109,7 +110,8 @@ class Oito2InfoBox extends StatelessWidget {
   /// A widget at the end, such as a close or action button.
   final Widget? trailing;
 
-  /// Replaces the type icon.
+  /// Replaces the type icon; unlike the default icon, it carries no kind
+  /// label for assistive technologies.
   final Widget? icon;
 
   @override

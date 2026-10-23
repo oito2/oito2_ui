@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -39,10 +39,10 @@ class Oito2TourStep {
   final String title;
 
   /// The key of the widget the step points at; the card is centered in
-  /// the window when null or when the widget isn't built.
+  /// the tour layer when null or when the widget isn't built.
   final GlobalKey? target;
 
-  /// The text of the step card.
+  /// The body text of the step card, below [title].
   final String? description;
 
   /// The side of the target where the card opens.
@@ -50,15 +50,20 @@ class Oito2TourStep {
 
   /// Whether the step waits for a tap on the target instead of offering
   /// a next button. The tap reaches the target, then the tour moves on.
+  /// While the target isn't on screen, the next button shows instead.
   final bool waitForTap;
 
-  /// The space around the target inside the spotlight.
+  /// The space around the target inside the spotlight, in logical
+  /// pixels.
   final double spotlightPadding;
 }
 
-/// Runs an [Oito2Tour] through its [steps].
+/// Runs an [Oito2Tour] through its [steps], notifying its listeners on
+/// every step change and when the tour ends.
 class Oito2TourController extends ChangeNotifier {
-  /// Creates a tour controller.
+  /// Creates a tour controller that isn't running yet.
+  ///
+  /// Throws an [AssertionError] in debug builds when [steps] is empty.
   Oito2TourController({required this.steps}) : assert(steps.isNotEmpty);
 
   /// The steps, in order.
@@ -76,13 +81,20 @@ class Oito2TourController extends ChangeNotifier {
   /// Whether the tour is running.
   bool get isActive => _index != null;
 
-  /// Whether the last run reached the end, rather than being skipped.
+  /// Whether the last run reached the end, rather than being skipped;
+  /// false while a run is in progress.
   bool get completed => _completed;
 
-  /// Starts the tour at [index].
+  /// Starts the tour, or restarts it, at the step at [index].
+  ///
+  /// Throws an [AssertionError] in debug builds when [index] is out of
+  /// range.
   void start([int index = 0]) => goTo(index);
 
-  /// Shows the step at [index].
+  /// Shows the step at [index], starting the tour when it isn't running.
+  ///
+  /// Throws an [AssertionError] in debug builds when [index] is out of
+  /// range.
   void goTo(int index) {
     assert(index >= 0 && index < steps.length);
     _index = index;
@@ -90,7 +102,8 @@ class Oito2TourController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Moves to the next step, or finishes the tour after the last.
+  /// Moves to the next step, or completes the tour after the last; does
+  /// nothing when the tour isn't running.
   void next() {
     final index = _index;
     if (index == null) return;
@@ -101,15 +114,18 @@ class Oito2TourController extends ChangeNotifier {
     }
   }
 
-  /// Moves to the previous step.
+  /// Moves to the previous step; does nothing on the first step or when
+  /// the tour isn't running.
   void previous() {
     final index = _index;
     if (index != null && index > 0) goTo(index - 1);
   }
 
-  /// Ends the tour before its last step.
+  /// Ends the tour without completing it; does nothing when it isn't
+  /// running.
   void skip() => _finish(completed: false);
 
+  /// Stops the running tour, recording whether it was [completed].
   void _finish({required bool completed}) {
     if (_index == null) return;
     _index = null;
@@ -122,10 +138,11 @@ class Oito2TourController extends ChangeNotifier {
 /// window around its target, scrolls it into view and shows a card with
 /// the step text, its position, and back, next and skip buttons.
 ///
-/// The card takes the focus and is announced to assistive technologies.
-/// The arrow keys move between steps and Escape skips the tour. Taps
-/// outside the spotlight are blocked; taps inside reach the target,
-/// which moves a [Oito2TourStep.waitForTap] step on.
+/// The card takes the focus and is announced to assistive technologies;
+/// when the tour ends, the focus returns to where it was before. While the
+/// card has focus, the arrow keys move between steps and Escape skips the
+/// tour. Taps outside the spotlight are blocked; taps inside reach the
+/// target, which moves a [Oito2TourStep.waitForTap] step on.
 class Oito2Tour extends StatefulWidget {
   /// Creates a tour.
   const Oito2Tour({
@@ -141,7 +158,8 @@ class Oito2Tour extends StatefulWidget {
   /// The content the tour runs over.
   final Widget child;
 
-  /// Called when the tour ends, with whether it reached the last step.
+  /// Called when the tour ends, with true when it was completed and false
+  /// when it was skipped.
   final ValueChanged<bool>? onFinished;
 
   @override
@@ -191,6 +209,7 @@ class _Oito2TourState extends State<Oito2Tour> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  /// Shows, moves or hides the tour layer to match the controller.
   void _sync() {
     if (!mounted) return;
     final index = _controller.index;
@@ -270,6 +289,8 @@ class _Oito2TourState extends State<Oito2Tour> with TickerProviderStateMixin {
     return Rect.lerp(from, target, Curves.easeOutCubic.transform(_move.value));
   }
 
+  /// Moves a [Oito2TourStep.waitForTap] step on when [event] lands inside
+  /// the target.
   void _onPointerUp(PointerUpEvent event) {
     final step = _controller.step;
     final target = _target;
@@ -282,6 +303,7 @@ class _Oito2TourState extends State<Oito2Tour> with TickerProviderStateMixin {
     });
   }
 
+  /// Builds the content of the card of [step], the step at [index].
   Widget _buildCard(BuildContext context, int index, Oito2TourStep step) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -387,6 +409,8 @@ class _Oito2TourState extends State<Oito2Tour> with TickerProviderStateMixin {
     );
   }
 
+  /// Builds the overlay with the dimmed backdrop, the spotlight and the
+  /// card of the current step.
   Widget _buildLayer(BuildContext context) {
     final index = _controller.index;
     if (index == null) return const SizedBox.shrink();
@@ -474,6 +498,7 @@ class _SpotlightPainter extends CustomPainter {
   final Rect? hole;
   final Color color;
 
+  /// The rounded spotlight shape, or null when there is no hole.
   RRect? get _hole {
     final hole = this.hole;
     return hole == null

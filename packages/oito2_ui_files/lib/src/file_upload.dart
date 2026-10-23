@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -42,10 +42,11 @@ class Oito2FileUpload extends StatefulWidget {
     this.zoneMinHeight = 160,
   });
 
-  /// The files and their limits.
+  /// The controller that holds the files and checks their limits.
   final Oito2FileUploadController controller;
 
-  /// Replaces the zone hint.
+  /// Replaces the default zone hint, which lists the accepted types and
+  /// the size limit.
   final Widget? hint;
 
   /// Whether image files show a thumbnail.
@@ -57,7 +58,7 @@ class Oito2FileUpload extends StatefulWidget {
   /// The source of dropped files; see [Oito2FileDropZone.dropTargetBuilder].
   final Oito2FileDropTargetBuilder? dropTargetBuilder;
 
-  /// The smallest height of the drop zone.
+  /// The smallest height of the drop zone, in logical pixels.
   final double zoneMinHeight;
 
   @override
@@ -98,6 +99,8 @@ class _Oito2FileUploadState extends State<Oito2FileUpload> {
     setState(() {});
   }
 
+  /// The localized accepted types and size limit of the controller, or
+  /// null when it has neither.
   String? _defaultHint(BuildContext context) {
     final strings = Oito2Localizations.of(context);
     final controller = widget.controller;
@@ -115,6 +118,7 @@ class _Oito2FileUploadState extends State<Oito2FileUpload> {
     return parts.isEmpty ? null : parts.join(' · ');
   }
 
+  /// The localized message that explains why [rejected] was refused.
   String _reason(BuildContext context, Oito2RejectedFile rejected) {
     final strings = Oito2Localizations.of(context);
     final name = rejected.file.name;
@@ -181,6 +185,7 @@ class _Oito2FileUploadState extends State<Oito2FileUpload> {
   }
 }
 
+/// The file extensions of the image formats that get a preview.
 const _imageExtensions = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'};
 
 /// Whether [file] is an image Flutter can decode, by MIME type or name.

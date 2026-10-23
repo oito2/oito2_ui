@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ final _cities = Oito2ListCollection(const [
   'Recife',
 ], isDisabled: (c) => c == 'Recife');
 
+/// [count] carousel slides, each showing `Slide <index>`.
 List<Widget> _slides(int count) => [
   for (var i = 0; i < count; i++) Center(child: Text('Slide $i')),
 ];
@@ -43,25 +44,38 @@ void main() {
       await tester.tap(find.byTooltip('Next page'));
       await tester.pumpAndSettle();
       expect(find.text('Slide 1'), findsOneWidget);
-      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-      await tester.pump();
       await tester.tap(find.byTooltip('Previous page'));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Previous page'));
       await tester.pumpAndSettle();
       expect(find.text('Slide 2'), findsOneWidget);
       expect(pages, [1, 0, 2]);
+      // With the focus inside, the arrow keys step and wrap around.
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(find.text('Slide 0'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pumpAndSettle();
+      expect(find.text('Slide 2'), findsOneWidget);
+      expect(pages, [1, 0, 2, 0, 2]);
     });
 
     testWidgets('without loop the ends disable the buttons', (tester) async {
       await pumpOito2(tester, Oito2Carousel(loop: false, children: _slides(2)));
-      final previous = tester.widget<Oito2IconButton>(
+      Oito2IconButton button(IconData icon) => tester.widget<Oito2IconButton>(
         find.ancestor(
-          of: find.byIcon(LucideIcons.chevron_left),
+          of: find.byIcon(icon),
           matching: find.byType(Oito2IconButton),
         ),
       );
-      expect(previous.onPressed, isNull);
+      expect(button(LucideIcons.chevron_left).onPressed, isNull);
+      expect(button(LucideIcons.chevron_right).onPressed, isNotNull);
+      await tester.tap(find.byTooltip('Next page'));
+      await tester.pumpAndSettle();
+      expect(find.text('Slide 1'), findsOneWidget);
+      expect(button(LucideIcons.chevron_left).onPressed, isNotNull);
+      expect(button(LucideIcons.chevron_right).onPressed, isNull);
     });
 
     testWidgets('the dots jump to a page', (tester) async {

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
-/// Pumps [builder] with a value that the built widget updates through the
-/// given setter.
+/// Pumps the widget built by [builder], centered, starting from [initial]
+/// and rebuilding it with every value passed to the setter it receives.
 Future<void> _pumpStateful<T>(
   WidgetTester tester,
   T initial,
@@ -442,8 +442,21 @@ void main() {
           title: Text('Unavailable'),
         ),
       );
+      final handle = tester.ensureSemantics();
       await tester.tap(find.text('Unavailable'));
+      await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Unavailable')),
+        isSemantics(
+          hasEnabledState: true,
+          isEnabled: false,
+          hasToggledState: true,
+          isToggled: false,
+          hasTapAction: false,
+        ),
+      );
+      handle.dispose();
     });
   });
 }

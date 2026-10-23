@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+/// Accented and special lowercase Latin letters mapped to their plain
+/// ASCII spelling.
 const _accents = {
   'à': 'a',
   'á': 'a',
@@ -70,18 +72,19 @@ const _accents = {
   'œ': 'oe',
 };
 
-/// Returns [text] in lower case without the accents of Latin letters,
-/// including the combining accents of decomposed text, and with `ß`, `æ`
-/// and `œ` spelled out.
+/// Returns [text] in lower case without the accents of Latin letters, with
+/// the combining accents of decomposed text removed, and with `ß`, `æ` and
+/// `œ` spelled out.
 ///
 /// Used to compare and search text ignoring case and accents, such as
 /// "Ação" matching "acao". [foldTextWithOffsets] also maps the result back
 /// to [text].
 String foldText(String text) => foldTextWithOffsets(text).folded;
 
-/// Folds [text] like [foldText], with the index in [text] of each folded
-/// character: `starts[i]` is where the character that produced
-/// `folded[i]` begins, and a final entry holds `text.length`.
+/// Folds [text] like [foldText] and returns the folded string with the
+/// index in [text] of each folded character: `starts[i]` is where the
+/// character that produced `folded[i]` begins, and a final entry holds
+/// `text.length`.
 ///
 /// A folded range `start..end` covers `starts[start]..starts[end]` of
 /// [text], with the combining accents that follow it.

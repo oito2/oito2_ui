@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,8 +18,9 @@ import 'package:material_ui/material_ui.dart';
 import '../../tokens/geometry.dart';
 import 'component_context.dart';
 
-/// The shape, size, padding and text style shared by every text button
-/// variant.
+/// Returns the shape, size, padding and text style shared by every text
+/// button variant, with the focus ring under keyboard focus and [side]
+/// otherwise.
 ///
 /// Buttons are at least [ComponentThemeContext.controlHeight] tall and grow
 /// when the label needs more room, such as under a large text scale. The
@@ -45,7 +46,8 @@ ButtonStyle _baseButtonStyle(ComponentThemeContext c, {BorderSide? side}) {
   );
 }
 
-/// Filled buttons: the scheme's primary fill with its on-color.
+/// Returns the theme of filled buttons: the scheme's primary fill with its
+/// on-color.
 FilledButtonThemeData buildFilledButtonTheme(ComponentThemeContext c) {
   return FilledButtonThemeData(
     style: _baseButtonStyle(c).copyWith(
@@ -63,8 +65,8 @@ FilledButtonThemeData buildFilledButtonTheme(ComponentThemeContext c) {
   );
 }
 
-/// Elevated buttons: the neutral desktop button, a raised container
-/// surface that gains a shadow on hover.
+/// Returns the theme of elevated buttons: the neutral desktop button, a
+/// raised container surface that gains a shadow on hover.
 ElevatedButtonThemeData buildElevatedButtonTheme(ComponentThemeContext c) {
   return ElevatedButtonThemeData(
     style: _baseButtonStyle(c).copyWith(
@@ -91,8 +93,8 @@ ElevatedButtonThemeData buildElevatedButtonTheme(ComponentThemeContext c) {
   );
 }
 
-/// Outlined buttons: a 1-pixel `outline` border with text-safe primary
-/// text.
+/// Returns the theme of outlined buttons: a 1-pixel `outline` border with
+/// text-safe primary text.
 OutlinedButtonThemeData buildOutlinedButtonTheme(ComponentThemeContext c) {
   return OutlinedButtonThemeData(
     style: _baseButtonStyle(c).copyWith(
@@ -106,7 +108,8 @@ OutlinedButtonThemeData buildOutlinedButtonTheme(ComponentThemeContext c) {
   );
 }
 
-/// Text buttons: text-safe primary text without a container.
+/// Returns the theme of text buttons: text-safe primary text without a
+/// container, with narrower padding.
 TextButtonThemeData buildTextButtonTheme(ComponentThemeContext c) {
   return TextButtonThemeData(
     style: _baseButtonStyle(c).copyWith(
@@ -122,7 +125,8 @@ TextButtonThemeData buildTextButtonTheme(ComponentThemeContext c) {
   );
 }
 
-/// Icon buttons: square, [ComponentThemeContext.controlHeight] wide on
+/// Returns the theme of icon buttons: square, at least
+/// [ComponentThemeContext.controlHeight] wide and exactly that size on
 /// pointer platforms, with the focus ring.
 IconButtonThemeData buildIconButtonTheme(ComponentThemeContext c) {
   return IconButtonThemeData(
@@ -144,8 +148,9 @@ IconButtonThemeData buildIconButtonTheme(ComponentThemeContext c) {
   );
 }
 
-/// Segmented buttons: control height, medium radius and `outline`
-/// borders, with the selected segment in the secondary container.
+/// Returns the theme of segmented buttons: control height, medium radius
+/// and `outline` borders; the selected segment keeps the Material
+/// secondary container fill.
 ///
 /// `SegmentedButton` keeps neither `minimumSize` nor `fixedSize` for its
 /// segments: each one is a text button 40 pixels tall adjusted by the
@@ -173,7 +178,8 @@ SegmentedButtonThemeData buildSegmentedButtonTheme(ComponentThemeContext c) {
   );
 }
 
-/// Floating action buttons: large radius and no elevation tint.
+/// Returns the theme of floating action buttons: the primary container
+/// with the large radius and low elevations.
 FloatingActionButtonThemeData buildFloatingActionButtonTheme(
   ComponentThemeContext c,
 ) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -40,6 +40,9 @@ class Oito2BorderContainer extends StatelessWidget {
   /// Creates a container tinted with [tint]: a [tint] border over a fill
   /// of [tint] at [opacity], such as a status color for a highlighted
   /// note.
+  ///
+  /// Throws an [AssertionError] in debug builds when [opacity] is outside
+  /// 0 to 1.
   Oito2BorderContainer.tinted({
     super.key,
     required Color tint,
@@ -64,10 +67,10 @@ class Oito2BorderContainer extends StatelessWidget {
   /// Space outside the border.
   final EdgeInsetsGeometry? margin;
 
-  /// A fixed width.
+  /// A fixed width; the container sizes to its content when null.
   final double? width;
 
-  /// A fixed height.
+  /// A fixed height; the container sizes to its content when null.
   final double? height;
 
   /// The background; defaults to the scheme surface.
@@ -335,7 +338,7 @@ class Oito2Watermark extends StatelessWidget {
   /// Space between the watermark and the edges.
   final EdgeInsetsGeometry padding;
 
-  /// The watermark opacity.
+  /// The watermark opacity, from 0 to 1.
   final double opacity;
 
   @override

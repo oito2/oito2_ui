@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -33,16 +33,22 @@ import 'sources.dart';
 class Oito2DconfGSettingsSource implements Oito2GSettingsSource {
   /// Creates a source on [sessionBus] and [systemBus], or on connections of
   /// its own when they are null.
+  ///
+  /// [close] closes the connections the source opened itself and leaves
+  /// the ones it was given open.
   Oito2DconfGSettingsSource({DBusClient? sessionBus, DBusClient? systemBus})
-    : _ownsBuses = sessionBus == null && systemBus == null,
+    : _ownsSessionBus = sessionBus == null,
+      _ownsSystemBus = systemBus == null,
       _sessionBus = sessionBus ?? DBusClient.session(),
       _systemBus = systemBus ?? DBusClient.system();
 
-  final bool _ownsBuses;
+  final bool _ownsSessionBus;
+  final bool _ownsSystemBus;
   final DBusClient _sessionBus;
   final DBusClient _systemBus;
   final Map<String, GSettings> _schemas = {};
 
+  /// The cached [GSettings] client for the schema [name].
   GSettings _schema(String name) => _schemas.putIfAbsent(
     name,
     () => GSettings(name, sessionBus: _sessionBus, systemBus: _systemBus),
@@ -58,7 +64,8 @@ class Oito2DconfGSettingsSource implements Oito2GSettingsSource {
     }
   }
 
-  /// Changes to [schema]'s keys; quiet when the schema isn't installed.
+  /// Emits whenever a key in [schema] changes; never emits when the schema
+  /// isn't installed.
   ///
   /// `GSettings` loads the schema when its stream gets a listener, and a
   /// missing schema fails outside the stream, so the subscription runs in
@@ -85,10 +92,8 @@ class Oito2DconfGSettingsSource implements Oito2GSettingsSource {
       await schema.close();
     }
     _schemas.clear();
-    if (_ownsBuses) {
-      await _sessionBus.close();
-      await _systemBus.close();
-    }
+    if (_ownsSessionBus) await _sessionBus.close();
+    if (_ownsSystemBus) await _systemBus.close();
   }
 }
 
@@ -116,6 +121,7 @@ class Oito2HomeConfigFileSource implements Oito2ConfigFileSource {
   /// The configuration directory.
   final String configHome;
 
+  /// The file at [relativePath] under [configHome].
   File _file(String relativePath) =>
       File(p.normalize(p.join(configHome, relativePath)));
 
@@ -161,6 +167,7 @@ class Oito2SystemThemeAccentSource implements Oito2AccentSource {
   /// Creates the source.
   Oito2SystemThemeAccentSource();
 
+  /// The fully transparent default that marks a missing accent.
   static const _missing = Color(0x00000000);
 
   /// The accent read on demand; its default marks a missing accent.

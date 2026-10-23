@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -36,10 +36,11 @@ class Oito2TocEntry {
   /// The section name.
   final String title;
 
-  /// The key of the section heading in the scroll view.
+  /// The key of the section heading widget inside the scroll view, used to
+  /// measure where the section starts and to scroll to it.
   final GlobalKey target;
 
-  /// The nesting level, from 0.
+  /// The nesting level, from 0; each level indents the entry further.
   final int depth;
 }
 
@@ -71,11 +72,12 @@ class Oito2TableOfContents extends StatefulWidget {
   /// The controller of the scroll view the sections are in.
   final ScrollController controller;
 
-  /// How far below the top of the viewport a heading makes its section
-  /// current.
+  /// How far below the top of the viewport, in logical pixels, a heading
+  /// makes its section current.
   final double activationOffset;
 
-  /// Called with the index of a picked section.
+  /// Called with the index of a picked section, before the view starts
+  /// scrolling to it.
   final ValueChanged<int>? onSelected;
 
   @override
@@ -138,6 +140,8 @@ class _Oito2TableOfContentsState extends State<Oito2TableOfContents> {
     });
   }
 
+  /// Recomputes the current section from the scroll position and the
+  /// measured headings, rebuilding only when it changes.
   void _update() {
     if (!mounted || !widget.controller.hasClients) return;
     final position = widget.controller.position;
@@ -167,6 +171,8 @@ class _Oito2TableOfContentsState extends State<Oito2TableOfContents> {
     if (active != _active) setState(() => _active = active);
   }
 
+  /// Reports [index] to [Oito2TableOfContents.onSelected] and scrolls its
+  /// heading into view when it is built.
   void _select(int index) {
     widget.onSelected?.call(index);
     final context = widget.entries[index].target.currentContext;

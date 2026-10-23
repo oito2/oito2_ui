@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -40,9 +40,12 @@ class _HostState<T> extends State<_Host<T>> {
       widget.builder(value, (v) => setState(() => value = v));
 }
 
+/// The value currently held by the [_Host] of type [T].
 T _hostValue<T>(WidgetTester tester) =>
     tester.state<_HostState<T>>(find.byType(_Host<T>)).value;
 
+/// Presses and releases [key], holding Shift when [shift] is true and
+/// Control when [control] is true, then pumps a frame.
 Future<void> _key(
   WidgetTester tester,
   LogicalKeyboardKey key, {
@@ -79,6 +82,28 @@ void main() {
             ),
           ),
         );
+
+    testWidgets('a sideways scroll leaves the value alone', (tester) async {
+      await pumpEntry(tester);
+      await tester.tap(find.byType(TextField));
+      await tester.pump();
+      final center = tester.getCenter(find.byType(TextField));
+      final pointer = TestPointer(1, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(pointer.hover(center));
+      await tester.sendEventToBinding(pointer.scroll(const Offset(40, 0)));
+      await tester.pump();
+      expect(_hostValue<double>(tester), 5);
+      await tester.sendEventToBinding(pointer.scroll(const Offset(0, -40)));
+      await tester.pump();
+      expect(_hostValue<double>(tester), 6);
+    });
+
+    test('rejects more decimals than a number can show', () {
+      expect(
+        () => Oito2NumberEntry(value: 1, onChanged: null, decimals: 21),
+        throwsAssertionError,
+      );
+    });
 
     for (final (locale, text, value) in const [
       (Locale('sv'), '\u22123', -3.0),
@@ -261,6 +286,22 @@ void main() {
       await tester.pump();
       expect(find.text('Caps Lock is on'), findsNothing);
     });
+
+    testWidgets('warns about Caps Lock next to an error', (tester) async {
+      await pumpOito2(
+        tester,
+        const Oito2PasswordField(errorText: 'Wrong password'),
+      );
+      await tester.tap(find.byType(TextField));
+      await tester.sendKeyEvent(LogicalKeyboardKey.capsLock);
+      await tester.pump();
+      expect(find.text('Wrong password'), findsOneWidget);
+      expect(find.text('Caps Lock is on'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.capsLock);
+      await tester.pump();
+      expect(find.text('Wrong password'), findsOneWidget);
+      expect(find.text('Caps Lock is on'), findsNothing);
+    });
   });
 
   group('Oito2PinEntry', () {
@@ -435,6 +476,25 @@ void main() {
       await tester.pump();
       expect(_hostValue<List<String>>(tester), isEmpty);
       expect(find.byTooltip('Clear'), findsNothing);
+    });
+
+    testWidgets('a pasted pair keeps its delimiter when the first is refused', (
+      tester,
+    ) async {
+      await pumpTags(tester, initial: ['dart']);
+      await tester.enterText(find.byType(TextField), 'dart,go');
+      await tester.pump();
+      expect(_hostValue<List<String>>(tester), ['dart']);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'go',
+      );
+      await tester.enterText(find.byType(TextField), 'dart,');
+      await tester.pump();
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'dart',
+      );
     });
 
     testWidgets('Enter and delimiters add tags; repeats are refused', (
@@ -751,6 +811,8 @@ void main() {
       expect(oito2ColorFromHex('#3584E480'), const Color(0x803584E4));
       expect(oito2ColorFromHex('#12345'), isNull);
       expect(oito2ColorFromHex('zzz'), isNull);
+      expect(oito2ColorFromHex('12#3456'), isNull);
+      expect(oito2ColorFromHex('##123456'), isNull);
     });
 
     Future<void> pumpPicker(WidgetTester tester) => pumpOito2(
@@ -784,6 +846,24 @@ void main() {
       await tester.tap(find.bySemanticsLabel('#2EC27E'));
       await tester.pump();
       expect(_hostValue<Color>(tester).toARGB32(), 0xFF2EC27E);
+    });
+
+    testWidgets('assistive technologies adjust saturation and brightness', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpPicker(tester);
+      final start = HSVColor.fromColor(_hostValue<Color>(tester));
+      tester.semantics.increase(find.semantics.byLabel('Saturation'));
+      await tester.pump();
+      final saturated = HSVColor.fromColor(_hostValue<Color>(tester));
+      expect(saturated.saturation, greaterThan(start.saturation));
+      expect(saturated.value, closeTo(start.value, 0.005));
+      tester.semantics.decrease(find.semantics.byLabel('Brightness'));
+      await tester.pump();
+      final darker = HSVColor.fromColor(_hostValue<Color>(tester));
+      expect(darker.value, lessThan(saturated.value));
+      handle.dispose();
     });
 
     testWidgets('grays keep the hue, also typed in HSL', (tester) async {
@@ -943,7 +1023,8 @@ void main() {
       expect(find.text('April 2026'), findsOneWidget);
       await _key(tester, LogicalKeyboardKey.pageDown, shift: true);
       expect(find.text('December 2026'), findsOneWidget);
-      // A year later is past lastDate, so the focus stops on December 31.
+      // Shift+Page Down overshoots lastDate, so the focus stops on December
+      // 31; Page Up then moves it to November 30.
       await _key(tester, LogicalKeyboardKey.pageUp);
       await _key(tester, LogicalKeyboardKey.enter);
       expect(_hostValue<Object?>(tester), DateTime(2026, 11, 30));
@@ -963,10 +1044,17 @@ void main() {
     });
 
     testWidgets('shows ISO week numbers', (tester) async {
+      final handle = tester.ensureSemantics();
       await pumpCalendar(tester, weeks: true);
       expect(find.text('Wk'), findsOneWidget);
-      expect(find.text('9'), findsWidgets);
-      expect(find.text('14'), findsWidgets);
+      // March 2026 in weeks starting on Sunday: each row takes the ISO
+      // week of its Wednesday, from March 4 (week 10) to April 1 (week 14).
+      for (var week = 10; week <= 14; week++) {
+        expect(find.bySemanticsLabel(RegExp('Week $week\\b')), findsOneWidget);
+      }
+      expect(find.bySemanticsLabel(RegExp(r'Week 9\b')), findsNothing);
+      expect(find.bySemanticsLabel(RegExp(r'Week 15\b')), findsNothing);
+      handle.dispose();
     });
 
     testWidgets('days carry their full date', (tester) async {
@@ -1012,7 +1100,11 @@ void main() {
           child: SizedBox(
             width: 320,
             child: _Host<DateTimeRange?>(
-              initial: null,
+              // A range in March 2026 opens the calendar on that month.
+              initial: DateTimeRange(
+                start: DateTime(2026, 3, 2),
+                end: DateTime(2026, 3, 4),
+              ),
               builder: (value, set) => Oito2DatePicker(
                 firstDate: DateTime(2026),
                 lastDate: DateTime(2026, 12, 31),
@@ -1023,10 +1115,21 @@ void main() {
           ),
         ),
       );
+      expect(find.text('03/02/2026 – 03/04/2026'), findsOneWidget);
       await _key(tester, LogicalKeyboardKey.tab);
       await _key(tester, LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
       expect(find.byType(Oito2Calendar), findsOneWidget);
+      await tester.tap(find.text('16'));
+      await tester.pump();
+      await tester.tap(find.text('20'));
+      await tester.pumpAndSettle();
+      expect(
+        _hostValue<DateTimeRange?>(tester),
+        DateTimeRange(start: DateTime(2026, 3, 16), end: DateTime(2026, 3, 20)),
+      );
+      expect(find.byType(Oito2Calendar), findsNothing);
+      expect(find.text('03/16/2026 – 03/20/2026'), findsOneWidget);
     });
   });
 }

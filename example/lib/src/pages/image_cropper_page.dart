@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -96,6 +96,8 @@ class _ImageCropperPageState extends State<ImageCropperPage> {
     return MemoryImage(bytes!.buffer.asUint8List());
   }
 
+  /// Crops the image to a 240-pixel-wide result, replacing and disposing
+  /// the previous one.
   Future<void> _crop() async {
     final image = await _controller.crop(width: 240, circle: _circle);
     if (!mounted) return;

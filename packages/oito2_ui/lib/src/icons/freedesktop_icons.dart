@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -653,15 +653,16 @@ enum Oito2FreedesktopIcons {
   /// The name in the Icon Naming Specification, such as `edit-copy`.
   final String iconName;
 
-  /// The icon.
+  /// The Lucide glyph that draws this icon.
   final IconData icon;
 
+  /// The icons by their specification name.
   static final Map<String, Oito2FreedesktopIcons> _byName = {
     for (final value in values) value.iconName: value,
   };
 
-  /// The icon for a specification [name], such as `document-save`, or
-  /// null when nothing matches.
+  /// Returns the icon for a specification [name], such as
+  /// `document-save`, or null when nothing matches.
   ///
   /// Trailing `-symbolic`, `-rtl` and `-ltr` suffixes are ignored, and a
   /// name without a mapping falls back, as the specification does, to the

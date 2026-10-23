@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,6 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -263,7 +264,22 @@ void main() {
       );
       await tester.tap(find.text('VPN'));
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
       expect(taps, 0);
+      // Neither the tap nor Tab put the focus on the tile.
+      final focused = FocusManager.instance.primaryFocus?.context;
+      expect(
+        focused == null ||
+            find
+                .descendant(
+                  of: find.byType(Oito2ListTile),
+                  matching: find.byWidget(focused.widget),
+                )
+                .evaluate()
+                .isEmpty,
+        isTrue,
+      );
       expect(tester.getSize(find.byType(Oito2ListTile)).height, 40);
     });
 
@@ -302,7 +318,19 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Second body'), findsOneWidget);
       expect(find.text('First body'), findsNothing);
-      expect(changes, [(1, true)]);
+      expect(changes, [(0, false), (1, true)]);
+    });
+
+    testWidgets('a rebuild with unpaired headers is reported', (tester) async {
+      await pumpOito2(tester, panel());
+      await pumpOito2(
+        tester,
+        const Oito2ExpansionPanel(
+          headers: [Text('First'), Text('Second'), Text('Third')],
+          children: [Text('First body'), Text('Second body')],
+        ),
+      );
+      expect(tester.takeException(), isAssertionError);
     });
 
     testWidgets('sections stay open without collapseOnExpand', (tester) async {
@@ -415,6 +443,11 @@ void main() {
         ),
       );
       expect(tester.takeException(), isNull);
+      final label = tester.renderObject<RenderParagraph>(
+        find.text('General settings'),
+      );
+      expect(label.overflow, TextOverflow.ellipsis);
+      expect(label.didExceedMaxLines, isTrue);
     });
   });
 }

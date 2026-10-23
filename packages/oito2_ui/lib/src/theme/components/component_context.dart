@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -72,11 +72,13 @@ class ComponentThemeContext {
   double get controlHeight =>
       isTouch ? Oito2Sizes.touchButtonHeight : Oito2Sizes.buttonHeight;
 
-  /// Size of icons inside controls.
+  /// Size of icons inside controls: 24 for touch input, otherwise
+  /// [Oito2Sizes.iconSize].
   double get iconSize => isTouch ? 24 : Oito2Sizes.iconSize;
 
   /// The color for selected toggles, indicators and focus rings: the
-  /// text-safe primary tone, which reaches 3:1 against every surface.
+  /// text-safe primary tone, which reaches the text contrast target against
+  /// every surface, well above the 3:1 needed by non-text elements.
   Color get indicator => semantic.primaryText;
 
   /// The foreground drawn on top of [indicator].
@@ -98,7 +100,7 @@ class ComponentThemeContext {
     });
   }
 
-  /// [color] at [opacity] alpha.
+  /// Returns [color] with its alpha set to [opacity], from 0 to 1.
   static Color fade(Color color, double opacity) =>
       color.withValues(alpha: opacity);
 }

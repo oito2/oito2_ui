@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -111,8 +111,8 @@ class Oito2NeutralPalette {
   /// Decorative borders and dividers.
   final Color outlineVariant;
 
-  /// All surfaces of this palette, from the title bar to the highest
-  /// container.
+  /// All surfaces of this palette: [surface], the containers from
+  /// [surfaceContainerLowest] to [surfaceContainerHighest], and [titleBar].
   List<Color> get surfaces => [
     surface,
     surfaceContainerLowest,

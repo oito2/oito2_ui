@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -43,7 +43,8 @@ class Oito2ContextMenuRegion extends StatefulWidget {
   /// The menu items.
   final List<Widget> menuChildren;
 
-  /// Whether the menu opens.
+  /// Whether the menu can open; when false, the browser's own menu stays
+  /// available on the web.
   final bool enabled;
 
   /// Called when the menu opens.
@@ -56,6 +57,8 @@ class Oito2ContextMenuRegion extends StatefulWidget {
   State<Oito2ContextMenuRegion> createState() => _Oito2ContextMenuRegionState();
 }
 
+/// Owns the menu controller of [Oito2ContextMenuRegion] and turns the
+/// browser's context menu off while the pointer is over it.
 class _Oito2ContextMenuRegionState extends State<Oito2ContextMenuRegion> {
   final _controller = MenuController();
   bool _browserMenuOff = false;
@@ -66,11 +69,14 @@ class _Oito2ContextMenuRegionState extends State<Oito2ContextMenuRegion> {
     super.dispose();
   }
 
-  /// The regions under the pointer that turned the browser menu off. The
-  /// menu is a page-wide setting, so it comes back only when the last of
-  /// them, such as the outer one of nested regions, lets it go.
+  /// The number of regions under the pointer that turned the browser menu
+  /// off. The menu is a page-wide setting, so it comes back only when the
+  /// last of them, such as the outer one of nested regions, lets it go.
   static int _browserMenuHolds = 0;
 
+  /// Releases (when [enabled]) or takes this region's hold on the
+  /// browser menu; does nothing off the web or when the hold is already
+  /// in that state.
   void _setBrowserMenu({required bool enabled}) {
     if (!kIsWeb || _browserMenuOff != enabled) return;
     _browserMenuOff = !enabled;
@@ -83,6 +89,8 @@ class _Oito2ContextMenuRegionState extends State<Oito2ContextMenuRegion> {
     }
   }
 
+  /// Opens the menu at [position], or at the center of the region when
+  /// null; does nothing when the region is disabled.
   void _open([Offset? position]) {
     if (!widget.enabled) return;
     final box = context.findRenderObject() as RenderBox?;

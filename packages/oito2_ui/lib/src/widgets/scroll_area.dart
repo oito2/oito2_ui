@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -34,8 +34,8 @@ enum Oito2ScrollDirection {
 ///
 /// The bars show while scrolling or, with [thumbVisibility], all the time.
 /// With [undershoot], an [Oito2ScrollViewUndershoot] shadow marks the
-/// edges with more content beyond them; when scrolling [Oito2ScrollDirection.both]
-/// ways, the shadows follow the vertical axis.
+/// edges with more content beyond them; with
+/// [Oito2ScrollDirection.both], the shadows follow the vertical axis.
 class Oito2ScrollArea extends StatefulWidget {
   /// Creates a scroll area.
   const Oito2ScrollArea({

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -109,11 +109,13 @@ class _Oito2PasswordFieldState extends State<Oito2PasswordField>
     super.dispose();
   }
 
+  /// Rechecks Caps Lock on every key event without handling the event.
   bool _onKey(KeyEvent event) {
     _checkCapsLock();
     return false;
   }
 
+  /// Shows the warning while the field has the focus and Caps Lock is on.
   void _checkCapsLock() {
     final on =
         widget.showCapsLockWarning &&
@@ -128,6 +130,36 @@ class _Oito2PasswordFieldState extends State<Oito2PasswordField>
   Widget build(BuildContext context) {
     final strings = Oito2Localizations.of(context);
     final warning = semanticColorsOf(context).warning;
+    final capsWarning = _capsLock
+        ? Semantics(
+            liveRegion: true,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 4,
+              children: [
+                Icon(LucideIcons.triangle_alert, size: 14, color: warning),
+                Text(strings.capsLockOn, style: TextStyle(color: warning)),
+              ],
+            ),
+          )
+        : null;
+    final errorText = widget.errorText;
+    // The decorator hides the helper while an error shows, so the Caps Lock
+    // warning joins the error in that case.
+    final combinedError = capsWarning != null && errorText != null
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 2,
+            children: [
+              Text(
+                errorText,
+                style: Theme.of(context).inputDecorationTheme.errorStyle,
+              ),
+              capsWarning,
+            ],
+          )
+        : null;
     return TextField(
       controller: widget.controller,
       focusNode: _focusNode,
@@ -144,20 +176,9 @@ class _Oito2PasswordFieldState extends State<Oito2PasswordField>
       decoration: InputDecoration(
         labelText: widget.labelText,
         hintText: widget.hintText,
-        errorText: widget.errorText,
-        helper: _capsLock
-            ? Semantics(
-                liveRegion: true,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 4,
-                  children: [
-                    Icon(LucideIcons.triangle_alert, size: 14, color: warning),
-                    Text(strings.capsLockOn, style: TextStyle(color: warning)),
-                  ],
-                ),
-              )
-            : null,
+        errorText: combinedError == null ? errorText : null,
+        error: combinedError,
+        helper: combinedError == null ? capsWarning : null,
         suffixIcon: FieldIconButton(
           icon: _visible ? LucideIcons.eye_off : LucideIcons.eye,
           tooltip: _visible ? strings.hidePassword : strings.showPassword,

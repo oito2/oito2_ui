@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,10 +18,10 @@ import 'package:material_ui/material_ui.dart';
 import '../../tokens/geometry.dart';
 import 'component_context.dart';
 
-/// Input fields: a soft `surfaceContainerHigh` fill, a 1-pixel `outline`
-/// border that reaches 3:1 against the surface, a 2-pixel focus border in
-/// the text-safe primary tone and error borders and messages in the
-/// text-safe error tone.
+/// Returns the theme of input fields: a soft `surfaceContainerHigh` fill,
+/// a 1-pixel `outline` border that reaches 3:1 against the surface, a
+/// 2-pixel focus border in the text-safe primary tone and error borders
+/// and messages in the text-safe error tone.
 ///
 /// A single-line field is [ComponentThemeContext.controlHeight] tall, the
 /// height of the buttons, with or without prefix and suffix icons: the
@@ -85,10 +85,10 @@ InputDecorationThemeData buildInputDecorationTheme(ComponentThemeContext c) {
   );
 }
 
-/// The height of one line of input text: the `bodyLarge` font size times
-/// its line height, which is what `TextField` uses by default. Without an
-/// explicit height, the `englishLike2021` geometry that `Theme.of`
-/// merges in at run time applies.
+/// Returns the height of one line of input text: the `bodyLarge` font size
+/// times its line height, which is what `TextField` uses by default. Sizes
+/// and heights missing from the text theme come from the `englishLike2021`
+/// geometry that `Theme.of` merges in at run time.
 double inputLineHeight(ComponentThemeContext c) {
   final style = c.textTheme.bodyLarge;
   final geometry = Typography.englishLike2021.bodyLarge!;
@@ -96,8 +96,8 @@ double inputLineHeight(ComponentThemeContext c) {
   return fontSize * (style?.height ?? geometry.height!);
 }
 
-/// Text selection: the primary fill at 35% alpha, with the cursor and
-/// handles in the text-safe primary tone.
+/// Returns the theme of text selection: the primary fill at 35% alpha,
+/// with the cursor and handles in the text-safe primary tone.
 TextSelectionThemeData buildTextSelectionTheme(ComponentThemeContext c) {
   return TextSelectionThemeData(
     selectionColor: ComponentThemeContext.fade(c.scheme.primary, 0.35),
@@ -106,8 +106,8 @@ TextSelectionThemeData buildTextSelectionTheme(ComponentThemeContext c) {
   );
 }
 
-/// Dropdown menus: the input field style for the anchor and the menu
-/// surface style for the list.
+/// Returns the theme of dropdown menus: [inputDecorationTheme] for the
+/// anchor field and [menuStyle] for the list.
 DropdownMenuThemeData buildDropdownMenuTheme(
   ComponentThemeContext c,
   InputDecorationThemeData inputDecorationTheme,

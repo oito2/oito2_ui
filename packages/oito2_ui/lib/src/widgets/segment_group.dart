@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -48,7 +48,8 @@ class Oito2Segment<T> {
 /// with a raised marker that slides to the selected one.
 ///
 /// The group is one stop in keyboard navigation: the arrow keys select the
-/// previous or next enabled segment. Assistive technologies read it as a
+/// previous or next enabled segment, wrapping at the ends, and Space or
+/// Enter selects the focused one. Assistive technologies read it as a
 /// group of radio buttons.
 class Oito2SegmentGroup<T> extends StatefulWidget {
   /// Creates a segment group.
@@ -92,6 +93,8 @@ class _Oito2SegmentGroupState<T> extends State<Oito2SegmentGroup<T>> {
     super.dispose();
   }
 
+  /// Adds or removes focus nodes and keys to match the segment count,
+  /// disposing removed nodes after the frame.
   void _syncSegments() {
     while (_nodes.length < widget.segments.length) {
       _nodes.add(FocusNode(debugLabel: 'Oito2SegmentGroup segment'));
@@ -107,9 +110,12 @@ class _Oito2SegmentGroupState<T> extends State<Oito2SegmentGroup<T>> {
   int get _selectedIndex =>
       widget.segments.indexWhere((s) => s.value == widget.selected);
 
+  /// Whether the segment at [index] is enabled in an enabled group.
   bool _canSelect(int index) =>
       widget.onChanged != null && widget.segments[index].enabled;
 
+  /// Focuses the segment at [index] and reports its value when it is not
+  /// already selected.
   void _select(int index) {
     if (!_canSelect(index)) return;
     _nodes[index].requestFocus();
@@ -135,6 +141,9 @@ class _Oito2SegmentGroupState<T> extends State<Oito2SegmentGroup<T>> {
     if (rect != _marker) setState(() => _marker = rect);
   }
 
+  /// Moves the selection with the arrow keys of the orientation, skipping
+  /// disabled segments, and selects the segment at [index] on Space or
+  /// Enter.
   KeyEventResult _onKey(int index, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
@@ -165,6 +174,8 @@ class _Oito2SegmentGroupState<T> extends State<Oito2SegmentGroup<T>> {
     return KeyEventResult.handled;
   }
 
+  /// Builds the segment at [index], which is in the focus traversal only
+  /// when it is the [tabStop].
   Widget _segment(int index, int tabStop) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -238,6 +249,7 @@ class _Oito2SegmentGroupState<T> extends State<Oito2SegmentGroup<T>> {
       ? IntrinsicWidth(child: child)
       : child;
 
+  /// The raised surface of the selection marker.
   BoxDecoration _markerDecoration() {
     final scheme = Theme.of(context).colorScheme;
     return BoxDecoration(

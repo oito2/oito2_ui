@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -50,7 +50,11 @@ enum Oito2SheetSide {
 /// tall as its content, up to 90% of the window, unless [snapPoints]
 /// gives the heights it rests at as fractions of the window height,
 /// ascending, starting at the [initialSnap] index; its handle then moves
-/// between them by drag, by the arrow keys or by Enter.
+/// between them by drag, by the arrow keys, or by a tap, Enter or Space,
+/// which cycle to the next height.
+///
+/// Throws an [AssertionError] in debug mode when [snapPoints] is given for
+/// a side sheet, or when it is empty or [initialSnap] does not index it.
 Future<T?> showOito2Sheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,
@@ -154,7 +158,8 @@ class Oito2Sheet extends StatelessWidget {
   /// The space around the header and the body.
   final EdgeInsetsGeometry padding;
 
-  /// Closes the closest sheet shown by [showOito2Sheet] with [result].
+  /// Closes the closest sheet shown by [showOito2Sheet] with [result];
+  /// does nothing outside a sheet.
   static void close<T>(BuildContext context, [T? result]) {
     context.getInheritedWidgetOfExactType<_SheetScope>()?.close(result);
   }
@@ -202,6 +207,7 @@ class Oito2Sheet extends StatelessWidget {
   }
 }
 
+/// The options of a sheet, as given to [showOito2Sheet].
 class _SheetConfig {
   const _SheetConfig({
     required this.side,
@@ -222,6 +228,8 @@ class _SheetConfig {
   final bool modal;
 }
 
+/// Gives the content of a sheet the function that closes it with a
+/// result.
 class _SheetScope extends InheritedWidget {
   const _SheetScope({required this.close, required super.child});
 
@@ -231,6 +239,7 @@ class _SheetScope extends InheritedWidget {
   bool updateShouldNotify(_SheetScope oldWidget) => false;
 }
 
+/// The popup route of a modal sheet, with a dimming barrier.
 class _Oito2SheetRoute<T> extends PopupRoute<T> {
   _Oito2SheetRoute({
     required this.builder,
@@ -282,6 +291,8 @@ class _Oito2SheetRoute<T> extends PopupRoute<T> {
   }
 }
 
+/// Hosts a non-modal sheet in an overlay entry and runs its entrance and
+/// exit animations.
 class _NonModalSheetHost<T> extends StatefulWidget {
   const _NonModalSheetHost({
     required this.builder,
@@ -317,6 +328,7 @@ class _NonModalSheetHostState<T> extends State<_NonModalSheetHost<T>>
     super.dispose();
   }
 
+  /// Plays the exit animation once and then reports [result].
   Future<void> _close(Object? result) async {
     if (_closing) return;
     _closing = true;
@@ -398,6 +410,8 @@ class _SheetFrameState extends State<_SheetFrame>
     super.dispose();
   }
 
+  /// Animates the drag offset to [to], or jumps there when animations are
+  /// disabled.
   void _animateDrag(double to) {
     final reduced = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     if (reduced) {
@@ -413,6 +427,8 @@ class _SheetFrameState extends State<_SheetFrame>
       );
   }
 
+  /// Moves a bottom sheet to the snap point at [index], clamped to the
+  /// available ones.
   void _setSnap(int index) {
     final snaps = _snaps;
     if (snaps == null) return;
@@ -428,6 +444,8 @@ class _SheetFrameState extends State<_SheetFrame>
     return (snaps.last - snaps[_snap]) * windowHeight;
   }
 
+  /// Adds the drag movement toward the sheet's edge, stopping at the
+  /// tallest snap point.
   void _onDragUpdate(DragUpdateDetails details, bool forward) {
     _settle.stop();
     final delta = _bottom
@@ -437,6 +455,9 @@ class _SheetFrameState extends State<_SheetFrame>
     setState(() => _drag = math.max(floor, _drag + delta));
   }
 
+  /// Settles the sheet after a drag: on the nearest snap point, or back in
+  /// place, or dismissed when dragged or flung far enough toward its edge
+  /// and dismissible.
   void _onDragEnd(DragEndDetails details, bool forward, double windowHeight) {
     final velocity = _bottom
         ? details.velocity.pixelsPerSecond.dy
@@ -478,6 +499,8 @@ class _SheetFrameState extends State<_SheetFrame>
     }
   }
 
+  /// Builds the drag handle of a bottom sheet; with two or more snap
+  /// points it is a focusable, adjustable control.
   Widget _handle(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final snaps = _snaps;

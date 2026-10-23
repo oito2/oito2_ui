@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -82,7 +82,7 @@ void main() {
         tester,
         const Center(child: Oito2CircularProgressIndicator(value: 0.5)),
       );
-      // Lets the app's theme transition from the second pump finish.
+      // Lets any transition started by the rebuild finish.
       await tester.pump(const Duration(seconds: 1));
       expect(tester.hasRunningAnimations, isFalse);
     });

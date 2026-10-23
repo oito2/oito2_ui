@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -36,8 +36,8 @@ enum Oito2ColorFormat {
   hsl,
 }
 
-/// Formats [color] as `#RRGGBB`, or `#RRGGBBAA` when it is translucent and
-/// [withAlpha] is set.
+/// Returns [color] formatted as `#RRGGBB`, or `#RRGGBBAA` when it is
+/// translucent and [withAlpha] is set.
 String oito2ColorToHex(Color color, {bool withAlpha = true}) {
   String part(double channel) =>
       (channel * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
@@ -45,10 +45,13 @@ String oito2ColorToHex(Color color, {bool withAlpha = true}) {
   return withAlpha && color.a < 1 ? '$hex${part(color.a)}' : hex;
 }
 
-/// Reads `#RGB`, `#RRGGBB` or `#RRGGBBAA`, with or without `#`; null when
-/// [text] isn't one of them.
+/// Parses [text] as `#RGB`, `#RRGGBB` or `#RRGGBBAA`, with or without
+/// `#` and surrounding whitespace.
+///
+/// Returns null when [text] is not one of these forms.
 Color? oito2ColorFromHex(String text) {
-  var hex = text.trim().replaceFirst('#', '');
+  var hex = text.trim();
+  if (hex.startsWith('#')) hex = hex.substring(1);
   if (!RegExp(r'^[0-9a-fA-F]+$').hasMatch(hex)) return null;
   if (hex.length == 3) hex = hex.split('').map((c) => '$c$c').join();
   if (hex.length == 6) hex = '${hex}FF';
@@ -83,7 +86,8 @@ class Oito2ColorPicker extends StatefulWidget {
   /// Called with each new color.
   final ValueChanged<Color> onChanged;
 
-  /// Whether the opacity can change.
+  /// Whether the opacity slider shows and the hex field includes the
+  /// alpha channel; without it, edits keep the current opacity.
   final bool showAlpha;
 
   /// Preset colors offered below the fields.
@@ -99,6 +103,8 @@ class Oito2ColorPicker extends StatefulWidget {
   State<Oito2ColorPicker> createState() => _Oito2ColorPickerState();
 }
 
+/// Holds the color as HSV, so the hue survives grays, and the chosen field
+/// format of [Oito2ColorPicker].
 class _Oito2ColorPickerState extends State<Oito2ColorPicker> {
   late HSVColor _hsv = HSVColor.fromColor(widget.value);
   late Oito2ColorFormat _format = widget.initialFormat;
@@ -245,72 +251,97 @@ class _SaturationArea extends StatelessWidget {
           .withSaturation((s + ds).clamp(0.0, 1.0))
           .withValue((v + dv).clamp(0.0, 1.0)),
     );
-    String label(double brightness) =>
-        '${strings.saturation} ${(s * 100).round()}%, '
-        '${(brightness.clamp(0.0, 1.0) * 100).round()}%';
-    return Semantics(
-      slider: true,
-      label: strings.saturationAndBrightness,
-      value: label(v),
-      increasedValue: label(v + 0.01),
-      decreasedValue: label(v - 0.01),
-      onIncrease: () => move(0, 0.01),
-      onDecrease: () => move(0, -0.01),
-      child: CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.arrowRight): () =>
-              move(0.01, 0),
-          const SingleActivator(
-            LogicalKeyboardKey.arrowRight,
-            shift: true,
-          ): () =>
-              move(0.1, 0),
-          const SingleActivator(LogicalKeyboardKey.arrowLeft): () =>
-              move(-0.01, 0),
-          const SingleActivator(
-            LogicalKeyboardKey.arrowLeft,
-            shift: true,
-          ): () =>
-              move(-0.1, 0),
-          const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
-              move(0, 0.01),
-          const SingleActivator(LogicalKeyboardKey.arrowUp, shift: true): () =>
-              move(0, 0.1),
-          const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
-              move(0, -0.01),
-          const SingleActivator(
-            LogicalKeyboardKey.arrowDown,
-            shift: true,
-          ): () =>
-              move(0, -0.1),
-        },
-        child: Oito2FocusBorder(
-          child: Focus(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final size = Size(constraints.maxWidth, 150);
-                void pick(Offset p) => onChanged(
-                  hsv
-                      .withSaturation((p.dx / size.width).clamp(0.0, 1.0))
-                      .withValue((1 - p.dy / size.height).clamp(0.0, 1.0)),
-                );
-                return GestureDetector(
-                  onTapDown: (d) => pick(d.localPosition),
-                  onPanStart: (d) => pick(d.localPosition),
-                  onPanUpdate: (d) => pick(d.localPosition),
-                  child: ExcludeSemantics(
-                    child: CustomPaint(size: size, painter: _AreaPainter(hsv)),
-                  ),
-                );
-              },
-            ),
+    String percent(double value) => '${(value.clamp(0.0, 1.0) * 100).round()}%';
+    // Assistive technologies get one slider per axis, over each half of
+    // the area, since a slider adjusts a single value.
+    Widget axis({
+      required String label,
+      required double value,
+      required void Function(double delta) step,
+    }) => Expanded(
+      child: Semantics(
+        slider: true,
+        label: label,
+        value: percent(value),
+        increasedValue: percent(value + 0.01),
+        decreasedValue: percent(value - 0.01),
+        onIncrease: () => step(0.01),
+        onDecrease: () => step(-0.01),
+        child: const SizedBox.expand(),
+      ),
+    );
+    final area = CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.arrowRight): () =>
+            move(0.01, 0),
+        const SingleActivator(LogicalKeyboardKey.arrowRight, shift: true): () =>
+            move(0.1, 0),
+        const SingleActivator(LogicalKeyboardKey.arrowLeft): () =>
+            move(-0.01, 0),
+        const SingleActivator(LogicalKeyboardKey.arrowLeft, shift: true): () =>
+            move(-0.1, 0),
+        const SingleActivator(LogicalKeyboardKey.arrowUp): () => move(0, 0.01),
+        const SingleActivator(LogicalKeyboardKey.arrowUp, shift: true): () =>
+            move(0, 0.1),
+        const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
+            move(0, -0.01),
+        const SingleActivator(LogicalKeyboardKey.arrowDown, shift: true): () =>
+            move(0, -0.1),
+      },
+      child: Oito2FocusBorder(
+        child: Focus(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final size = Size(constraints.maxWidth, 150);
+              void pick(Offset p) => onChanged(
+                hsv
+                    .withSaturation((p.dx / size.width).clamp(0.0, 1.0))
+                    .withValue((1 - p.dy / size.height).clamp(0.0, 1.0)),
+              );
+              return GestureDetector(
+                onTapDown: (d) => pick(d.localPosition),
+                onPanStart: (d) => pick(d.localPosition),
+                onPanUpdate: (d) => pick(d.localPosition),
+                child: ExcludeSemantics(
+                  child: CustomPaint(size: size, painter: _AreaPainter(hsv)),
+                ),
+              );
+            },
           ),
         ),
+      ),
+    );
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      label: strings.saturationAndBrightness,
+      child: Stack(
+        children: [
+          area,
+          Positioned.fill(
+            child: Row(
+              children: [
+                axis(
+                  label: strings.saturation,
+                  value: s,
+                  step: (delta) => move(delta, 0),
+                ),
+                axis(
+                  label: strings.brightness,
+                  value: v,
+                  step: (delta) => move(0, delta),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
+/// Paints the saturation and brightness area for the hue of [hsv], with a
+/// thumb at its saturation and brightness.
 class _AreaPainter extends CustomPainter {
   _AreaPainter(this.hsv);
 
@@ -445,6 +476,8 @@ class _ChannelSlider extends StatelessWidget {
   }
 }
 
+/// Paints a channel slider track as a gradient of [colors], over a
+/// checkerboard when [checkerboard] is set, with a thumb at [value].
 class _SliderPainter extends CustomPainter {
   _SliderPainter({
     required this.value,
@@ -655,6 +688,8 @@ class _CommitField extends StatefulWidget {
   State<_CommitField> createState() => _CommitFieldState();
 }
 
+/// Owns the controller and focus node of [_CommitField] and commits its
+/// text when focus leaves.
 class _CommitFieldState extends State<_CommitField> {
   late final _controller = TextEditingController(text: widget.text);
   final _focusNode = FocusNode();
@@ -695,6 +730,8 @@ class _CommitFieldState extends State<_CommitField> {
     super.dispose();
   }
 
+  /// Applies the typed text when it changed, restoring the shown text
+  /// when the commit callback rejects it.
   void _commit() {
     if (_controller.text == widget.text) return;
     if (!widget.onCommit(_controller.text)) _controller.text = widget.text;
@@ -742,13 +779,15 @@ class Oito2ColorPickerButton extends StatelessWidget {
   /// Called with each new color; the button is disabled when null.
   final ValueChanged<Color>? onChanged;
 
-  /// Whether the opacity can change.
+  /// Whether the picker offers opacity and the label includes the alpha
+  /// channel.
   final bool showAlpha;
 
   /// Preset colors offered in the picker.
   final List<Color> swatches;
 
-  /// The accessibility label, such as what the color is for.
+  /// The accessibility label of the button and the popover, such as what
+  /// the color is for.
   final String? semanticLabel;
 
   @override

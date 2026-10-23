@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -38,6 +38,8 @@ void main() {
     desktopEnvironment: Oito2DesktopEnvironment.kde,
   );
 
+  /// Pumps the showcase on the page [slug], or with no page selected when
+  /// it is null, with [options] in a view of [size] logical pixels.
   Future<void> pumpShowcase(
     WidgetTester tester, {
     String? slug,
@@ -177,7 +179,16 @@ void main() {
       Oito2ThemePreset.dracula.colors.colorScheme.primary,
     );
     expect(Theme.of(context).brightness, Brightness.dark);
-    expect(find.byTooltip('High contrast'), findsNothing);
+    // High contrast stays available, and applies to the preset.
+    await tester.tap(find.byTooltip('High contrast'));
+    await _settle(tester);
+    expect(
+      Theme.of(tester.element(find.byType(Scaffold).first)).colorScheme,
+      Oito2ColorTheme.fromRoles(
+        Oito2ThemePreset.dracula.roles,
+        highContrast: true,
+      ).colorScheme,
+    );
   });
 
   testWidgets('the settings dialog switches to compact mode', (tester) async {

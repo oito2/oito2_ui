@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
+/// Centers [child] in a Linux-themed app.
 Widget _host(Widget child) => MaterialApp(
   theme: Oito2Theme.light(
     platform: const Oito2Platform(
@@ -28,6 +29,7 @@ Widget _host(Widget child) => MaterialApp(
   home: Scaffold(body: Center(child: child)),
 );
 
+/// The decoration of the container that paints the window control.
 ShapeDecoration _decoration(WidgetTester tester) {
   final container = tester.widget<Container>(
     find.descendant(
@@ -72,6 +74,25 @@ void main() {
       });
     }
   }
+
+  testWidgets('every drawn style is at least a 24-pixel target', (
+    tester,
+  ) async {
+    for (final style in drawn) {
+      await tester.pumpWidget(
+        _host(
+          Oito2WindowControl(
+            type: Oito2WindowControlType.close,
+            style: style,
+            onPressed: () {},
+          ),
+        ),
+      );
+      final size = tester.getSize(find.byType(Oito2WindowControl));
+      expect(size.width, greaterThanOrEqualTo(24), reason: style.name);
+      expect(size.height, greaterThanOrEqualTo(24), reason: style.name);
+    }
+  });
 
   testWidgets('none renders nothing', (tester) async {
     await tester.pumpWidget(

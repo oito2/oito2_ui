@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -41,7 +41,8 @@ class Oito2ToggleItem<T> {
   /// icon.
   final String? tooltip;
 
-  /// Whether the item can be toggled.
+  /// Whether the item can be toggled and focused; a disabled item is
+  /// dimmed.
   final bool enabled;
 }
 
@@ -54,7 +55,8 @@ class Oito2ToggleItem<T> {
 /// track.
 ///
 /// The group is one stop in keyboard navigation: the arrow keys move
-/// between the items, and Space or Enter toggles the focused one.
+/// between the enabled items, wrapping at the ends, and Space or Enter
+/// toggles the focused one.
 class Oito2ToggleGroup<T> extends StatefulWidget {
   /// Creates a toggle group.
   const Oito2ToggleGroup({
@@ -80,8 +82,8 @@ class Oito2ToggleGroup<T> extends StatefulWidget {
   /// Whether several items can be on at once.
   final bool multiple;
 
-  /// Whether the only item that is on can be turned off when not
-  /// [multiple].
+  /// Whether the only item that is on can be turned off, leaving none on;
+  /// ignored when [multiple].
   final bool deselectable;
 
   /// Whether the items run across or down.
@@ -105,6 +107,8 @@ class _Oito2ToggleGroupState<T> extends State<Oito2ToggleGroup<T>> {
     super.dispose();
   }
 
+  /// Keeps one focus node per item, disposing removed nodes after the
+  /// frame.
   void _syncNodes() {
     while (_nodes.length < widget.items.length) {
       _nodes.add(FocusNode(debugLabel: 'Oito2ToggleGroup item'));
@@ -115,9 +119,12 @@ class _Oito2ToggleGroupState<T> extends State<Oito2ToggleGroup<T>> {
     }
   }
 
+  /// Whether the item at [index] responds to input.
   bool _canToggle(int index) =>
       widget.onChanged != null && widget.items[index].enabled;
 
+  /// Focuses the item at [index] and reports the selection with it turned
+  /// on or off.
   void _toggle(int index) {
     if (!_canToggle(index)) return;
     setState(() => _focused = index);
@@ -138,6 +145,8 @@ class _Oito2ToggleGroupState<T> extends State<Oito2ToggleGroup<T>> {
     widget.onChanged!(next);
   }
 
+  /// Moves focus to the next enabled item along the arrow pressed, or
+  /// toggles the item at [index] on Space or Enter.
   KeyEventResult _onKey(int index, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
@@ -169,6 +178,8 @@ class _Oito2ToggleGroupState<T> extends State<Oito2ToggleGroup<T>> {
     return KeyEventResult.handled;
   }
 
+  /// Builds the item at [index]; only the item at [tabStop] takes part in
+  /// focus traversal.
   Widget _item(int index, int tabStop) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -29,10 +29,12 @@ import 'shortcut_widgets.dart';
 /// commands available at [context] (or [commands] when given), each with
 /// its shortcut.
 ///
-/// Typing filters the commands by label, description, group and
-/// keywords, ignoring case and accents; labels that start with the query
-/// come first. The arrow keys move the highlight, Enter or a click runs a
-/// command after the palette closes, and Escape closes it.
+/// Typing filters the commands to those whose label, description, group
+/// and keywords contain every typed word, ignoring case and accents.
+/// Commands whose label starts with the first word come first, then those
+/// whose label contains every word. The arrow keys move the highlight,
+/// Enter or a click closes the palette and runs a command, and Escape
+/// closes it.
 Future<void> showOito2CommandPalette(
   BuildContext context, {
   List<Oito2Command>? commands,
@@ -44,6 +46,7 @@ Future<void> showOito2CommandPalette(
   );
 }
 
+/// The command palette dialog over [commands].
 class _CommandPalette extends StatefulWidget {
   const _CommandPalette({required this.commands});
 
@@ -83,6 +86,7 @@ class _CommandPaletteState extends State<_CommandPalette> {
       ),
   ];
 
+  /// The commands that contain every word of the query, best match first.
   List<Oito2Command> get _matches {
     final words = foldText(_query)
         .split(RegExp(r'\s+'))
@@ -105,11 +109,14 @@ class _CommandPaletteState extends State<_CommandPalette> {
     return [for (final (_, command) in scored) command];
   }
 
+  /// Closes the palette and runs [command].
   void _run(Oito2Command command) {
     Navigator.of(context).pop();
     command.onInvoke();
   }
 
+  /// Moves the highlight by [step] among [count] matches, wrapping around,
+  /// and scrolls it into view after the frame.
   void _move(int step, int count) {
     if (count == 0) return;
     setState(() => _highlight = (_highlight + step) % count);

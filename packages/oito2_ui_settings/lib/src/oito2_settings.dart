@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -28,7 +28,8 @@ abstract final class Oito2Settings {
   static Oito2SystemSettingsReader reader({Oito2Platform? platform}) =>
       createReader(platform ?? Oito2Platform.current());
 
-  /// Reads the current system settings once, then releases the reader.
+  /// Reads the current system settings of [platform] once, then releases
+  /// the reader.
   static Future<Oito2SystemSettings> load({Oito2Platform? platform}) async {
     final settingsReader = reader(platform: platform);
     try {
@@ -38,20 +39,26 @@ abstract final class Oito2Settings {
     }
   }
 
-  /// Emits the current system settings, then every change; the reader is
-  /// released when the subscription is cancelled.
+  /// Emits the current system settings of [platform], then every change.
+  ///
+  /// The reader, with its system connections, is created when the stream
+  /// is listened to and released when the subscription is cancelled, so a
+  /// stream that is never listened to opens nothing.
   static Stream<Oito2SystemSettings> watch({Oito2Platform? platform}) {
-    final settingsReader = reader(platform: platform);
+    Oito2SystemSettingsReader? settingsReader;
     late final StreamController<Oito2SystemSettings> controller;
     StreamSubscription<Oito2SystemSettings>? subscription;
     controller = StreamController(
-      onListen: () => subscription = settingsReader.watch().listen(
-        controller.add,
-        onError: controller.addError,
-      ),
+      onListen: () {
+        final created = settingsReader = reader(platform: platform);
+        subscription = created.watch().listen(
+          controller.add,
+          onError: controller.addError,
+        );
+      },
       onCancel: () async {
         await subscription?.cancel();
-        await settingsReader.close();
+        await settingsReader?.close();
       },
     );
     return controller.stream;
@@ -124,6 +131,7 @@ class _Oito2SystemSettingsScopeState extends State<Oito2SystemSettingsScope>
     _listen();
   }
 
+  /// Shows [settings] when they differ from the ones shown.
   void _apply(Oito2SystemSettings settings) {
     if (!mounted || settings == _settings) return;
     setState(() => _settings = settings);

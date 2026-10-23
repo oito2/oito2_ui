@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -76,7 +76,8 @@ enum Oito2TabBarStyle {
 ///
 /// It drives a [TabController] like Material's `TabBar`: the [controller]
 /// given, or the closest `DefaultTabController`. The marker slides between
-/// tabs; [style] picks its look.
+/// tabs; [style] picks its look. Throws a [FlutterError] in debug builds
+/// when neither [controller] nor a `DefaultTabController` is available.
 class Oito2TabBar extends StatelessWidget implements PreferredSizeWidget {
   /// Creates a tab bar.
   const Oito2TabBar({
@@ -99,12 +100,14 @@ class Oito2TabBar extends StatelessWidget implements PreferredSizeWidget {
   final ValueChanged<int>? onTap;
 
   /// Whether the tabs keep their own width and scroll, instead of sharing
-  /// the bar width equally.
+  /// the bar width equally. The [Oito2TabBarStyle.subtle] style always
+  /// scrolls, whatever this value.
   final bool isScrollable;
 
-  /// The height of the tabs that [preferredSize] reserves: the touch
-  /// height by default, which fits every platform. [Oito2Sizes.buttonHeight]
-  /// fits pointer platforms exactly.
+  /// The tab height that [preferredSize] reserves: the touch height by
+  /// default, which fits every platform. [Oito2Sizes.buttonHeight] fits
+  /// pointer platforms exactly. The tabs size themselves from the theme's
+  /// tap target size, not from this value.
   final double tabHeight;
 
   /// The look of the selected tab marker.

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -45,9 +45,11 @@ enum Oito2AvatarShape {
   square,
 }
 
-/// The initials of [name]: the first letters of its first and last words,
-/// in upper case. A letter is a whole user-perceived character, so
-/// decomposed accents and emoji sequences stay intact.
+/// Returns the initials of [name]: the first letters of its first and
+/// last words, in upper case, or an empty string when [name] is blank.
+///
+/// A letter is a whole user-perceived character, so decomposed accents
+/// and emoji sequences stay intact.
 String oito2Initials(String name) {
   final words = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
   if (words.isEmpty) return '';
@@ -77,14 +79,14 @@ class Oito2Avatar extends StatelessWidget {
     this.backgroundColor,
   });
 
-  /// The picture.
+  /// The image shown once it loads, over the initials or icon fallback.
   final ImageProvider? image;
 
   /// The name the initials, the color and the accessibility label come
   /// from.
   final String? name;
 
-  /// The fallback when there is no name.
+  /// The icon shown when [name] is null or blank.
   final IconData icon;
 
   /// The width and height.
@@ -99,10 +101,15 @@ class Oito2Avatar extends StatelessWidget {
   /// The fallback background; defaults to a color picked from [name].
   final Color? backgroundColor;
 
+  /// The corner radius for [shape]: half the size for a circle, 22% of it
+  /// for a square.
   BorderRadius get _radius => shape == Oito2AvatarShape.circle
       ? BorderRadius.circular(size / 2)
       : BorderRadius.circular(size * 0.22);
 
+  /// Returns [backgroundColor], otherwise an accent color picked by a
+  /// stable hash of [name], or a neutral surface of [scheme] when there
+  /// is no name.
   Color _background(ColorScheme scheme) {
     final name = this.name;
     if (backgroundColor != null) return backgroundColor!;
@@ -114,6 +121,7 @@ class Oito2Avatar extends StatelessWidget {
     return accents[hash % accents.length].color;
   }
 
+  /// Returns the localized name of [status], which must not be null.
   String _statusLabel(Oito2Localizations strings) => switch (status!) {
     Oito2AvatarStatus.online => strings.statusOnline,
     Oito2AvatarStatus.away => strings.statusAway,
@@ -207,13 +215,16 @@ class Oito2Avatar extends StatelessWidget {
   }
 }
 
-/// [avatars] in an overlapping row, showing at most [max] and a "+N"
+/// A row of overlapping [avatars], showing at most [max] and a "+N"
 /// bubble for the rest.
 ///
 /// The ring around each avatar and the bubble follow [shape], which
 /// should match the avatars'.
 class Oito2AvatarGroup extends StatelessWidget {
   /// Creates an avatar group.
+  ///
+  /// Throws an [AssertionError] in debug builds when [max] is not positive
+  /// or [overlap] is outside 0 (inclusive) to 1 (exclusive).
   const Oito2AvatarGroup({
     super.key,
     required this.avatars,

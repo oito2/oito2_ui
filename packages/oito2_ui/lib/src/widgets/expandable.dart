@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -59,7 +59,8 @@ class Oito2Expandable extends StatefulWidget {
   /// The content shown when collapsed, such as a summary.
   final Widget? collapsedChild;
 
-  /// Whether the content is shown.
+  /// Whether the content is shown; only the initial state when
+  /// [onChanged] is null.
   final bool isExpanded;
 
   /// Called with the requested state when the header is activated; when
@@ -76,9 +77,12 @@ class Oito2Expandable extends StatefulWidget {
   State<Oito2Expandable> createState() => _Oito2ExpandableState();
 }
 
+/// Holds the expanded state of an uncontrolled [Oito2Expandable].
 class _Oito2ExpandableState extends State<Oito2Expandable> {
   late bool _ownExpanded = widget.isExpanded;
 
+  /// The state shown: the widget's when controlled, the own one
+  /// otherwise.
   bool get _expanded =>
       widget.onChanged == null ? _ownExpanded : widget.isExpanded;
 
@@ -90,6 +94,8 @@ class _Oito2ExpandableState extends State<Oito2Expandable> {
     }
   }
 
+  /// Requests the opposite state from the parent when controlled, or
+  /// flips the own state otherwise.
   void _toggle() {
     final onChanged = widget.onChanged;
     if (onChanged != null) {
@@ -158,8 +164,8 @@ class _Oito2ExpandableState extends State<Oito2Expandable> {
           ),
         ),
         ClipRect(
-          // AnimatedSize can't run with a zero duration, so reduced motion
-          // shows the content directly.
+          // Reduced motion swaps the content directly, without animating
+          // the size.
           child: reduced
               ? body
               : AnimatedSize(

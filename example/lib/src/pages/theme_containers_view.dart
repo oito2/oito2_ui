@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@ import 'package:oito2_ui/oito2_ui.dart';
 import '../widgets/showcase_widgets.dart';
 
 /// The Containers section of the Material theme page: cards, list
-/// tiles, dialogs, sheets, banners, snack bars, menus and tooltips, as
-/// `Oito2Theme` styles them.
+/// tiles, dialogs, sheets, banners, snack bars, tooltips, menus and tabs,
+/// as `Oito2Theme` styles them.
 class ThemeContainersView extends StatefulWidget {
   /// Creates the containers section.
   const ThemeContainersView({super.key});
@@ -32,6 +32,7 @@ class ThemeContainersView extends StatefulWidget {
 class _ThemeContainersViewState extends State<ThemeContainersView> {
   int _selectedTile = 0;
 
+  /// Opens an alert dialog with two actions.
   void _showDialog() {
     showDialog<void>(
       context: context,
@@ -54,6 +55,7 @@ class _ThemeContainersViewState extends State<ThemeContainersView> {
     );
   }
 
+  /// Opens a simple dialog with a list of options.
   void _showSimpleDialog() {
     showDialog<void>(
       context: context,
@@ -70,6 +72,7 @@ class _ThemeContainersViewState extends State<ThemeContainersView> {
     );
   }
 
+  /// Opens a modal bottom sheet with a drag handle.
   void _showBottomSheet() {
     showModalBottomSheet<void>(
       context: context,
@@ -86,6 +89,7 @@ class _ThemeContainersViewState extends State<ThemeContainersView> {
     );
   }
 
+  /// Shows a Material banner with a dismiss action.
   void _showBanner() {
     final messenger = ScaffoldMessenger.of(context);
     messenger.showMaterialBanner(
@@ -102,6 +106,7 @@ class _ThemeContainersViewState extends State<ThemeContainersView> {
     );
   }
 
+  /// Shows a snack bar with an undo action.
   void _showSnackBar() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

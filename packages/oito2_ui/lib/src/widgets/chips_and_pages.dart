@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
 
 import 'dart:math' as math;
 
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
@@ -41,6 +42,9 @@ enum Oito2ChoiceChipBarStyle {
 /// the sides with hidden chips.
 class Oito2ChoiceChipBar extends StatefulWidget {
   /// Creates a choice chip bar.
+  ///
+  /// Throws an [AssertionError] in debug builds when [labels] and
+  /// [isSelected] differ in length.
   const Oito2ChoiceChipBar({
     super.key,
     required this.labels,
@@ -66,18 +70,18 @@ class Oito2ChoiceChipBar extends StatefulWidget {
   /// How chips that don't fit are laid out.
   final Oito2ChoiceChipBarStyle style;
 
-  /// Space between chips.
+  /// The space between chips, and between rows in the wrap style.
   final double spacing;
 
-  /// How far one arrow button scrolls.
+  /// The distance, in logical pixels, one arrow button press scrolls.
   final double scrollStep;
 
-  /// The accessibility label of the backward arrow; defaults to
-  /// [Oito2Localizations.scrollBack].
+  /// The tooltip and accessibility label of the backward arrow; defaults
+  /// to [Oito2Localizations.scrollBack].
   final String? previousLabel;
 
-  /// The accessibility label of the forward arrow; defaults to
-  /// [Oito2Localizations.scrollForward].
+  /// The tooltip and accessibility label of the forward arrow; defaults
+  /// to [Oito2Localizations.scrollForward].
   final String? nextLabel;
 
   /// Whether a selected chip shows a check mark; without it only the fill
@@ -88,6 +92,8 @@ class Oito2ChoiceChipBar extends StatefulWidget {
   State<Oito2ChoiceChipBar> createState() => _Oito2ChoiceChipBarState();
 }
 
+/// Tracks which edges of the [Oito2ChoiceChipBar] row hide chips, to show
+/// the matching arrow buttons.
 class _Oito2ChoiceChipBarState extends State<Oito2ChoiceChipBar> {
   final _controller = ScrollController();
   bool _canGoBack = false;
@@ -105,6 +111,8 @@ class _Oito2ChoiceChipBarState extends State<Oito2ChoiceChipBar> {
     super.dispose();
   }
 
+  /// Recomputes whether chips are hidden before or after the visible
+  /// part and rebuilds when that changes.
   void _update() {
     if (!_controller.hasClients) return;
     final position = _controller.position;
@@ -118,6 +126,8 @@ class _Oito2ChoiceChipBarState extends State<Oito2ChoiceChipBar> {
     }
   }
 
+  /// Scrolls the row by [delta], within its extent, animating unless
+  /// animations are disabled.
   void _scrollBy(double delta) {
     final position = _controller.position;
     final target = (position.pixels + delta).clamp(
@@ -134,6 +144,7 @@ class _Oito2ChoiceChipBarState extends State<Oito2ChoiceChipBar> {
           );
   }
 
+  /// Builds one [ChoiceChip] per label.
   List<Widget> _chips() => [
     for (var i = 0; i < widget.labels.length; i++)
       ChoiceChip(
@@ -212,6 +223,9 @@ enum Oito2PageIndicatorLayout {
 /// available width, the indicator shows "page / length" text instead.
 class Oito2PageIndicator extends StatelessWidget {
   /// Creates a page indicator.
+  ///
+  /// Throws an [AssertionError] in debug builds when [page] is not
+  /// between 0 and [length] - 1.
   const Oito2PageIndicator({
     super.key,
     required this.length,
@@ -229,13 +243,14 @@ class Oito2PageIndicator extends StatelessWidget {
   /// The current page, from 0.
   final int page;
 
-  /// Called with the index of the activated dot.
+  /// Called with the index of the activated dot; the dots are not
+  /// interactive when null.
   final ValueChanged<int>? onTap;
 
   /// The diameter of the dots.
   final double dotSize;
 
-  /// Space between dots; [layout] may reduce it.
+  /// The space between dots; [layout] may reduce it.
   final double spacing;
 
   /// How the dots are spaced.
@@ -245,13 +260,47 @@ class Oito2PageIndicator extends StatelessWidget {
   /// and the page count; defaults to [Oito2Localizations.pageOf].
   final String Function(int page, int length)? pageLabel;
 
+  /// The smallest width and height of an interactive dot's target.
+  static const double _minTarget = 24;
+
+  /// Moves to the page the arrow, Home or End key of [event] points at.
+  KeyEventResult _onKey(BuildContext context, KeyEvent event) {
+    final onTap = this.onTap;
+    if (onTap == null || (event is! KeyDownEvent && event is! KeyRepeatEvent)) {
+      return KeyEventResult.ignored;
+    }
+    final (:back, :forward) = readingArrowsOf(context);
+    final key = event.logicalKey;
+    final int target;
+    if (key == back) {
+      target = page - 1;
+    } else if (key == forward) {
+      target = page + 1;
+    } else if (key == LogicalKeyboardKey.home) {
+      target = 0;
+    } else if (key == LogicalKeyboardKey.end) {
+      target = length - 1;
+    } else {
+      return KeyEventResult.ignored;
+    }
+    if (target >= 0 && target < length && target != page) onTap(target);
+    return KeyEventResult.handled;
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final active = semanticColorsOf(context).primaryText;
     final pageLabel = this.pageLabel ?? Oito2Localizations.of(context).pageOf;
+    final interactive = onTap != null;
     final selectedWidth = dotSize * 3;
-    final dots = selectedWidth + (length - 1) * dotSize + 16;
+    // Interactive dots sit in boxes at least _minTarget wide, which the
+    // spacing between them absorbs as far as it can.
+    double boxWidth(double width) =>
+        interactive ? math.max(width, _minTarget) : width;
+    final boxes =
+        boxWidth(selectedWidth) + (length - 1) * boxWidth(dotSize) + 16;
+    final absorbed = boxWidth(dotSize) - dotSize;
     final gaps = math.max(1, length - 1);
 
     return LayoutBuilder(
@@ -266,10 +315,14 @@ class Oito2PageIndicator extends StatelessWidget {
                 : this.spacing * 0.5,
           Oito2PageIndicatorLayout.bounded => math.max(
             dotSize / 2,
-            math.min(this.spacing, (constraints.maxWidth - dots) / gaps),
+            math.min(
+              this.spacing,
+              (constraints.maxWidth - boxes) / gaps + absorbed,
+            ),
           ),
         };
-        if (constraints.maxWidth < dots + (length - 1) * spacing) {
+        final gap = math.max(0.0, spacing - absorbed);
+        if (constraints.maxWidth < boxes + (length - 1) * gap) {
           return Semantics(
             label: pageLabel(page + 1, length),
             excludeSemantics: true,
@@ -279,28 +332,30 @@ class Oito2PageIndicator extends StatelessWidget {
             ),
           );
         }
-        return Row(
+        Widget dots = Row(
           mainAxisSize: MainAxisSize.min,
-          spacing: spacing,
+          spacing: gap,
           children: [
             for (var i = 0; i < length; i++)
               Semantics(
-                button: onTap != null,
+                button: interactive,
                 selected: i == page,
                 label: pageLabel(i + 1, length),
                 excludeSemantics: true,
-                onTap: onTap == null ? null : () => onTap!(i),
+                onTap: interactive ? () => onTap!(i) : null,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: onTap == null ? null : () => onTap!(i),
+                  onTap: interactive ? () => onTap!(i) : null,
                   child: MouseRegion(
-                    cursor: onTap == null
-                        ? SystemMouseCursors.basic
-                        : SystemMouseCursors.click,
-                    child: Padding(
+                    cursor: interactive
+                        ? SystemMouseCursors.click
+                        : SystemMouseCursors.basic,
+                    child: Container(
+                      width: boxWidth(i == page ? selectedWidth : dotSize),
                       padding: EdgeInsets.symmetric(
-                        vertical: math.max(0, (24 - dotSize) / 2),
+                        vertical: math.max(0, (_minTarget - dotSize) / 2),
                       ),
+                      alignment: Alignment.center,
                       child: AnimatedContainer(
                         duration: motionDuration(
                           context,
@@ -320,6 +375,18 @@ class Oito2PageIndicator extends StatelessWidget {
               ),
           ],
         );
+        if (interactive) {
+          // The dots are one stop in keyboard navigation; the arrow keys,
+          // Home and End change the page.
+          dots = Oito2FocusBorder(
+            borderRadius: Oito2Radius.smallAll,
+            child: Focus(
+              onKeyEvent: (_, event) => _onKey(context, event),
+              child: dots,
+            ),
+          );
+        }
+        return dots;
       },
     );
   }

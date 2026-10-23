@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -142,7 +142,8 @@ class ShowcaseFrame extends StatefulWidget {
   /// The framed layout.
   final Widget child;
 
-  /// The width at start.
+  /// The frame width at start, clamped to the slider range of 360 to 900
+  /// pixels.
   final double initialWidth;
 
   /// The frame height.

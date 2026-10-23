@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -32,11 +32,16 @@ import 'widget_helpers.dart';
 /// value.
 ///
 /// The arrow keys change the value by [step], Page Up and Page Down by
-/// [pageStep], Home and End jump to [min] and [max]. With the focus in
+/// [pageStep], Home and End jump to [min] and [max] when they are finite.
+/// With the focus in
 /// the field the mouse wheel steps too, and dragging sideways on the
 /// buttons scrubs the value one [step] per 4 pixels.
 class Oito2NumberEntry extends StatefulWidget {
   /// Creates a number entry.
+  ///
+  /// [pageStep] defaults to ten times [step]. Throws an [AssertionError] in
+  /// debug mode when [min] is greater than [max], when [step] is not
+  /// greater than zero, or when [decimals] is not between 0 and 20.
   const Oito2NumberEntry({
     super.key,
     required this.value,
@@ -53,7 +58,7 @@ class Oito2NumberEntry extends StatefulWidget {
   }) : pageStep = pageStep ?? step * 10,
        assert(min <= max),
        assert(step > 0),
-       assert(decimals >= 0);
+       assert(decimals >= 0 && decimals <= 20);
 
   /// The current value.
   final double value;
@@ -73,7 +78,7 @@ class Oito2NumberEntry extends StatefulWidget {
   /// The change of Page Up and Page Down; ten steps by default.
   final double pageStep;
 
-  /// The number of decimal places shown and kept.
+  /// The number of decimal places shown and kept, from 0 to 20.
   final int decimals;
 
   /// The field label.
@@ -138,6 +143,8 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry>
     super.dispose();
   }
 
+  /// Shows [value] formatted in the field, keeping the text when it is
+  /// already the same.
   void _show(double value) {
     final text = _format!.format(value);
     if (_controller.text != text) {
@@ -175,16 +182,22 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry>
     );
   }
 
+  /// Returns the number typed in the field, or null when the text is not a
+  /// number in the locale's format.
   double? _parse() {
     final number = _format?.tryParse(_controller.text.trim());
     return number?.toDouble();
   }
 
+  /// Rounds [value] to the decimal places and clamps it between the
+  /// bounds.
   double _normalize(double value) {
     final rounded = double.parse(value.toStringAsFixed(widget.decimals));
     return rounded.clamp(widget.min, widget.max);
   }
 
+  /// Applies the typed text, or restores the current value when the text
+  /// is not a number or the entry is read-only.
   void _commit() {
     final parsed = _parse();
     if (parsed == null || !_enabled) {
@@ -194,12 +207,16 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry>
     _set(parsed);
   }
 
+  /// Normalizes and shows [value], reporting it when it differs from the
+  /// current value.
   void _set(double value) {
     final next = _normalize(value);
     _show(next);
     if (next != widget.value) widget.onChanged?.call(next);
   }
 
+  /// Adds [delta] to the typed number, or to the current value when the
+  /// text is not a number.
   void _stepBy(double delta) {
     if (!_enabled) return;
     _set((_parse() ?? widget.value) + delta);
@@ -210,13 +227,21 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry>
     if (!_focusNode.hasFocus) _commit();
   }
 
+  /// Steps the value on a vertical mouse wheel scroll while the field has
+  /// the focus; sideways scrolls are left to the enclosing widgets.
   void _onScroll(PointerSignalEvent event) {
-    if (event is! PointerScrollEvent || !_focusNode.hasFocus) return;
+    if (event is! PointerScrollEvent ||
+        !_focusNode.hasFocus ||
+        event.scrollDelta.dy == 0) {
+      return;
+    }
     GestureBinding.instance.pointerSignalResolver.register(event, (_) {
       _stepBy(event.scrollDelta.dy < 0 ? widget.step : -widget.step);
     });
   }
 
+  /// Accumulates the horizontal drag, mirrored in right-to-left text, and
+  /// steps once per 4 pixels.
   void _onScrub(DragUpdateDetails details) {
     final rtl = Directionality.of(context) == TextDirection.rtl;
     _scrub += details.delta.dx * (rtl ? -1 : 1);

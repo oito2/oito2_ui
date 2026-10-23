@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -43,6 +43,9 @@ typedef Oito2MasterTileBuilder = Widget Function(
 /// selection. The selection survives switching between the two layouts.
 class Oito2MasterDetailPage extends StatefulWidget {
   /// Creates a master-detail page.
+  ///
+  /// Throws an [AssertionError] in debug mode unless exactly one of
+  /// [length] and [controller] is given.
   const Oito2MasterDetailPage({
     super.key,
     this.length,
@@ -152,11 +155,15 @@ class _Oito2MasterDetailPageState extends State<Oito2MasterDetailPage>
     });
   }
 
+  /// Selects the item at [index] and reports it to the `onSelected`
+  /// callback.
   void _select(int index) {
     _controller.index = index;
     widget.onSelected?.call(index);
   }
 
+  /// Builds the master pane at [width] with the tile at [selected]
+  /// highlighted, showing [content] in place of the list when given.
   Widget _master(
     BuildContext context,
     double width,
@@ -325,6 +332,7 @@ class _Oito2MasterListViewState extends State<Oito2MasterListView> {
     super.dispose();
   }
 
+  /// Schedules a reveal of the selected tile after the current frame.
   void _revealSoon({bool animate = true}) {
     if (widget.selectedIndex < 0) return;
     WidgetsBinding.instance.addPostFrameCallback(

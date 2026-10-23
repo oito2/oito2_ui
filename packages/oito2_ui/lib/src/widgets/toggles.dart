@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ bool _isTouch(ThemeData theme) =>
 /// The colors a painted toggle uses in its current [Theme].
 @immutable
 class _ToggleColors {
+  /// Resolves the toggle colors from the theme of [context].
   factory _ToggleColors.of(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -127,13 +128,14 @@ class _ToggleState {
   /// Whether a pointer hovers the toggle.
   final bool hovered;
 
-  /// Whether a pointer presses the toggle.
+  /// Whether a pointer is pressing the toggle.
   final bool pressed;
 
   /// Whether the toggle shows its keyboard focus ring.
   final bool focused;
 
-  /// The opacity of the hover and press overlay.
+  /// The opacity of the hover and press overlay: 0.16 while pressed,
+  /// 0.08 while hovered, otherwise 0.
   double get overlay => pressed ? 0.16 : (hovered ? 0.08 : 0);
 
   @override
@@ -148,8 +150,8 @@ class _ToggleState {
   int get hashCode => Object.hash(progress, hovered, pressed, focused);
 }
 
-/// Paints a ring of [width] around [rrect], [gap] pixels away from it, as
-/// a filled shape.
+/// Paints a [color] ring of [width] around [rrect], [gap] pixels away from
+/// it, as a filled shape.
 void _paintRing(
   Canvas canvas,
   RRect rrect,
@@ -292,6 +294,9 @@ class _ToggleWidgetState extends State<_Toggle>
 /// 24 pixels on touch platforms, in a 48-pixel target.
 class Oito2Checkbox extends StatelessWidget {
   /// Creates a check box.
+  ///
+  /// Throws an [AssertionError] in debug builds when [value] is null and
+  /// [tristate] is false.
   const Oito2Checkbox({
     super.key,
     required this.value,
@@ -351,6 +356,8 @@ class Oito2Checkbox extends StatelessWidget {
   }
 }
 
+/// Paints the box of an [Oito2Checkbox], its check mark or dash, and its
+/// focus ring.
 class _CheckboxPainter extends CustomPainter {
   _CheckboxPainter({
     required this.state,
@@ -427,6 +434,8 @@ class _CheckboxPainter extends CustomPainter {
     if (state.focused) _paintRing(canvas, rrect, colors.focus);
   }
 
+  /// The leading [t] fraction of [metric], which draws the check mark
+  /// progressively.
   static Path _partial(PathMetric metric, double t) =>
       metric.extractPath(0, metric.length * t);
 
@@ -470,7 +479,8 @@ class Oito2Radio<T> extends StatelessWidget {
   /// is cleared; null disables the radio.
   final ValueChanged<T?>? onChanged;
 
-  /// Whether tapping the selected radio clears the group.
+  /// Whether tapping the selected radio clears the group by calling
+  /// [onChanged] with null.
   final bool toggleable;
 
   /// The focus node; one is created when null.
@@ -482,6 +492,7 @@ class Oito2Radio<T> extends StatelessWidget {
   /// The accessibility label, when no surrounding label provides one.
   final String? semanticLabel;
 
+  /// Whether this radio's [value] is the group's selection.
   bool get _selected => value == groupValue;
 
   @override
@@ -511,6 +522,7 @@ class Oito2Radio<T> extends StatelessWidget {
   }
 }
 
+/// Paints the ring of an [Oito2Radio], its dot and its focus ring.
 class _RadioPainter extends CustomPainter {
   _RadioPainter({
     required this.state,
@@ -584,7 +596,8 @@ class Oito2Switch extends StatelessWidget {
   /// Called with the new value; null disables the switch.
   final ValueChanged<bool>? onChanged;
 
-  /// Whether the track marks the on and off states with shapes.
+  /// Whether the track marks the on and off states with an "I" and an "O",
+  /// so the state doesn't rely on color alone.
   final bool onOffShapes;
 
   /// The focus node; one is created when null.
@@ -626,6 +639,8 @@ class Oito2Switch extends StatelessWidget {
   }
 }
 
+/// Paints the track and thumb of an [Oito2Switch], its optional on and off
+/// marks, and its focus ring; the thumb follows [textDirection].
 class _SwitchPainter extends CustomPainter {
   _SwitchPainter({
     required this.state,
@@ -750,13 +765,15 @@ class Oito2ToggleButton extends StatelessWidget {
   /// [Oito2Switch].
   final Widget control;
 
-  /// The label.
+  /// The label, usually a [Text].
   final Widget title;
 
   /// Secondary text below the label.
   final Widget? subtitle;
 
-  /// Called when the row is activated; null disables the row.
+  /// Called when the row is tapped or activated with the keyboard; null
+  /// disables the row and dims its text. It does not disable [control],
+  /// which takes its own callback.
   final VoidCallback? onToggled;
 
   /// Whether [control] follows the text instead of preceding it.
@@ -888,6 +905,9 @@ class _ToggleListTile extends StatelessWidget {
 /// A [ListTile] with an [Oito2Checkbox]; tapping the tile toggles it.
 class Oito2CheckboxListTile extends StatelessWidget {
   /// Creates a check box list tile.
+  ///
+  /// The check box throws an [AssertionError] in debug builds when [value]
+  /// is null and [tristate] is false.
   const Oito2CheckboxListTile({
     super.key,
     required this.value,
@@ -927,7 +947,7 @@ class Oito2CheckboxListTile extends StatelessWidget {
   /// Space around the tile content.
   final EdgeInsetsGeometry? contentPadding;
 
-  /// The focus node of the tile.
+  /// The focus node of the tile; one is created when null.
   final FocusNode? focusNode;
 
   /// Whether the tile takes focus when first shown.
@@ -1005,7 +1025,7 @@ class Oito2RadioListTile<T> extends StatelessWidget {
   /// Space around the tile content.
   final EdgeInsetsGeometry? contentPadding;
 
-  /// The focus node of the tile.
+  /// The focus node of the tile; one is created when null.
   final FocusNode? focusNode;
 
   /// Whether the tile takes focus when first shown.
@@ -1072,7 +1092,7 @@ class Oito2SwitchListTile extends StatelessWidget {
   /// A widget on the side opposite the switch, such as an icon.
   final Widget? secondary;
 
-  /// Whether the switch track marks its states with shapes.
+  /// Whether the switch track marks its states with an "I" and an "O".
   final bool onOffShapes;
 
   /// Where the switch sits; [Oito2ControlAffinity.platform] is trailing.
@@ -1081,7 +1101,7 @@ class Oito2SwitchListTile extends StatelessWidget {
   /// Space around the tile content.
   final EdgeInsetsGeometry? contentPadding;
 
-  /// The focus node of the tile.
+  /// The focus node of the tile; one is created when null.
   final FocusNode? focusNode;
 
   /// Whether the tile takes focus when first shown.

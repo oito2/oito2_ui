@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -119,17 +119,19 @@ class Oito2WindowControl extends StatefulWidget {
   /// The glyph color; defaults to the theme's `onSurface`.
   final Color? foregroundColor;
 
-  /// The title bar height, used by the full-height Windows buttons.
+  /// The title bar height, which the full-height Windows buttons fill;
+  /// other styles are [Oito2Sizes.windowControlSize] tall.
   final double height;
 
   /// Whether the window is active; inactive macOS buttons turn grey.
   final bool isActive;
 
-  /// The width this button takes for [style] at [height].
+  /// Returns the width this button takes for [style]; every style has a
+  /// fixed width, so [height] doesn't change it.
   static double widthFor(Oito2WindowControlStyle style, double height) {
     return switch (style) {
       Oito2WindowControlStyle.windows => Oito2Sizes.windowsWindowControlWidth,
-      Oito2WindowControlStyle.macos => 20,
+      Oito2WindowControlStyle.macos => Oito2Sizes.windowControlSize,
       Oito2WindowControlStyle.none => 0,
       _ => Oito2Sizes.windowControlSize,
     };
@@ -153,8 +155,8 @@ class _Oito2WindowControlState extends State<Oito2WindowControl> {
 
   bool get _isClose => widget.type == Oito2WindowControlType.close;
 
-  /// The background, glyph color and shape of the button in its current
-  /// interaction state.
+  /// Returns the background, glyph color and shape of the button in its
+  /// current interaction state, tinting [foreground] for hover and press.
   (Color background, Color glyph, ShapeBorder shape) _appearance(
     Color foreground,
   ) {

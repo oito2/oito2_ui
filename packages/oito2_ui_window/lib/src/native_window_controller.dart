@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -81,6 +81,8 @@ class Oito2NativeWindowController
     }
   }
 
+  /// Applies [change] to [state] and invalidates any refresh in flight,
+  /// unless the controller is disposed.
   void _update(Oito2WindowState Function(Oito2WindowState state) change) {
     if (_disposed) return;
     _generation++;

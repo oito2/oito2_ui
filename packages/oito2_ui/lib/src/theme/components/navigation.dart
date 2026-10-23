@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,9 +18,10 @@ import 'package:material_ui/material_ui.dart';
 import '../../tokens/geometry.dart';
 import 'component_context.dart';
 
-/// App bars: the title bar tone without elevation or scroll tint. On
-/// pointer platforms they are [Oito2Sizes.titleBarHeight] tall with a
-/// bottom border, and native Linux centers the title as GNOME does.
+/// Returns the theme of app bars: the title bar tone without elevation or
+/// scroll tint. On pointer platforms they are [Oito2Sizes.titleBarHeight]
+/// tall with a bottom border, and native Linux centers the title as GNOME
+/// does.
 AppBarThemeData buildAppBarTheme(ComponentThemeContext c) {
   final isPointer = !c.isTouch;
   return AppBarThemeData(
@@ -43,8 +44,8 @@ AppBarThemeData buildAppBarTheme(ComponentThemeContext c) {
   );
 }
 
-/// Tab bars: the text-safe primary tone for the selected label and
-/// indicator.
+/// Returns the theme of tab bars: the text-safe primary tone for the
+/// selected label and the label-wide indicator.
 TabBarThemeData buildTabBarTheme(ComponentThemeContext c) {
   return TabBarThemeData(
     labelColor: c.indicator,
@@ -57,8 +58,8 @@ TabBarThemeData buildTabBarTheme(ComponentThemeContext c) {
   );
 }
 
-/// Navigation rails: the sidebar tone with the secondary container
-/// indicator.
+/// Returns the theme of navigation rails: the sidebar tone with the
+/// secondary container indicator.
 NavigationRailThemeData buildNavigationRailTheme(ComponentThemeContext c) {
   return NavigationRailThemeData(
     backgroundColor: c.chrome.sidebar,
@@ -81,7 +82,8 @@ NavigationRailThemeData buildNavigationRailTheme(ComponentThemeContext c) {
   );
 }
 
-/// Navigation bars: the sidebar tone, 64 tall on pointer platforms.
+/// Returns the theme of navigation bars: the sidebar tone with the
+/// secondary container indicator, 64 pixels tall on pointer platforms.
 NavigationBarThemeData buildNavigationBarTheme(ComponentThemeContext c) {
   return NavigationBarThemeData(
     backgroundColor: c.chrome.sidebar,
@@ -100,8 +102,8 @@ NavigationBarThemeData buildNavigationBarTheme(ComponentThemeContext c) {
   );
 }
 
-/// Navigation drawers: the chrome dialog tone with the secondary container
-/// indicator.
+/// Returns the theme of navigation drawers: the chrome dialog tone with the
+/// secondary container indicator, and 40-pixel tiles on pointer platforms.
 NavigationDrawerThemeData buildNavigationDrawerTheme(ComponentThemeContext c) {
   return NavigationDrawerThemeData(
     backgroundColor: c.chrome.dialog,
@@ -114,8 +116,8 @@ NavigationDrawerThemeData buildNavigationDrawerTheme(ComponentThemeContext c) {
   );
 }
 
-/// List tiles: the medium radius, compact padding on pointer platforms and
-/// the text-safe primary tone when selected.
+/// Returns the theme of list tiles: the medium radius, compact padding on
+/// pointer platforms and the text-safe primary tone when selected.
 ListTileThemeData buildListTileTheme(ComponentThemeContext c) {
   return ListTileThemeData(
     shape: const RoundedRectangleBorder(borderRadius: Oito2Radius.mediumAll),
@@ -135,8 +137,8 @@ ListTileThemeData buildListTileTheme(ComponentThemeContext c) {
   );
 }
 
-/// Expansion tiles: no borders when expanded or collapsed and the
-/// text-safe primary tone for the expanded icon.
+/// Returns the theme of expansion tiles: no borders when expanded or
+/// collapsed and the text-safe primary tone for the expanded icon.
 ExpansionTileThemeData buildExpansionTileTheme(ComponentThemeContext c) {
   return ExpansionTileThemeData(
     shape: const Border(),
@@ -148,8 +150,9 @@ ExpansionTileThemeData buildExpansionTileTheme(ComponentThemeContext c) {
   );
 }
 
-/// Scrollbars: thin, rounded and semi-transparent `onSurface` thumbs,
-/// wider on hover on pointer platforms.
+/// Returns the theme of scrollbars: thin, rounded and semi-transparent
+/// `onSurface` thumbs that widen and darken on hover; they can be dragged
+/// on pointer platforms only.
 ScrollbarThemeData buildScrollbarTheme(ComponentThemeContext c) {
   return ScrollbarThemeData(
     thickness: WidgetStateProperty.resolveWith(

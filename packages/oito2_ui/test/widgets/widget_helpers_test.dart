@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -31,6 +31,8 @@ class _Probe extends StatefulWidget {
   State<_Probe> createState() => _ProbeState();
 }
 
+/// Counts focus and controller notifications and records each controller
+/// replaced by a new one.
 class _ProbeState extends State<_Probe>
     with OwnedFocusNodeMixin, OwnedControllerMixin<_Probe, ValueNotifier<int>> {
   int focusChanges = 0;

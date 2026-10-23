@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@ class Oito2PopoverController extends ChangeNotifier {
   /// Opens the popover when closed and closes it when open.
   void toggle() => _set(!_isOpen);
 
+  /// Stores [value] and notifies the listeners when it changes.
   void _set(bool value) {
     if (_isOpen == value) return;
     _isOpen = value;
@@ -187,6 +188,8 @@ class _Oito2PopoverState extends State<Oito2Popover>
     super.dispose();
   }
 
+  /// Shows or hides the panel to match the controller, saves and restores
+  /// the focus around it, and reports the change to `onOpenChanged`.
   void _sync() {
     if (!mounted) return;
     final open = _controller.isOpen;
@@ -209,16 +212,21 @@ class _Oito2PopoverState extends State<Oito2Popover>
     widget.onOpenChanged?.call(open);
   }
 
+  /// Focuses the first focusable widget of the open panel, or the panel's
+  /// scope when it has none.
   void _focusPanel() {
     if (!mounted || !_portal.isShowing) return;
     final first = _scope.traversalDescendants.firstOrNull;
     first != null ? first.requestFocus() : _scope.requestFocus();
   }
 
+  /// The Escape binding that closes the panel while it is open.
   Map<ShortcutActivator, VoidCallback> get _bindings => _portal.isShowing
       ? {const SingleActivator(LogicalKeyboardKey.escape): _controller.close}
       : const {};
 
+  /// Builds the panel next to the anchor described by [info], inside the
+  /// tap region groups of this popover and its enclosing ones.
   Widget _buildPanel(BuildContext context, OverlayChildLayoutInfo info) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -278,7 +286,8 @@ class _Oito2PopoverState extends State<Oito2Popover>
     );
   }
 
-  /// Counts the builds of the popover, which rebuild the panel content.
+  /// The number of builds of the popover; the panel content is built again
+  /// only when it changes.
   int _builds = 0;
   int _contentBuild = -1;
   Widget? _content;

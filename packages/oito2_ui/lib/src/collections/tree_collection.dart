@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ import 'text_folding.dart';
 @immutable
 class Oito2TreeNode<T> {
   /// Creates a node; give [children] (possibly empty) to make a branch.
+  /// The [label] defaults to [value].
   const Oito2TreeNode({
     required this.value,
     this._label,
@@ -50,7 +51,8 @@ class Oito2TreeNode<T> {
   /// Whether the node can have children.
   bool get isBranch => children != null;
 
-  /// Returns a copy with the given fields replaced.
+  /// Returns a copy with the given fields replaced; the [value] stays the
+  /// same, and [data] and [children] can't be reset to null this way.
   Oito2TreeNode<T> copyWith({
     String? label,
     T? data,
@@ -104,9 +106,11 @@ class Oito2TreeCollection<T> {
     index(this.roots, const [], null);
   }
 
-  /// Builds a tree from slash-separated [paths], such as file paths: each
-  /// segment becomes a branch and the last one a leaf. Node values are
-  /// the paths up to each node and labels the segment names.
+  /// Builds a tree from [paths] split by [separator], such as file paths:
+  /// each segment becomes a branch and the last one a leaf, unless another
+  /// path continues below it. Empty segments are skipped. Node values are
+  /// the paths up to each node, joined by [separator], and labels are the
+  /// segment names.
   factory Oito2TreeCollection.fromPaths(
     Iterable<String> paths, {
     String separator = '/',
@@ -150,10 +154,12 @@ class Oito2TreeCollection<T> {
   /// Whether a node has [value].
   bool has(String? value) => _paths.containsKey(value);
 
-  /// The index path of the node with [value], or null.
+  /// Returns the index path of the node with [value], or null when there is
+  /// none.
   List<int>? indexPathOf(String value) => _paths[value];
 
-  /// The node at [indexPath], or null when the path doesn't exist.
+  /// Returns the node at [indexPath], or null when the path is empty or
+  /// doesn't exist.
   Oito2TreeNode<T>? nodeAt(List<int> indexPath) {
     List<Oito2TreeNode<T>>? level = roots;
     Oito2TreeNode<T>? node;
@@ -165,26 +171,29 @@ class Oito2TreeCollection<T> {
     return node;
   }
 
-  /// The node with [value], or null.
+  /// Returns the node with [value], or null when there is none.
   Oito2TreeNode<T>? find(String? value) {
     final path = _paths[value];
     return path == null ? null : nodeAt(path);
   }
 
-  /// The value of the parent of [value], or null for a top-level node.
+  /// Returns the value of the parent of [value], or null for a top-level
+  /// or unknown node.
   String? parentOf(String value) => _parents[value];
 
-  /// The children of [value]; empty for a leaf or a missing node.
+  /// Returns the children of [value]; empty for a leaf or a missing node.
   List<Oito2TreeNode<T>> childrenOf(String value) =>
       find(value)?.children ?? const [];
 
-  /// The nodes that share a parent with [value], including it.
+  /// Returns the nodes that share a parent with [value], including it; the
+  /// top-level nodes for an unknown value.
   List<Oito2TreeNode<T>> siblingsOf(String value) {
     final parent = parentOf(value);
     return parent == null ? roots : childrenOf(parent);
   }
 
-  /// The values of the ancestors of [value], from the top level down.
+  /// Returns the values of the ancestors of [value], from the top level
+  /// down.
   List<String> ancestorsOf(String value) {
     final result = <String>[];
     for (var p = parentOf(value); p != null; p = parentOf(p)) {
@@ -193,16 +202,20 @@ class Oito2TreeCollection<T> {
     return result;
   }
 
-  /// The depth of [value]: 0 at the top level.
+  /// Returns the depth of [value]: 0 at the top level, and also 0 for an
+  /// unknown value.
   int depthOf(String value) => (_paths[value]?.length ?? 1) - 1;
 
-  /// Every node in depth-first order with its depth and index path.
+  /// Returns every node in depth-first order with its depth and index
+  /// path.
   List<Oito2TreeEntry<T>> flatten() => _flatten(null);
 
-  /// The nodes a tree view shows when the branches in [expanded] are open,
-  /// in display order.
+  /// Returns the nodes a tree view shows when the branches in [expanded]
+  /// are open, in display order.
   List<Oito2TreeEntry<T>> visible(Set<String> expanded) => _flatten(expanded);
 
+  /// Returns the nodes in depth-first order, descending only into the
+  /// branches in [expanded], or into every branch when it is null.
   List<Oito2TreeEntry<T>> _flatten(Set<String>? expanded) {
     final result = <Oito2TreeEntry<T>>[];
     void walk(List<Oito2TreeNode<T>> nodes, List<int> path) {
@@ -229,7 +242,7 @@ class Oito2TreeCollection<T> {
       if (e.node.isBranch) e.node.value,
   ];
 
-  /// The values of every node below [value].
+  /// Returns the values of every node below [value], in depth-first order.
   List<String> descendantsOf(String value) {
     final result = <String>[];
     void walk(List<Oito2TreeNode<T>> nodes) {
@@ -243,8 +256,9 @@ class Oito2TreeCollection<T> {
     return result;
   }
 
-  /// The values of the leaves below [value], or [value] itself when it is
-  /// a leaf; empty for an unknown value.
+  /// Returns the values of the leaves below [value], or [value] itself when
+  /// it is a leaf; empty for an unknown value. Empty branches don't count
+  /// as leaves.
   List<String> leavesOf(String value) {
     final node = find(value);
     if (node == null) return const [];
@@ -255,16 +269,20 @@ class Oito2TreeCollection<T> {
     ];
   }
 
-  /// The enabled visible node after [value] for the [expanded] branches,
-  /// or null at the end.
+  /// Returns the value of the enabled visible node after [value] for the
+  /// [expanded] branches, or null at the end or when [value] isn't
+  /// visible.
   String? nextVisible(String value, Set<String> expanded) =>
       _step(value, expanded, 1);
 
-  /// The enabled visible node before [value] for the [expanded] branches,
-  /// or null at the start.
+  /// Returns the value of the enabled visible node before [value] for the
+  /// [expanded] branches, or null at the start or when [value] isn't
+  /// visible.
   String? previousVisible(String value, Set<String> expanded) =>
       _step(value, expanded, -1);
 
+  /// Returns the value of the first enabled visible node found by moving
+  /// [step] positions at a time from [value].
   String? _step(String value, Set<String> expanded, int step) {
     final list = visible(expanded);
     var index = list.indexWhere((e) => e.node.value == value);
@@ -275,8 +293,10 @@ class Oito2TreeCollection<T> {
     return null;
   }
 
-  /// A tree with the nodes for which [test] returns true and their
-  /// ancestors; branches keep only matching descendants.
+  /// Returns a tree with the nodes for which [test] returns true and their
+  /// ancestors. A matching node keeps all its descendants; a branch that
+  /// doesn't match is kept, with only its matching descendants, when any
+  /// of them matches.
   Oito2TreeCollection<T> filter(bool Function(Oito2TreeNode<T> node) test) {
     List<Oito2TreeNode<T>> keep(List<Oito2TreeNode<T>> nodes) => [
       for (final node in nodes)
@@ -290,17 +310,20 @@ class Oito2TreeCollection<T> {
     return Oito2TreeCollection(keep(roots));
   }
 
-  /// A tree with the nodes whose label contains [query], ignoring case and
-  /// accents, and their ancestors.
+  /// Returns a tree with the nodes whose label contains [query], ignoring
+  /// case and accents, and their ancestors, as [filter] keeps them.
   Oito2TreeCollection<T> search(String query) {
     final needle = foldText(query);
     return filter((node) => foldText(node.label).contains(needle));
   }
 
-  /// A tree with [nodes] inserted among the children of [parentValue] (the
-  /// top level when null) at [index], or at the end when [index] is null.
+  /// Returns a tree with [nodes] inserted among the children of
+  /// [parentValue] (the top level when null) at [index], or at the end
+  /// when [index] is null. Inserting into a leaf turns it into a branch.
   ///
-  /// Throws an [ArgumentError] when [parentValue] isn't in the tree.
+  /// Throws an [ArgumentError] when [parentValue] isn't in the tree or a
+  /// value of [nodes] is already used, and a [RangeError] when [index] is
+  /// outside `0` to the number of children.
   Oito2TreeCollection<T> insert(
     String? parentValue,
     List<Oito2TreeNode<T>> nodes, {
@@ -322,7 +345,8 @@ class Oito2TreeCollection<T> {
     );
   }
 
-  /// A tree without the nodes in [values] and their descendants.
+  /// Returns a tree without the nodes in [values] and their descendants;
+  /// unknown values are ignored.
   Oito2TreeCollection<T> remove(Iterable<String> values) {
     final set = values.toSet();
     List<Oito2TreeNode<T>> prune(List<Oito2TreeNode<T>> nodes) => [
@@ -333,13 +357,15 @@ class Oito2TreeCollection<T> {
     return Oito2TreeCollection(prune(roots));
   }
 
-  /// A tree with the nodes in [values] moved, in tree order, among the
-  /// children of [parentValue] (the top level when null) at [index], or
-  /// at the end when [index] is null. [index] counts the children left
-  /// after the moved nodes are taken out.
+  /// Returns a tree with the nodes in [values] moved, in tree order, among
+  /// the children of [parentValue] (the top level when null) at [index],
+  /// or at the end when [index] is null. [index] counts the children left
+  /// after the moved nodes are taken out. A moved node brings its
+  /// descendants along, and unknown values are ignored.
   ///
   /// Throws an [ArgumentError] when [parentValue] isn't in the tree, or is
-  /// one of the moved nodes or a descendant of one.
+  /// one of the moved nodes or a descendant of one, and a [RangeError]
+  /// when [index] is outside `0` to the number of remaining children.
   Oito2TreeCollection<T> move(
     Iterable<String> values,
     String? parentValue, {
@@ -368,10 +394,16 @@ class Oito2TreeCollection<T> {
     return remove(set).insert(parentValue, moved, index: index);
   }
 
-  /// A tree with the node [value] replaced by [replacement].
+  /// Returns a tree with the node [value] replaced by [replacement], or an
+  /// equal tree when [value] is unknown.
+  ///
+  /// Throws an [ArgumentError] when [replacement] brings a value already
+  /// used elsewhere in the tree.
   Oito2TreeCollection<T> replace(String value, Oito2TreeNode<T> replacement) =>
       _mapNode(value, (_) => replacement);
 
+  /// Returns a tree with the node [value] replaced by the result of
+  /// [change].
   Oito2TreeCollection<T> _mapNode(
     String value,
     Oito2TreeNode<T> Function(Oito2TreeNode<T> node) change,

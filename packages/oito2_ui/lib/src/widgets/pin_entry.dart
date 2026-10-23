@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -29,6 +29,9 @@ import 'widget_helpers.dart';
 /// entry calls [onCompleted] and gives up the focus.
 class Oito2PinEntry extends StatefulWidget {
   /// Creates a code entry.
+  ///
+  /// Throws an [AssertionError] in debug mode when [length] is not greater
+  /// than zero.
   const Oito2PinEntry({
     super.key,
     this.length = 6,
@@ -105,6 +108,7 @@ class _Oito2PinEntryState extends State<Oito2PinEntry>
 
   FocusNode get _focusNode => effectiveFocusNode;
 
+  /// Rebuilds the cells when the state is still mounted.
   void _refresh() {
     if (mounted) setState(() {});
   }
@@ -120,6 +124,8 @@ class _Oito2PinEntryState extends State<Oito2PinEntry>
     _refresh();
   }
 
+  /// Reports [text], and when every cell is filled reports the completed
+  /// code and releases the focus.
   void _onChanged(String text) {
     widget.onChanged?.call(text);
     // Cells hold user-perceived characters, so an emoji fills one cell.

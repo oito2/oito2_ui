@@ -1,3 +1,18 @@
+// Copyright (C) 2026  OITO2
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #ifndef RUNNER_WIN32_WINDOW_H_
 #define RUNNER_WIN32_WINDOW_H_
 
@@ -7,9 +22,8 @@
 #include <memory>
 #include <string>
 
-// A class abstraction for a high DPI-aware Win32 Window. Intended to be
-// inherited from by classes that wish to specialize with custom
-// rendering and input handling
+// A high DPI-aware Win32 window, meant to be subclassed by windows with
+// custom rendering and input handling.
 class Win32Window {
  public:
   struct Point {
@@ -36,10 +50,10 @@ class Win32Window {
   // |Show| is called. Returns true if the window was created successfully.
   bool Create(const std::wstring& title, const Point& origin, const Size& size);
 
-  // Show the current window. Returns true if the window was successfully shown.
+  // Shows the window. Returns true if the window was successfully shown.
   bool Show();
 
-  // Release OS resources associated with window.
+  // Releases the OS resources associated with the window.
   void Destroy();
 
   // Inserts |content| into the window tree.
@@ -52,11 +66,11 @@ class Win32Window {
   // If true, closing this window will quit the application.
   void SetQuitOnClose(bool quit_on_close);
 
-  // Return a RECT representing the bounds of the current client area.
+  // Returns a RECT representing the bounds of the current client area.
   RECT GetClientArea();
 
  protected:
-  // Processes and route salient window messages for mouse handling,
+  // Processes and routes salient window messages for mouse handling,
   // size change and DPI. Delegates handling of these to member overloads that
   // inheriting classes can handle.
   virtual LRESULT MessageHandler(HWND window,
@@ -64,8 +78,8 @@ class Win32Window {
                                  WPARAM const wparam,
                                  LPARAM const lparam) noexcept;
 
-  // Called when CreateAndShow is called, allowing subclass window-related
-  // setup. Subclasses should return false if setup fails.
+  // Called by Create, allowing subclass window-related setup. Subclasses
+  // should return false if setup fails.
   virtual bool OnCreate();
 
   // Called when Destroy is called.
@@ -84,18 +98,18 @@ class Win32Window {
                                   WPARAM const wparam,
                                   LPARAM const lparam) noexcept;
 
-  // Retrieves a class instance pointer for |window|
+  // Retrieves the class instance pointer stored on |window|.
   static Win32Window* GetThisFromHandle(HWND const window) noexcept;
 
-  // Update the window frame's theme to match the system theme.
+  // Updates the window frame's theme to match the system theme.
   static void UpdateTheme(HWND const window);
 
   bool quit_on_close_ = false;
 
-  // window handle for top level window.
+  // Window handle for the top-level window.
   HWND window_handle_ = nullptr;
 
-  // window handle for hosted content.
+  // Window handle for the hosted content.
   HWND child_content_ = nullptr;
 };
 

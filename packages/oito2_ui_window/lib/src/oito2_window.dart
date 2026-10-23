@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,6 +23,10 @@ import 'window_stub.dart' if (dart.library.io) 'window_io.dart' as platform;
 abstract final class Oito2Window {
   /// Hides the native title bar, applies the initial window options, shows
   /// the window and returns an [Oito2WindowController] for it.
+  ///
+  /// [title] sets the window title, [size] the initial size and
+  /// [minimumSize] the smallest size the user can resize it to; when
+  /// [center] is true the window opens centered on the screen.
   ///
   /// Call it in `main` before `runApp`, and provide the result through an
   /// [Oito2WindowScope]. Returns null on the web, Android and iOS, where

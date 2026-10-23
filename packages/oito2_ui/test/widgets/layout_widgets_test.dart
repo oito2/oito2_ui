@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@ import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 const _paneKey = ValueKey('pane');
 const _pageKey = ValueKey('page');
 
+/// A paned view with a 300 px pane on [side], limited to a 200 px pane and
+/// a 400 px page, whose pane and page carry [_paneKey] and [_pageKey].
 Widget _paned({
   Oito2PaneSide side = Oito2PaneSide.start,
   bool resizable = true,

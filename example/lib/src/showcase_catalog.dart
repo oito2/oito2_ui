@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -118,7 +118,8 @@ enum ShowcaseGroup {
   /// The file components of the oito2_ui_files package.
   files('Files'),
 
-  /// Collections, formatting and keyboard commands.
+  /// Collections, formatting, keyboard commands and the freedesktop icon
+  /// names.
   utilities('Utilities'),
 
   /// The Material theme sample, with the colors, fonts and tokens, and
@@ -168,11 +169,13 @@ class ShowcasePage {
   String get sourceAsset => 'lib/src/pages/$source';
 }
 
+/// Returns a page builder that always returns [page], for pages that don't
+/// read the scheme colors.
 Widget Function(BuildContext, Oito2ColorTheme) _page(Widget page) =>
     (_, _) => page;
 
 /// Every showcase page: the components in alphabetical order, then the
-/// utilities and the theme pages.
+/// extras, files, utilities and theme pages.
 final List<ShowcasePage> showcasePages = [
   ShowcasePage(
     title: 'Oito2AngleSlider',

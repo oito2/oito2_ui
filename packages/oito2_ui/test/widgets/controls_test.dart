@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
@@ -84,8 +85,21 @@ void main() {
           ),
         ),
       );
+      final handle = tester.ensureSemantics();
       await tester.tap(find.text('Locked'));
+      await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Locked')),
+        isSemantics(
+          hasEnabledState: true,
+          isEnabled: false,
+          hasCheckedState: true,
+          isChecked: false,
+          hasTapAction: false,
+        ),
+      );
+      handle.dispose();
     });
   });
 
@@ -317,7 +331,19 @@ void main() {
       ),
     );
     final border = (ring.decoration! as BoxDecoration).border! as Border;
-    expect(border.top.color, yellow);
+    // Light yellow on a light surface is adjusted to stand out, keeping
+    // its hue.
+    final surface = Theme.of(tester.element(find.byType(Oito2ColorDisk)))
+        .colorScheme
+        .surface;
+    expect(
+      Oito2Contrast.ratio(border.top.color, surface),
+      greaterThanOrEqualTo(Oito2Contrast.nonTextAA),
+    );
+    expect(
+      HSLColor.fromColor(border.top.color).hue,
+      closeTo(HSLColor.fromColor(yellow).hue, 1),
+    );
     expect(tester.getSize(find.byType(Container).last).width, 28);
     expect(
       tester.getSemantics(find.byType(Oito2ColorDisk)),
@@ -326,11 +352,49 @@ void main() {
         isButton: true,
         isSelected: true,
         hasSelectedState: true,
+        hasEnabledState: true,
+        isEnabled: true,
         hasTapAction: true,
       ),
     );
     await tester.tap(find.byType(Oito2ColorDisk));
     expect(taps, 1);
+    handle.dispose();
+  });
+
+  testWidgets('Oito2ColorDisk keeps a contrasting color as is and '
+      'reports when it is disabled', (tester) async {
+    final handle = tester.ensureSemantics();
+    const blue = Color(0xFF1A5FB4);
+    await pumpOito2(
+      tester,
+      const Center(
+        child: Oito2ColorDisk(
+          color: blue,
+          selected: true,
+          label: 'Blue',
+          onPressed: null,
+        ),
+      ),
+    );
+    final ring = tester.widget<Container>(
+      find.descendant(
+        of: find.byType(Oito2ColorDisk),
+        matching: find.byType(Container),
+      ),
+    );
+    final border = (ring.decoration! as BoxDecoration).border! as Border;
+    expect(border.top.color, blue);
+    expect(
+      tester.getSemantics(find.byType(Oito2ColorDisk)),
+      matchesSemantics(
+        label: 'Blue',
+        isButton: true,
+        isSelected: true,
+        hasSelectedState: true,
+        hasEnabledState: true,
+      ),
+    );
     handle.dispose();
   });
 
@@ -438,6 +502,32 @@ void main() {
       await tester.tap(find.bySemanticsLabel('Page 4 of 5'));
       expect(taps, [3]);
       handle.dispose();
+    });
+
+    testWidgets('interactive dots are 24-pixel targets and take the keys', (
+      tester,
+    ) async {
+      final taps = <int>[];
+      await pumpOito2(
+        tester,
+        Center(child: Oito2PageIndicator(length: 5, page: 1, onTap: taps.add)),
+      );
+      final dots = find.descendant(
+        of: find.byType(Oito2PageIndicator),
+        matching: find.byType(GestureDetector),
+      );
+      expect(dots, findsNWidgets(5));
+      for (var i = 0; i < 5; i++) {
+        final size = tester.getSize(dots.at(i));
+        expect(size.width, greaterThanOrEqualTo(24));
+        expect(size.height, greaterThanOrEqualTo(24));
+      }
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.end);
+      await tester.sendKeyEvent(LogicalKeyboardKey.home);
+      expect(taps, [2, 0, 4, 0]);
     });
 
     testWidgets('falls back to text when the dots don\'t fit', (tester) async {

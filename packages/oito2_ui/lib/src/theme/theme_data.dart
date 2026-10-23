@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -37,9 +37,10 @@ import 'page_transitions.dart';
 
 /// Builds the oito2 Material 3 [ThemeData].
 ///
-/// Every builder accepts an optional [Oito2Platform]; it defaults to
-/// [Oito2Platform.current] and drives density, control sizes, tap targets,
-/// splash effects and page transitions.
+/// The platform drives density, control sizes, tap targets, splash effects
+/// and page transitions. [light], [dark] and [fromColors] take it as an
+/// optional [Oito2Platform] that defaults to [Oito2Platform.current];
+/// [fromSystem] takes it from the settings.
 abstract final class Oito2Theme {
   /// The light oito2 base theme with [accent] as the primary hue.
   static ThemeData light({
@@ -88,9 +89,13 @@ abstract final class Oito2Theme {
   /// The theme for already resolved [colors].
   ///
   /// [colors] provides the `ColorScheme`, the scaffold background and the
-  /// [ThemeExtension]s ([Oito2ColorTheme.semantic],
+  /// color [ThemeExtension]s ([Oito2ColorTheme.semantic],
   /// [Oito2ColorTheme.chrome] and [Oito2ColorTheme.syntax] wrapped in
-  /// [Oito2SyntaxTheme]).
+  /// [Oito2SyntaxTheme]); the theme also carries the navigation, progress
+  /// and title bar extensions derived from them.
+  ///
+  /// Calls with an equal [colors] and platform return the same
+  /// [ThemeData] instance while it stays among the 16 most recently used.
   static ThemeData fromColors(
     Oito2ColorTheme colors, {
     Oito2Platform? platform,
@@ -104,10 +109,13 @@ abstract final class Oito2Theme {
     return _cache[key] = _build(colors, target);
   }
 
-  /// The themes built recently, by scheme and platform, so rebuilding an
-  /// app with the same inputs returns the same theme.
+  /// The 16 most recently used themes, by scheme and platform, in least
+  /// to most recently used order, so rebuilding an app with the same
+  /// inputs returns the same theme.
   static final Map<(Oito2ColorTheme, Oito2Platform), ThemeData> _cache = {};
 
+  /// Builds the theme of [colors] for [target], with every component theme
+  /// and extension.
   static ThemeData _build(Oito2ColorTheme colors, Oito2Platform target) {
     final scheme = colors.colorScheme;
     final textTheme = Oito2Typography.textTheme(colors.brightness)
@@ -205,16 +213,17 @@ abstract final class Oito2Theme {
   }
 }
 
+/// Whether [_registerFontLicense] has added the Inter license.
 bool _fontLicenseRegistered = false;
 
-/// Lists the license of the bundled Inter font, the SIL Open Font
-/// License, in the app's license page, once.
+/// Adds the license of the bundled Inter font, the SIL Open Font License,
+/// to the [LicenseRegistry] the first time it is called.
 void _registerFontLicense() {
   if (_fontLicenseRegistered) return;
   _fontLicenseRegistered = true;
   LicenseRegistry.addLicense(() async* {
     // An app bundles the file under the package prefix; the package's own
-    // tests bundle it without.
+    // tests bundle it without. A missing file adds no entry.
     for (final key in const [
       'packages/oito2_ui/assets/fonts/inter/OFL.txt',
       'assets/fonts/inter/OFL.txt',

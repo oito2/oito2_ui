@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ enum Oito2SwapEffect {
   /// A cross-fade.
   fade,
 
-  /// The new widget grows in while the old one shrinks away.
+  /// The new widget grows in while the old one shrinks away, both fading.
   scale,
 
   /// The widgets turn a quarter turn while fading.

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -168,7 +168,7 @@ class Oito2SelectableContainer extends StatelessWidget {
 }
 
 /// A card-like clickable surface for promoting content, such as an app in
-/// a store grid. Hovering strengthens its border.
+/// a store grid. Hovering strengthens its border when it has an [onTap].
 ///
 /// [Oito2Banner.tile] lays out an icon, a title and a subtitle. [onHover]
 /// tells when the pointer enters and leaves, so the content can change

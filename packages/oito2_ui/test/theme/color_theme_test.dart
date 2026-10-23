@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -38,12 +38,18 @@ Map<String, Oito2ColorTheme> _allThemes() => {
     name: Oito2ColorTheme.fromRoles(roles),
 };
 
+/// The text contrast ratio [t] must reach: AAA in high contrast, AA
+/// otherwise.
 double _textTarget(Oito2ColorTheme t) =>
     t.highContrast ? Oito2Contrast.textAAA : Oito2Contrast.textAA;
 
+/// The contrast ratio outlines of [t] must reach: the AA text ratio in high
+/// contrast, the AA non-text ratio otherwise.
 double _nonTextTarget(Oito2ColorTheme t) =>
     t.highContrast ? Oito2Contrast.textAA : Oito2Contrast.nonTextAA;
 
+/// Matches a ratio of at least [target], with a small tolerance for
+/// floating-point rounding.
 Matcher _atLeast(double target) => greaterThanOrEqualTo(target - 0.0001);
 
 void main() {

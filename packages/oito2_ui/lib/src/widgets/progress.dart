@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,7 +22,8 @@ import 'widget_helpers.dart';
 
 /// The resolved colors and sizes of a progress indicator: the widget's
 /// own values, then the [Oito2ProgressIndicatorThemeData] of the theme,
-/// then the selected fill on the highest container.
+/// then the selected fill color over the highest surface container track,
+/// a 4-pixel stroke and a 6-pixel height.
 ({Color color, Color track, double stroke, double height}) _resolve(
   BuildContext context, {
   Color? color,
@@ -50,6 +51,7 @@ String? _percent(double? value) =>
 /// no value and animations are enabled.
 mixin _IndeterminateAnimation<T extends StatefulWidget>
     on State<T>, SingleTickerProviderStateMixin<T> {
+  /// The controller that drives the indeterminate animation.
   late final AnimationController animation = AnimationController(
     vsync: this,
     duration: period,
@@ -64,6 +66,8 @@ mixin _IndeterminateAnimation<T extends StatefulWidget>
   /// The current value, or null for indeterminate progress.
   double? get value;
 
+  /// Starts the animation while the progress is indeterminate and
+  /// animations are enabled, and stops it otherwise.
   void _sync() {
     final animate =
         value == null &&
@@ -224,6 +228,8 @@ class _Oito2CircularProgressIndicatorState
   }
 }
 
+/// Paints the track and progress ring, or the spinning arc of
+/// indeterminate progress.
 class _CircularPainter extends CustomPainter {
   _CircularPainter({
     required this.value,
@@ -297,7 +303,8 @@ class _CircularPainter extends CustomPainter {
 /// With a [value] from 0 to 1, a bar fills the track from the start side.
 /// Without one, a short segment glides back and forth along the track, as
 /// GNOME's pulse; when animations are disabled it stays still. The bar
-/// and the track have round ends and fill the available width.
+/// and the track have round ends and fill the available width, or 160
+/// pixels when the width is unbounded.
 ///
 /// Colors and height default to the theme's
 /// [Oito2ProgressIndicatorThemeData].
@@ -382,6 +389,8 @@ class _Oito2LinearProgressIndicatorState
   }
 }
 
+/// Paints the track and the progress bar, or the gliding segment of
+/// indeterminate progress, mirrored in right-to-left text.
 class _LinearPainter extends CustomPainter {
   _LinearPainter({
     required this.value,

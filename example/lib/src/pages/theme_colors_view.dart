@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@ import 'package:oito2_ui_syntax/oito2_ui_syntax.dart';
 
 import '../widgets/showcase_widgets.dart';
 
+/// Dart code that shows the syntax colors: a comment, an annotation,
+/// keywords, types, a number and a string with an interpolation.
 const _sample = r'''
 // Greets everyone on the list.
 @override

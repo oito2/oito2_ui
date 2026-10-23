@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,9 +25,9 @@ import 'tree_view.dart';
 /// A key and value of a node of an [Oito2JsonTreeView].
 typedef Oito2JsonEntry = ({String key, Object? value});
 
-/// Builds the tree of decoded JSON [data]: objects and lists become
-/// branches, other values leaves. Node values are JSON paths, such as
-/// `$.items[0].name`.
+/// Returns the tree of decoded JSON [data]: objects and lists become
+/// branches, other values leaves, and the top node is labeled
+/// [rootLabel]. Node values are JSON paths, such as `$.items[0].name`.
 Oito2TreeCollection<Oito2JsonEntry> oito2JsonTree(
   Object? data, {
   String rootLabel = r'$',
@@ -88,7 +88,8 @@ class Oito2JsonTreeView extends StatefulWidget {
   /// The decoded JSON: maps, lists, strings, numbers, booleans and null.
   final Object? data;
 
-  /// The depth up to which branches start open.
+  /// The depth up to which branches start open; 0 keeps every branch
+  /// closed. The tree opens to it again when [data] or this changes.
   final int expandDepth;
 
   /// The label of the top node.
@@ -104,15 +105,19 @@ class Oito2JsonTreeView extends StatefulWidget {
   State<Oito2JsonTreeView> createState() => _Oito2JsonTreeViewState();
 }
 
+/// Builds the tree of [Oito2JsonTreeView.data] and owns the controller
+/// that holds the open branches.
 class _Oito2JsonTreeViewState extends State<Oito2JsonTreeView> {
   late Oito2TreeCollection<Oito2JsonEntry> _tree = _build();
   late final _controller = Oito2TreeController(
     expanded: _openUpTo(widget.expandDepth),
   );
 
+  /// Builds the tree of the current data and root label.
   Oito2TreeCollection<Oito2JsonEntry> _build() =>
       oito2JsonTree(widget.data, rootLabel: widget.rootLabel);
 
+  /// Returns the paths of the branches shallower than [depth].
   Iterable<String> _openUpTo(int depth) => [
     for (final entry in _tree.flatten())
       if (entry.node.isBranch && entry.depth < depth) entry.node.value,
@@ -151,6 +156,8 @@ class _Oito2JsonTreeViewState extends State<Oito2JsonTreeView> {
   }
 }
 
+/// One tree row: the key, then the value in its syntax color, or the size
+/// of an object or list.
 class _JsonRow extends StatelessWidget {
   const _JsonRow({required this.entry, required this.palette});
 

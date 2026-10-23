@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,7 +24,11 @@ import 'package:window_manager/window_manager.dart';
 import 'native_window_controller.dart';
 
 /// Prepares the native desktop window for client-side decorations and
-/// returns its controller, or null on non-desktop platforms.
+/// returns its controller.
+///
+/// Returns null on non-desktop platforms and when the window plugin isn't
+/// registered. [title], [size], [minimumSize] and [center] become the
+/// initial window options.
 Future<Oito2WindowController?> ensureInitialized({
   String? title,
   Size? size,

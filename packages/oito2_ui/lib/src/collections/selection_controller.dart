@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -36,7 +36,10 @@ enum Oito2SelectionMode {
 /// Disabled items and values outside the collection are never selected.
 /// [selectedValues] keeps the collection order.
 class Oito2SelectionController extends ChangeNotifier {
-  /// Creates a selection over [collection].
+  /// Creates a selection over [collection] with [initialValues].
+  ///
+  /// Initial values that [canSelect] rejects are dropped, and in single
+  /// mode only the first remaining value in collection order is kept.
   Oito2SelectionController({
     required this._collection,
     this.mode = Oito2SelectionMode.single,
@@ -56,7 +59,7 @@ class Oito2SelectionController extends ChangeNotifier {
   /// How many items can be selected.
   final Oito2SelectionMode mode;
 
-  /// Whether a selected item can be deselected by selecting it again in
+  /// Whether a selected item can be deselected by clicking it again in
   /// single mode, or by toggling it.
   final bool deselectable;
 
@@ -69,6 +72,10 @@ class Oito2SelectionController extends ChangeNotifier {
   String? _anchor;
 
   /// The collection the values belong to.
+  ///
+  /// Setting it clears the selection when [resetOnCollectionChange],
+  /// otherwise drops the values that are no longer enabled items, and
+  /// forgets the anchor when its item is gone.
   Oito2ListCollection<Object?> get collection => _collection;
 
   set collection(Oito2ListCollection<Object?> value) {
@@ -129,9 +136,12 @@ class Oito2SelectionController extends ChangeNotifier {
   /// mixed "select all" check box.
   bool get isSomeSelected => _selected.isNotEmpty && !isAllSelected;
 
-  /// Selects [value]. In single mode it replaces the selection; selecting
-  /// the selected value again deselects it when [deselectable] and
-  /// [forceToggle] are set.
+  /// Selects [value] and makes it the anchor; does nothing when
+  /// [canSelect] rejects it.
+  ///
+  /// In multiple mode it adds [value] to the selection. In single mode it
+  /// replaces the selection; selecting the selected value again deselects
+  /// it when [deselectable] and [forceToggle] are set.
   void select(String value, {bool forceToggle = false}) {
     if (!canSelect(value)) return;
     _anchor = value;
@@ -158,7 +168,8 @@ class Oito2SelectionController extends ChangeNotifier {
   }
 
   /// Selects [value] when it isn't selected, otherwise deselects it if
-  /// [deselectable].
+  /// [deselectable]. [value] becomes the anchor when the selection
+  /// changes.
   void toggle(String value) {
     if (_selected.contains(value)) {
       if (!deselectable) return;
@@ -169,7 +180,8 @@ class Oito2SelectionController extends ChangeNotifier {
     }
   }
 
-  /// Makes [value] the only selected value; null clears the selection.
+  /// Makes [value] the only selected value and the anchor; null clears the
+  /// selection. Does nothing when [canSelect] rejects [value].
   void replace(String? value) {
     if (value != null && !canSelect(value)) return;
     _anchor = value;
@@ -187,8 +199,10 @@ class Oito2SelectionController extends ChangeNotifier {
   }
 
   /// Selects the enabled values from [anchorValue] to [targetValue], both
-  /// included, replacing the previous selection. In single mode it selects
-  /// [targetValue] only.
+  /// included, replacing the previous selection and keeping [anchorValue]
+  /// as the anchor. Does nothing when either value isn't in the
+  /// collection. In single and none modes it behaves as [select] with
+  /// [targetValue].
   void extend(String anchorValue, String targetValue) {
     if (mode != Oito2SelectionMode.multiple) {
       select(targetValue);
@@ -211,7 +225,8 @@ class Oito2SelectionController extends ChangeNotifier {
   /// Applies a pointer click on [value] with the desktop conventions:
   /// [extend] (Shift) selects the range from the anchor, [toggle]
   /// (Control or Command) toggles the value, and a plain click selects
-  /// only it.
+  /// only it. [extend] and [toggle] apply in multiple mode only; in single
+  /// mode a click on the selected value deselects it when [deselectable].
   void click(String value, {bool extend = false, bool toggle = false}) {
     final anchor = _anchor;
     if (extend && anchor != null && mode == Oito2SelectionMode.multiple) {
@@ -225,7 +240,7 @@ class Oito2SelectionController extends ChangeNotifier {
     }
   }
 
-  /// Selects every enabled item, in multiple mode.
+  /// Selects every enabled item; does nothing outside multiple mode.
   void selectAll() {
     if (mode != Oito2SelectionMode.multiple) return;
     _setSelected([..._selected, ..._collection.values.where(canSelect)]);

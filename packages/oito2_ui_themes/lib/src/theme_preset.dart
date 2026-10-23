@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,44 +24,45 @@ import 'preset_roles.dart';
 /// [Oito2ColorRoles], from which [colors] derives a complete
 /// [Oito2ColorTheme] and [theme] a Material `ThemeData`.
 enum Oito2ThemePreset {
-  /// Everforest Light.
+  /// Everforest Light: a light preset with a green primary.
   everforestLight(label: 'Everforest Light', isDark: false),
 
-  /// Everforest Dark.
+  /// Everforest Dark: a dark preset with a green primary.
   everforestDark(label: 'Everforest Dark', isDark: true),
 
-  /// Rosé Pine.
+  /// Rosé Pine: the main dark variant, with a pine primary.
   rosePine(label: 'Rosé Pine', isDark: true),
 
-  /// Rosé Pine Moon.
+  /// Rosé Pine Moon: the second dark variant, with a pine primary.
   rosePineMoon(label: 'Rosé Pine Moon', isDark: true),
 
-  /// Rosé Pine Dawn.
+  /// Rosé Pine Dawn: the light variant, with a pine primary.
   rosePineDawn(label: 'Rosé Pine Dawn', isDark: false),
 
-  /// Nord, dark.
+  /// Nord Dark: the official dark Nord, with a `nord8` frost primary.
   nordDark(label: 'Nord Dark', isDark: true),
 
-  /// Nord, light: an unofficial derivation with Polar Night and Snow Storm
-  /// swapped.
+  /// Nord Light: an unofficial derivation with Polar Night and Snow Storm
+  /// swapped and a `nord10` primary.
   nordLight(label: 'Nord Light', isDark: false),
 
-  /// Dracula.
+  /// Dracula: a dark preset with a purple primary.
   dracula(label: 'Dracula', isDark: true),
 
-  /// Alucard, the light variant of Dracula.
+  /// Alucard: the light variant of Dracula, with a purple primary.
   alucard(label: 'Alucard', isDark: false),
 
-  /// Catppuccin Latte.
+  /// Catppuccin Latte: the light flavor, with a mauve primary.
   catppuccinLatte(label: 'Catppuccin Latte', isDark: false),
 
-  /// Catppuccin Frappé.
+  /// Catppuccin Frappé: the lightest dark flavor, with a mauve primary.
   catppuccinFrappe(label: 'Catppuccin Frappé', isDark: true),
 
-  /// Catppuccin Macchiato.
+  /// Catppuccin Macchiato: a dark flavor between Frappé and Mocha, with a
+  /// mauve primary.
   catppuccinMacchiato(label: 'Catppuccin Macchiato', isDark: true),
 
-  /// Catppuccin Mocha.
+  /// Catppuccin Mocha: the darkest flavor, with a mauve primary.
   catppuccinMocha(label: 'Catppuccin Mocha', isDark: true);
 
   const Oito2ThemePreset({required this.label, required this.isDark});
@@ -75,10 +76,11 @@ enum Oito2ThemePreset {
   /// The brightness of this preset.
   Brightness get brightness => isDark ? Brightness.dark : Brightness.light;
 
-  /// The role colors of this preset, as published by its theme family.
+  /// The role colors of this preset, mapped from its theme family's
+  /// palette and cached after the first use.
   Oito2ColorRoles get roles => _roles[this] ??= presetRoles(this);
 
-  /// The complete colors of this preset.
+  /// The complete color theme derived from [roles].
   Oito2ColorTheme get colors => Oito2ColorTheme.fromRoles(roles);
 
   /// The oito2 Material theme of this preset for [platform], which

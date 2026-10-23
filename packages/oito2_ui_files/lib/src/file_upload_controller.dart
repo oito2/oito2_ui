@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ enum Oito2FileRejection {
 /// A file an [Oito2FileUploadController] refused, with the reason.
 @immutable
 class Oito2RejectedFile {
-  /// Creates a rejected file.
+  /// Creates a record of [file] refused for [reason].
   const Oito2RejectedFile(this.file, this.reason);
 
   /// The refused file.
@@ -82,7 +82,9 @@ bool oito2FileMatchesTypes(XFile file, List<XTypeGroup> accept) {
 /// [add] keeps the files that pass the checks and lists the others in
 /// [rejected], which holds the refusals of the last [add] only.
 class Oito2FileUploadController extends ChangeNotifier {
-  /// Creates a controller holding [files] at first.
+  /// Creates a controller holding [files] at first, unchecked.
+  ///
+  /// Asserts that [maxFiles] and [maxFileSize], when given, are positive.
   Oito2FileUploadController({
     this.accept = const [],
     this.maxFiles,
@@ -95,15 +97,18 @@ class Oito2FileUploadController extends ChangeNotifier {
   /// The accepted file types; empty accepts every file.
   final List<XTypeGroup> accept;
 
-  /// The largest number of files.
+  /// The largest number of files, or null for no limit.
   final int? maxFiles;
 
-  /// The largest file size, in bytes.
+  /// The largest file size, in bytes, or null for no limit.
   final int? maxFileSize;
 
   final List<XFile> _files;
   List<Oito2RejectedFile> _rejected = const [];
   bool _disposed = false;
+
+  /// The last queued [add], which the next one waits for.
+  Future<void> _queue = Future.value();
 
   /// The accepted files, in the order they were added.
   List<XFile> get files => List.unmodifiable(_files);
@@ -118,8 +123,18 @@ class Oito2FileUploadController extends ChangeNotifier {
   /// lists the others in [rejected].
   ///
   /// Reading the size of each file can take a moment, so this completes
-  /// once every file is checked.
-  Future<void> add(Iterable<XFile> incoming) async {
+  /// once every file is checked. Nothing changes when the controller is
+  /// disposed meanwhile. A call made before an earlier one completes waits
+  /// for it, so the limits hold across both.
+  Future<void> add(Iterable<XFile> incoming) {
+    final files = incoming.toList(growable: false);
+    final next = _queue.then((_) => _add(files));
+    _queue = next.catchError((Object _) {});
+    return next;
+  }
+
+  /// Checks and adds [incoming] for [add], once earlier calls are done.
+  Future<void> _add(List<XFile> incoming) async {
     final added = <XFile>[];
     final rejected = <Oito2RejectedFile>[];
     for (final file in incoming) {
@@ -146,7 +161,7 @@ class Oito2FileUploadController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Removes [file].
+  /// Removes [file], if the controller holds it.
   void remove(XFile file) {
     if (_files.remove(file)) notifyListeners();
   }

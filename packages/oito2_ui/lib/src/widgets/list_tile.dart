@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -31,6 +31,9 @@ import 'utilities.dart';
 /// platforms and 56 (72) on touch platforms.
 class Oito2ListTile extends StatelessWidget {
   /// Creates a list tile with rounded corners.
+  ///
+  /// Throws an [AssertionError] in debug builds when both [title] and
+  /// [titleText], or both [subtitle] and [subtitleText], are given.
   const Oito2ListTile({
     super.key,
     this.leading,
@@ -52,6 +55,9 @@ class Oito2ListTile extends StatelessWidget {
        assert(subtitle == null || subtitleText == null);
 
   /// Creates a list tile with square corners, for tile lists.
+  ///
+  /// Throws an [AssertionError] in debug builds when both [title] and
+  /// [titleText], or both [subtitle] and [subtitleText], are given.
   const Oito2ListTile.square({
     super.key,
     this.leading,
@@ -96,7 +102,7 @@ class Oito2ListTile extends StatelessWidget {
   /// Whether the row is highlighted as selected.
   final bool selected;
 
-  /// Whether the row responds to input.
+  /// Whether the row responds to input; a disabled row is dimmed.
   final bool enabled;
 
   /// Whether the title and subtitle are centered.
@@ -105,13 +111,14 @@ class Oito2ListTile extends StatelessWidget {
   /// The corner radius of the hover, selection and focus shapes.
   final BorderRadius borderRadius;
 
-  /// Space around the row content.
+  /// Space around the row content; defaults to medium horizontal and
+  /// extra-small vertical spacing.
   final EdgeInsetsGeometry? contentPadding;
 
   /// Space between [leading], the text and [trailing].
   final double horizontalGap;
 
-  /// The focus node of the row.
+  /// The focus node of the row; one is created when null.
   final FocusNode? focusNode;
 
   /// Whether the row takes focus when first shown.
@@ -200,8 +207,8 @@ class Oito2ListTile extends StatelessWidget {
     );
 
     final interactive = onTap != null && enabled;
-    // Static rows declare neither an enabled nor a selected state, which a
-    // screen reader would otherwise read on every row.
+    // Static rows declare no enabled state and unselected rows no selected
+    // state, which a screen reader would otherwise read on every row.
     return Semantics(
       button: onTap != null,
       enabled: onTap != null ? enabled : null,

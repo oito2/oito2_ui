@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -170,6 +170,22 @@ void main() {
       expect(controller.rejected, isEmpty);
     });
 
+    test('overlapping adds still respect the file limit', () async {
+      // The size limit makes each add wait for the file sizes.
+      final controller = Oito2FileUploadController(
+        maxFiles: 1,
+        maxFileSize: 100,
+      );
+      addTearDown(controller.dispose);
+      // The second add starts while the first still reads its files.
+      await Future.wait([
+        controller.add([_file('a.txt', 1), _file('b.txt', 1)]),
+        controller.add([_file('c.txt', 1)]),
+      ]);
+      expect(controller.files.map((f) => f.name), ['a.txt']);
+      expect(controller.rejected.single.file.name, 'c.txt');
+    });
+
     test('a later add replaces the refusals', () async {
       final controller = Oito2FileUploadController(accept: const [_images]);
       addTearDown(controller.dispose);
@@ -215,6 +231,7 @@ void main() {
     });
 
     testWidgets('a disabled zone opens nothing', (tester) async {
+      final handle = tester.ensureSemantics();
       await pumpOito2(
         tester,
         Oito2FileDropZone(enabled: false, onFiles: (_) {}),
@@ -222,6 +239,11 @@ void main() {
       await tester.tap(find.byType(Oito2FileDropZone));
       await tester.pump();
       expect(selector.calls, isEmpty);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel(RegExp('^Choose files'))),
+        isSemantics(isButton: true, hasEnabledState: true, isEnabled: false),
+      );
+      handle.dispose();
     });
 
     testWidgets('a drop target invites drops and passes them on', (

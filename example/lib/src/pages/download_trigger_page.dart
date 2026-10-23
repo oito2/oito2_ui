@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ class _DownloadTriggerPageState extends State<DownloadTriggerPage> {
     super.dispose();
   }
 
+  /// Shows whether the file was [saved] or the save was canceled.
   void _report(bool saved) =>
       setState(() => _status = saved ? 'Saved.' : 'Canceled.');
 

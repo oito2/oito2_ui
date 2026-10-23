@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@ import 'component_context.dart';
 
 const _noTint = Color(0x00000000);
 
-/// Cards: no elevation, the scheme surface and a thin `outlineVariant`
-/// border with the large radius.
+/// Returns the theme of cards: no elevation, the scheme surface and a thin
+/// `outlineVariant` border with the large radius.
 CardThemeData buildCardTheme(ComponentThemeContext c) {
   return CardThemeData(
     elevation: 0,
@@ -36,7 +36,8 @@ CardThemeData buildCardTheme(ComponentThemeContext c) {
   );
 }
 
-/// Dialogs: the chrome dialog tone with the window radius and a thin border.
+/// Returns the theme of dialogs: the chrome dialog tone with the window
+/// radius and a thin `outlineVariant` border.
 DialogThemeData buildDialogTheme(ComponentThemeContext c) {
   return DialogThemeData(
     backgroundColor: c.chrome.dialog,
@@ -57,7 +58,8 @@ DialogThemeData buildDialogTheme(ComponentThemeContext c) {
   );
 }
 
-/// Bottom sheets: the chrome dialog tone with the window radius on top.
+/// Returns the theme of bottom sheets: the chrome dialog tone with the
+/// window radius on top, and a drag handle on touch platforms.
 BottomSheetThemeData buildBottomSheetTheme(ComponentThemeContext c) {
   return BottomSheetThemeData(
     backgroundColor: c.chrome.dialog,
@@ -73,7 +75,8 @@ BottomSheetThemeData buildBottomSheetTheme(ComponentThemeContext c) {
   );
 }
 
-/// Drawers: the chrome dialog tone, square on pointer platforms.
+/// Returns the theme of drawers: the chrome dialog tone, square and flat on
+/// pointer platforms.
 DrawerThemeData buildDrawerTheme(ComponentThemeContext c) {
   return DrawerThemeData(
     backgroundColor: c.chrome.dialog,
@@ -84,7 +87,7 @@ DrawerThemeData buildDrawerTheme(ComponentThemeContext c) {
   );
 }
 
-/// Dividers: one pixel of `outlineVariant`.
+/// Returns the theme of dividers: one pixel of `outlineVariant`.
 DividerThemeData buildDividerTheme(ComponentThemeContext c) {
   return DividerThemeData(
     color: c.scheme.outlineVariant,
@@ -93,7 +96,8 @@ DividerThemeData buildDividerTheme(ComponentThemeContext c) {
   );
 }
 
-/// Snack bars: floating on pointer platforms, on the inverse surface.
+/// Returns the theme of snack bars: the inverse surface, floating with the
+/// medium radius on pointer platforms and fixed on touch platforms.
 SnackBarThemeData buildSnackBarTheme(ComponentThemeContext c) {
   return SnackBarThemeData(
     behavior: c.isTouch ? SnackBarBehavior.fixed : SnackBarBehavior.floating,
@@ -108,8 +112,8 @@ SnackBarThemeData buildSnackBarTheme(ComponentThemeContext c) {
   );
 }
 
-/// Tooltips: the inverse surface with the small radius, shown after a
-/// short hover delay on pointer platforms.
+/// Returns the theme of tooltips: the inverse surface with the small
+/// radius, shown after a 500 ms hover delay on pointer platforms.
 TooltipThemeData buildTooltipTheme(ComponentThemeContext c) {
   return TooltipThemeData(
     decoration: BoxDecoration(
@@ -127,7 +131,8 @@ TooltipThemeData buildTooltipTheme(ComponentThemeContext c) {
   );
 }
 
-/// Carousels: the large radius on the container surface.
+/// Returns the theme of carousels: the container surface with the large
+/// radius and no elevation.
 CarouselViewThemeData buildCarouselViewTheme(ComponentThemeContext c) {
   return CarouselViewThemeData(
     backgroundColor: c.scheme.surfaceContainer,

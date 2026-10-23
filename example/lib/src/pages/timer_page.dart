@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -45,6 +45,8 @@ class _TimerPageState extends State<TimerPage> {
     super.dispose();
   }
 
+  /// The time of [timer], with tenths of a second when [tenths] is true,
+  /// and its start, pause and reset buttons.
   Widget _controls(Oito2TimerController timer, {bool tenths = false}) {
     final style = Theme.of(context).textTheme.displaySmall;
     return ListenableBuilder(

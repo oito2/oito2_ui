@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -113,6 +113,7 @@ class _BannerPageState extends State<BannerPage> {
   }
 }
 
+/// The sample apps: a title, a description and an icon.
 const _apps = [
   ('Weather', 'Forecasts for your places', LucideIcons.sun),
   ('Music', 'Play your library', LucideIcons.headphones),

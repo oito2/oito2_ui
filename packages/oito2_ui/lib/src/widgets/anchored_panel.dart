@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -46,6 +46,7 @@ enum Oito2PopoverAlignment {
   end,
 }
 
+/// A physical side of the anchor, after resolving the text direction.
 enum _Side { top, bottom, left, right }
 
 /// Lays out [child] next to [anchor], inside its own bounds less
@@ -86,7 +87,9 @@ class AnchoredPanel extends SingleChildRenderObjectWidget {
   /// The alignment along the anchor's edge.
   final Oito2PopoverAlignment alignment;
 
-  /// Resolves [Oito2PopoverPlacement.start] and the alignments.
+  /// The text direction that maps [Oito2PopoverPlacement.start],
+  /// [Oito2PopoverPlacement.end] and the start and end alignments to
+  /// physical sides.
   final TextDirection textDirection;
 
   /// The panel fill.
@@ -148,6 +151,7 @@ class RenderAnchoredPanel extends RenderShiftedBox {
     markNeedsLayout();
   }
 
+  /// The physical side matching [AnchoredPanel.placement].
   _Side get _preferred {
     final ltr = _config.textDirection == TextDirection.ltr;
     return switch (_config.placement) {
@@ -158,6 +162,7 @@ class RenderAnchoredPanel extends RenderShiftedBox {
     };
   }
 
+  /// Returns the side across the anchor from [side].
   static _Side _opposite(_Side side) => switch (side) {
     _Side.top => _Side.bottom,
     _Side.bottom => _Side.top,
@@ -165,6 +170,8 @@ class RenderAnchoredPanel extends RenderShiftedBox {
     _Side.right => _Side.left,
   };
 
+  /// Returns the room for the panel on [side] of the anchor, after the
+  /// gap, the arrow and the margin; never negative.
   double _space(_Side side) {
     final c = _config;
     final reach = c.gap + (c.arrowSize?.height ?? 0) + c.margin;
@@ -177,6 +184,9 @@ class RenderAnchoredPanel extends RenderShiftedBox {
     }.clamp(0.0, double.infinity);
   }
 
+  /// Returns the panel constraints for [side]: the available area less
+  /// the margins, capped by the configured maximums and, when given, by
+  /// [mainLimit] along the axis that points away from the anchor.
   BoxConstraints _childConstraints(_Side side, {double? mainLimit}) {
     final c = _config;
     final vertical = side == _Side.top || side == _Side.bottom;
@@ -196,6 +206,9 @@ class RenderAnchoredPanel extends RenderShiftedBox {
     return BoxConstraints(maxWidth: maxW, maxHeight: maxH);
   }
 
+  /// Returns the panel's leading coordinate when aligned to the anchor
+  /// edge from [start] to [end], given the panel [extent]; [flip] swaps
+  /// the start and end alignments for right-to-left text.
   double _align(double start, double end, double extent, bool flip) {
     final alignment = switch (_config.alignment) {
       Oito2PopoverAlignment.start when flip => Oito2PopoverAlignment.end,
@@ -209,6 +222,8 @@ class RenderAnchoredPanel extends RenderShiftedBox {
     };
   }
 
+  /// Clamps [value] into [min]..[max], returning [min] when the range is
+  /// empty.
   static double _clampInto(double value, double min, double max) =>
       max < min ? min : value.clamp(min, max);
 
@@ -273,6 +288,8 @@ class RenderAnchoredPanel extends RenderShiftedBox {
     (child.parentData! as BoxParentData).offset = Offset(x, y);
   }
 
+  /// Returns the outline of the panel at [rect], with the arrow joined
+  /// to the edge that faces the anchor.
   Path _shape(Rect rect) {
     final c = _config;
     final path = Path()

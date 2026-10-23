@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,7 +25,8 @@ import 'drop_target.dart';
 /// The chosen or dropped files go to [onFiles] unchecked; an
 /// `Oito2FileUploadController` checks them against its limits. [accept]
 /// filters the file chooser. Drops come from [dropTargetBuilder], or from
-/// [oito2PlatformDropTarget] (the web only) when it is null.
+/// [oito2PlatformDropTarget] (the web only) when it is null, and pass
+/// every dropped file even when [multiple] is false.
 class Oito2FileDropZone extends StatefulWidget {
   /// Creates a file drop zone.
   const Oito2FileDropZone({
@@ -45,7 +46,7 @@ class Oito2FileDropZone extends StatefulWidget {
   /// The file types the file chooser offers; empty offers every file.
   final List<XTypeGroup> accept;
 
-  /// Whether several files can be chosen at once.
+  /// Whether several files can be chosen at once in the file chooser.
   final bool multiple;
 
   /// Whether the zone opens the chooser and receives drops.
@@ -57,7 +58,7 @@ class Oito2FileDropZone extends StatefulWidget {
   /// The source of dropped files; null uses [oito2PlatformDropTarget].
   final Oito2FileDropTargetBuilder? dropTargetBuilder;
 
-  /// The smallest height of the zone.
+  /// The smallest height of the zone, in logical pixels.
   final double minHeight;
 
   @override
@@ -69,6 +70,7 @@ class _Oito2FileDropZoneState extends State<Oito2FileDropZone> {
 
   bool get _canDrop => widget.dropTargetBuilder != null || oito2CanDropFiles;
 
+  /// Opens the file chooser and hands the chosen files to `onFiles`.
   Future<void> _choose() async {
     final files = widget.multiple
         ? await openFiles(acceptedTypeGroups: widget.accept)
@@ -157,7 +159,12 @@ class _Oito2FileDropZoneState extends State<Oito2FileDropZone> {
         ),
       ),
     );
-    zone = Semantics(button: true, label: choose, child: zone);
+    zone = Semantics(
+      button: true,
+      enabled: enabled,
+      label: choose,
+      child: zone,
+    );
     if (!enabled) zone = Opacity(opacity: 0.5, child: zone);
     final build = widget.dropTargetBuilder ?? oito2PlatformDropTarget;
     return build(

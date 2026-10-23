@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -38,6 +38,8 @@ const _android = Oito2Platform(
   isWeb: false,
 );
 
+/// Pumps a scaffold with [appBar] under [settings], a window scope holding
+/// [controller] and the light theme for the settings platform.
 Future<void> _pump(
   WidgetTester tester, {
   required Oito2SystemSettings settings,
@@ -58,6 +60,7 @@ Future<void> _pump(
   );
 }
 
+/// The types of the window controls on screen, in tree order.
 List<Oito2WindowControlType> _controlTypes(WidgetTester tester) => tester
     .widgetList<Oito2WindowControl>(find.byType(Oito2WindowControl))
     .map((c) => c.type)

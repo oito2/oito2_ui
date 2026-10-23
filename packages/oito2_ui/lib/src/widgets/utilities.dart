@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,9 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'widget_helpers.dart';
 
@@ -33,13 +35,14 @@ class Oito2FocusBorder extends StatefulWidget {
     this.focused,
   });
 
-  /// The content.
+  /// The content the ring surrounds.
   final Widget child;
 
   /// The ring corner radius.
   final BorderRadius borderRadius;
 
-  /// Forces the ring on or off; null follows keyboard focus.
+  /// Forces the ring on or off; null follows keyboard focus and the
+  /// highlight mode.
   final bool? focused;
 
   @override
@@ -157,7 +160,7 @@ class Oito2ScrollViewUndershoot extends StatefulWidget {
   /// Whether the shadow at the end edge is shown.
   final bool end;
 
-  /// The depth of the shadows.
+  /// The depth of the shadows, in logical pixels.
   final double extent;
 
   @override
@@ -168,25 +171,45 @@ class Oito2ScrollViewUndershoot extends StatefulWidget {
 class _Oito2ScrollViewUndershootState extends State<Oito2ScrollViewUndershoot> {
   bool _before = false;
   bool _after = false;
-  Axis _axis = Axis.vertical;
+  AxisDirection _direction = AxisDirection.down;
 
+  Axis get _axis => axisDirectionToAxis(_direction);
+
+  /// Records which ends of the scroll have content beyond them and the
+  /// direction the content runs in, rebuilding when either changes.
+  /// Returns false so the notification keeps bubbling.
   bool _onMetrics(ScrollMetrics metrics) {
     final before = metrics.extentBefore > 0;
     final after = metrics.extentAfter > 0;
-    if (before != _before || after != _after || metrics.axis != _axis) {
+    if (before != _before ||
+        after != _after ||
+        metrics.axisDirection != _direction) {
       setState(() {
         _before = before;
         _after = after;
-        _axis = metrics.axis;
+        _direction = metrics.axisDirection;
       });
     }
     return false;
   }
 
+  /// Whether the scroll's leading end, where [_before] counts, lies at the
+  /// painted end edge (bottom, or the reading end) instead of the start
+  /// edge, as in reversed scroll views.
+  bool get _leadingAtEnd {
+    if (_axis == Axis.vertical) return _direction == AxisDirection.up;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    // A right-running scroll leads at the left, which is the start edge in
+    // left-to-right text.
+    return (_direction == AxisDirection.right) == rtl;
+  }
+
+  /// Builds the shadow along the start edge when [atStart], or along the
+  /// end edge.
   Widget _shadow(bool atStart) {
     final color = Theme.of(context).colorScheme.shadow;
     final vertical = _axis == Axis.vertical;
-    final visible = atStart ? _before : _after;
+    final visible = atStart == !_leadingAtEnd ? _before : _after;
     final begin = vertical
         ? (atStart ? Alignment.topCenter : Alignment.bottomCenter)
         : (atStart
@@ -289,6 +312,8 @@ class Oito2DiagonalClip extends StatelessWidget {
       ClipPath(clipper: _DiagonalClipper(corner), child: child);
 }
 
+/// Clips to the triangle of [corner] cut by the diagonal between its two
+/// neighboring corners.
 class _DiagonalClipper extends CustomClipper<Path> {
   const _DiagonalClipper(this.corner);
 
@@ -334,12 +359,14 @@ class Oito2Draggable extends StatefulWidget {
     this.onDragEnd,
     this.onMoved,
     this.keyboardStep = 8,
+    this.semanticLabel,
   });
 
-  /// The content.
+  /// The content that moves.
   final Widget child;
 
-  /// The position at start.
+  /// The initial offset from the stack's top-left corner; later changes
+  /// are ignored.
   final Offset initialPosition;
 
   /// Called when a pointer drag starts.
@@ -348,11 +375,16 @@ class Oito2Draggable extends StatefulWidget {
   /// Called when a pointer drag ends.
   final VoidCallback? onDragEnd;
 
-  /// Called with each new position.
+  /// Called with each new position, after a pointer or keyboard move.
   final ValueChanged<Offset>? onMoved;
 
-  /// How far one arrow key press moves the widget.
+  /// How far one arrow key press, or one accessibility move action, moves
+  /// the widget, in logical pixels.
   final double keyboardStep;
+
+  /// The name assistive technologies read for the widget, which they also
+  /// tell can be moved with the arrow keys or the move actions.
+  final String? semanticLabel;
 
   @override
   State<Oito2Draggable> createState() => _Oito2DraggableState();
@@ -362,11 +394,14 @@ class _Oito2DraggableState extends State<Oito2Draggable> {
   late Offset _position = widget.initialPosition;
   bool _dragging = false;
 
+  /// Shifts the position by [delta] and reports it.
   void _move(Offset delta) {
     setState(() => _position += delta);
     widget.onMoved?.call(_position);
   }
 
+  /// Moves the widget by [Oito2Draggable.keyboardStep] along the arrow key
+  /// pressed.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
@@ -384,29 +419,51 @@ class _Oito2DraggableState extends State<Oito2Draggable> {
     return KeyEventResult.handled;
   }
 
+  /// Ends a pointer drag in progress and reports it.
+  void _endDrag() {
+    if (!_dragging) return;
+    setState(() => _dragging = false);
+    widget.onDragEnd?.call();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final strings = Oito2Localizations.of(context);
+    final step = widget.keyboardStep;
     return Positioned(
       left: _position.dx,
       top: _position.dy,
       child: Oito2FocusBorder(
         child: Focus(
           onKeyEvent: _onKey,
-          child: MouseRegion(
-            cursor: _dragging
-                ? SystemMouseCursors.grabbing
-                : SystemMouseCursors.grab,
-            child: GestureDetector(
-              onPanStart: (_) {
-                setState(() => _dragging = true);
-                widget.onDragStart?.call();
-              },
-              onPanUpdate: (details) => _move(details.delta),
-              onPanEnd: (_) {
-                setState(() => _dragging = false);
-                widget.onDragEnd?.call();
-              },
-              child: widget.child,
+          child: Semantics(
+            container: true,
+            label: widget.semanticLabel,
+            hint: strings.moveWithArrowKeys,
+            customSemanticsActions: {
+              CustomSemanticsAction(label: strings.moveUp): () =>
+                  _move(Offset(0, -step)),
+              CustomSemanticsAction(label: strings.moveDown): () =>
+                  _move(Offset(0, step)),
+              CustomSemanticsAction(label: strings.moveLeft): () =>
+                  _move(Offset(-step, 0)),
+              CustomSemanticsAction(label: strings.moveRight): () =>
+                  _move(Offset(step, 0)),
+            },
+            child: MouseRegion(
+              cursor: _dragging
+                  ? SystemMouseCursors.grabbing
+                  : SystemMouseCursors.grab,
+              child: GestureDetector(
+                onPanStart: (_) {
+                  setState(() => _dragging = true);
+                  widget.onDragStart?.call();
+                },
+                onPanUpdate: (details) => _move(details.delta),
+                // A pointer cancelled mid-drag also ends here.
+                onPanEnd: (_) => _endDrag(),
+                child: widget.child,
+              ),
             ),
           ),
         ),

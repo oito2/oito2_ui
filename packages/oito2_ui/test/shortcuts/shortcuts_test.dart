@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -257,6 +257,55 @@ void main() {
       await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
       expect(runs, isEmpty);
+    });
+
+    testWidgets('an inner scope that is not rebuilt sees the outer update', (
+      tester,
+    ) async {
+      final runs = <String>[];
+      late BuildContext innerContext;
+      var version = 1;
+      late StateSetter setVersion;
+      // The same inner widget instance, so the outer rebuild skips it.
+      final inner = Oito2Commands(
+        commands: [Oito2Command(id: 'inner', label: 'Inner', onInvoke: () {})],
+        child: Builder(
+          builder: (context) {
+            innerContext = context;
+            return const Focus(autofocus: true, child: SizedBox());
+          },
+        ),
+      );
+      await pumpOito2(
+        tester,
+        StatefulBuilder(
+          builder: (context, setState) {
+            setVersion = setState;
+            final current = version;
+            return Oito2Commands(
+              commands: [
+                Oito2Command(
+                  id: 'save',
+                  label: 'Save v$current',
+                  shortcut: Oito2Shortcut.parse('Ctrl+S'),
+                  onInvoke: () => runs.add('v$current'),
+                ),
+              ],
+              child: inner,
+            );
+          },
+        ),
+      );
+      setVersion(() => version = 2);
+      await tester.pump();
+      expect(
+        [for (final c in Oito2Commands.availableAt(innerContext)) c.label],
+        ['Inner', 'Save v2'],
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      expect(runs, ['v2']);
     });
 
     test('reports clashing and prefix shortcuts', () {

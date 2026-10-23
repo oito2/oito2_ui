@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -33,6 +33,9 @@ import 'widget_helpers.dart';
 /// screen readers, or that none matched.
 class Oito2Autocomplete<T extends Object> extends StatefulWidget {
   /// Creates an autocomplete field.
+  ///
+  /// Throws an [AssertionError] in debug builds when only one of
+  /// [controller] and [focusNode] is given.
   const Oito2Autocomplete({
     super.key,
     required this.collection,
@@ -52,10 +55,11 @@ class Oito2Autocomplete<T extends Object> extends StatefulWidget {
   /// Called with the picked item.
   final ValueChanged<T>? onSelected;
 
-  /// The value of the item shown in the field at start.
+  /// The value of the item whose label fills the field initially; used
+  /// only when no [controller] is given.
   final String? initialValue;
 
-  /// The field hint.
+  /// The hint shown while the field is empty.
   final String? hintText;
 
   /// Whether every enabled item is suggested while the field is empty.
@@ -77,6 +81,8 @@ class Oito2Autocomplete<T extends Object> extends StatefulWidget {
   State<Oito2Autocomplete<T>> createState() => _Oito2AutocompleteState<T>();
 }
 
+/// Owns the fallback controller and focus node of [Oito2Autocomplete],
+/// caches the suggestions and builds the field with its live region.
 class _Oito2AutocompleteState<T extends Object>
     extends State<Oito2Autocomplete<T>>
     with
@@ -114,14 +120,15 @@ class _Oito2AutocompleteState<T extends Object>
     }
   }
 
+  /// Rebuilds to refresh the suggestions and the announcement.
   void _onText() => setState(() {});
 
   Oito2ListCollection<T>? _optionsSource;
   String? _lastQuery;
   List<T> _lastOptions = const [];
 
-  /// The items matching [text], reused while the text and the collection
-  /// stay the same.
+  /// Returns the items matching [text], reusing the last result while
+  /// the text and the collection stay the same.
   List<T> _options(String text) {
     final collection = widget.collection;
     if (identical(_optionsSource, collection) && text == _lastQuery) {

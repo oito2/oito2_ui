@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -64,6 +64,8 @@ class _ListBoxPageState extends State<ListBoxPage> {
     super.dispose();
   }
 
+  /// A bordered list box of the fonts, selected through [controller] and
+  /// announced as [label].
   Widget _box(Oito2SelectionController controller, String label) {
     final scheme = Theme.of(context).colorScheme;
     return Container(

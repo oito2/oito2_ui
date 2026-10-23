@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -30,6 +30,8 @@ class PopoverPage extends StatefulWidget {
 class _PopoverPageState extends State<PopoverPage> {
   bool _arrow = true;
 
+  /// A button labeled [label] that opens and closes the popover of
+  /// [controller].
   Widget _anchor(String label, Oito2PopoverController controller) =>
       OutlinedButton(onPressed: controller.toggle, child: Text(label));
 

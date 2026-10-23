@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,7 +24,9 @@ import 'theme_home_view.dart';
 import 'theme_text_fields_view.dart';
 import 'theme_tokens_view.dart';
 
-/// A section of the Material theme page.
+/// A section of the Material theme page: its navigation label and icon,
+/// the badge on the icon (0 for none, a negative value for a dot, a
+/// positive value for a count) and the builder of its body.
 typedef _Section = ({
   String label,
   IconData icon,
@@ -32,6 +34,7 @@ typedef _Section = ({
   Widget Function(Oito2ColorTheme colors) builder,
 });
 
+/// The sections in navigation order.
 final List<_Section> _sections = [
   (
     label: 'Home',
@@ -98,6 +101,7 @@ class _ThemePageState extends State<ThemePage> {
 
   void _select(int index) => setState(() => _index = index);
 
+  /// The icon of [section], with its badge.
   Widget _icon(_Section section) {
     final icon = Icon(section.icon);
     return switch (section.badge) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -36,12 +36,14 @@ enum Oito2TagsFieldStyle {
 
 /// A field of tags shown as chips, with a text input after them.
 ///
-/// Enter or a [delimiters] character adds the typed text as a tag; a
-/// pasted list is split on the delimiters. A tag is refused when it is
-/// empty, repeated (unless [allowDuplicates]), past [maxTags] or rejected
-/// by [validator].
+/// Enter or a [delimiters] character adds the typed text, trimmed, as a
+/// tag; a pasted list is split on the delimiters. A tag is refused when it
+/// is empty, repeated (unless [allowDuplicates]), past [maxTags] or
+/// rejected by [validator]. A typed tag that is refused stays in the input
+/// to be fixed; the refused tags of a pasted list are dropped.
 ///
-/// Backspace or the start arrow in the empty input moves to the last tag;
+/// Backspace in the empty input, or the start arrow with the caret at the
+/// start of the input, moves to the last tag;
 /// the arrow keys move between tags, and Backspace or Delete removes the
 /// focused one. With [suggestions], matching items not yet added show
 /// below the input as it is typed. With [clearable], a button at the end
@@ -67,16 +69,20 @@ class Oito2TagsField extends StatefulWidget {
   /// The tags, in order.
   final List<String> tags;
 
-  /// Called with the new tag list; the field is read-only when null.
+  /// Called with the new tag list after tags are added or removed; the
+  /// field is read-only when null.
   final ValueChanged<List<String>>? onChanged;
 
-  /// The characters that end a tag while typing or pasting.
+  /// The strings that end a tag while typing or pasting; when empty, only
+  /// Enter adds a tag.
   final List<String> delimiters;
 
-  /// The largest number of tags.
+  /// The largest number of tags; once reached, the input turns read-only.
+  /// Unlimited when null.
   final int? maxTags;
 
-  /// Whether a tag is accepted.
+  /// Decides whether a trimmed, non-empty tag is accepted; every such tag
+  /// is accepted when null.
   final bool Function(String tag)? validator;
 
   /// Whether the same tag can be added twice.
@@ -85,10 +91,11 @@ class Oito2TagsField extends StatefulWidget {
   /// The field label.
   final String? labelText;
 
-  /// The hint shown in the empty input.
+  /// The hint shown in the input while there are no tags.
   final String? hintText;
 
-  /// The tags offered while typing.
+  /// The tags offered below the input while typing, excluding the tags
+  /// already added; no suggestions are shown when null.
   final Oito2ListCollection<String>? suggestions;
 
   /// The focus node of the text input; one is created when null.
@@ -160,6 +167,7 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
     });
   }
 
+  /// Whether [tag] can be appended to [tags] under the field's rules.
   bool _accepts(String tag, List<String> tags) =>
       tag.isNotEmpty &&
       (widget.allowDuplicates || !tags.contains(tag)) &&
@@ -190,6 +198,8 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
     selection: TextSelection.collapsed(offset: text.length),
   );
 
+  /// Removes the tag at [index], then focuses the previous tag, or the
+  /// input when it was the first one.
   void _remove(int index) {
     if (!_enabled) return;
     widget.onChanged!([...widget.tags]..removeAt(index));
@@ -203,6 +213,7 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
     });
   }
 
+  /// Removes every tag and the typed text, and focuses the input.
   void _clear() {
     if (!_enabled) return;
     _controller.clear();
@@ -210,25 +221,31 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
     _input.requestFocus();
   }
 
+  /// Turns every delimited part of [text] into a tag, keeping the text
+  /// after the last delimiter in the input.
   void _onTextChanged(String text) {
     final pattern = RegExp(widget.delimiters.map(RegExp.escape).join('|'));
     if (widget.delimiters.isEmpty || !text.contains(pattern)) return;
     final parts = text.split(pattern);
     final refused = _add(parts.take(parts.length - 1));
-    // A single tag refused as its delimiter is typed stays to be fixed, as
-    // with Enter; refused repeats of a pasted list are dropped.
+    // A single tag refused as its delimiter is typed at the end stays to
+    // be fixed, as with Enter; the refused parts of pasted text are
+    // dropped, leaving the text after the last delimiter.
     _setText(
-      parts.length == 2 && refused.isNotEmpty
-          ? refused.single + parts.last
+      parts.length == 2 && refused.isNotEmpty && parts.last.isEmpty
+          ? refused.single
           : parts.last,
     );
   }
 
+  /// Adds the typed text as a tag, clearing the input when it is accepted.
   void _submit() {
     if (_add([_controller.text]).isEmpty) _controller.clear();
     _input.requestFocus();
   }
 
+  /// Moves focus from the input to the last tag on Backspace in the empty
+  /// input or on the start arrow at the start of the input.
   KeyEventResult _onInputKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
@@ -248,6 +265,8 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
     return KeyEventResult.ignored;
   }
 
+  /// Handles the keys of the tag at [index]: Backspace and Delete remove
+  /// it, and the arrows move to the adjacent tag or to the input.
   KeyEventResult _onTagKey(int index, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
@@ -272,12 +291,15 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
     return KeyEventResult.ignored;
   }
 
+  /// The suggestions matching [text] that are not tags yet.
   List<String> _options(String text) {
     final suggestions = widget.suggestions;
     if (suggestions == null || text.trim().isEmpty) return const [];
     return suggestions.suggestions(text.trim(), exclude: widget.tags.toSet());
   }
 
+  /// Builds the focusable chip of the tag at [index], with its remove
+  /// button when the field is editable.
   Widget _tag(int index) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -363,6 +385,7 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
     );
   }
 
+  /// Builds the text input that follows the tags.
   Widget _buildInput(
     BuildContext context,
     TextEditingController controller,

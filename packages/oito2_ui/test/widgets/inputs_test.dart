@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,6 +19,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
+/// The day the date entry calendars treat as today, so the tests don't
+/// depend on the wall clock.
+final _today = DateTime(2025, 6, 10);
 void main() {
   group('Oito2SearchField', () {
     testWidgets('clears with the button and with Escape', (tester) async {
@@ -155,6 +158,7 @@ void main() {
         child: Oito2DateEntry(
           firstDate: DateTime(2020),
           lastDate: DateTime(2030, 12, 31),
+          currentDate: _today,
           acceptEmpty: acceptEmpty,
           onChanged: values.add,
         ),
@@ -291,7 +295,7 @@ void main() {
       expect(find.byType(Oito2Calendar), findsOneWidget);
       await tester.tap(find.text('15'));
       await tester.pumpAndSettle();
-      expect(values.single?.day, 15);
+      expect(values.single, DateTime(2025, 6, 15));
       expect(find.byType(Oito2Calendar), findsNothing);
     });
 
@@ -305,10 +309,7 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
-      expect(
-        values.single,
-        DateUtils.addDaysToDate(DateUtils.dateOnly(DateTime.now()), 1),
-      );
+      expect(values.single, DateTime(2025, 6, 11));
     });
   });
 
@@ -450,6 +451,42 @@ void main() {
     expect(values.last, DateTime(2026, 6, 1, 8, 30));
   });
 
+  testWidgets('Oito2DateTimeEntry stays quiet while a field is invalid', (
+    tester,
+  ) async {
+    final values = <DateTime?>[];
+    final errors = <String?>[];
+    await pumpOito2(
+      tester,
+      Center(
+        child: SizedBox(
+          width: 520,
+          child: Oito2DateTimeEntry(
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2030),
+            onChanged: values.add,
+            onErrorChanged: errors.add,
+          ),
+        ),
+      ),
+    );
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.first, '06/01/2026');
+    await tester.enterText(fields.last, '99:99');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    expect(errors.last, isNotNull);
+    final reported = values.length;
+    await tester.enterText(fields.first, '07/01/2026');
+    await tester.pump();
+    expect(values, hasLength(reported));
+    await tester.enterText(fields.last, '08:30');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    expect(errors.last, isNull);
+    expect(values.last, DateTime(2026, 7, 1, 8, 30));
+  });
+
   group('Oito2SegmentedEntry', () {
     Widget entry(List<List<String>> values) => Center(
       child: Oito2SegmentedEntry(
@@ -461,6 +498,32 @@ void main() {
         onChanged: values.add,
       ),
     );
+
+    testWidgets('a spaced delimiter advances on its visible character', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        const Center(
+          child: Oito2SegmentedEntry(
+            delimiter: ' - ',
+            segments: [
+              Oito2EntrySegment(length: 4, numeric: false),
+              Oito2EntrySegment(length: 4, numeric: false),
+            ],
+          ),
+        ),
+      );
+      final fields = find.byType(EditableText);
+      await tester.tap(find.byType(TextField).first);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.minus, character: '-');
+      await tester.pump();
+      expect(
+        tester.widget<EditableText>(fields.at(1)).focusNode.hasFocus,
+        isTrue,
+      );
+    });
 
     testWidgets('follows a change in the number of segments', (tester) async {
       Widget build(int count) => Center(

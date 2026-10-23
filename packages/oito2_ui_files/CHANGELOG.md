@@ -14,3 +14,9 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2FileUploadController`, `Oito2RejectedFile`, `Oito2FileRejection` and `oito2FileMatchesTypes`: accepted types, a size limit and a file count limit, with the refused files and their reasons.
 - `Oito2FileUpload`: a drop zone with a hint built from the limits, the refusals of the last addition and the file list with sizes, image previews and remove buttons.
 - `Oito2Downloads` and `Oito2DownloadTrigger`: saving bytes as a file through a download on the web and the "Save as" dialog on Linux, Windows and macOS; the trigger builds the data on demand, shows a spinner and is disabled where files can't be saved.
+
+### Fixed
+
+- `Oito2FileUploadController.add` calls made while an earlier one is still checking files wait for it, so `maxFiles` holds across them.
+- `Oito2FileDropZone` reports when it is disabled to assistive technologies.
+- On the web, a dropped item the browser can't read, such as a folder, is skipped instead of losing the whole drop.

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -90,28 +90,33 @@ class Oito2FloatingPanel extends StatefulWidget {
   /// The position and size at start, in the stack's coordinates.
   final Rect initialRect;
 
-  /// The smallest size.
+  /// The smallest size the panel can be resized to.
   final Size minSize;
 
   /// Whether the edges resize the panel.
   final bool resizable;
 
-  /// Called by the close button; the button is disabled when null.
+  /// Called by the close button; the panel shows no close button when
+  /// null.
   final VoidCallback? onClose;
 
-  /// Called with the new rectangle after a move or a resize.
+  /// Called with the new rectangle on every move or resize step,
+  /// including each step of a drag.
   final ValueChanged<Rect>? onRectChanged;
 
   /// The look of the title bar buttons.
   final Oito2WindowControlStyle controlStyle;
 
-  /// The distance of one arrow key press.
+  /// The distance, in logical pixels, one arrow key press moves or
+  /// resizes the panel.
   final double keyboardStep;
 
   @override
   State<Oito2FloatingPanel> createState() => _Oito2FloatingPanelState();
 }
 
+/// Holds the rectangle and the minimized, maximized and dragging states
+/// of [Oito2FloatingPanel].
 class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
   late Rect _rect = widget.initialRect;
   late final _window = _PanelWindow(this);
@@ -119,7 +124,12 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
   bool _maximized = false;
   bool _minimized = false;
   bool _dragging = false;
+
+  /// The global position where the last pointer went down on the title
+  /// bar.
   Offset _pointerDown = Offset.zero;
+
+  /// The latest global position of that pointer.
   Offset _pointer = Offset.zero;
 
   static const double _barHeight = Oito2Sizes.titleBarHeight;
@@ -137,6 +147,8 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
     _move(_pointer - _pointerDown);
   }
 
+  /// Minimizes the panel to its title bar or restores it, leaving the
+  /// maximized state when minimizing.
   void _toggleMinimized() {
     setState(() {
       _minimized = !_minimized;
@@ -146,6 +158,8 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
     _window.state.value = _window.state.value.copyWith(isMaximized: _maximized);
   }
 
+  /// Maximizes the panel to the whole stack or restores it, leaving the
+  /// minimized state when maximizing.
   void _toggleMaximized() {
     setState(() {
       _maximized = !_maximized;
@@ -168,6 +182,7 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
     );
   }
 
+  /// Applies [rect], clamped, and reports it when it changed.
   void _setRect(Rect rect) {
     final next = _clamp(rect);
     if (next == _rect) return;
@@ -175,11 +190,14 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
     widget.onRectChanged?.call(next);
   }
 
+  /// Moves the panel by [delta]; does nothing while maximized.
   void _move(Offset delta) {
     if (_maximized) return;
     _setRect(_rect.shift(delta));
   }
 
+  /// Grows the panel by [dx] and [dy]; does nothing while maximized or
+  /// when not resizable.
   void _resize(double dx, double dy) {
     if (_maximized || !widget.resizable) return;
     _setRect(
@@ -187,6 +205,8 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
     );
   }
 
+  /// Moves the panel with the arrow keys, or resizes it with Shift and
+  /// the arrows, while the title bar has focus.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
@@ -205,6 +225,8 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
     return KeyEventResult.handled;
   }
 
+  /// Builds an invisible resize handle with [cursor] that calls [onDrag]
+  /// while dragged.
   Widget _edge({
     required MouseCursor cursor,
     required void Function(DragUpdateDetails) onDrag,
@@ -260,11 +282,11 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
                   controller: _window,
                   onClose: widget.onClose,
                   controlStyle: widget.controlStyle,
-                  buttonLayout: const Oito2WindowButtonLayout(
+                  buttonLayout: Oito2WindowButtonLayout(
                     trailing: [
                       Oito2WindowButton.minimize,
                       Oito2WindowButton.maximize,
-                      Oito2WindowButton.close,
+                      if (widget.onClose != null) Oito2WindowButton.close,
                     ],
                   ),
                 ),

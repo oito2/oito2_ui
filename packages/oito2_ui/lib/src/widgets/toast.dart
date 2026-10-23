@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -48,10 +48,11 @@ enum Oito2ToasterPlacement {
 
   const Oito2ToasterPlacement(this.alignment);
 
-  /// The alignment of the stack in the window.
+  /// The alignment of the stack in the toaster's area.
   final AlignmentDirectional alignment;
 
-  /// Whether the stack sits at the top edge.
+  /// Whether the stack sits at the top edge, so toasts enter from above
+  /// and the oldest sits on top.
   bool get isTop => alignment.y < 0;
 }
 
@@ -70,19 +71,21 @@ class Oito2Toast {
     this.dismissible = true,
   });
 
-  /// The message.
+  /// The message, shown in bold.
   final String title;
 
-  /// An optional second line.
+  /// Optional detail text shown below [title].
   final String? description;
 
   /// The kind of message, shown as a colored icon; none when null.
   final Oito2InfoType? type;
 
-  /// The label of the action button, shown with [onAction].
+  /// The label of the action button; the button shows only when
+  /// [onAction] is also set.
   final String? actionLabel;
 
-  /// Called by the action button, which also dismisses the toast.
+  /// Called when the action button is pressed; the toast is then
+  /// dismissed.
   final VoidCallback? onAction;
 
   /// How long the toast stays; it stays until dismissed when null. The
@@ -93,11 +96,12 @@ class Oito2Toast {
   /// until it is updated or dismissed.
   final bool loading;
 
-  /// Whether the toast has a dismiss button.
+  /// Whether the toast has a dismiss button and closes on Escape.
   final bool dismissible;
 }
 
-/// A shown toast, to update or dismiss it.
+/// A reference to a toast passed to [Oito2ToasterState.show], used to
+/// update or dismiss it.
 class Oito2ToastHandle {
   Oito2ToastHandle._(this._toaster, this._entry);
 
@@ -107,13 +111,17 @@ class Oito2ToastHandle {
   /// Whether the toast is still shown or waiting to be shown.
   bool get isActive => !_entry.closing && _toaster._entries.contains(_entry);
 
-  /// Replaces the toast's content and restarts its time.
+  /// Replaces the toast's content and restarts its time; does nothing once
+  /// the toast is dismissed.
   void update(Oito2Toast toast) => _toaster._update(_entry, toast);
 
-  /// Dismisses the toast.
+  /// Dismisses the toast with its exit animation; does nothing when it is
+  /// already dismissed.
   void dismiss() => _toaster._dismiss(_entry);
 }
 
+/// The mutable state of a toast in a toaster: its content, closing flag
+/// and auto-dismiss timer.
 class _ToastEntry {
   _ToastEntry(this.toast);
 
@@ -126,6 +134,8 @@ class _ToastEntry {
   DateTime? startedAt;
   Timer? timer;
 
+  /// Cancels the auto-dismiss timer, keeping the time it had left in
+  /// [remaining].
   void stop() {
     final started = startedAt;
     if (timer != null && started != null && remaining != null) {
@@ -147,6 +157,9 @@ class _ToastEntry {
 /// time stops while the pointer or the focus is on the stack.
 class Oito2Toaster extends StatefulWidget {
   /// Creates a toaster.
+  ///
+  /// Throws an [AssertionError] in debug builds when [maxVisible] is not
+  /// positive.
   const Oito2Toaster({
     super.key,
     required this.child,
@@ -161,20 +174,24 @@ class Oito2Toaster extends StatefulWidget {
   /// Where the toasts stack.
   final Oito2ToasterPlacement placement;
 
-  /// The number of toasts shown at a time.
+  /// The largest number of toasts shown at a time.
   final int maxVisible;
 
-  /// The largest toast width.
+  /// The largest width of the toast stack, in logical pixels.
   final double maxWidth;
 
-  /// The closest toaster.
+  /// Returns the state of the closest [Oito2Toaster] above [context].
+  ///
+  /// Throws an [AssertionError] in debug builds, and a [TypeError] in
+  /// release builds, when there is none; see [maybeOf].
   static Oito2ToasterState of(BuildContext context) {
     final state = maybeOf(context);
     assert(state != null, 'No Oito2Toaster above this context.');
     return state!;
   }
 
-  /// The closest toaster, or null when there is none.
+  /// Returns the state of the closest [Oito2Toaster] above [context], or
+  /// null when there is none.
   static Oito2ToasterState? maybeOf(BuildContext context) =>
       context.findAncestorStateOfType<Oito2ToasterState>();
 
@@ -182,7 +199,8 @@ class Oito2Toaster extends StatefulWidget {
   State<Oito2Toaster> createState() => Oito2ToasterState();
 }
 
-/// The state of an [Oito2Toaster], which shows the toasts.
+/// The state of an [Oito2Toaster], which queues, shows and times the
+/// toasts.
 class Oito2ToasterState extends State<Oito2Toaster> {
   final List<_ToastEntry> _entries = [];
   late final OverlayEntry _content = OverlayEntry(
@@ -195,7 +213,8 @@ class Oito2ToasterState extends State<Oito2Toaster> {
 
   bool get _paused => _hovered || _focused;
 
-  /// Shows [toast] and returns its handle.
+  /// Queues [toast], shown at once when there is room, and returns a handle
+  /// to update or dismiss it.
   Oito2ToastHandle show(Oito2Toast toast) {
     final entry = _ToastEntry(toast);
     _entries.add(entry);
@@ -205,7 +224,11 @@ class Oito2ToasterState extends State<Oito2Toaster> {
   }
 
   /// Shows [loading] until [future] completes, then replaces it with the
-  /// toast from [success] or [error], and returns [future].
+  /// toast that [success] builds from the value or [error] builds from the
+  /// error, and returns [future].
+  ///
+  /// The toast is not replaced when it was dismissed meanwhile. An error
+  /// thrown by [success] or [error] is reported to [FlutterError.reportError].
   Future<T> promise<T>(
     Future<T> future, {
     required Oito2Toast loading,
@@ -213,8 +236,8 @@ class Oito2ToasterState extends State<Oito2Toaster> {
     required Oito2Toast Function(Object error) error,
   }) {
     final handle = show(loading);
-    // An error thrown by [success] or [error] is reported instead of
-    // escaping as an unhandled asynchronous error.
+    // An error thrown by success or error is reported instead of escaping
+    // as an unhandled asynchronous error.
     void report(Object exception, StackTrace stack) => FlutterError.reportError(
       FlutterErrorDetails(
         exception: exception,
@@ -236,16 +259,12 @@ class Oito2ToasterState extends State<Oito2Toaster> {
     return future;
   }
 
-  /// Dismisses every toast.
+  /// Dismisses every toast, shown or waiting.
   void dismissAll() {
-    for (final entry in _entries) {
-      entry
-        ..stop()
-        ..closing = true;
-    }
-    _refresh();
+    _close(_entries.where((entry) => !entry.closing).toList());
   }
 
+  /// Replaces the content of [entry] and resets its time.
   void _update(_ToastEntry entry, Oito2Toast toast) {
     if (!_entries.contains(entry) || entry.closing) return;
     entry
@@ -255,14 +274,27 @@ class Oito2ToasterState extends State<Oito2Toaster> {
     _refresh();
   }
 
+  /// Starts closing [entry]; its view removes it after the exit animation.
   void _dismiss(_ToastEntry entry) {
     if (!_entries.contains(entry) || entry.closing) return;
-    entry
-      ..stop()
-      ..closing = true;
+    _close([entry]);
+  }
+
+  /// Marks [entries] as closing. Shown entries leave once their exit
+  /// animation ends; waiting entries have no view to animate, so they are
+  /// removed at once.
+  void _close(List<_ToastEntry> entries) {
+    final shown = _visible.toSet();
+    for (final entry in entries) {
+      entry
+        ..stop()
+        ..closing = true;
+      if (!shown.contains(entry)) _entries.remove(entry);
+    }
     _refresh();
   }
 
+  /// Drops [entry] once its exit animation has finished.
   void _removed(_ToastEntry entry) {
     if (!mounted) return;
     _entries.remove(entry);
@@ -276,6 +308,7 @@ class Oito2ToasterState extends State<Oito2Toaster> {
     _syncTimers();
   }
 
+  /// The entries that have room on screen, oldest first.
   List<_ToastEntry> get _visible =>
       _entries.take(widget.maxVisible).toList(growable: false);
 
@@ -295,6 +328,8 @@ class Oito2ToasterState extends State<Oito2Toaster> {
     }
   }
 
+  /// Records whether the pointer or the focus is on the stack, pausing or
+  /// resuming the toast timers.
   void _setPaused({bool? hovered, bool? focused}) {
     _hovered = hovered ?? _hovered;
     _focused = focused ?? _focused;
@@ -322,6 +357,7 @@ class Oito2ToasterState extends State<Oito2Toaster> {
     super.dispose();
   }
 
+  /// Builds the overlay layer holding the stack of visible toasts.
   Widget _buildLayer(BuildContext context) {
     final placement = widget.placement;
     final visible = _visible;
@@ -383,6 +419,8 @@ class Oito2ToasterState extends State<Oito2Toaster> {
   }
 }
 
+/// One animated toast: slides and fades in when shown, and out when
+/// [closing] turns true, then calls [onRemoved].
 class _ToastView extends StatefulWidget {
   const _ToastView({
     super.key,
@@ -441,6 +479,9 @@ class _ToastViewState extends State<_ToastView>
     super.dispose();
   }
 
+  /// The icon color of [type], taken from the status palette of the
+  /// opposite brightness and raised to non-text contrast on the inverse
+  /// surface.
   Color _typeColor(Oito2InfoType type, ColorScheme scheme) {
     final inverse = scheme.brightness == Brightness.light
         ? Brightness.dark

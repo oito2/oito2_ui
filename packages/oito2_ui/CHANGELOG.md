@@ -123,11 +123,14 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2DialogTitleBar.leading`, such as an icon or an `Oito2AnimatedIcon` before the title.
 - `Oito2TabBar.style` with `Oito2TabBarStyle.subtle`: the selected tab tinted with a faint accent fill and accent text, the tabs sized to their labels from the leading edge.
 - `Oito2TagsField.style` with `Oito2TagsFieldStyle.subtle` (neutral tags with medium-weight text, the focused tag tinted with the accent) and `Oito2TagsField.clearable`, a button that removes every tag.
+- `Oito2DateEntry.currentDate`: the day its calendar marks as today and opens on when no date is set.
 - `Oito2Slider` and `Oito2RangeSlider`: Material sliders with a thick rounded track and ring thumbs, an optional label and value text, labeled `Oito2SliderMark`s along the track and a vertical orientation.
 - `Oito2SegmentGroup` with `Oito2Segment`: mutually exclusive choices on a recessed track with a raised marker that slides to the selected one, across or down, one stop in keyboard navigation with arrow-key selection.
 - `Oito2ToggleGroup` with `Oito2ToggleItem`: joined buttons that turn on and off, one or several at once (`multiple`, `deselectable`), across or down, with arrow-key focus and Space or Enter to toggle.
 - `Oito2ScrollArea` with `Oito2ScrollDirection`: a scrollable box with the themed scroll bars on the vertical, horizontal or both axes, and an optional undershoot shadow.
 - `Oito2HighlightedText.queries`, `splitWords`, `ignoreCase`, `wholeWords` and `matchAll`, also on `Oito2HighlightedText.matches`: several queries, whole phrases, case- and accent-sensitive matching, whole words only and the first occurrence only.
+- `Oito2CopyButton.onError` and `Oito2CopyField.onError`: a copy the platform refuses shows a cross and "Couldn't copy" and reports the error.
+- `Oito2Draggable.semanticLabel`, with a hint about the arrow keys and accessibility actions that move it up, down, left and right.
 
 ### Changed
 
@@ -158,6 +161,14 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2ChoiceChipBar` chips are pill-shaped.
 - `Oito2ColorDisk` is smaller (20 pixels by default) and marks the selection with a ring in its own color instead of a check mark; hover and keyboard focus show a fainter ring.
 - Menu items, including the `Oito2Select` and `Oito2PopupMenuButton` lists, show hover, keyboard focus and the selected item with the highlighted background only, without the focus ring border.
+- `Oito2ExpansionPanel.onExpansionChanged` also reports the sections `collapseOnExpand` closes, before the one that opened; the length check of `headers` and `children` runs on every build.
+- `Oito2FloatingPanel` shows no close button without `onClose`.
+- macOS-style window controls are 24-pixel targets; the circles keep their size.
+- `Oito2ColorDisk` keeps its ring in its own hue but adjusts it to stand out from the surface, and reports when it is disabled.
+- `Oito2SegmentedEntry` advances on the first visible character of a spaced delimiter, such as `-` for `' - '`.
+- `Oito2NumberEntry` asserts that `decimals` is at most 20.
+- `Oito2DateTimeEntry` reports a new combination only while both fields parse, and once they parse again if it changed.
+- `Oito2TagsField` drops the refused tags of a pasted list instead of joining the refused text to the rest.
 
 ### Fixed
 
@@ -219,3 +230,15 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2Toaster` disposes its overlay entries and reports errors from `promise`'s `success` and `error` builders.
 - Progress indicators and animated icons repaint without rebuilding, the popover reuses its content between anchor layouts, and focus borders rebuild only when they could show.
 - `Oito2SplitButton` and the `Oito2Pagination` page buttons are as tall as the other buttons again.
+- `Oito2Toaster`: dismissing toasts that are still waiting for room, with `dismissAll` or a handle, removes them instead of leaving them as invisible entries that kept later toasts waiting.
+- `Oito2TreeView`: a rename whose row is filtered out, removed or scrolled away ends, so the keyboard navigation keeps working.
+- `Oito2PageIndicator`: interactive dots are one keyboard stop (arrow keys, Home and End change the page) and 24-pixel targets.
+- `Oito2Slider` and `Oito2RangeSlider`: a vertical slider keeps its minimum at the bottom in right-to-left layouts, where its marks point.
+- `Oito2Commands`: an inner scope that isn't rebuilt sees the latest commands of the outer scope, whose shortcuts keep working inside it.
+- `oito2ColorFromHex` accepts `#` only at the start.
+- `Oito2ColorPicker`: assistive technologies adjust saturation and brightness as two sliders.
+- `Oito2NumberEntry`: a sideways wheel or trackpad scroll no longer changes the value.
+- `Oito2PasswordField`: the Caps Lock warning also shows while an error is shown.
+- `Oito2Steps`: assistive technologies read a step's description.
+- `Oito2TimerController.pause` and `reset` do nothing after `dispose`.
+- `Oito2ScrollViewUndershoot` shades the right edges of reversed scroll views.

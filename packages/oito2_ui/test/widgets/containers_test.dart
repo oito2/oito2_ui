@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -63,13 +63,22 @@ void main() {
   testWidgets('Oito2BorderContainer hosts ink effects of its children', (
     tester,
   ) async {
+    // Without a Scaffold, the container is the only Material above the
+    // tile, so the tap only splashes if the container hosts the ink.
     await pumpOito2(
       tester,
       Oito2BorderContainer(
         child: ListTile(title: const Text('Row'), onTap: () {}),
       ),
+      scaffold: false,
     );
+    await tester.tap(find.text('Row'));
+    await tester.pump();
     expect(tester.takeException(), isNull);
+    expect(
+      find.ancestor(of: find.byType(ListTile), matching: find.byType(Material)),
+      findsWidgets,
+    );
   });
 
   testWidgets('Oito2Section shows a header and its actions', (tester) async {

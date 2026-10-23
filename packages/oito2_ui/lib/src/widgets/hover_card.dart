@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -49,10 +49,12 @@ class Oito2HoverCard extends StatefulWidget {
   /// Builds the card content.
   final WidgetBuilder cardBuilder;
 
-  /// The wait before the card opens.
+  /// The wait before the card opens after the pointer enters the child
+  /// or the focus moves inside it.
   final Duration openDelay;
 
-  /// The wait before the card closes.
+  /// The wait before the card closes after the pointer or the focus
+  /// leaves.
   final Duration closeDelay;
 
   /// The preferred side of the child.
@@ -71,6 +73,8 @@ class Oito2HoverCard extends StatefulWidget {
   State<Oito2HoverCard> createState() => _Oito2HoverCardState();
 }
 
+/// Schedules the opening and closing of the [Oito2HoverCard] popover and
+/// listens for Escape while it is open.
 class _Oito2HoverCardState extends State<Oito2HoverCard> {
   final _controller = Oito2PopoverController();
   Timer? _timer;
@@ -96,6 +100,8 @@ class _Oito2HoverCardState extends State<Oito2HoverCard> {
     return true;
   }
 
+  /// Cancels a pending change and listens for Escape only while the card
+  /// is open.
   void _onOpenChanged(bool open) {
     _timer?.cancel();
     if (open) {
@@ -105,6 +111,9 @@ class _Oito2HoverCardState extends State<Oito2HoverCard> {
     }
   }
 
+  /// Opens the card after the open delay, or closes it after the close
+  /// delay, replacing any pending change; does nothing when the card is
+  /// already in that state.
   void _schedule(bool open) {
     _timer?.cancel();
     if (_controller.isOpen == open) return;

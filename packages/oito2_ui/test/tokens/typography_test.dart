@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
+/// The fifteen Material 3 text styles of [t], from displayLarge to
+/// labelSmall.
 List<TextStyle> _styles(TextTheme t) => [
   t.displayLarge!,
   t.displayMedium!,

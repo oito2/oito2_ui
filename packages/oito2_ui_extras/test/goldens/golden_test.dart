@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_extras/oito2_ui_extras.dart';
 
-/// A wavy stroke across [width] pixels.
+/// A wavy stroke across [width] pixels around the height [y].
 List<Oito2SignaturePoint> _wave(double width, double y) => [
   for (var x = 20.0; x < width - 20; x += 6)
     (

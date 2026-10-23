@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -42,7 +42,10 @@ class _FileUploadPageState extends State<FileUploadPage> {
     maxFileSize: 5 * 1000 * 1000,
   );
   final _document = Oito2FileUploadController(maxFiles: 1);
-  List<XFile> _received = const [];
+
+  /// The files of the bare zone's last drop or choice, with their sizes,
+  /// read once per file.
+  List<(XFile, Future<int>)> _received = const [];
 
   @override
   void dispose() {
@@ -91,11 +94,15 @@ class _FileUploadPageState extends State<FileUploadPage> {
                           ? 'Drag files from your desktop or click'
                           : 'Dropping files works in the web build',
                     ),
-                    onFiles: (files) => setState(() => _received = files),
+                    onFiles: (files) => setState(
+                      () => _received = [
+                        for (final file in files) (file, file.length()),
+                      ],
+                    ),
                   ),
-                  for (final file in _received)
+                  for (final (file, length) in _received)
                     FutureBuilder<int>(
-                      future: file.length(),
+                      future: length,
                       builder: (context, size) => Text(
                         '${file.name} — ${size.hasData ? format.bytes(size.data!) : '…'}',
                       ),

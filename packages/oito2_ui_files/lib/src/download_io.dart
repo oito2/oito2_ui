@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,7 +23,10 @@ bool get canSaveFiles =>
     Platform.isLinux || Platform.isWindows || Platform.isMacOS;
 
 /// Asks where to save [bytes] with the platform's "Save as" dialog and
-/// writes them there; false when the dialog is canceled.
+/// writes them there.
+///
+/// Returns false when the dialog is canceled. Throws an [UnsupportedError]
+/// outside Linux, Windows and macOS.
 Future<bool> saveFile({
   required String fileName,
   required Uint8List bytes,

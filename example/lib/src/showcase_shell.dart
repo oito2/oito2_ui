@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ import 'showcase_router.dart';
 /// The width at which the page list and the page sit side by side.
 const _breakpoint = 620.0;
 
-/// The repository folder that holds the page sources.
+/// The GitHub URL of the repository folder that holds the page sources.
 const _sourceUrl =
     'https://github.com/oito2/oito2_ui/blob/main/example/lib/src/pages/';
 
@@ -123,10 +123,12 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
     super.dispose();
   }
 
-  /// Rebuilds the shell when an option it reads, such as the compact
-  /// mode, changes.
+  /// Rebuilds the shell whenever the options change, so the options it
+  /// reads, such as the compact mode, take effect.
   void _onOptionsChanged() => setState(() {});
 
+  /// Shows [page] and writes its slug to the location, which the router
+  /// turns into a new history entry.
   void _select(ShowcasePage page) {
     setState(() => _selected = page);
     _railController.index = showcasePages.indexOf(page);
@@ -146,6 +148,8 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
     if (page != null) _goTo(page);
   }
 
+  /// Filters the page list by [query], keeping the selected page selected
+  /// while it matches and clearing the selection otherwise.
   void _search(String query) {
     setState(() => _query = query);
     final filtered = _filtered;
@@ -160,6 +164,7 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
     FocusManager.instance.primaryFocus?.context ?? context,
   );
 
+  /// Cycles the theme mode: system, light, dark.
   void _cycleThemeMode() => widget.controller.update(
     (o) => o.copyWith(
       themeMode: switch (o.themeMode) {
@@ -212,7 +217,6 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
         label: 'Toggle high contrast',
         group: 'Appearance',
         icon: LucideIcons.contrast,
-        enabled: options.preset == null,
         onInvoke: () => widget.controller.update(
           (o) => o.copyWith(highContrast: !o.highContrast),
         ),
@@ -268,6 +272,8 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
     _listController.index = showcasePages.indexOf(page);
   }
 
+  /// The title bar actions; [source] adds the button that shows the source
+  /// of the selected page.
   List<Widget> _actions({bool source = false}) => [
     IconButton(
       tooltip: 'Commands',
@@ -277,8 +283,7 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
     if (source) _sourceButton(_selected),
     _ThemeModeButton(controller: widget.controller),
     _SchemeMenu(controller: widget.controller),
-    if (widget.controller.value.preset == null)
-      _HighContrastButton(controller: widget.controller),
+    _HighContrastButton(controller: widget.controller),
   ];
 
   /// Shows the source of [page] in a dialog.
@@ -323,6 +328,8 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
     );
   }
 
+  /// The page list beside the selected page, with a search field above the
+  /// list; [wide] tells whether both panes are visible.
   Widget _masterDetail(Oito2Platform platform, {required bool wide}) {
     final filtered = _filtered;
     final chrome = Oito2ChromeColors.maybeOf(context);
@@ -437,6 +444,7 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
     );
   }
 
+  /// The compact layout: the selected page beside a navigation rail.
   Widget _compact(Oito2Platform platform) {
     return Scaffold(
       appBar: Oito2WindowTitleBar(
@@ -468,7 +476,8 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
   }
 }
 
-/// Cycles the theme mode: system, light, dark.
+/// Cycles the theme mode: system, light, dark. Hidden while a preset is
+/// selected, since presets have a fixed brightness.
 class _ThemeModeButton extends StatelessWidget {
   const _ThemeModeButton({required this.controller});
 
@@ -499,7 +508,7 @@ class _ThemeModeButton extends StatelessWidget {
   }
 }
 
-/// Toggles high contrast on the base scheme.
+/// Toggles high contrast on the scheme in use, the base one or a preset.
 class _HighContrastButton extends StatelessWidget {
   const _HighContrastButton({required this.controller});
 

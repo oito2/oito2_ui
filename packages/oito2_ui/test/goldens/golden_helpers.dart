@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -39,7 +39,9 @@ final Map<String, Oito2ColorTheme> goldenSchemes = {
 /// file `goldens/<name>.png`.
 ///
 /// With [wholeApp], the capture includes the routes above [child], such
-/// as dialogs.
+/// as dialogs. [setup] runs once after the scene settles, for actions such
+/// as opening a menu or typing, and the scene settles again before the
+/// capture.
 Future<void> expectGoldenScene(
   WidgetTester tester,
   Widget child, {
@@ -47,6 +49,7 @@ Future<void> expectGoldenScene(
   required Oito2ColorTheme colors,
   Size size = const Size(640, 480),
   bool wholeApp = false,
+  Future<void> Function()? setup,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -67,6 +70,10 @@ Future<void> expectGoldenScene(
       wholeApp ? RepaintBoundary(key: appKey, child: app) : app,
     );
     await tester.pumpAndSettle();
+    if (setup != null) {
+      await setup();
+      await tester.pumpAndSettle();
+    }
     await expectLater(
       wholeApp ? find.byKey(appKey) : find.byType(RepaintBoundary).first,
       matchesGoldenFile('goldens/$name.png'),

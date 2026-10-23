@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -31,7 +31,8 @@ typedef Oito2SignaturePoint = ({Offset position, double width});
 class Oito2SignatureController extends ChangeNotifier {
   final List<List<Oito2SignaturePoint>> _strokes = [];
 
-  /// The size of the pad, updated as it lays out.
+  /// The size of the pad, updated as it lays out; [toSvg] and [toImage]
+  /// export at this size.
   Size size = Size.zero;
 
   /// The strokes, in drawing order; neither the list nor its strokes can
@@ -42,7 +43,7 @@ class Oito2SignatureController extends ChangeNotifier {
   /// Whether nothing has been drawn.
   bool get isEmpty => _strokes.isEmpty;
 
-  /// Removes the last stroke.
+  /// Removes the last stroke, if any.
   void undo() {
     if (_strokes.isEmpty) return;
     _strokes.removeLast();
@@ -56,26 +57,33 @@ class Oito2SignatureController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Adds a whole [stroke], such as one of a saved signature.
+  /// Adds a copy of a whole [stroke], such as one of a saved signature.
+  ///
+  /// An empty [stroke] is ignored.
   void addStroke(List<Oito2SignaturePoint> stroke) {
     if (stroke.isEmpty) return;
     _strokes.add(List.of(stroke));
     notifyListeners();
   }
 
+  /// Starts a stroke at [point].
   void _begin(Oito2SignaturePoint point) {
     _strokes.add([point]);
     notifyListeners();
   }
 
+  /// Appends [point] to the last stroke, if any.
   void _extend(Oito2SignaturePoint point) {
     if (_strokes.isEmpty) return;
     _strokes.last.add(point);
     notifyListeners();
   }
 
-  /// The strokes as an SVG document of [size] (the pad size by default),
-  /// one path per stroke segment so the width can vary.
+  /// Returns the strokes as an SVG document of [size] (the pad size by
+  /// default), one path per stroke segment so the width can vary.
+  ///
+  /// Strokes use the opaque RGB value of [color]; its alpha is ignored. A
+  /// single-point stroke becomes a filled circle.
   String toSvg({Size? size, Color color = const Color(0xFF000000)}) {
     final s = size ?? this.size;
     String n(double v) => v.toStringAsFixed(1);
@@ -112,8 +120,11 @@ class Oito2SignatureController extends ChangeNotifier {
     return buffer.toString();
   }
 
-  /// Renders the strokes in [color] on a transparent background, at
-  /// [pixelRatio] physical pixels per logical pixel.
+  /// Renders the strokes in [color] on a transparent background of the pad
+  /// [size], at [pixelRatio] physical pixels per logical pixel.
+  ///
+  /// The image is at least one pixel wide and tall. The caller owns the
+  /// returned image and must dispose it.
   Future<ui.Image> toImage({
     Color color = const Color(0xFF000000),
     double pixelRatio = 2,
@@ -130,7 +141,8 @@ class Oito2SignatureController extends ChangeNotifier {
     return image;
   }
 
-  /// The strokes as PNG bytes; see [toImage].
+  /// Returns the strokes encoded as PNG bytes, or null when encoding
+  /// fails; see [toImage].
   Future<Uint8List?> toPngBytes({
     Color color = const Color(0xFF000000),
     double pixelRatio = 2,
@@ -182,6 +194,8 @@ void _paintStrokes(
 /// Assistive technologies hear whether the pad is empty or signed.
 class Oito2SignaturePad extends StatefulWidget {
   /// Creates a signature pad.
+  ///
+  /// Asserts that [minWidth] is positive and not above [maxWidth].
   const Oito2SignaturePad({
     super.key,
     required this.controller,
@@ -194,7 +208,7 @@ class Oito2SignaturePad extends StatefulWidget {
     this.semanticLabel,
   }) : assert(minWidth > 0 && maxWidth >= minWidth);
 
-  /// The strokes.
+  /// The controller that holds the drawn strokes.
   final Oito2SignatureController controller;
 
   /// The pad height; it takes the available width.
@@ -268,12 +282,16 @@ class _Oito2SignaturePadState extends State<Oito2SignaturePad> {
   /// lifts.
   int? _pointer;
 
+  /// The width factor from a stylus' pressure, from 0.6 to 1.4; 1 for
+  /// other pointers or when the pressure range is unknown.
   double _pressureWidth(PointerEvent event) {
     final range = event.pressureMax - event.pressureMin;
     if (range <= 0 || event.kind != ui.PointerDeviceKind.stylus) return 1;
     return 0.6 + 0.8 * ((event.pressure - event.pressureMin) / range);
   }
 
+  /// Starts a stroke for the first pointer down, ignoring secondary mouse
+  /// buttons.
   void _down(PointerDownEvent event) {
     if (_pointer != null) return;
     if (event.kind == ui.PointerDeviceKind.mouse &&
@@ -290,6 +308,8 @@ class _Oito2SignaturePadState extends State<Oito2SignaturePad> {
     ));
   }
 
+  /// Extends the current stroke when its pointer moves at least one
+  /// logical pixel.
   void _move(PointerMoveEvent event) {
     if (event.pointer != _pointer) return;
     final last = _last;
@@ -314,6 +334,7 @@ class _Oito2SignaturePadState extends State<Oito2SignaturePad> {
     ));
   }
 
+  /// Ends the current stroke when its pointer lifts or is cancelled.
   void _up(PointerEvent event) {
     if (event.pointer != _pointer) return;
     _pointer = null;

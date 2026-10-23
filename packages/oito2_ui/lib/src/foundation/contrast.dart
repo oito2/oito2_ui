@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -62,11 +62,12 @@ abstract final class Oito2Contrast {
   /// Returns the color closest to [color] that reaches [target] contrast
   /// against every color in [backgrounds].
   ///
-  /// Keeps hue and saturation and moves only the HSL lightness, searching
-  /// in steps of 0.005 in both directions and returning the first
-  /// lightness that satisfies [target]. Returns [color] unchanged when it
-  /// already satisfies [target]. When no lightness satisfies it, returns
-  /// black or white, whichever reaches the higher minimum ratio.
+  /// Keeps hue, saturation and alpha and moves only the HSL lightness,
+  /// searching in steps of 0.005, darker before lighter at each distance,
+  /// and returning the first lightness that satisfies [target]. Returns
+  /// [color] unchanged when it already satisfies [target] or when
+  /// [backgrounds] is empty. When no lightness satisfies it, returns black
+  /// or white, whichever reaches the higher minimum ratio.
   static Color ensure(Color color, Iterable<Color> backgrounds, double target) {
     final list = backgrounds.toList(growable: false);
     if (minRatio(color, list) >= target) return color;

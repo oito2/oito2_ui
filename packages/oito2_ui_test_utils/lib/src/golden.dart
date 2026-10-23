@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,7 +23,10 @@ import 'package:flutter_test/flutter_test.dart';
 /// absorbing anti-aliasing differences between machines.
 const double goldenTolerance = 0.005;
 
-/// A font family to load for golden tests, from files of [package].
+/// A font family to load for golden tests from [files] of [package].
+///
+/// A `required` font that is missing from the test bundle fails the load;
+/// an optional one is skipped.
 typedef _GoldenFont = ({
   String family,
   String package,
@@ -31,6 +34,7 @@ typedef _GoldenFont = ({
   bool required,
 });
 
+/// The font families loaded by [loadGoldenFonts], in load order.
 const List<_GoldenFont> _fonts = [
   (
     family: 'packages/oito2_ui/Inter',
@@ -103,6 +107,9 @@ Future<void> loadGoldenFonts() async {
 
 /// Replaces the golden comparator with one that accepts up to
 /// [goldenTolerance] of differing pixels.
+///
+/// Does nothing when the current comparator isn't a
+/// [LocalFileComparator].
 void installGoldenComparator() {
   final current = goldenFileComparator;
   if (current is! LocalFileComparator) return;
@@ -119,6 +126,9 @@ Future<void> runGoldenTests(FutureOr<void> Function() testMain) async {
   await testMain();
 }
 
+/// A [LocalFileComparator] that passes when at most [goldenTolerance] of
+/// the pixels differ, and throws a [FlutterError] with the failure output
+/// otherwise.
 class _TolerantComparator extends LocalFileComparator {
   _TolerantComparator(Uri basedir) : super(basedir.resolve('golden_test.dart'));
 

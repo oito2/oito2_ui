@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@ import 'dart:ui' show Color;
 
 /// Parsers for the configuration file formats of Linux desktops.
 abstract final class Oito2ConfigParsers {
-  /// Returns the value of [key] in [group] of an INI-style file, such as
-  /// KDE's `kwinrc` and `kdeglobals`, or null when it is missing.
+  /// Returns the value of [key] in [group] of the INI-style [content], such
+  /// as KDE's `kwinrc` and `kdeglobals`, or null when it is missing.
   ///
   /// Group headers are `[name]`; nested KDE groups like `[a][b]` match the
   /// name `a][b`. Lines starting with `#` or `;` are comments. Keys with
@@ -45,8 +45,8 @@ abstract final class Oito2ConfigParsers {
   }
 
   /// Returns the `value` attribute of the `<property name="[name]">`
-  /// element in an xfconf channel file, such as `xfwm4.xml`, or null when
-  /// it is missing.
+  /// element in the xfconf channel file [content], such as `xfwm4.xml`, or
+  /// null when it is missing. XML entities in the value are decoded.
   static String? xfconfProperty(String content, String name) {
     final pattern = RegExp(
       '<property\\s+name="${RegExp.escape(name)}"[^>]*?\\svalue="([^"]*)"',
@@ -55,7 +55,9 @@ abstract final class Oito2ConfigParsers {
     return value == null ? null : _unescapeXml(value);
   }
 
-  /// Parses a `true`/`false` file, as COSMIC stores its boolean settings.
+  /// Parses [content] as a `true`/`false` file, as COSMIC stores its
+  /// boolean settings.
+  ///
   /// Returns null for any other content.
   static bool? cosmicBool(String content) => switch (content.trim()) {
     'true' => true,
@@ -63,8 +65,9 @@ abstract final class Oito2ConfigParsers {
     _ => null,
   };
 
-  /// Parses a KDE `r,g,b` color, such as `AccentColor=61,174,233`, or
-  /// returns null when the text isn't one.
+  /// Parses [value] as a KDE `r,g,b` color, such as the value of
+  /// `AccentColor=61,174,233`, or returns null when it isn't one with
+  /// three components from 0 to 255.
   static Color? kdeColor(String value) {
     final parts = value.split(',').map((p) => int.tryParse(p.trim())).toList();
     if (parts.length != 3 || parts.any((p) => p == null || p < 0 || p > 255)) {
@@ -73,6 +76,7 @@ abstract final class Oito2ConfigParsers {
     return Color.fromARGB(255, parts[0]!, parts[1]!, parts[2]!);
   }
 
+  /// Decodes the predefined XML entities in [value].
   static String _unescapeXml(String value) => value
       .replaceAll('&lt;', '<')
       .replaceAll('&gt;', '>')

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -45,8 +45,11 @@ class _PageIndicatorPageState extends State<PageIndicatorPage> {
           ],
         ),
         ShowcaseSection(
-          'Layouts with 12 pages: fixed, stepped and bounded in 160 px',
+          'Layouts with 12 pages, showing the page only: fixed, stepped and '
+          'bounded in 160 px',
           children: [
+            // Without onTap the dots keep their size; interactive dots are
+            // 24-pixel targets, which 12 of don't fit in 160 pixels.
             for (final layout in Oito2PageIndicatorLayout.values)
               SizedBox(
                 width: 160,
@@ -54,7 +57,6 @@ class _PageIndicatorPageState extends State<PageIndicatorPage> {
                   length: 12,
                   page: _page % 12,
                   layout: layout,
-                  onTap: (i) => setState(() => _page = i),
                 ),
               ),
           ],

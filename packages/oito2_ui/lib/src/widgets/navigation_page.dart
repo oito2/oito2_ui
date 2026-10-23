@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -113,6 +113,8 @@ class _Oito2NavigationPageState extends State<Oito2NavigationPage>
 
   void _onChanged() => setState(() {});
 
+  /// Selects the destination at [index] and reports it to the
+  /// `onSelected` callback.
   void _select(int index) {
     _controller.index = index;
     widget.onSelected?.call(index);

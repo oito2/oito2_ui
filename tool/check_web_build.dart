@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 // and fonts come from the site itself.
 //
 // Usage: dart run tool/check_web_build.dart <build/web> <base href>
+//
+// Exits with code 64 on wrong arguments and 1 when a check fails.
 
 import 'dart:io';
 
@@ -30,6 +32,7 @@ void main(List<String> args) {
   final base = args[1];
   final problems = <String>[];
 
+  // Resolves a path relative to the build folder.
   File file(String path) => File('${root.path}/$path');
 
   final index = file('index.html');

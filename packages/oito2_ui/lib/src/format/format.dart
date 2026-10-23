@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,10 +22,10 @@ import '../l10n/oito2_localizations.dart';
 
 /// The units of [Oito2Format.bytes].
 enum Oito2ByteUnits {
-  /// Powers of 1000: B, kB, MB, GB, TB.
+  /// Powers of 1000: B, kB, MB, GB, TB, PB.
   si,
 
-  /// Powers of 1024: B, KiB, MiB, GiB, TiB.
+  /// Powers of 1024: B, KiB, MiB, GiB, TiB, PiB.
   iec,
 }
 
@@ -52,8 +52,8 @@ class Oito2Format {
            ) ??
            'en';
 
-  /// A formatter for the locale and the [Oito2Localizations] of
-  /// [context].
+  /// Creates a formatter for the locale and the [Oito2Localizations] of
+  /// [context], with English when [context] has no locale.
   factory Oito2Format.of(BuildContext context) => Oito2Format(
     locale: Localizations.maybeLocaleOf(context)?.toString() ?? 'en',
     strings: Oito2Localizations.of(context),
@@ -68,9 +68,12 @@ class Oito2Format {
   static const _siUnits = ['B', 'kB', 'MB', 'GB', 'TB', 'PB'];
   static const _iecUnits = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];
 
-  /// Formats a byte count, such as `1536` as "1.5 kB" (or "1,5 kB" in
-  /// Portuguese), with at most [fractionDigits] decimals; counts below one
-  /// kilobyte keep no decimals.
+  /// Formats a byte count in [units], such as `1536` as "1.5 kB" (or
+  /// "1,5 kB" in Portuguese), with at most [fractionDigits] decimals.
+  ///
+  /// Picks the largest unit, up to petabytes, that keeps the value at
+  /// least 1; counts below one kilobyte keep no decimals. Negative counts
+  /// keep their sign.
   String bytes(
     int bytes, {
     Oito2ByteUnits units = Oito2ByteUnits.si,
@@ -105,8 +108,12 @@ class Oito2Format {
       NumberFormat.compact(locale: locale).format(value);
 
   /// Describes [time] relative to [now] (the current time by default),
-  /// such as "3 minutes ago" or "in 2 days", picking the largest unit
-  /// that fits; times within 45 seconds read as "now".
+  /// such as "3 minutes ago" or "in 2 days", with [strings].
+  ///
+  /// Times within 45 seconds read as [Oito2Localizations.justNow]. Larger
+  /// differences are rounded to minutes below 45 minutes, hours below 22
+  /// hours, days below six and a half days, weeks below 30 days, months
+  /// (of 30 days) below 365 days and years beyond.
   String relativeTime(DateTime time, {DateTime? now}) {
     final difference = time.difference(now ?? DateTime.now());
     final future = !difference.isNegative;

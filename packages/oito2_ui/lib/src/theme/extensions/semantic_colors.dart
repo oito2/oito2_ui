@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,11 +17,11 @@ import 'package:material_ui/material_ui.dart';
 
 /// Text-safe accent and status colors of an oito2 scheme.
 ///
-/// Every color reaches at least a 4.5:1 contrast ratio against every
-/// surface of the scheme it belongs to, so it can color text, links,
-/// icons and focus indicators. The `ColorScheme.primary` and
-/// `ColorScheme.error` fills keep the scheme's own colors, which may not
-/// reach that ratio.
+/// Every color reaches at least a 4.5:1 contrast ratio (7:1 in a
+/// high-contrast scheme) against every surface of the scheme it belongs
+/// to, so it can color text, links, icons and focus indicators. The
+/// `ColorScheme.primary` and `ColorScheme.error` fills keep the scheme's
+/// own colors, which may not reach that ratio.
 @immutable
 class Oito2SemanticColors extends ThemeExtension<Oito2SemanticColors> {
   /// Creates semantic colors from explicit values.

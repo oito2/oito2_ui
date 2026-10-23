@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -83,6 +83,7 @@ class _TitleBarPageState extends State<TitleBarPage> {
     super.dispose();
   }
 
+  /// A miniature window with [titleBar] above an empty page.
   Widget _frame(Widget titleBar) {
     return Container(
       width: 560,

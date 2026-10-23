@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 /// Strings of the oito2_ui widgets that `MaterialLocalizations` doesn't
-/// cover: window controls, pane resizing, scroll arrows, page and segment
-/// labels.
+/// cover, such as window controls, pane and sheet handles, relative
+/// times, the command palette, form fields, pickers and file uploads.
 ///
 /// Register [delegate] in the app's `localizationsDelegates`. Without it,
 /// [of] falls back to English. A label passed explicitly to a widget
@@ -91,13 +91,13 @@ abstract class Oito2Localizations {
   /// counted from 1.
   String partOf(int part, int count);
 
-  /// A moment less than a minute away from now.
+  /// A time so close to now that it reads as "now".
   String get justNow;
 
-  /// A time [count] [unit]s in the past, such as "3 minutes ago".
+  /// Returns a time [count] [unit]s in the past, such as "3 minutes ago".
   String timeAgo(int count, Oito2TimeUnit unit);
 
-  /// A time [count] [unit]s in the future, such as "in 3 minutes".
+  /// Returns a time [count] [unit]s in the future, such as "in 3 minutes".
   String timeFromNow(int count, Oito2TimeUnit unit);
 
   /// The hint of the command palette search field.
@@ -181,6 +181,9 @@ abstract class Oito2Localizations {
   /// The saturation of a color.
   String get saturation;
 
+  /// The brightness (HSV value) of a color.
+  String get brightness;
+
   /// The lightness of a color.
   String get lightness;
 
@@ -207,6 +210,24 @@ abstract class Oito2Localizations {
 
   /// Announced after a copy to the clipboard.
   String get copied;
+
+  /// Announced when the platform refuses a copy to the clipboard.
+  String get copyFailed;
+
+  /// The hint of a widget the arrow keys move.
+  String get moveWithArrowKeys;
+
+  /// The accessibility action that moves a widget up.
+  String get moveUp;
+
+  /// The accessibility action that moves a widget down.
+  String get moveDown;
+
+  /// The accessibility action that moves a widget left.
+  String get moveLeft;
+
+  /// The accessibility action that moves a widget right.
+  String get moveRight;
 
   /// The label of a page button, such as "Page 3".
   String pageNumber(int page);
@@ -406,6 +427,7 @@ class Oito2LocalizationsEn extends Oito2Localizations {
   @override
   String get justNow => 'now';
 
+  /// Returns [count] followed by the singular or plural English [unit].
   static String _unit(int count, Oito2TimeUnit unit) {
     final name = unit.name;
     return count == 1 ? '1 $name' : '$count ${name}s';
@@ -498,6 +520,9 @@ class Oito2LocalizationsEn extends Oito2Localizations {
   String get saturation => 'Saturation';
 
   @override
+  String get brightness => 'Brightness';
+
+  @override
   String get lightness => 'Lightness';
 
   @override
@@ -522,6 +547,24 @@ class Oito2LocalizationsEn extends Oito2Localizations {
   String weekNumber(int week) => 'Week $week';
   @override
   String get copied => 'Copied';
+
+  @override
+  String get copyFailed => "Couldn't copy";
+
+  @override
+  String get moveWithArrowKeys => 'Use the arrow keys to move it';
+
+  @override
+  String get moveUp => 'Move up';
+
+  @override
+  String get moveDown => 'Move down';
+
+  @override
+  String get moveLeft => 'Move left';
+
+  @override
+  String get moveRight => 'Move right';
 
   @override
   String pageNumber(int page) => 'Page $page';
@@ -700,6 +743,7 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
   @override
   String get justNow => 'agora';
 
+  /// Returns [count] followed by the singular or plural Portuguese [unit].
   static String _unit(int count, Oito2TimeUnit unit) {
     final (one, many) = switch (unit) {
       Oito2TimeUnit.second => ('segundo', 'segundos'),
@@ -803,6 +847,9 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
   String get saturation => 'Saturação';
 
   @override
+  String get brightness => 'Brilho';
+
+  @override
   String get lightness => 'Luminosidade';
 
   @override
@@ -828,6 +875,24 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String get copied => 'Copiado';
+
+  @override
+  String get copyFailed => 'Não foi possível copiar';
+
+  @override
+  String get moveWithArrowKeys => 'Use as setas do teclado para mover';
+
+  @override
+  String get moveUp => 'Mover para cima';
+
+  @override
+  String get moveDown => 'Mover para baixo';
+
+  @override
+  String get moveLeft => 'Mover para a esquerda';
+
+  @override
+  String get moveRight => 'Mover para a direita';
 
   @override
   String pageNumber(int page) => 'Página $page';
@@ -969,6 +1034,8 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
       'Downloads não estão disponíveis neste dispositivo';
 }
 
+/// Loads [Oito2Localizations.forLocale] synchronously for English and
+/// Portuguese locales.
 class _Oito2LocalizationsDelegate
     extends LocalizationsDelegate<Oito2Localizations> {
   const _Oito2LocalizationsDelegate();

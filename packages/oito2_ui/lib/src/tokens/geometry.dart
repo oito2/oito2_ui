@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -54,31 +54,31 @@ abstract final class Oito2Radius {
 
 /// Spacing tokens on a 4-point scale, for padding, gaps and margins.
 abstract final class Oito2Spacing {
-  /// 2.
+  /// Extra-extra-small spacing: 2.
   static const double xxs = 2;
 
-  /// 4.
+  /// Extra-small spacing: 4.
   static const double xs = 4;
 
-  /// 8.
+  /// Small spacing: 8.
   static const double sm = 8;
 
-  /// 12.
+  /// Medium spacing: 12.
   static const double md = 12;
 
-  /// 16.
+  /// Large spacing: 16.
   static const double lg = 16;
 
   /// 20, the default padding around page content.
   static const double page = 20;
 
-  /// 24.
+  /// Extra-large spacing: 24.
   static const double xl = 24;
 
-  /// 32.
+  /// Extra-extra-large spacing: 32.
   static const double xxl = 32;
 
-  /// 48.
+  /// The largest spacing: 48.
   static const double xxxl = 48;
 }
 

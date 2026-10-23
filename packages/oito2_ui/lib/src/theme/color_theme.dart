@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -70,10 +70,14 @@ class Oito2ColorTheme {
         return _base(Brightness.dark, accent, highContrast);
       });
 
-  /// The schemes built recently, by their inputs, so asking again for the
-  /// same scheme returns it without recomputing the contrast adjustments.
+  /// The 32 most recently used schemes, by their inputs, in least to most
+  /// recently used order, so asking again for the same scheme returns it
+  /// without recomputing the contrast adjustments.
   static final Map<Object, Oito2ColorTheme> _cache = {};
 
+  /// Returns the cached scheme for [key], or the result of [build], which
+  /// is then cached in place of the least recently used entry when the
+  /// cache is full.
   static Oito2ColorTheme _cached(Object key, Oito2ColorTheme Function() build) {
     final cached = _cache.remove(key);
     if (cached != null) return _cache[key] = cached;
@@ -105,6 +109,8 @@ class Oito2ColorTheme {
     bool highContrast = false,
   }) => _cached((roles, highContrast), () => _fromRoles(roles, highContrast));
 
+  /// Maps [roles] to the surface ladder described in
+  /// [Oito2ColorTheme.fromRoles] and assembles the scheme.
   static Oito2ColorTheme _fromRoles(Oito2ColorRoles roles, bool highContrast) {
     final isDark = roles.brightness == Brightness.dark;
     final card = roles.card;
@@ -163,6 +169,8 @@ class Oito2ColorTheme {
   /// all `ColorScheme` surface roles.
   List<Color> get surfaces => _surfacesOf(colorScheme, background, chrome);
 
+  /// Returns [background], the surface roles of [scheme] and, when given,
+  /// the [chrome] surfaces.
   static List<Color> _surfacesOf(
     ColorScheme scheme,
     Color background,
@@ -183,6 +191,8 @@ class Oito2ColorTheme {
     ?chrome?.dialog,
   ];
 
+  /// Builds the oito2 base scheme from the neutral and status palettes of
+  /// [brightness], with [accent] darkened as needed for white text.
   static Oito2ColorTheme _base(
     Brightness brightness,
     Color? accent,
@@ -225,6 +235,10 @@ class Oito2ColorTheme {
     );
   }
 
+  /// Builds the resolved theme from raw colors: derives the chrome colors,
+  /// raises text, outline, semantic and syntax colors to the contrast
+  /// targets against every surface, and fills the rest of the Material
+  /// scheme from a seed of [primary].
   static Oito2ColorTheme _assemble({
     required Brightness brightness,
     required bool highContrast,

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -27,7 +27,9 @@ import 'package:oito2_ui/oito2_ui.dart';
 /// The pan is in the crop box's logical pixels and is kept so the image
 /// always covers the box.
 class Oito2CropController extends ChangeNotifier {
-  /// Creates a crop controller.
+  /// Creates a crop controller that zooms up to [maxZoom].
+  ///
+  /// Asserts that [maxZoom] is at least 1.
   Oito2CropController({this.maxZoom = 5}) : assert(maxZoom >= 1);
 
   /// The largest zoom, as a multiple of the zoom that just covers the box.
@@ -49,7 +51,8 @@ class Oito2CropController extends ChangeNotifier {
   /// The pan of the image center from the box center.
   Offset get offset => _offset;
 
-  /// The clockwise quarter turns, from 0 to 3.
+  /// The clockwise quarter turns applied to the image before the flip,
+  /// from 0 to 3.
   int get quarterTurns => _quarterTurns;
 
   /// Whether the image is mirrored horizontally.
@@ -58,7 +61,8 @@ class Oito2CropController extends ChangeNotifier {
   /// The crop box size in logical pixels, set by the cropper's layout.
   Size get boxSize => _box;
 
-  /// Sets the zoom.
+  /// Sets the zoom, clamped from 1 to [maxZoom], and keeps the image
+  /// covering the box.
   set zoom(double value) {
     final next = value.clamp(1.0, maxZoom);
     if (next == _zoom) return;
@@ -70,22 +74,30 @@ class Oito2CropController extends ChangeNotifier {
   /// Multiplies the zoom by [factor].
   void zoomBy(double factor) => zoom = _zoom * factor;
 
-  /// Moves the image by [delta].
+  /// Moves the image by [delta], as far as the image still covers the box.
   void panBy(Offset delta) {
     _offset += delta;
     _clampOffset();
     notifyListeners();
   }
 
-  /// Turns the image a quarter clockwise.
-  void rotateRight() => _turn(1);
+  /// Turns the image a quarter clockwise on screen.
+  void rotateRight() => _turn(clockwise: true);
 
-  /// Turns the image a quarter counterclockwise.
-  void rotateLeft() => _turn(3);
+  /// Turns the image a quarter counterclockwise on screen.
+  void rotateLeft() => _turn(clockwise: false);
 
-  void _turn(int turns) {
-    _quarterTurns = (_quarterTurns + turns) % 4;
-    _offset = Offset(-_offset.dy, _offset.dx) * (turns == 1 ? 1 : -1);
+  /// Turns the image a quarter [clockwise] or counterclockwise as seen on
+  /// screen, and rotates the pan with it.
+  ///
+  /// The turns apply before the flip, so a flipped image takes the
+  /// opposite turn to look turned the requested way.
+  void _turn({required bool clockwise}) {
+    final step = clockwise != _flipped ? 1 : 3;
+    _quarterTurns = (_quarterTurns + step) % 4;
+    _offset = clockwise
+        ? Offset(-_offset.dy, _offset.dx)
+        : Offset(_offset.dy, -_offset.dx);
     _clampOffset();
     notifyListeners();
   }
@@ -103,6 +115,7 @@ class Oito2CropController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Restores the zoom, pan, rotation and flip without notifying.
   void _resetTransform() {
     _zoom = 1;
     _offset = Offset.zero;
@@ -114,6 +127,9 @@ class Oito2CropController extends ChangeNotifier {
   /// working after the cropper that loaded it is gone. With [reset], the
   /// zoom, pan, rotation and flip start over, as for a new picture.
   void _setImage(ui.Image? image, {bool reset = false}) {
+    // A cropper may still hand its image back to a controller its owner
+    // already disposed, which released the image itself.
+    if (_disposed) return;
     _image?.dispose();
     _image = image?.clone();
     if (reset) _resetTransform();
@@ -142,6 +158,7 @@ class Oito2CropController extends ChangeNotifier {
     });
   }
 
+  /// The image size after the quarter turns.
   Size get _turnedImage {
     final image = _image!;
     final w = image.width.toDouble();
@@ -149,6 +166,8 @@ class Oito2CropController extends ChangeNotifier {
     return _quarterTurns.isOdd ? Size(h, w) : Size(w, h);
   }
 
+  /// The image pixels to box logical pixels scale: the zoom times the
+  /// scale at which the turned image just covers the box.
   double get _scale {
     final turned = _turnedImage;
     final cover = math.max(
@@ -158,6 +177,7 @@ class Oito2CropController extends ChangeNotifier {
     return cover * _zoom;
   }
 
+  /// Limits the pan so the image still covers the box.
   void _clampOffset() {
     if (_image == null || _box.isEmpty) return;
     final turned = _turnedImage * _scale;
@@ -189,9 +209,11 @@ class Oito2CropController extends ChangeNotifier {
       ..restore();
   }
 
-  /// The cropped image at the image's own resolution, or [width] pixels
-  /// wide when given, cut to a circle when [circle] is set; null before
-  /// the image loads.
+  /// Returns the cropped image at the decoded image's resolution, or
+  /// [width] pixels wide when given, cut to a circle when [circle] is set.
+  ///
+  /// Returns null before the image loads or before the box is laid out.
+  /// The caller owns the returned image and must dispose it.
   Future<ui.Image?> crop({double? width, bool circle = false}) async {
     if (_image == null || _box.isEmpty) return null;
     final ratio = width != null ? width / _box.width : 1 / _scale;
@@ -224,6 +246,9 @@ class Oito2CropController extends ChangeNotifier {
 /// shows the result live.
 class Oito2ImageCropper extends StatefulWidget {
   /// Creates an image cropper.
+  ///
+  /// Asserts that [aspectRatio] is positive and that
+  /// [maxDecodedDimension], when given, is positive.
   const Oito2ImageCropper({
     super.key,
     required this.image,
@@ -241,10 +266,11 @@ class Oito2ImageCropper extends StatefulWidget {
   /// The image to crop.
   final ImageProvider image;
 
-  /// The crop state.
+  /// The controller that holds the zoom, pan, rotation and flip.
   final Oito2CropController controller;
 
-  /// The crop box width divided by its height; 1 with [circle].
+  /// The crop box width divided by its height; ignored with [circle],
+  /// which uses 1.
   final double aspectRatio;
 
   /// Whether the crop box is a circle.
@@ -322,6 +348,9 @@ class _Oito2ImageCropperState extends State<Oito2ImageCropper> {
     if (mounted) setState(() {});
   }
 
+  /// Resolves [Oito2ImageCropper.image], scaled down to
+  /// [Oito2ImageCropper.maxDecodedDimension], and listens to its stream
+  /// when it differs from the current one.
   void _resolve() {
     final max = widget.maxDecodedDimension;
     final provider = max == null
@@ -342,6 +371,8 @@ class _Oito2ImageCropperState extends State<Oito2ImageCropper> {
   /// with the transform reset.
   bool _newPicture = false;
 
+  /// Hands a loaded frame to the controller, resetting the transform for
+  /// a new picture.
   void _onImage(ImageInfo info, bool _) {
     _info?.dispose();
     _info = info;
@@ -349,6 +380,8 @@ class _Oito2ImageCropperState extends State<Oito2ImageCropper> {
     _newPicture = false;
   }
 
+  /// Forwards a load failure to [Oito2ImageCropper.onError], or reports
+  /// it to [FlutterError.reportError] without one.
   void _onError(Object error, StackTrace? stackTrace) {
     final onError = widget.onError;
     if (onError != null) {
@@ -522,6 +555,9 @@ class _Oito2ImageCropperState extends State<Oito2ImageCropper> {
   }
 }
 
+/// Paints the image inside [box] over [background], dims the area
+/// outside the box with [scrim], and outlines the box in [border] with
+/// rule-of-thirds guides unless it is a [circle].
 class _CropPainter extends CustomPainter {
   _CropPainter({
     required this.controller,
@@ -596,7 +632,7 @@ class Oito2CropPreview extends StatelessWidget {
     this.circle = false,
   });
 
-  /// The crop state.
+  /// The controller whose crop is shown.
   final Oito2CropController controller;
 
   /// The preview width; the height follows the crop box.
@@ -626,6 +662,7 @@ class Oito2CropPreview extends StatelessWidget {
   }
 }
 
+/// Paints the crop of [controller] scaled to the preview size.
 class _PreviewPainter extends CustomPainter {
   _PreviewPainter(this.controller) : super(repaint: controller);
 

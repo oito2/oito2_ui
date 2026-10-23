@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -33,6 +33,9 @@ import 'widget_helpers.dart';
 /// such as text or icons, fits best.
 class Oito2Marquee extends StatefulWidget {
   /// Creates a marquee.
+  ///
+  /// Throws an [AssertionError] in debug mode when [speed] is not greater
+  /// than zero.
   const Oito2Marquee({
     super.key,
     required this.child,
@@ -108,6 +111,8 @@ class _Oito2MarqueeState extends State<Oito2Marquee>
     super.dispose();
   }
 
+  /// Starts or stops the ticker to match [_shouldRun], and resets the
+  /// offset when the child fits or animations are disabled.
   void _sync() {
     if (_shouldRun && !_ticker.isActive) {
       _last = Duration.zero;
@@ -121,6 +126,8 @@ class _Oito2MarqueeState extends State<Oito2Marquee>
     }
   }
 
+  /// Advances the offset by the time elapsed since the previous frame,
+  /// wrapping it at one content length plus the gap.
   void _onTick(Duration elapsed) {
     final dt = (elapsed - _last).inMicroseconds / 1e6;
     _last = elapsed;
@@ -128,6 +135,8 @@ class _Oito2MarqueeState extends State<Oito2Marquee>
     _offset.value = (_offset.value + widget.speed * dt) % period;
   }
 
+  /// Records the child's length along the axis and resyncs after the
+  /// frame when it changes.
   void _onSize(Size size) {
     final extent = _horizontal ? size.width : size.height;
     if (extent == _extent) return;
@@ -168,7 +177,8 @@ class _Oito2MarqueeState extends State<Oito2Marquee>
             ],
           ],
         );
-        // Toward the start in the reading direction unless reversed.
+        // Whether the strip moves toward negative offsets: toward the
+        // reading start, or up when vertical, unless reversed.
         final towardNegative = _horizontal
             ? (rtl == widget.reverse)
             : !widget.reverse;

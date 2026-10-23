@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -32,10 +32,11 @@ class Oito2ShortcutLabel extends StatelessWidget {
   /// Creates a shortcut label.
   const Oito2ShortcutLabel(this.shortcut, {super.key, this.platform});
 
-  /// The shortcut.
+  /// The shortcut to show.
   final Oito2Shortcut shortcut;
 
-  /// The notation; defaults to the theme platform.
+  /// The platform whose notation is used; defaults to the theme's
+  /// [ThemeData.platform].
   final TargetPlatform? platform;
 
   @override
@@ -102,11 +103,12 @@ class Oito2ShortcutRecorder extends StatefulWidget {
   /// The recorded shortcut, or null.
   final Oito2Shortcut? value;
 
-  /// Called with the new shortcut, or null when it is cleared; null
-  /// disables the recorder.
+  /// Called with the new shortcut, or null when it is cleared; the
+  /// recorder is disabled when this is null.
   final ValueChanged<Oito2Shortcut?>? onChanged;
 
-  /// The focus node; one is created when null.
+  /// The focus node of the recording field; one is created and owned by
+  /// the recorder when null.
   final FocusNode? focusNode;
 
   /// Whether the recorder takes focus when first shown.
@@ -129,12 +131,16 @@ class _Oito2ShortcutRecorderState extends State<Oito2ShortcutRecorder> {
     super.dispose();
   }
 
+  /// Starts recording and focuses the field, when the recorder is enabled.
   void _start() {
     if (widget.onChanged == null) return;
     setState(() => _recording = true);
     _node.requestFocus();
   }
 
+  /// Starts recording on Enter or Space; while recording, stores the next
+  /// key with its modifiers, or cancels on Escape and clears on Backspace
+  /// or Delete pressed without Shift or a command modifier.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     final key = event.logicalKey;
@@ -162,7 +168,9 @@ class _Oito2ShortcutRecorderState extends State<Oito2ShortcutRecorder> {
     return KeyEventResult.handled;
   }
 
-  /// Stores the platform's primary modifier as [Oito2KeyChord.primary].
+  /// Returns [chord] with the theme platform's primary modifier (Command
+  /// on Apple platforms, Control elsewhere) stored as
+  /// [Oito2KeyChord.primary].
   Oito2KeyChord _withPrimary(Oito2KeyChord chord) {
     final apple = oito2UsesCommandKey(Theme.of(context).platform);
     final isPrimary = apple ? chord.meta : chord.control;

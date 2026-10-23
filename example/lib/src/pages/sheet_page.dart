@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -30,6 +30,8 @@ class SheetPage extends StatefulWidget {
 class _SheetPageState extends State<SheetPage> {
   String _last = 'Nothing yet';
 
+  /// Opens a sheet from [side] and shows its result, or "Dismissed" when
+  /// it closes without one.
   Future<void> _open(
     Oito2SheetSide side, {
     bool modal = true,

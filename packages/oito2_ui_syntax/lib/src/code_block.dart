@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -42,7 +42,8 @@ class Oito2CodeBlock extends StatefulWidget {
   /// The source code.
   final String code;
 
-  /// The language name, such as `dart`; null shows plain text.
+  /// The language name or alias, such as `dart`; null or an unregistered
+  /// name shows plain text.
   final String? language;
 
   /// The highlighter; defaults to [Oito2Highlighter.instance].
@@ -60,8 +61,8 @@ class Oito2CodeBlock extends StatefulWidget {
   /// Space around the code.
   final EdgeInsetsGeometry padding;
 
-  /// The family name of JetBrains Mono, as bundled by this package. It
-  /// already carries the package prefix.
+  /// The family name of JetBrains Mono as bundled by this package,
+  /// including the package prefix.
   static const String fontFamily = 'packages/oito2_ui_syntax/JetBrains Mono';
 
   /// System monospace families used for glyphs the bundled font lacks, in

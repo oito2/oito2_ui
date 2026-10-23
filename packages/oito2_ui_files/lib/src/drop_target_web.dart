@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -35,6 +35,8 @@ Widget buildDropTarget({
   child: child,
 );
 
+/// Listens to the page's drag events and reports the files dragged over
+/// or dropped inside [child].
 class _WebDropTarget extends StatefulWidget {
   const _WebDropTarget({
     required this.child,
@@ -76,6 +78,7 @@ class _WebDropTargetState extends State<_WebDropTarget> {
     super.dispose();
   }
 
+  /// Reports a change of the hover state to the widget's `onHover`.
   void _setHovering(bool hovering) {
     if (hovering == _hovering) return;
     _hovering = hovering;
@@ -100,6 +103,8 @@ class _WebDropTargetState extends State<_WebDropTarget> {
     return (box.localToGlobal(Offset.zero) & box.size).contains(point);
   }
 
+  /// Accepts a file drag over this widget as a copy and updates the hover
+  /// state.
   void _dragOver(web.DragEvent event) {
     final accepts = _accepts(event);
     if (accepts) {
@@ -109,11 +114,14 @@ class _WebDropTargetState extends State<_WebDropTarget> {
     _setHovering(accepts);
   }
 
+  /// Clears the hover state when the drag leaves the window.
   void _dragLeave(web.DragEvent event) {
     // Leaving the window has no related target.
     if (event.relatedTarget == null) _setHovering(false);
   }
 
+  /// Takes the files dropped inside this widget and keeps the browser from
+  /// opening them.
   void _drop(web.DragEvent event) {
     final accepts = _accepts(event);
     _setHovering(false);
@@ -126,11 +134,17 @@ class _WebDropTargetState extends State<_WebDropTarget> {
   }
 
   /// Reads the dropped files into memory, so they don't depend on blob
-  /// URLs, and hands them over.
+  /// URLs, and hands over the ones that could be read; items the browser
+  /// can't read, such as folders, are skipped.
   Future<void> _read(List<web.File> files) async {
     final read = <XFile>[];
     for (final file in files) {
-      final buffer = await file.arrayBuffer().toDart;
+      final JSArrayBuffer buffer;
+      try {
+        buffer = await file.arrayBuffer().toDart;
+      } catch (_) {
+        continue;
+      }
       read.add(
         XFile.fromData(
           buffer.toDart.asUint8List(),

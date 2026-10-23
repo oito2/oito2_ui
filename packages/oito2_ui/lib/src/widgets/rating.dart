@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -28,10 +28,14 @@ import 'widget_helpers.dart';
 /// With [allowHalf] the value moves in halves: the start half of a star
 /// gives the half value. Hovering previews the value under the pointer.
 /// The arrow keys change the value by one step, Home and End jump to 0
-/// and [max], and the digit keys pick a whole value. A star animates when
+/// and [max], and the digit keys 0 to 9 pick that whole value, up to
+/// [max]. A star animates when
 /// it fills. Assistive technologies see it as a slider.
 class Oito2Rating extends StatefulWidget {
   /// Creates a rating.
+  ///
+  /// Throws an [AssertionError] in debug mode when [max] is not greater
+  /// than zero or [value] is outside 0 to [max].
   const Oito2Rating({
     super.key,
     required this.value,
@@ -106,6 +110,8 @@ class _Oito2RatingState extends State<Oito2Rating> {
   /// next one instead of by a whole step past it.
   void _stepBy(int steps) => _set(_aligned(widget.value) + steps * _step);
 
+  /// Aligns [value] to the step, clamps it between 0 and the maximum, and
+  /// reports it when it differs from the current value.
   void _set(double value) {
     final next = _aligned(value).clamp(0, widget.max).toDouble();
     if (next != widget.value) widget.onChanged?.call(next);
@@ -122,6 +128,7 @@ class _Oito2RatingState extends State<Oito2Rating> {
     return whole + (half ? 0.5 : 1);
   }
 
+  /// The localized accessibility text of [value] out of the maximum.
   String _format(double value) {
     final format = value % 1 == 0 ? _wholeFormat! : _halfFormat!;
     return Oito2Localizations.of(context)

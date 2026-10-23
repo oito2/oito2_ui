@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@ class NavigationMenuPage extends StatefulWidget {
 class _NavigationMenuPageState extends State<NavigationMenuPage> {
   int _selected = 0;
 
+  /// A menu panel of [links], each a title with a short description.
   Widget _links(List<(String, String)> links) => SizedBox(
     width: 420,
     child: Wrap(

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -56,10 +56,14 @@ class Oito2CarouselController extends PageController {
   /// The curve of page changes.
   final Curve animationCurve;
 
-  /// The current page, rounded; 0 before the carousel is shown.
+  /// The current page, rounded; the initial page while no carousel is
+  /// attached.
   int get currentPage => hasClients ? (page ?? 0).round() : initialPage;
 
-  /// Animates to [index], or jumps there when [animate] is false.
+  /// Animates to page [index], or jumps there when [animate] is false.
+  ///
+  /// The returned future completes when the change ends; it does nothing
+  /// while no carousel is attached.
   Future<void> goTo(int index, {bool animate = true}) async {
     if (!hasClients) return;
     if (animate) {
@@ -79,10 +83,9 @@ class Oito2CarouselController extends PageController {
 ///
 /// Pages change by the buttons, the dots, the Left and Right arrow keys
 /// while the carousel has focus (it takes focus as a whole and shows the
-/// focus ring), or a swipe (also with a mouse). The
-/// buttons and arrows wrap around when [loop] is true, jumping straight
-/// to the other end. Automatic
-/// scrolling comes from an [Oito2CarouselController].
+/// focus ring), or a swipe (also with a mouse). The buttons and arrows
+/// wrap around when [loop] is true, jumping straight to the other end.
+/// Automatic scrolling comes from an [Oito2CarouselController].
 class Oito2Carousel extends StatefulWidget {
   /// Creates a carousel.
   const Oito2Carousel({
@@ -121,6 +124,8 @@ class Oito2Carousel extends StatefulWidget {
   State<Oito2Carousel> createState() => _Oito2CarouselState();
 }
 
+/// Tracks the current page, hover and focus of [Oito2Carousel] and runs
+/// its automatic scrolling timer.
 class _Oito2CarouselState extends State<Oito2Carousel>
     with OwnedControllerMixin<Oito2Carousel, Oito2CarouselController> {
   Timer? _timer;
@@ -136,6 +141,7 @@ class _Oito2CarouselState extends State<Oito2Carousel>
 
   Oito2CarouselController get _controller => effectiveController;
 
+  /// Whether animations were disabled at the last dependency change.
   bool? _reduced;
 
   @override
@@ -187,6 +193,8 @@ class _Oito2CarouselState extends State<Oito2Carousel>
     });
   }
 
+  /// Moves [step] pages from the current one, wrapping when [loop] (or
+  /// [Oito2Carousel.loop] when null) is true and clamping otherwise.
   void _step(int step, {bool? loop}) {
     final count = widget.children.length;
     if (count == 0) return;
@@ -203,6 +211,8 @@ class _Oito2CarouselState extends State<Oito2Carousel>
     unawaited(_controller.goTo(target, animate: !wraps));
   }
 
+  /// Records whether a pointer hovers the carousel, which pauses the
+  /// automatic scrolling.
   void _setHovered(bool value) {
     _hovered = value;
     _schedule();

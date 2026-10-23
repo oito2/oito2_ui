@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -33,6 +33,9 @@ import 'widget_helpers.dart';
 /// as a slider.
 class Oito2AngleSlider extends StatefulWidget {
   /// Creates an angle slider.
+  ///
+  /// Throws an [AssertionError] in debug builds when [step] is not
+  /// positive.
   const Oito2AngleSlider({
     super.key,
     required this.value,
@@ -56,10 +59,11 @@ class Oito2AngleSlider extends StatefulWidget {
   /// each key press or assistive-technology adjustment.
   final ValueChanged<double>? onChangeEnd;
 
-  /// The smallest change.
+  /// The increment the angle snaps to, and the turn of one arrow key
+  /// press.
   final double step;
 
-  /// The change of Page Up and Page Down.
+  /// The turn of one Page Up or Page Down press.
   final double pageStep;
 
   /// The angles that get a tick.
@@ -71,13 +75,15 @@ class Oito2AngleSlider extends StatefulWidget {
   /// Whether the angle shows in the middle of the dial.
   final bool showValue;
 
-  /// The accessibility label.
+  /// The label announced by assistive technologies.
   final String? semanticLabel;
 
   @override
   State<Oito2AngleSlider> createState() => _Oito2AngleSliderState();
 }
 
+/// Tracks focus and the value of the change in progress for
+/// [Oito2AngleSlider].
 class _Oito2AngleSliderState extends State<Oito2AngleSlider> {
   final _focusNode = FocusNode(debugLabel: 'Oito2AngleSlider');
 
@@ -89,14 +95,19 @@ class _Oito2AngleSliderState extends State<Oito2AngleSlider> {
 
   bool get _enabled => widget.onChanged != null;
 
+  /// Returns [degrees] wrapped into the range 0 to under 360.
   static double _wrap(double degrees) => (degrees % 360 + 360) % 360;
 
+  /// Returns [degrees] rounded to the nearest [Oito2AngleSlider.step]
+  /// multiple and wrapped into the range 0 to under 360.
   double _snap(double degrees) =>
       _wrap((degrees / widget.step).round() * widget.step);
 
   /// The last value reported, which the parent may not have shown yet.
   double? _pending;
 
+  /// Snaps [degrees] and reports it through [Oito2AngleSlider.onChanged]
+  /// when it differs from the current value.
   void _set(double degrees) {
     final next = _snap(degrees);
     if (next != (_pending ?? widget.value)) {
@@ -105,7 +116,8 @@ class _Oito2AngleSliderState extends State<Oito2AngleSlider> {
     }
   }
 
-  /// Ends a change: a drag, a tap or a key press.
+  /// Reports the final value of a drag, tap or key press through
+  /// [Oito2AngleSlider.onChangeEnd] and clears the pending value.
   void _end() {
     widget.onChangeEnd?.call(_pending ?? widget.value);
     _pending = null;
@@ -135,6 +147,8 @@ class _Oito2AngleSliderState extends State<Oito2AngleSlider> {
     );
   }
 
+  /// Focuses the dial and turns it toward [local], ignoring points within
+  /// 2 pixels of the center, where the direction is unreliable.
   void _pointAt(Offset local) {
     _focusNode.requestFocus();
     final center = Offset(widget.size / 2, widget.size / 2);
@@ -143,7 +157,8 @@ class _Oito2AngleSliderState extends State<Oito2AngleSlider> {
     _set(math.atan2(d.dx, -d.dy) * 180 / math.pi);
   }
 
-  /// [degrees] in the locale's number format, with a tenth when it has one.
+  /// Returns [degrees] in the locale's number format with a degree sign,
+  /// showing one decimal only for fractional values.
   String _label(double degrees) =>
       '${(degrees % 1 == 0 ? _wholeFormat : _tenthFormat)!.format(degrees)}°';
 
@@ -231,6 +246,8 @@ class _Oito2AngleSliderState extends State<Oito2AngleSlider> {
   }
 }
 
+/// Paints the dial: the track, the marker ticks and the hand with its
+/// knob.
 class _DialPainter extends CustomPainter {
   _DialPainter({
     required this.angle,

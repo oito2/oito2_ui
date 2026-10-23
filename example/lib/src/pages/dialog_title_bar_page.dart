@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,6 +23,8 @@ class DialogTitleBarPage extends StatelessWidget {
   /// Creates the dialog title bar page.
   const DialogTitleBarPage({super.key});
 
+  /// Opens a dialog whose title bar shows [leading] and [title], or
+  /// "Preferences" when [title] is null.
   void _openDialog(BuildContext context, {Widget? leading, String? title}) {
     showDialog<void>(
       context: context,

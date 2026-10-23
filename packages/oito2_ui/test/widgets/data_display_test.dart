@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
+/// Hosts a value and rebuilds [builder] when it changes, so controlled
+/// widgets behave as in an app.
 class _Host<T> extends StatefulWidget {
   const _Host({required this.initial, required this.builder});
 
@@ -38,9 +40,12 @@ class _HostState<T> extends State<_Host<T>> {
       widget.builder(value, (v) => setState(() => value = v));
 }
 
+/// The value currently held by the [_Host] of type [T].
 T _hostValue<T>(WidgetTester tester) =>
     tester.state<_HostState<T>>(find.byType(_Host<T>)).value;
 
+/// Presses and releases [key], holding Shift when [shift] is true and
+/// Control when [control] is true, then pumps a frame.
 Future<void> _key(
   WidgetTester tester,
   LogicalKeyboardKey key, {
@@ -262,6 +267,27 @@ void main() {
       );
       expect(tester.takeException(), isNull);
       expect(find.byType(Oito2LinearProgressIndicator), findsOneWidget);
+    });
+
+    testWidgets('a step description reaches assistive technologies', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpOito2(
+        tester,
+        const Oito2Steps(
+          current: 0,
+          steps: [
+            Oito2Step(title: 'Account', description: 'Name and e-mail'),
+            Oito2Step(title: 'Done'),
+          ],
+        ),
+      );
+      expect(
+        tester.getSemantics(find.bySemanticsLabel(RegExp('^Account'))).hint,
+        'Name and e-mail',
+      );
+      handle.dispose();
     });
 
     testWidgets('long horizontal titles do not overflow', (tester) async {
@@ -532,6 +558,23 @@ void main() {
       expect(find.text('draft'), findsOneWidget);
     });
 
+    testWidgets('has no close button without onClose', (tester) async {
+      await pumpOito2(
+        tester,
+        const Stack(
+          children: [
+            Oito2FloatingPanel(
+              title: 'Notes',
+              initialRect: Rect.fromLTWH(50, 50, 300, 200),
+              child: SizedBox(),
+            ),
+          ],
+        ),
+      );
+      expect(find.bySemanticsLabel('Minimize'), findsOneWidget);
+      expect(find.bySemanticsLabel('Close'), findsNothing);
+    });
+
     Future<List<String>> pumpPanel(WidgetTester tester) async {
       final events = <String>[];
       await pumpOito2(
@@ -690,6 +733,47 @@ void main() {
   });
 
   group('Oito2CopyButton', () {
+    testWidgets('a refused copy shows the failure and reports it', (
+      tester,
+    ) async {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            throw PlatformException(code: 'denied');
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      final errors = <Object>[];
+      var copies = 0;
+      await pumpOito2(
+        tester,
+        Center(
+          child: Oito2CopyButton(
+            text: 'secret',
+            onCopied: () => copies++,
+            onError: errors.add,
+          ),
+        ),
+      );
+      await tester.tap(find.byTooltip('Copy'));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(copies, 0);
+      expect(errors.single, isA<PlatformException>());
+      expect(find.byTooltip("Couldn't copy"), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Copy'), findsOneWidget);
+    });
+
     testWidgets('copies and shows the copied state for a while', (
       tester,
     ) async {
@@ -843,6 +927,15 @@ void main() {
       expect(timer.remaining, Duration.zero);
     });
 
+    testWidgets('pause and reset do nothing once disposed', (tester) async {
+      final timer = Oito2TimerController(now: () => tester.binding.clock.now());
+      timer.start();
+      timer.dispose();
+      timer.pause();
+      timer.reset();
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('does not start once disposed', (tester) async {
       final timer = Oito2TimerController(now: () => tester.binding.clock.now());
       timer.dispose();
@@ -980,8 +1073,23 @@ void main() {
       await tester.tap(find.text('src'));
       await _key(tester, LogicalKeyboardKey.arrowDown, shift: true);
       expect(controller.selected, {'src', 'README.md'});
+      // Control+click toggles one node without touching the others.
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.tap(find.text('src'));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(controller.selected, {'README.md'});
+      // Control+A selects every enabled visible node, the opened branch's
+      // children included.
+      controller.setExpanded('src', true);
+      await tester.pumpAndSettle();
       await _key(tester, LogicalKeyboardKey.keyA, control: true);
-      expect(controller.selected, {'src', 'README.md'});
+      expect(controller.selected, {
+        'src',
+        'src/main.dart',
+        'src/widgets',
+        'README.md',
+      });
     });
 
     testWidgets('a query shows matches with their ancestors', (tester) async {
@@ -1015,6 +1123,43 @@ void main() {
       expect(renamed, isEmpty);
       expect(find.byType(TextField), findsNothing);
       expect(find.text('README.md'), findsOneWidget);
+    });
+
+    testWidgets('a rename ends when its row goes away', (tester) async {
+      final controller = Oito2TreeController();
+      addTearDown(controller.dispose);
+      var query = '';
+      late StateSetter setQuery;
+      await pumpOito2(
+        tester,
+        StatefulBuilder(
+          builder: (context, setState) {
+            setQuery = setState;
+            return SizedBox(
+              width: 300,
+              height: 400,
+              child: Oito2TreeView(
+                collection: _files,
+                controller: controller,
+                query: query,
+                onRename: (_, _) {},
+              ),
+            );
+          },
+        ),
+      );
+      await tester.tap(find.text('README.md'));
+      await _key(tester, LogicalKeyboardKey.f2);
+      await tester.pumpAndSettle();
+      expect(find.byType(TextField), findsOneWidget);
+      setQuery(() => query = 'main');
+      await tester.pumpAndSettle();
+      setQuery(() => query = '');
+      await tester.pumpAndSettle();
+      expect(find.byType(TextField), findsNothing);
+      await tester.tap(find.text('README.md'));
+      await _key(tester, LogicalKeyboardKey.home);
+      expect(controller.selected, {'src'});
     });
 
     Future<Oito2TreeController> pumpFocusedTree(

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -67,6 +67,8 @@ enum Oito2DesktopEnvironment {
     return _fromName(desktopSession ?? '') ?? unknown;
   }
 
+  /// Maps one desktop or session [name], ignoring case and surrounding
+  /// spaces, to its environment; returns null when it isn't recognized.
   static Oito2DesktopEnvironment? _fromName(String name) {
     return switch (name.trim().toLowerCase()) {
       'gnome' || 'gnome-classic' || 'gnome-xorg' || 'gnome-wayland' => gnome,

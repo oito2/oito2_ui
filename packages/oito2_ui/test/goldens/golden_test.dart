@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 @Tags(['golden'])
 library;
+
+import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -641,43 +643,47 @@ class _OverlaysSceneState extends State<_OverlaysScene> {
   }
 }
 
-/// A modal end sheet.
-class _SheetScene extends StatelessWidget {
+/// A modal end sheet, opened once after the first frame.
+class _SheetScene extends StatefulWidget {
   const _SheetScene();
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Builder(
-        builder: (context) {
-          WidgetsBinding.instance.addPostFrameCallback(
-            (_) => showOito2Sheet<void>(
-              context,
-              builder: (_) => Oito2Sheet(
-                title: const Text('Filters'),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Oito2CheckboxListTile(
-                      value: true,
-                      onChanged: (_) {},
-                      title: const Text('Images'),
-                    ),
-                    Oito2CheckboxListTile(
-                      value: false,
-                      onChanged: (_) {},
-                      title: const Text('Documents'),
-                    ),
-                  ],
-                ),
+  State<_SheetScene> createState() => _SheetSceneState();
+}
+
+class _SheetSceneState extends State<_SheetScene> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => showOito2Sheet<void>(
+        context,
+        builder: (_) => Oito2Sheet(
+          title: const Text('Filters'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Oito2CheckboxListTile(
+                value: true,
+                onChanged: (_) {},
+                title: const Text('Images'),
               ),
-            ),
-          );
-          return const Center(child: Text('Page'));
-        },
+              Oito2CheckboxListTile(
+                value: false,
+                onChanged: (_) {},
+                title: const Text('Documents'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: Text('Page')));
   }
 }
 
@@ -1307,26 +1313,20 @@ void main() {
             padding: const EdgeInsets.all(Oito2Spacing.lg),
             child: SizedBox(
               width: 280,
-              child: Builder(
-                builder: (context) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) async {
-                    await tester.enterText(find.byType(TextField), 'sa');
-                  });
-                  return Oito2Autocomplete<String>(
-                    collection: Oito2ListCollection(const [
-                      'Belo Horizonte',
-                      'Salvador',
-                      'São Paulo',
-                      'Santos',
-                    ]),
-                    hintText: 'City',
-                  );
-                },
+              child: Oito2Autocomplete<String>(
+                collection: Oito2ListCollection(const [
+                  'Belo Horizonte',
+                  'Salvador',
+                  'São Paulo',
+                  'Santos',
+                ]),
+                hintText: 'City',
               ),
             ),
           ),
         ),
         name: 'open_autocomplete_$name',
+        setup: () => tester.enterText(find.byType(TextField), 'sa'),
         colors: goldenSchemes[name]!,
         size: const Size(320, 240),
         wholeApp: true,
@@ -1355,22 +1355,16 @@ void main() {
             padding: const EdgeInsets.all(Oito2Spacing.lg),
             child: Align(
               alignment: AlignmentDirectional.topStart,
-              child: Builder(
-                builder: (context) {
-                  WidgetsBinding.instance.addPostFrameCallback(
-                    (_) => tester.tap(find.text('KDE Plasma')),
-                  );
-                  return Oito2Select(
-                    collection: _goldenDesktops,
-                    value: 'kde',
-                    onChanged: (_) {},
-                  );
-                },
+              child: Oito2Select(
+                collection: _goldenDesktops,
+                value: 'kde',
+                onChanged: (_) {},
               ),
             ),
           ),
         ),
         name: 'open_select_$name',
+        setup: () => tester.tap(find.text('KDE Plasma')),
         colors: goldenSchemes[name]!,
         size: const Size(320, 280),
         wholeApp: true,
@@ -1418,16 +1412,16 @@ void main() {
               onInvoke: () {},
             ),
           ],
-          child: Builder(
-            builder: (context) {
-              WidgetsBinding.instance.addPostFrameCallback(
-                (_) => showOito2CommandPalette(context),
-              );
-              return const Scaffold();
-            },
-          ),
+          child: const Scaffold(),
         ),
         name: 'command_palette_$name',
+        setup: () async {
+          // The palette's future completes when it closes, so it isn't
+          // awaited.
+          unawaited(
+            showOito2CommandPalette(tester.element(find.byType(Scaffold))),
+          );
+        },
         colors: goldenSchemes[name]!,
         size: const Size(640, 400),
         wholeApp: true,

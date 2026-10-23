@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -87,12 +87,15 @@ class _Oito2SearchFieldState extends State<Oito2SearchField>
 
   void _onText() => setState(() {});
 
+  /// Empties the field and reports the empty text and the clearing.
   void _clear() {
     _controller.clear();
     widget.onChanged?.call('');
     widget.onClear?.call();
   }
 
+  /// Handles Escape: clears a field with text, or calls `onEscape` on an
+  /// empty one.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is KeyDownEvent &&
         event.logicalKey == LogicalKeyboardKey.escape) {
@@ -208,6 +211,7 @@ class _Oito2SearchTitleFieldState extends State<Oito2SearchTitleField> {
     super.dispose();
   }
 
+  /// Asks to close the search and moves the focus to the toggle button.
   void _close() {
     widget.onSearchActiveChanged(false);
     _toggleFocusNode.requestFocus();

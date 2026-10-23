@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,22 +25,34 @@ import 'sources.dart';
 /// platform.
 ///
 /// On native Linux it detects the desktop environment from [environment]
-/// and reads, per desktop:
+/// and reads the window button layout per desktop:
 ///
-/// | Desktop | Button layout | Accent | High contrast |
-/// |---|---|---|---|
-/// | GNOME, Budgie, Pantheon, Unity, unknown | `org.gnome.desktop.wm.preferences button-layout` | `org.gnome.desktop.interface accent-color` (GNOME 47+), else the toolkit theme | `org.gnome.desktop.a11y.interface high-contrast`, or a `HighContrast` GTK theme |
-/// | Cinnamon | `org.cinnamon.desktop.wm.preferences button-layout` | toolkit theme | as GNOME |
-/// | MATE | `org.mate.Marco.general button-layout` | toolkit theme | as GNOME |
-/// | KDE Plasma | `kwinrc` `[org.kde.kdecoration2]` `ButtonsOnLeft`/`ButtonsOnRight` | `kdeglobals` `[General] AccentColor`, else the toolkit theme | a `kdeglobals` color scheme whose name contains "contrast" |
-/// | Xfce | `xfwm4.xml` `button_layout` | toolkit theme | as GNOME |
-/// | COSMIC | `com.system76.CosmicTk/v1/show_minimize` and `show_maximize` | toolkit theme | as GNOME |
+/// - GNOME, Budgie, Pantheon, Unity and unknown desktops:
+///   `org.gnome.desktop.wm.preferences button-layout`.
+/// - Cinnamon: `org.cinnamon.desktop.wm.preferences button-layout`.
+/// - MATE: `org.mate.Marco.general button-layout`.
+/// - KDE Plasma: `ButtonsOnLeft` and `ButtonsOnRight` in the
+///   `[org.kde.kdecoration2]` group of `kwinrc`.
+/// - Xfce: `button_layout` in `xfwm4.xml`.
+/// - COSMIC: `com.system76.CosmicTk/v1/show_minimize` and
+///   `show_maximize`.
+///
+/// KDE Plasma reads the accent from `AccentColor` in the `[General]` group
+/// of `kdeglobals`, and high contrast from a `kdeglobals` color scheme whose
+/// name contains "contrast". Every other desktop reads the accent from
+/// `org.gnome.desktop.interface accent-color`, and high contrast from
+/// `org.gnome.desktop.a11y.interface high-contrast` or a `HighContrast` GTK
+/// theme. Without a desktop accent, the accent comes from the toolkit
+/// theme through [accent].
 ///
 /// Missing values fall back to each desktop's defaults. On other
 /// platforms only the accent comes from [accent]. [platformHighContrast]
 /// is combined with the desktop preference on every platform.
 class Oito2SystemSettingsReader {
-  /// Creates a reader over the given sources.
+  /// Creates a reader for [platform] over the given sources.
+  ///
+  /// Every source defaults to an [Oito2EmptySource], and
+  /// [platformHighContrast] to a function that returns false.
   Oito2SystemSettingsReader({
     required this.platform,
     this.environment = const {},
@@ -98,7 +110,10 @@ class Oito2SystemSettingsReader {
         )
       : null;
 
-  /// Reads the current settings.
+  /// Reads the current settings from every source.
+  ///
+  /// A source that fails to read counts as missing, so its value falls
+  /// back to the desktop default.
   Future<Oito2SystemSettings> read() async {
     final environment = desktopEnvironment;
     final fallback = Oito2SystemSettings.fallback(
@@ -178,6 +193,8 @@ class Oito2SystemSettingsReader {
   /// connections of GSettings. The reader can't be used afterwards.
   Future<void> close() => gsettings.close();
 
+  /// The change streams of the sources that [read] uses on this platform
+  /// and desktop.
   Iterable<Stream<void>> _changeStreams() sync* {
     yield accent.changes();
     final environment = desktopEnvironment;
@@ -204,6 +221,8 @@ class Oito2SystemSettingsReader {
     }
   }
 
+  /// Reads the window button layout of [environment], or null when its
+  /// GSettings key is missing or unparsable.
   Future<Oito2WindowButtonLayout?> _buttonLayout(
     Oito2DesktopEnvironment environment,
   ) async {
@@ -211,6 +230,7 @@ class Oito2SystemSettingsReader {
       case Oito2DesktopEnvironment.kde:
         final kwinrc = await _safe(() => configFiles.read(_kwinrc)) ?? '';
         const group = 'org.kde.kdecoration2';
+        // Missing keys use KWin's default buttons.
         return Oito2WindowButtonLayout.parseKde(
           buttonsOnLeft:
               Oito2ConfigParsers.iniValue(kwinrc, group, 'ButtonsOnLeft') ??
@@ -221,10 +241,12 @@ class Oito2SystemSettingsReader {
         );
       case Oito2DesktopEnvironment.xfce:
         final xml = await _safe(() => configFiles.read(_xfwm)) ?? '';
+        // A missing property uses xfwm4's default layout.
         return Oito2WindowButtonLayout.parseXfwm(
           Oito2ConfigParsers.xfconfProperty(xml, 'button_layout') ?? 'O|SHMC',
         );
       case Oito2DesktopEnvironment.cosmic:
+        // A missing or unparsable flag shows the button.
         Future<bool> flag(String path) async {
           final content = await _safe(() => configFiles.read(path));
           return content == null
@@ -247,11 +269,14 @@ class Oito2SystemSettingsReader {
     }
   }
 
+  /// Parses the GNOME-style `button-layout` key of [schema], or returns
+  /// null when it isn't a string.
   Future<Oito2WindowButtonLayout?> _gnomeLayout(String schema) async {
     final value = await _safe(() => gsettings.read(schema, 'button-layout'));
     return value is String ? Oito2WindowButtonLayout.parseGnome(value) : null;
   }
 
+  /// Reads the desktop accent of [environment], falling back to [accent].
   Future<Color?> _linuxAccent(Oito2DesktopEnvironment environment) async {
     if (environment == Oito2DesktopEnvironment.kde) {
       final globals = await _safe(() => configFiles.read(_kdeglobals)) ?? '';
@@ -273,6 +298,7 @@ class Oito2SystemSettingsReader {
     return _safe(accent.read);
   }
 
+  /// Whether the desktop settings of [environment] ask for high contrast.
   Future<bool> _linuxHighContrast(Oito2DesktopEnvironment environment) async {
     if (environment == Oito2DesktopEnvironment.kde) {
       final globals = await _safe(() => configFiles.read(_kdeglobals)) ?? '';

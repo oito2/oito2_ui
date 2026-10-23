@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ class Oito2ListBox<T> extends StatefulWidget {
   /// The selection over [collection].
   final Oito2SelectionController controller;
 
-  /// Builds a row; the item label by default.
+  /// Builds the content of a row; shows the item label when null.
   final Oito2ListBoxItemBuilder<T>? itemBuilder;
 
   /// Called on Enter or a double click on an enabled item.
@@ -83,10 +83,18 @@ class Oito2ListBox<T> extends StatefulWidget {
   State<Oito2ListBox<T>> createState() => _Oito2ListBoxState<T>();
 }
 
+/// Tracks the active row, the type-ahead text and the row keys of
+/// [Oito2ListBox], and turns keys and clicks into selection changes.
 class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
   final _focusNode = FocusNode(debugLabel: 'Oito2ListBox');
+
+  /// The key of each built row, by item value, to scroll rows into view.
   final Map<String, GlobalKey> _keys = {};
+
+  /// The value of the active row, or null before the list is used.
   String? _active;
+
+  /// The text typed for type-ahead search, cleared after a pause.
   String _typed = '';
   Timer? _typeTimer;
   final _clicks = DoubleClickDetector();
@@ -124,10 +132,13 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
     super.dispose();
   }
 
+  /// Rebuilds when still mounted.
   void _refresh() {
     if (mounted) setState(() {});
   }
 
+  /// Activates the first selected or enabled row when the list gains
+  /// focus without an active row, and rebuilds to update the focus marks.
   void _onFocus() {
     if (_focusNode.hasFocus && _active == null) {
       _active = _selection.firstSelectedValue ?? _collection.firstValue;
@@ -135,6 +146,9 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
     _refresh();
   }
 
+  /// Makes [value] the active row and scrolls it into view; a single
+  /// selection list also selects it, and a multiple one with [extend]
+  /// extends the selection from the anchor to it.
   void _activate(String? value, {bool extend = false}) {
     if (value == null) return;
     final anchor = _selection.anchorValue ?? _active;
@@ -159,6 +173,7 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
     });
   }
 
+  /// Handles navigation, selection, activation and type-ahead keys.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
@@ -217,6 +232,8 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
     return KeyEventResult.handled;
   }
 
+  /// Focuses the list, activates the row of [value] and applies a click
+  /// with the pressed Shift, Control or Command modifiers.
   void _click(String value) {
     final keyboard = HardwareKeyboard.instance;
     _focusNode.requestFocus();
@@ -228,6 +245,8 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
     );
   }
 
+  /// Builds the row of [item] with its selection, active and disabled
+  /// states.
   Widget _row(BuildContext context, T item) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;

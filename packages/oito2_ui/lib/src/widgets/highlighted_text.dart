@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -72,7 +72,8 @@ class Oito2HighlightedText extends StatelessWidget {
   /// The style of the text; defaults to the ambient text style.
   final TextStyle? style;
 
-  /// The style merged into the matches.
+  /// The style merged into the matches; defaults to bold text in the
+  /// text-safe primary tone.
   final TextStyle? highlightStyle;
 
   /// The maximum number of lines.
@@ -84,8 +85,8 @@ class Oito2HighlightedText extends StatelessWidget {
   /// The horizontal alignment.
   final TextAlign? textAlign;
 
-  /// The ranges of [text] that match [query] and [queries], sorted and
-  /// merged where they overlap or touch. The options work as on the
+  /// Returns the ranges of [text] that match [query] and [queries], sorted
+  /// and merged where they overlap or touch. The options work as on the
   /// widget: by default each word matches everywhere, ignoring case and
   /// accents.
   static List<TextRange> matches(
@@ -184,4 +185,5 @@ class Oito2HighlightedText extends StatelessWidget {
   }
 }
 
+/// Matches one letter, digit or underscore in any script.
 final _wordChar = RegExp(r'[\p{L}\p{N}_]', unicode: true);

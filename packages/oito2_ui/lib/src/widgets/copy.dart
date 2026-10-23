@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -28,7 +28,9 @@ import 'widget_helpers.dart';
 ///
 /// After a copy the icon turns into a check mark and the tooltip into
 /// "Copied" for [feedbackDuration], and assistive technologies hear the
-/// change.
+/// change. When the platform refuses the copy, such as a browser without
+/// clipboard permission, the button shows a cross and "Couldn't copy"
+/// instead, and [onError] receives the error.
 class Oito2CopyButton extends StatefulWidget {
   /// Creates a copy button.
   const Oito2CopyButton({
@@ -36,6 +38,7 @@ class Oito2CopyButton extends StatefulWidget {
     required this.text,
     this.tooltip,
     this.onCopied,
+    this.onError,
     this.feedbackDuration = const Duration(milliseconds: 1500),
   });
 
@@ -48,15 +51,23 @@ class Oito2CopyButton extends StatefulWidget {
   /// Called after each copy.
   final VoidCallback? onCopied;
 
-  /// How long the copied state shows.
+  /// Called with the error when the platform refuses a copy.
+  final ValueChanged<Object>? onError;
+
+  /// How long the check mark and the "Copied" tooltip, or the failure,
+  /// show.
   final Duration feedbackDuration;
 
   @override
   State<Oito2CopyButton> createState() => _Oito2CopyButtonState();
 }
 
+/// Tracks the copied state of [Oito2CopyButton] and the timer that
+/// resets it.
 class _Oito2CopyButtonState extends State<Oito2CopyButton> {
-  bool _copied = false;
+  /// Whether the last copy succeeded, while its feedback shows; null
+  /// shows the idle state.
+  bool? _copied;
   Timer? _timer;
 
   @override
@@ -65,32 +76,51 @@ class _Oito2CopyButtonState extends State<Oito2CopyButton> {
     super.dispose();
   }
 
+  /// Copies the text, shows whether it worked and reports the copy or the
+  /// error, then schedules the reset after the feedback duration.
   Future<void> _copy() async {
-    await Clipboard.setData(ClipboardData(text: widget.text));
+    Object? error;
+    try {
+      await Clipboard.setData(ClipboardData(text: widget.text));
+    } catch (e) {
+      error = e;
+    }
     if (!mounted) return;
-    setState(() => _copied = true);
-    widget.onCopied?.call();
+    setState(() => _copied = error == null);
+    if (error == null) {
+      widget.onCopied?.call();
+    } else {
+      widget.onError?.call(error);
+    }
     _timer?.cancel();
     _timer = Timer(widget.feedbackDuration, () {
-      if (mounted) setState(() => _copied = false);
+      if (mounted) setState(() => _copied = null);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final tooltip = _copied
-        ? Oito2Localizations.of(context).copied
-        : widget.tooltip ?? MaterialLocalizations.of(context).copyButtonLabel;
+    final strings = Oito2Localizations.of(context);
+    final colors = semanticColorsOf(context);
+    final copied = _copied;
+    final tooltip = switch (copied) {
+      true => strings.copied,
+      false => strings.copyFailed,
+      null =>
+        widget.tooltip ?? MaterialLocalizations.of(context).copyButtonLabel,
+    };
     return Semantics(
-      liveRegion: _copied,
+      liveRegion: copied != null,
       child: Oito2IconButton(
         tooltip: tooltip,
         onPressed: _copy,
         icon: Oito2Swap(
-          swapped: _copied,
+          swapped: copied != null,
           effect: Oito2SwapEffect.scale,
           off: const Icon(LucideIcons.copy),
-          on: Icon(LucideIcons.check, color: semanticColorsOf(context).success),
+          on: copied == false
+              ? Icon(LucideIcons.x, color: colors.errorText)
+              : Icon(LucideIcons.check, color: colors.success),
         ),
       ),
     );
@@ -107,6 +137,7 @@ class Oito2CopyField extends StatefulWidget {
     this.labelText,
     this.obscure = false,
     this.onCopied,
+    this.onError,
   });
 
   /// The text shown and copied.
@@ -121,10 +152,15 @@ class Oito2CopyField extends StatefulWidget {
   /// Called after each copy.
   final VoidCallback? onCopied;
 
+  /// Called with the error when the platform refuses a copy.
+  final ValueChanged<Object>? onError;
+
   @override
   State<Oito2CopyField> createState() => _Oito2CopyFieldState();
 }
 
+/// Keeps the read-only field text of [Oito2CopyField] in sync with its
+/// value.
 class _Oito2CopyFieldState extends State<Oito2CopyField> {
   late final _controller = TextEditingController(text: widget.value);
 
@@ -151,6 +187,7 @@ class _Oito2CopyFieldState extends State<Oito2CopyField> {
         suffixIcon: Oito2CopyButton(
           text: widget.value,
           onCopied: widget.onCopied,
+          onError: widget.onError,
         ),
       ),
     );

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,9 +24,12 @@ import 'expandable.dart';
 ///
 /// [headers] and [children] pair up by index. With [collapseOnExpand],
 /// opening a section closes the others, so at most one is open.
-/// [onExpansionChanged] reports each change.
+/// [onExpansionChanged] reports each section that opens or closes.
 class Oito2ExpansionPanel extends StatefulWidget {
   /// Creates an expansion panel.
+  ///
+  /// Throws an [AssertionError] in debug builds, when built, if [headers]
+  /// and [children] differ in length.
   const Oito2ExpansionPanel({
     super.key,
     required this.headers,
@@ -47,7 +50,8 @@ class Oito2ExpansionPanel extends StatefulWidget {
   /// The section contents, in the order of [headers]; one per header.
   final List<Widget> children;
 
-  /// The indexes of the sections open at start.
+  /// The indexes of the sections open at start; with [collapseOnExpand],
+  /// only the first of them opens.
   final Set<int> initiallyExpanded;
 
   /// Whether opening a section closes the others.
@@ -59,13 +63,16 @@ class Oito2ExpansionPanel extends StatefulWidget {
   /// Space around each section.
   final EdgeInsetsGeometry padding;
 
-  /// Called with a section index and whether it is now open.
+  /// Called with the index of each section that opens or closes and
+  /// whether it is now open, including the sections [collapseOnExpand]
+  /// closes, which are reported before the section that opened.
   final void Function(int index, bool expanded)? onExpansionChanged;
 
   @override
   State<Oito2ExpansionPanel> createState() => _Oito2ExpansionPanelState();
 }
 
+/// Holds the set of open sections of [Oito2ExpansionPanel].
 class _Oito2ExpansionPanelState extends State<Oito2ExpansionPanel> {
   late final Set<int> _expanded = {
     if (widget.collapseOnExpand)
@@ -74,29 +81,36 @@ class _Oito2ExpansionPanelState extends State<Oito2ExpansionPanel> {
       ...widget.initiallyExpanded,
   };
 
-  @override
-  void initState() {
-    super.initState();
-    assert(
-      widget.headers.length == widget.children.length,
-      'Give one child per header',
-    );
-  }
-
+  /// Opens or closes the section at [index], closing the others first
+  /// when [Oito2ExpansionPanel.collapseOnExpand] is set, and reports every
+  /// section that changed.
   void _change(int index, bool expanded) {
+    final closed = expanded && widget.collapseOnExpand
+        ? [..._expanded.where((i) => i != index)]
+        : const <int>[];
     setState(() {
       if (expanded) {
-        if (widget.collapseOnExpand) _expanded.clear();
-        _expanded.add(index);
+        _expanded
+          ..removeAll(closed)
+          ..add(index);
       } else {
         _expanded.remove(index);
       }
     });
-    widget.onExpansionChanged?.call(index, expanded);
+    final report = widget.onExpansionChanged;
+    if (report == null) return;
+    for (final i in closed) {
+      report(i, false);
+    }
+    report(index, expanded);
   }
 
   @override
   Widget build(BuildContext context) {
+    assert(
+      widget.headers.length == widget.children.length,
+      'Give one child per header',
+    );
     return Oito2BorderContainer(
       child: Column(
         mainAxisSize: MainAxisSize.min,

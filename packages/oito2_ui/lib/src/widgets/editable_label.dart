@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,13 +21,12 @@ import '../tokens/geometry.dart';
 import 'utilities.dart';
 import 'widget_helpers.dart';
 
-/// A text label that turns into a field to rename it, like GNOME's
-/// editable label.
+/// A text label that turns into a field to rename it in place.
 ///
 /// A double click, Enter or F2 starts editing with the text selected.
 /// Enter or leaving the field keeps the change, calling [onSubmitted]
-/// when the text changed and isn't empty; Escape restores the text.
-/// [onSubmitted] null makes the label read-only.
+/// with the trimmed text when it changed and isn't empty; Escape
+/// restores the text. [onSubmitted] null makes the label read-only.
 class Oito2EditableLabel extends StatefulWidget {
   /// Creates an editable label.
   const Oito2EditableLabel({
@@ -42,7 +41,8 @@ class Oito2EditableLabel extends StatefulWidget {
   /// The label text.
   final String text;
 
-  /// Called with the new text after a change.
+  /// Called with the new, trimmed text after a change; null makes the
+  /// label read-only.
   final ValueChanged<String>? onSubmitted;
 
   /// The text style; defaults to `bodyLarge`.
@@ -58,6 +58,8 @@ class Oito2EditableLabel extends StatefulWidget {
   State<Oito2EditableLabel> createState() => _Oito2EditableLabelState();
 }
 
+/// Switches [Oito2EditableLabel] between the label and the editing field
+/// and moves the focus between them.
 class _Oito2EditableLabelState extends State<Oito2EditableLabel>
     with OwnedFocusNodeMixin {
   final _controller = TextEditingController();
@@ -84,6 +86,8 @@ class _Oito2EditableLabelState extends State<Oito2EditableLabel>
     super.dispose();
   }
 
+  /// Starts editing with the whole text selected and focuses the field
+  /// after it is built; does nothing when read-only or already editing.
   void _start() {
     if (widget.onSubmitted == null || _editing) return;
     _controller.value = TextEditingValue(
@@ -96,6 +100,9 @@ class _Oito2EditableLabelState extends State<Oito2EditableLabel>
     });
   }
 
+  /// Ends editing, submitting the trimmed text when [keep] is true and it
+  /// is a non-empty change, and returns the focus to the label when the
+  /// field had it.
   void _finish({required bool keep}) {
     if (!_editing) return;
     final text = _controller.text.trim();
@@ -111,6 +118,7 @@ class _Oito2EditableLabelState extends State<Oito2EditableLabel>
     }
   }
 
+  /// Keeps the change when the field loses focus.
   void _onFieldFocus() {
     if (!_fieldFocus.hasFocus) _finish(keep: true);
   }

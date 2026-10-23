@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,6 +25,10 @@ import 'resize_handle.dart';
 @immutable
 class Oito2SplitterPane {
   /// Creates a splitter pane.
+  ///
+  /// Throws an [AssertionError] in debug mode when [minSize] is negative,
+  /// when [maxSize] is less than [minSize], or when [initiallyCollapsed]
+  /// is set on a pane that isn't [collapsible].
   const Oito2SplitterPane({
     required this.child,
     this.initialFraction,
@@ -65,11 +69,14 @@ class Oito2SplitterPane {
 /// A divider keeps both of its panes within their limits. From the
 /// keyboard a focused divider moves by [keyboardStep] with the arrow
 /// keys, Home and End take the pane before it to its smallest and largest
-/// size, and Enter collapses or restores the collapsible pane next to it,
-/// as a double click does. Splitters nest. For a single resizable side
-/// pane, `Oito2PanedView` is simpler.
+/// size, and Enter or Space collapses or restores the collapsible pane
+/// next to it, as a double click does. Splitters nest. For a single
+/// resizable side pane, `Oito2PanedView` is simpler.
 class Oito2Splitter extends StatefulWidget {
   /// Creates a splitter.
+  ///
+  /// Throws an [AssertionError] in debug mode, when the splitter is first
+  /// built, if [panes] has fewer than two entries.
   const Oito2Splitter({
     super.key,
     required this.panes,
@@ -117,8 +124,13 @@ class _Oito2SplitterState extends State<Oito2Splitter> {
     assert(widget.panes.length >= 2, 'A splitter needs two panes or more.');
   }
 
+  /// The smallest size of pane [i], which is its collapsed size while
+  /// collapsed.
   double _min(int i) =>
       _collapsed[i] ? _panes[i].collapsedSize : _panes[i].minSize;
+
+  /// The largest size of pane [i], which is its collapsed size while
+  /// collapsed.
   double _max(int i) =>
       _collapsed[i] ? _panes[i].collapsedSize : _panes[i].maxSize;
 
@@ -216,6 +228,8 @@ class _Oito2SplitterState extends State<Oito2Splitter> {
     return KeyEventResult.handled;
   }
 
+  /// Builds the resize handle of the divider after pane [i], whose
+  /// accessibility value is that pane's share of the space.
   Widget _handle(BuildContext context, int i, bool rtl) {
     final strings = Oito2Localizations.of(context);
     String label(double size) =>

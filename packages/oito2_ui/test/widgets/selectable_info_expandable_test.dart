@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 import '../support/sample_roles.dart';
 
+/// The border side of the first [Material] under [finder].
 BorderSide _side(WidgetTester tester, Finder finder) {
   final material = tester.widget<Material>(
     find.descendant(of: finder, matching: find.byType(Material)).first,
@@ -355,9 +356,12 @@ void main() {
           ),
         ),
       );
+      expect(find.text('details').hitTestable(), findsNothing);
       await tester.tap(find.text('Advanced'));
       await tester.pump();
       expect(tester.hasRunningAnimations, isFalse);
+      // A single frame is enough to show the content.
+      expect(find.text('details').hitTestable(), findsOneWidget);
     });
 
     testWidgets('an uncontrolled section toggles itself', (tester) async {

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ const double _verticalLength = 192;
 /// thumb, so it keeps the keyboard, pointer and accessibility behavior of
 /// `Slider`. [valueText] formats the value for the text above the track,
 /// the indicator shown while dragging (with [showValueIndicator]) and
-/// assistive technologies. A [Axis.vertical] slider is [length] pixels
+/// assistive technologies. An [Axis.vertical] slider is [length] pixels
 /// tall, with its minimum at the bottom.
 class Oito2Slider extends StatelessWidget {
   /// Creates a slider.
@@ -297,7 +297,15 @@ class _SliderFrame extends StatelessWidget {
     final track = vertical
         ? SizedBox(
             height: length,
-            child: RotatedBox(quarterTurns: 3, child: themed),
+            // Turned a quarter left, a left-to-right track runs upward, so
+            // the minimum is at the bottom whatever the text direction.
+            child: RotatedBox(
+              quarterTurns: 3,
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: themed,
+              ),
+            ),
           )
         : themed;
     final body = marks.isEmpty
@@ -448,6 +456,8 @@ class _RingThumbShape extends SliderComponentShape
   Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
       const Size.fromRadius(_thumbRadius);
 
+  /// Paints the shadow, the [fill] disk and the ring, whose color follows
+  /// the enabled state.
   void _paintRing(
     Canvas canvas,
     Offset center,

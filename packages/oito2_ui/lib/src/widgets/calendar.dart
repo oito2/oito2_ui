@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ import '../tokens/geometry.dart';
 import 'popover.dart';
 import 'widget_helpers.dart';
 
-/// The ISO 8601 week number of [date]: weeks start on Monday and week 1
+/// Returns the ISO 8601 week number of [date]: weeks start on Monday and week 1
 /// holds the year's first Thursday.
 int oito2IsoWeekNumber(DateTime date) {
   // UTC dates have no daylight-saving shifts, so day differences are exact.
@@ -80,10 +80,12 @@ class Oito2Calendar extends StatefulWidget {
   /// Called with a completed range; setting it turns on range mode.
   final ValueChanged<DateTimeRange>? onRangeSelected;
 
-  /// The month shown first; defaults to the selection or today.
+  /// The month shown first; defaults to the month of the selection or of
+  /// today, kept within [firstDate] and [lastDate].
   final DateTime? initialMonth;
 
-  /// Restricts which days can be picked.
+  /// Decides which days between [firstDate] and [lastDate] can be picked;
+  /// every day can when null.
   final SelectableDayPredicate? selectableDayPredicate;
 
   /// Whether a week number column shows.
@@ -96,6 +98,8 @@ class Oito2Calendar extends StatefulWidget {
   State<Oito2Calendar> createState() => _Oito2CalendarState();
 }
 
+/// Tracks the shown month, the focused day and a range in progress for
+/// [Oito2Calendar].
 class _Oito2CalendarState extends State<Oito2Calendar> {
   final _gridFocus = FocusNode(debugLabel: 'Oito2Calendar grid');
   late DateTime _month;
@@ -103,6 +107,7 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
   DateTime? _rangeStart;
   DateTime? _hovered;
 
+  /// Whether the calendar picks a range instead of a single date.
   bool get _rangeMode => widget.onRangeSelected != null;
 
   @override
@@ -151,32 +156,40 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
     super.dispose();
   }
 
+  /// Rebuilds to show or hide the focus ring and the keyboard range
+  /// preview.
   void _onGridFocus() => setState(() {});
 
   /// Today, read once per build so every cell agrees on it.
   late DateTime _today;
 
+  /// Returns [day] moved into the range from the first to the last date.
   DateTime _clamp(DateTime day) {
     final first = DateUtils.dateOnly(widget.firstDate);
     final last = DateUtils.dateOnly(widget.lastDate);
     return day.isBefore(first) ? first : (day.isAfter(last) ? last : day);
   }
 
+  /// Whether [day] is within the limits and accepted by the predicate.
   bool _canPick(DateTime day) =>
       !day.isBefore(DateUtils.dateOnly(widget.firstDate)) &&
       !day.isAfter(DateUtils.dateOnly(widget.lastDate)) &&
       (widget.selectableDayPredicate?.call(day) ?? true);
 
+  /// Whether a month before the shown one holds pickable dates.
   bool get _canGoBack => DateTime(
     _month.year,
     _month.month,
   ).isAfter(DateTime(widget.firstDate.year, widget.firstDate.month));
 
+  /// Whether a month after the shown one holds pickable dates.
   bool get _canGoForward => DateTime(
     _month.year,
     _month.month,
   ).isBefore(DateTime(widget.lastDate.year, widget.lastDate.month));
 
+  /// Shows the month [delta] months away and focuses the same day number
+  /// in it, clamped to the month length and the limits.
   void _showMonth(int delta) {
     setState(() {
       _month = DateUtils.addMonthsToMonthDate(_month, delta);
@@ -187,6 +200,7 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
     });
   }
 
+  /// Focuses [day], clamped to the limits, and shows its month.
   void _focus(DateTime day) {
     final target = _clamp(day);
     setState(() {
@@ -195,6 +209,9 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
     });
   }
 
+  /// Picks [day] when it can be picked: reports it in single mode; in
+  /// range mode, the first pick starts a range and the second reports
+  /// it, ordered from the earlier to the later day.
   void _pick(DateTime day) {
     if (!_canPick(day)) return;
     setState(() => _focused = day);
@@ -218,6 +235,7 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
     );
   }
 
+  /// Moves the focused day or picks it for the grid's navigation keys.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
@@ -259,7 +277,8 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
     return KeyEventResult.handled;
   }
 
-  /// Where [day] sits in the shown selection.
+  /// Returns where [day] sits in the shown selection: a range in progress
+  /// previews up to the hovered or focused day.
   ({bool selected, bool inRange, bool start, bool end}) _state(DateTime day) {
     if (!_rangeMode) {
       final selected =
@@ -295,6 +314,8 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
     );
   }
 
+  /// Builds the cell of [day], with its selection, range band, today and
+  /// focus marks, at [size] square.
   Widget _day(BuildContext context, DateTime day, double size) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -534,7 +555,8 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
 /// change it.
 ///
 /// Enter, Space or Alt+Down opens the calendar, which takes the focus; a
-/// pick closes it.
+/// pick closes it. The field is disabled when neither [onChanged] nor
+/// [onRangeChanged] is set.
 class Oito2DatePicker extends StatefulWidget {
   /// Creates a date picker.
   const Oito2DatePicker({
@@ -572,10 +594,12 @@ class Oito2DatePicker extends StatefulWidget {
   /// The field label.
   final String? labelText;
 
-  /// The text shown when nothing is picked.
+  /// The text shown when nothing is picked; defaults to the localized
+  /// date format hint.
   final String? hintText;
 
-  /// Restricts which days can be picked.
+  /// Decides which days between [firstDate] and [lastDate] can be picked;
+  /// every day can when null.
   final SelectableDayPredicate? selectableDayPredicate;
 
   /// Whether the calendar shows week numbers.
@@ -585,6 +609,8 @@ class Oito2DatePicker extends StatefulWidget {
   State<Oito2DatePicker> createState() => _Oito2DatePickerState();
 }
 
+/// Keeps the field text in sync with the value and owns the popover
+/// controller of [Oito2DatePicker].
 class _Oito2DatePickerState extends State<Oito2DatePicker> {
   final _popover = Oito2PopoverController();
   final _text = TextEditingController();
@@ -596,6 +622,8 @@ class _Oito2DatePickerState extends State<Oito2DatePicker> {
     super.dispose();
   }
 
+  /// Returns the value as compact localized text, or an empty string when
+  /// nothing is picked.
   String _display() {
     final l10n = MaterialLocalizations.of(context);
     final range = widget.range;
@@ -611,7 +639,8 @@ class _Oito2DatePickerState extends State<Oito2DatePicker> {
     return value == null ? '' : l10n.formatCompactDate(value);
   }
 
-  /// Shows the value in the field, outside of build.
+  /// Writes the displayed value into the field when it differs; runs
+  /// outside build so the controller never notifies during one.
   void _syncText() {
     final display = _display();
     if (_text.text != display) _text.text = display;

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -306,6 +306,71 @@ void main() {
       await tester.sendEventToBinding(pointer.scroll(const Offset(0, -200)));
       await tester.pump();
       expect(controller.zoom, greaterThan(1));
+    });
+
+    testWidgets('a flipped image still turns the way its button says', (
+      tester,
+    ) async {
+      final controller = await pumpCropper(tester);
+      // The image is red on the left and blue on the right; flipped, blue
+      // is on the left, and a clockwise turn brings the left to the top.
+      controller
+        ..flipHorizontally()
+        ..rotateRight();
+      final colors = await tester.runAsync(() async {
+        final image = (await controller.crop(width: 40))!;
+        final data = (await image.toByteData())!;
+        Color at(int x, int y) {
+          final i = (y * image.width + x) * 4;
+          return Color.fromARGB(
+            data.getUint8(i + 3),
+            data.getUint8(i),
+            data.getUint8(i + 1),
+            data.getUint8(i + 2),
+          );
+        }
+
+        final result = (top: at(20, 5), bottom: at(20, 34));
+        image.dispose();
+        return result;
+      });
+      expect(colors!.top, const Color(0xFF0000FF));
+      expect(colors.bottom, const Color(0xFFFF0000));
+    });
+
+    testWidgets('swaps to a new controller after disposing the old one', (
+      tester,
+    ) async {
+      final bytes = (await tester.runAsync(() => _png(400, 200)))!;
+      final image = MemoryImage(bytes);
+      final old = Oito2CropController();
+      final next = Oito2CropController();
+      addTearDown(next.dispose);
+      Widget cropper(Oito2CropController controller) => Center(
+        child: SizedBox(
+          width: 400,
+          child: Oito2ImageCropper(image: image, controller: controller),
+        ),
+      );
+      await pumpOito2(tester, cropper(old));
+      await tester.runAsync(() async {
+        await precacheImage(
+          image,
+          tester.element(find.byType(Oito2ImageCropper)),
+        );
+      });
+      for (var i = 0; i < 5 && old.image == null; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump();
+      }
+      expect(old.image, isNotNull);
+      // The owner disposes the old controller in the same update.
+      old.dispose();
+      await pumpOito2(tester, cropper(next));
+      expect(tester.takeException(), isNull);
+      expect(next.image, isNotNull);
     });
 
     testWidgets('crops after the cropper is gone', (tester) async {

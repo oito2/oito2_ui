@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -45,7 +45,8 @@ class Oito2Command {
   /// The name shown in the command palette.
   final String label;
 
-  /// Runs the command.
+  /// Called when the command runs, from its shortcut or the command
+  /// palette.
   final VoidCallback onInvoke;
 
   /// The keyboard shortcut, if any.
@@ -63,7 +64,8 @@ class Oito2Command {
   /// Extra words the palette search matches.
   final List<String> keywords;
 
-  /// Whether the command can run now.
+  /// Whether the command can run now; disabled commands neither react to
+  /// their shortcut nor appear in the command palette.
   final bool enabled;
 }
 
@@ -96,15 +98,13 @@ class Oito2Commands extends StatefulWidget {
   /// The longest wait between the chords of a sequence.
   final Duration sequenceTimeout;
 
-  /// The enabled commands available at [context]: those of every
+  /// Returns the enabled commands available at [context]: those of every
   /// enclosing scope, the innermost first, with inner commands replacing
   /// outer ones of the same id.
   static List<Oito2Command> availableAt(BuildContext context) {
     final result = <Oito2Command>[];
     final ids = <String>{};
-    var scope =
-        context.getElementForInheritedWidgetOfExactType<_CommandScope>()?.widget
-            as _CommandScope?;
+    var scope = _CommandScope.of(context);
     while (scope != null) {
       for (final command in scope.commands) {
         if (command.enabled && ids.add(command.id)) result.add(command);
@@ -114,9 +114,9 @@ class Oito2Commands extends StatefulWidget {
     return result;
   }
 
-  /// The pairs of [commands] whose shortcuts clash on [platform]: the same
-  /// shortcut, or one that is a prefix of another (the longer one could
-  /// never run).
+  /// Returns the pairs of [commands] whose shortcuts clash on [platform]
+  /// (the current platform by default): the same shortcut, or one that is
+  /// a prefix of another (the longer one could never run).
   static List<(Oito2Command, Oito2Command)> conflicts(
     List<Oito2Command> commands, {
     TargetPlatform? platform,
@@ -160,6 +160,8 @@ class _Oito2CommandsState extends State<Oito2Commands> {
     assert(_debugCheckConflicts());
   }
 
+  /// Reports the first shortcut clash among the commands of this scope as
+  /// a [FlutterError]; returns true so it can run inside an `assert`.
   bool _debugCheckConflicts() {
     final clashes = Oito2Commands.conflicts(
       widget.commands,
@@ -187,11 +189,13 @@ class _Oito2CommandsState extends State<Oito2Commands> {
     super.dispose();
   }
 
+  /// Drops the pending chords of a sequence.
   void _reset() {
     _timer?.cancel();
     _pending.clear();
   }
 
+  /// Whether the primary focus is in an [EditableText].
   static bool _textFieldFocused() {
     final context = FocusManager.instance.primaryFocus?.context;
     if (context == null) return false;
@@ -199,6 +203,9 @@ class _Oito2CommandsState extends State<Oito2Commands> {
         context.findAncestorWidgetOfExactType<EditableText>() != null;
   }
 
+  /// Matches a key press against the commands; when a pending sequence
+  /// doesn't continue with it, retries the press as the start of a new
+  /// sequence.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent ||
         Oito2KeyChord.isModifierKey(event.logicalKey)) {
@@ -219,18 +226,17 @@ class _Oito2CommandsState extends State<Oito2Commands> {
   Set<String> _overriddenIds() {
     final ids = <String>{};
     final focusContext = FocusManager.instance.primaryFocus?.context;
-    var scope =
-        focusContext
-                ?.getElementForInheritedWidgetOfExactType<_CommandScope>()
-                ?.widget
-            as _CommandScope?;
-    while (scope != null && !identical(scope.commands, widget.commands)) {
+    var scope = focusContext == null ? null : _CommandScope.of(focusContext);
+    while (scope != null && !identical(scope.owner, this)) {
       ids.addAll(scope.commands.map((command) => command.id));
       scope = scope.parent;
     }
     return ids;
   }
 
+  /// Runs the command whose shortcut the pending chords plus [chord]
+  /// complete, or keeps [chord] pending when it continues a longer
+  /// shortcut, until [Oito2Commands.sequenceTimeout] passes.
   KeyEventResult _match(Oito2KeyChord chord) {
     final platform = _platform;
     final typing = _textFieldFocused();
@@ -262,33 +268,47 @@ class _Oito2CommandsState extends State<Oito2Commands> {
 
   @override
   Widget build(BuildContext context) {
-    final parent =
-        context.getElementForInheritedWidgetOfExactType<_CommandScope>()?.widget
-            as _CommandScope?;
     return Focus(
       canRequestFocus: false,
       skipTraversal: true,
       onKeyEvent: _onKey,
       child: _CommandScope(
+        owner: this,
         commands: widget.commands,
-        parent: parent,
         child: widget.child,
       ),
     );
   }
 }
 
+/// Exposes the commands of an [Oito2Commands] and its enclosing scope.
 class _CommandScope extends InheritedWidget {
   const _CommandScope({
+    required this.owner,
     required this.commands,
-    required this.parent,
     required super.child,
   });
 
+  /// The scope nearest above [context], or null outside every scope.
+  ///
+  /// Looking it up registers no dependency, so callers read the scopes as
+  /// they are at that moment.
+  static _CommandScope? of(BuildContext context) =>
+      context.getElementForInheritedWidgetOfExactType<_CommandScope>()?.widget
+          as _CommandScope?;
+
+  /// The [Oito2Commands] state that builds this scope.
+  final _Oito2CommandsState owner;
+
+  /// The commands of [owner].
   final List<Oito2Command> commands;
-  final _CommandScope? parent;
+
+  /// The scope enclosing [owner], looked up from the element tree on each
+  /// read, so it reflects the latest commands of that scope even when this
+  /// scope's subtree has not been rebuilt since.
+  _CommandScope? get parent => owner.mounted ? of(owner.context) : null;
 
   @override
   bool updateShouldNotify(_CommandScope oldWidget) =>
-      !identical(commands, oldWidget.commands) || parent != oldWidget.parent;
+      !identical(commands, oldWidget.commands);
 }

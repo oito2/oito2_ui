@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -79,25 +79,25 @@ class Oito2ListCollection<T> {
     for (final item in items) foldText(labelOf(item)),
   ];
 
-  /// The unique value of [item].
+  /// Returns the unique value of [item].
   String valueOf(T item) => _valueOf(item);
 
-  /// The display label of [item].
+  /// Returns the display label of [item].
   String labelOf(T item) => _labelOf?.call(item) ?? _valueOf(item);
 
   /// Whether [item] can't be selected or focused.
   bool isDisabled(T item) => _isDisabled?.call(item) ?? false;
 
-  /// The group of [item], or null when it has none.
+  /// Returns the group of [item], or null when it has none.
   String? groupOf(T item) => _groupOf?.call(item);
 
   /// Whether an item has [value].
   bool has(String? value) => _indexes.containsKey(value);
 
-  /// The index of the item with [value], or -1.
+  /// Returns the index of the item with [value], or -1 when there is none.
   int indexOf(String? value) => _indexes[value] ?? -1;
 
-  /// The item with [value], or null.
+  /// Returns the item with [value], or null when there is none.
   T? find(String? value) {
     final index = indexOf(value);
     return index < 0 ? null : items[index];
@@ -115,18 +115,27 @@ class Oito2ListCollection<T> {
   /// The value of the last enabled item, or null.
   String? get lastValue => _scan(length, -1, loop: false);
 
-  /// The value of the enabled item after [value], or null at the end.
-  /// With [loop], the search wraps around to the start.
+  /// Returns the value of the first enabled item after [value], or null at
+  /// the end. With [loop], the search wraps around to the start.
+  ///
+  /// When [value] isn't in the collection, the search starts before the
+  /// first item.
   String? nextValue(String value, {bool loop = false}) =>
       _scan(indexOf(value), 1, loop: loop);
 
-  /// The value of the enabled item before [value], or null at the start.
-  /// With [loop], the search wraps around to the end.
+  /// Returns the value of the first enabled item before [value], or null
+  /// at the start. With [loop], the search wraps around to the end.
+  ///
+  /// When [value] isn't in the collection, the search starts after the
+  /// last item.
   String? previousValue(String value, {bool loop = false}) {
     final index = indexOf(value);
     return _scan(index < 0 ? length : index, -1, loop: loop);
   }
 
+  /// Returns the value of the first enabled item found by moving [step]
+  /// positions at a time from the index [from], wrapping around with
+  /// [loop] and stopping at either end otherwise.
   String? _scan(int from, int step, {required bool loop}) {
     for (var n = 1; n <= length; n++) {
       var index = from + step * n;
@@ -141,9 +150,10 @@ class Oito2ListCollection<T> {
     return null;
   }
 
-  /// The value of the first enabled item whose label starts with [query],
-  /// ignoring case and accents, searching after [from] and wrapping
-  /// around; null when none matches.
+  /// Returns the value of the first enabled item whose label starts with
+  /// [query], ignoring case and accents, searching after the item with
+  /// value [from] (from the first item when [from] is null or unknown) and
+  /// wrapping around; null when none matches or [query] is empty.
   ///
   /// It implements typeahead: typing letters while a list has focus moves
   /// to the next matching item.
@@ -178,7 +188,9 @@ class Oito2ListCollection<T> {
     return [for (final group in order) (group: group, items: byGroup[group]!)];
   }
 
-  /// A collection of [items] with the same accessors.
+  /// Returns a collection of [items] with the same accessors.
+  ///
+  /// Throws an [ArgumentError] when two of [items] share a value.
   Oito2ListCollection<T> copyWith(Iterable<T> items) => Oito2ListCollection(
     items,
     valueOf: _valueOf,
@@ -187,11 +199,12 @@ class Oito2ListCollection<T> {
     groupOf: _groupOf,
   );
 
-  /// The items for which [test] returns true.
+  /// Returns a collection of the items for which [test] returns true.
   Oito2ListCollection<T> where(bool Function(T item) test) =>
       copyWith(items.where(test));
 
-  /// The items whose label contains [query], ignoring case and accents.
+  /// Returns a collection of the items whose label contains [query],
+  /// ignoring case and accents.
   Oito2ListCollection<T> filter(String query) {
     final needle = foldText(query);
     return copyWith([
@@ -200,8 +213,8 @@ class Oito2ListCollection<T> {
     ]);
   }
 
-  /// The enabled items whose label contains [query], ignoring case and
-  /// accents, in order, leaving out those whose label is in [exclude]:
+  /// Returns the enabled items whose label contains [query], ignoring case
+  /// and accents, in order, leaving out those whose label is in [exclude]:
   /// the suggestions for a text typed in a field.
   List<T> suggestions(String query, {Set<String> exclude = const {}}) {
     final needle = foldText(query);
@@ -214,7 +227,7 @@ class Oito2ListCollection<T> {
     ];
   }
 
-  /// The collection with the item at [from] moved to [to].
+  /// Returns the collection with the item at [from] moved to [to].
   ///
   /// Throws a [RangeError] when either index is outside the items.
   Oito2ListCollection<T> reorder(int from, int to) {

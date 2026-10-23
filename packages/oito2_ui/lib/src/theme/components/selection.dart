@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,12 +24,13 @@ bool _activeSelected(Set<WidgetState> states) =>
     states.contains(WidgetState.selected) &&
     !states.contains(WidgetState.disabled);
 
+/// Pads tap targets on touch platforms and shrink-wraps them elsewhere.
 MaterialTapTargetSize _tapTarget(ComponentThemeContext c) =>
     c.isTouch ? MaterialTapTargetSize.padded : MaterialTapTargetSize.shrinkWrap;
 
-/// Check boxes: the check radius, an `outline` border and the text-safe
-/// primary fill when checked, so the checked state reaches 3:1 against
-/// every surface.
+/// Returns the theme of check boxes: the check radius, an `outline` border
+/// and the text-safe primary fill when checked, so the checked state
+/// reaches 3:1 against every surface.
 CheckboxThemeData buildCheckboxTheme(ComponentThemeContext c) {
   return CheckboxThemeData(
     shape: const RoundedRectangleBorder(borderRadius: Oito2Radius.checkAll),
@@ -58,8 +59,8 @@ CheckboxThemeData buildCheckboxTheme(ComponentThemeContext c) {
   );
 }
 
-/// Radio buttons: the text-safe primary tone when selected and `outline`
-/// otherwise.
+/// Returns the theme of radio buttons: the text-safe primary tone when
+/// selected and `outline` otherwise.
 RadioThemeData buildRadioTheme(ComponentThemeContext c) {
   return RadioThemeData(
     fillColor: WidgetStateProperty.resolveWith((states) {
@@ -75,8 +76,8 @@ RadioThemeData buildRadioTheme(ComponentThemeContext c) {
   );
 }
 
-/// Switches: the text-safe primary track when on, with a thumb in its
-/// on-color.
+/// Returns the theme of switches: the text-safe primary track when on,
+/// with a thumb in its on-color, and an `outline` track border when off.
 SwitchThemeData buildSwitchTheme(ComponentThemeContext c) {
   return SwitchThemeData(
     trackColor: WidgetStateProperty.resolveWith(
@@ -96,7 +97,8 @@ SwitchThemeData buildSwitchTheme(ComponentThemeContext c) {
   );
 }
 
-/// Sliders: the text-safe primary tone for the active track and thumb.
+/// Returns the theme of sliders: the text-safe primary tone for the active
+/// track and thumb, on the highest container track.
 SliderThemeData buildSliderTheme(ComponentThemeContext c) {
   return SliderThemeData(
     activeTrackColor: c.indicator,
@@ -110,8 +112,8 @@ SliderThemeData buildSliderTheme(ComponentThemeContext c) {
   );
 }
 
-/// Progress indicators: the text-safe primary tone on the highest
-/// container track.
+/// Returns the theme of Material progress indicators: the text-safe
+/// primary tone on the highest container track.
 ProgressIndicatorThemeData buildProgressIndicatorTheme(
   ComponentThemeContext c,
 ) {
@@ -124,8 +126,8 @@ ProgressIndicatorThemeData buildProgressIndicatorTheme(
   );
 }
 
-/// Chips: the medium radius, an `outline` border and the
-/// secondary container when selected.
+/// Returns the theme of chips: the medium radius, an `outline` border and
+/// the secondary container when selected.
 ///
 /// A chip is 32 pixels tall plus its label's vertical padding, its
 /// 1-pixel side above and below and half of the visual density

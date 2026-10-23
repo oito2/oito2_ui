@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -100,6 +100,8 @@ class _Oito2PanedViewState extends State<Oito2PanedView> {
   late double _size = widget.initialPaneSize;
   double _available = 0;
 
+  /// Clamps [value] between the minimum pane size and the space left
+  /// after the minimum page size.
   double _clamp(double value) {
     final max = math.max(widget.minPaneSize, _available - widget.minPageSize);
     return value.clamp(widget.minPaneSize, max).toDouble();

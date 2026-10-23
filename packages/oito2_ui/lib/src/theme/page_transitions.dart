@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,7 +21,9 @@ class Oito2DesktopPageTransitionsBuilder extends PageTransitionsBuilder {
   /// Creates the desktop page transition builder.
   const Oito2DesktopPageTransitionsBuilder();
 
-  /// The fraction of the page width the incoming page travels.
+  /// The fraction of the page width the incoming page travels; it moves
+  /// toward the start side, so it comes from the right in left-to-right
+  /// text and from the left in right-to-left text.
   static const double slideFraction = 0.04;
 
   @override
@@ -83,6 +85,7 @@ class _DesktopPageTransitionState extends State<_DesktopPageTransition> {
     super.dispose();
   }
 
+  /// Creates the incoming and outgoing curves for the current animations.
   void _curve() {
     _incoming = CurvedAnimation(
       parent: widget.animation,
@@ -95,6 +98,7 @@ class _DesktopPageTransitionState extends State<_DesktopPageTransition> {
     );
   }
 
+  /// Disposes the curves created by [_curve].
   void _dispose() {
     _incoming.dispose();
     _outgoing.dispose();
@@ -124,9 +128,10 @@ class _DesktopPageTransitionState extends State<_DesktopPageTransition> {
   }
 }
 
-/// Page transitions for every platform: [Oito2DesktopPageTransitionsBuilder]
-/// on Linux and Windows, and the Material defaults elsewhere (Cupertino
-/// transitions on iOS and macOS, predictive back on Android).
+/// Returns the page transitions for every platform:
+/// [Oito2DesktopPageTransitionsBuilder] on Linux and Windows, and the
+/// Material defaults elsewhere (Cupertino transitions on iOS and macOS,
+/// predictive back on Android).
 PageTransitionsTheme oito2PageTransitionsTheme() {
   return PageTransitionsTheme(
     builders: {

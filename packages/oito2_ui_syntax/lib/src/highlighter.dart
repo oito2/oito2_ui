@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -102,10 +102,11 @@ class Oito2Highlighter {
   /// (such as `js` or `yml`), in any letter case.
   bool supports(String language) => _highlight.getLanguage(language) != null;
 
-  /// The token styles of recently used palettes, so highlighting doesn't
-  /// rebuild them on every call.
+  /// The token styles of up to 16 palettes, so highlighting doesn't rebuild
+  /// them on every call; the oldest entry is evicted first.
   static final _themes = <Oito2SyntaxPalette, Map<String, TextStyle>>{};
 
+  /// The cached token styles of [palette], built on first use.
   static Map<String, TextStyle> _themeFor(Oito2SyntaxPalette palette) {
     final cached = _themes[palette];
     if (cached != null) return cached;
@@ -121,9 +122,8 @@ class Oito2Highlighter {
   ///
   /// [language] is a registered name or alias, in any letter case. When it
   /// isn't registered, or is null and [autoDetect] is false, the code is
-  /// returned unhighlighted in the foreground color.
-  /// With [autoDetect], a null [language] is guessed among the registered
-  /// ones.
+  /// returned unhighlighted in the foreground color. With [autoDetect], a
+  /// null [language] is guessed among the registered ones.
   TextSpan highlight(
     String code, {
     required Oito2SyntaxPalette palette,

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -135,6 +136,46 @@ void main() {
     expect(opacities(), [1, 0]);
   });
 
+  for (final (name, axis, direction, before) in [
+    ('a reversed list', Axis.vertical, TextDirection.ltr, 1.0),
+    ('a right-to-left row', Axis.horizontal, TextDirection.rtl, 0.0),
+    ('a reversed right-to-left row', Axis.horizontal, TextDirection.rtl, 1.0),
+  ]) {
+    testWidgets('Oito2ScrollViewUndershoot shades the right edges of $name', (
+      tester,
+    ) async {
+      final reverse = name.contains('reversed');
+      await pumpOito2(
+        tester,
+        SizedBox(
+          height: 300,
+          width: 300,
+          child: Oito2ScrollViewUndershoot(
+            child: ListView(
+              scrollDirection: axis,
+              reverse: reverse,
+              children: [
+                for (var i = 0; i < 40; i++)
+                  SizedBox.square(dimension: 40, child: Text('$i')),
+              ],
+            ),
+          ),
+        ),
+        textDirection: direction,
+      );
+      await tester.pumpAndSettle();
+      // At the scroll start, only the edge where the content continues is
+      // shaded: the start shadow comes first.
+      expect(
+        tester
+            .widgetList<AnimatedOpacity>(find.byType(AnimatedOpacity))
+            .map((o) => o.opacity)
+            .toList(),
+        [before, 1 - before],
+      );
+    });
+  }
+
   testWidgets('Oito2ScrollViewUndershoot ignores nested scroll views', (
     tester,
   ) async {
@@ -228,6 +269,65 @@ void main() {
     await tester.pump();
     expect(tester.getTopLeft(find.byType(ColoredBox)), const Offset(50, 38));
     expect(positions.last, const Offset(50, 38));
+  });
+
+  testWidgets('Oito2Draggable ends a cancelled drag', (tester) async {
+    final events = <String>[];
+    await pumpOito2(
+      tester,
+      Stack(
+        children: [
+          Oito2Draggable(
+            onDragStart: () => events.add('start'),
+            onDragEnd: () => events.add('end'),
+            child: const SizedBox.square(
+              dimension: 40,
+              child: ColoredBox(color: Color(0xFF3584E4)),
+            ),
+          ),
+        ],
+      ),
+    );
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(ColoredBox)),
+    );
+    await gesture.moveBy(const Offset(30, 0));
+    await tester.pump();
+    await gesture.cancel();
+    await tester.pump();
+    expect(events, ['start', 'end']);
+  });
+
+  testWidgets('Oito2Draggable is named and movable for assistive '
+      'technologies', (tester) async {
+    final handle = tester.ensureSemantics();
+    await pumpOito2(
+      tester,
+      const Stack(
+        children: [
+          Oito2Draggable(
+            semanticLabel: 'Sticky note',
+            initialPosition: Offset(20, 20),
+            child: SizedBox.square(
+              dimension: 40,
+              child: ColoredBox(color: Color(0xFF3584E4)),
+            ),
+          ),
+        ],
+      ),
+    );
+    final node = tester.getSemantics(find.bySemanticsLabel('Sticky note'));
+    expect(node.hint, 'Use the arrow keys to move it');
+    final action = node.getSemanticsData().customSemanticsActionIds!;
+    expect(action, hasLength(4));
+    tester
+        .renderObject(find.byType(ColoredBox))
+        .owner!
+        .semanticsOwner!
+        .performAction(node.id, SemanticsAction.customAction, action.first);
+    await tester.pump();
+    expect(tester.getTopLeft(find.byType(ColoredBox)), const Offset(20, 12));
+    handle.dispose();
   });
 
   testWidgets('Oito2EdgeFocusInterceptor lets Tab leave the group', (

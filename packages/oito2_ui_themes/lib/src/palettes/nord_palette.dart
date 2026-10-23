@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 import 'package:material_ui/material_ui.dart';
 
-/// The official Nord palette (nordtheme.com).
+/// The official Nord palette.
 ///
 /// Polar Night ([nord0] to [nord3]), Snow Storm ([nord4] to [nord6]), Frost
 /// ([nord7] to [nord10]) and Aurora ([nord11] to [nord15]).

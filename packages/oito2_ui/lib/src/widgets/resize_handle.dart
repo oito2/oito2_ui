@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -93,6 +93,8 @@ class _ResizeHandleState extends State<ResizeHandle> {
 
   bool get _horizontal => widget.axis == Axis.horizontal;
 
+  /// Offers key presses to `onKey` first, then moves on the arrow keys of
+  /// the axis and toggles on Enter or Space.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;

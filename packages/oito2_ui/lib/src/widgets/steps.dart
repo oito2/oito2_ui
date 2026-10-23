@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -57,6 +57,8 @@ class Oito2Step {
 /// column with the content under the current step.
 class Oito2Steps extends StatelessWidget {
   /// Creates a step indicator.
+  ///
+  /// Throws an [AssertionError] in debug mode when [current] is negative.
   const Oito2Steps({
     super.key,
     required this.steps,
@@ -81,6 +83,7 @@ class Oito2Steps extends StatelessWidget {
   /// Whether only completed steps and the current one can be reached.
   final bool linear;
 
+  /// Whether the step at [index] can be moved to.
   bool _reachable(int index) => !linear || index <= current;
 
   @override
@@ -95,7 +98,8 @@ class Oito2Steps extends StatelessWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               // Each header gets at most an equal share of the width, so
-              // long titles wrap and fade instead of overflowing.
+              // long titles wrap to two lines and end with an ellipsis
+              // instead of overflowing.
               final headerWidth = math.min(
                 _maxHeaderWidth,
                 constraints.maxWidth / steps.length,
@@ -178,11 +182,17 @@ class Oito2Steps extends StatelessWidget {
   }
 }
 
+/// The diameter of a step's numbered circle.
 const _indicatorSize = 28.0;
+
+/// The largest width of a step header in a row.
 const _maxHeaderWidth = 160.0;
 
+/// The display state of a step.
 enum _StepState { upcoming, current, completed, error }
 
+/// The state of the step at [index]: an error first, then completed,
+/// current or upcoming by its position relative to the current step.
 _StepState _stateOf(Oito2Steps steps, int index) {
   if (steps.steps[index].hasError) return _StepState.error;
   if (index < steps.current) return _StepState.completed;
@@ -190,6 +200,8 @@ _StepState _stateOf(Oito2Steps steps, int index) {
   return _StepState.upcoming;
 }
 
+/// The circle of a step: its number, a check mark when completed or a
+/// cross on error.
 class _Indicator extends StatelessWidget {
   const _Indicator({required this.index, required this.steps});
 
@@ -240,6 +252,7 @@ class _Indicator extends StatelessWidget {
   }
 }
 
+/// The line between two steps, filled once the step after it is reached.
 class _Connector extends StatelessWidget {
   const _Connector({required this.done, required this.vertical});
 
@@ -264,6 +277,8 @@ class _Connector extends StatelessWidget {
   }
 }
 
+/// The tappable title and description of a step, with its circle above
+/// them in a row layout, announced with its position and state.
 class _StepHeader extends StatelessWidget {
   const _StepHeader({
     required this.index,
@@ -340,6 +355,7 @@ class _StepHeader extends StatelessWidget {
       button: reachable,
       selected: state == _StepState.current,
       label: label,
+      hint: step.description,
       excludeSemantics: true,
       onTap: reachable ? () => steps.onStepTapped!(index) : null,
       child: Oito2FocusBorder(

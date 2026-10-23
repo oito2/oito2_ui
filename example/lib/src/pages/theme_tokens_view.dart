@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ import 'package:oito2_ui/oito2_ui.dart';
 import '../widgets/showcase_widgets.dart';
 
 /// The Tokens section of the Material theme page: the color, radius,
-/// spacing and size tokens.
+/// spacing, elevation and size tokens.
 class ThemeTokensView extends StatelessWidget {
   /// Creates the tokens section.
   const ThemeTokensView({super.key});

@@ -22,8 +22,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- `Oito2CropController.rotateRight` and `rotateLeft` turn a flipped image the way their names say, with the pan following.
 - `Oito2CropController` keeps its own handle to the image, so `crop()` and `Oito2CropPreview` keep working after the `Oito2ImageCropper` that loaded it is gone.
 - `Oito2SignaturePad` draws one stroke at a time and only with the primary mouse button, and repaints a stroke without rebuilding the pad.
 - `Oito2QrCode` reuses the encoding of the same data and level, so a rebuild doesn't encode or repaint it again.
 - `Oito2ImageCropper` resets the zoom, pan, rotation and flip for a new picture, and `Oito2CropPreview` follows a resized crop box.
 - `Oito2NavigationMenu` rejects a negative `selectedIndex`, and `toPngBytes` releases its image when encoding fails.
+- `Oito2ImageCropper` no longer notifies a controller its owner disposed while swapping controllers.

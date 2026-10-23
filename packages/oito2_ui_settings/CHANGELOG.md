@@ -27,3 +27,5 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2SystemSettingsScope` follows a new `reader` and keeps the last settings when a read fails.
 - `Oito2SystemThemeAccentSource` no longer changes `system_theme`'s global fallback color, counts every real accent color, and reports no changes where `system_theme` doesn't stream them.
 - `Oito2DconfGSettingsSource.changes` stays quiet for a schema that isn't installed, such as the GNOME schemas on another desktop, instead of raising an unhandled error.
+- `Oito2DconfGSettingsSource.close` closes each bus connection the source opened itself, also when only one bus was given.
+- `Oito2Settings.watch` creates its reader, and its system connections, when the stream is listened to, so an unused stream opens nothing.

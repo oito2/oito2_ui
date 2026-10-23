@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
+/// A popover labelled `Panel` anchored to a 200 px wide button that toggles
+/// it, showing [content] or, by default, a button that closes it.
 Widget _popover({
   Oito2PopoverPlacement placement = Oito2PopoverPlacement.bottom,
   bool closeOnTapOutside = true,
@@ -554,6 +556,30 @@ void main() {
       await tester.pump(const Duration(seconds: 4));
       await tester.pumpAndSettle();
       expect(find.text('Saved'), findsNothing);
+    });
+
+    testWidgets('dismissed waiting toasts free their place', (tester) async {
+      final toaster = await pumpToaster(tester, maxVisible: 1);
+      for (final title in ['One', 'Two', 'Three']) {
+        toaster.show(Oito2Toast(title: title, duration: null));
+      }
+      await tester.pumpAndSettle();
+      toaster.dismissAll();
+      await tester.pumpAndSettle();
+      toaster.show(const Oito2Toast(title: 'Four', duration: null));
+      await tester.pumpAndSettle();
+      expect(find.text('Four'), findsOneWidget);
+      final waiting = toaster.show(
+        const Oito2Toast(title: 'Five', duration: null),
+      );
+      toaster.show(const Oito2Toast(title: 'Six', duration: null));
+      waiting.dismiss();
+      await tester.pumpAndSettle();
+      toaster.dismissAll();
+      await tester.pumpAndSettle();
+      toaster.show(const Oito2Toast(title: 'Seven', duration: null));
+      await tester.pumpAndSettle();
+      expect(find.text('Seven'), findsOneWidget);
     });
 
     testWidgets('extra toasts wait for room', (tester) async {

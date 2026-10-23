@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -52,8 +52,8 @@ Oito2ChromeColors chromeColorsOf(BuildContext context) {
       Oito2ChromeColors.fromTheme(Theme.of(context));
 }
 
-/// The fill and mark colors of selected controls and progress indicators
-/// in the closest theme.
+/// Returns the fill and mark colors of selected controls and progress
+/// indicators in the closest theme.
 ///
 /// The fill is the scheme's primary tone, with its on-color, when it
 /// stands out 3:1 from the surface, the scaffold background and the
@@ -89,13 +89,13 @@ class FieldIconButton extends StatelessWidget {
     required this.onPressed,
   });
 
-  /// The icon.
+  /// The icon, drawn at [Oito2Sizes.iconSize].
   final IconData icon;
 
   /// The tooltip and accessibility label.
   final String tooltip;
 
-  /// Called when the button is pressed.
+  /// Called when the button is pressed; null disables the button.
   final VoidCallback? onPressed;
 
   @override
@@ -111,16 +111,18 @@ class FieldIconButton extends StatelessWidget {
   }
 }
 
-/// The height of buttons and single-line fields in the closest theme: 34
-/// pixels on pointer platforms and 40 on touch ones, read from the width
-/// of the input decoration icon boxes, which match the field height.
+/// Returns the height of buttons and single-line fields in the closest
+/// theme: 34 pixels on pointer platforms and 40 on touch ones, read from
+/// the width of the input decoration icon boxes, which match the field
+/// height. Falls back to [Oito2Sizes.buttonHeight] when the theme sets no
+/// icon box size.
 double controlHeightOf(BuildContext context) =>
     Theme.of(context).inputDecorationTheme.suffixIconConstraints?.minWidth ??
     Oito2Sizes.buttonHeight;
 
-/// An input decoration with no fill, border, padding or minimum size,
-/// overriding the theme, for a text field placed inside another
-/// decorated box.
+/// Returns an input decoration with no fill, border, padding or minimum
+/// size, overriding the theme, for a text field placed inside another
+/// decorated box, showing [hintText] when given.
 InputDecoration bareInputDecoration({String? hintText}) => InputDecoration(
   hintText: hintText,
   isCollapsed: true,
@@ -135,12 +137,13 @@ InputDecoration bareInputDecoration({String? hintText}) => InputDecoration(
   constraints: const BoxConstraints(),
 );
 
-/// Reports the size of [child] after each layout.
+/// Reports the size of its child after each layout.
 class SizeReporter extends SingleChildRenderObjectWidget {
   /// Creates a size reporter.
   const SizeReporter({super.key, required this.onSize, super.child});
 
-  /// Called with the child size after each layout.
+  /// Called with the child size after each layout, during the layout
+  /// phase.
   final ValueChanged<Size> onSize;
 
   @override
@@ -156,10 +159,11 @@ class SizeReporter extends SingleChildRenderObjectWidget {
 
 /// The render object of [SizeReporter].
 class RenderSizeReporter extends RenderProxyBox {
-  /// Creates the render object.
+  /// Creates the render object, reporting through [onSize].
   RenderSizeReporter(this.onSize);
 
-  /// Called with the child size after each layout.
+  /// Called with the child size after each layout, during the layout
+  /// phase.
   ValueChanged<Size> onSize;
 
   @override
@@ -204,10 +208,10 @@ class DoubleClickDetector {
 /// A focus node that the widget gives or, when it gives none, the state
 /// owns.
 ///
-/// [onEffectiveFocusChange] listens to the node in use and follows it when
-/// the widget starts or stops giving one, or gives another. An owned node
-/// that the widget replaces is disposed after the frame, and the one still
-/// owned with the state.
+/// [onEffectiveFocusChange] listens to the node in use and moves to the
+/// new node when the widget starts or stops giving one, or gives another.
+/// An owned node that a given node replaces is disposed after the frame;
+/// a node still owned is disposed with the state.
 mixin OwnedFocusNodeMixin<W extends StatefulWidget> on State<W> {
   FocusNode? _ownedFocusNode;
   late FocusNode _listenedFocusNode;
@@ -215,10 +219,12 @@ mixin OwnedFocusNodeMixin<W extends StatefulWidget> on State<W> {
   /// The node [widget] gives, if any.
   FocusNode? get widgetFocusNode;
 
-  /// Creates the node owned while the widget gives none.
+  /// Creates the node owned while the widget gives none; a plain
+  /// [FocusNode] by default.
   FocusNode createOwnedFocusNode() => FocusNode();
 
-  /// Called when the node in use gains or loses focus.
+  /// Called whenever the node in use notifies its listeners, such as when
+  /// it gains or loses focus; does nothing by default.
   void onEffectiveFocusChange() {}
 
   /// The node in use: the widget's, or the one this state owns.
@@ -258,11 +264,11 @@ mixin OwnedFocusNodeMixin<W extends StatefulWidget> on State<W> {
 /// A controller that the widget gives or, when it gives none, the state
 /// owns.
 ///
-/// [onControllerChange] listens to the controller in use and follows it
-/// when the widget starts or stops giving one, or gives another, after
-/// which [didChangeController] runs. An owned controller that the widget
-/// replaces is disposed after the frame, and the one still owned with the
-/// state.
+/// [onControllerChange] listens to the controller in use and moves to the
+/// new controller when the widget starts or stops giving one, or gives
+/// another, after which [didChangeController] runs. An owned controller
+/// that a given controller replaces is disposed after the frame; a
+/// controller still owned is disposed with the state.
 mixin OwnedControllerMixin<W extends StatefulWidget, C extends ChangeNotifier>
     on State<W> {
   C? _ownedController;
@@ -274,10 +280,12 @@ mixin OwnedControllerMixin<W extends StatefulWidget, C extends ChangeNotifier>
   /// Creates the controller owned while the widget gives none.
   C createOwnedController();
 
-  /// Called when the controller in use notifies its listeners.
+  /// Called when the controller in use notifies its listeners; does
+  /// nothing by default.
   void onControllerChange() {}
 
-  /// Called after the controller in use changed from [previous].
+  /// Called after the controller in use changed from [previous]; does
+  /// nothing by default.
   void didChangeController(C previous) {}
 
   /// The controller in use: the widget's, or the one this state owns.
@@ -315,15 +323,15 @@ mixin OwnedControllerMixin<W extends StatefulWidget, C extends ChangeNotifier>
   }
 }
 
-/// The chevron pointing toward the end of [context]'s reading direction
-/// when [forward], and toward its start otherwise.
+/// Returns the chevron icon pointing toward the end of [context]'s
+/// reading direction when [forward], and toward its start otherwise.
 IconData directionalChevron(BuildContext context, {required bool forward}) {
   final rtl = Directionality.of(context) == TextDirection.rtl;
   return forward != rtl ? LucideIcons.chevron_right : LucideIcons.chevron_left;
 }
 
-/// The arrow keys that move toward the start ([back]) and the end
-/// ([forward]) of [context]'s reading direction.
+/// Returns the arrow keys that move toward the start (`back`) and the end
+/// (`forward`) of [context]'s reading direction.
 ({LogicalKeyboardKey back, LogicalKeyboardKey forward}) readingArrowsOf(
   BuildContext context,
 ) {
@@ -344,7 +352,7 @@ IconData directionalChevron(BuildContext context, {required bool forward}) {
 ///
 /// The scroll animates for [duration], or jumps when it is null or
 /// animations are disabled. Returns false when [item] isn't laid out in a
-/// scroll view.
+/// scroll view, and true otherwise.
 bool revealCentered(BuildContext item, {Duration? duration}) {
   final box = item.findRenderObject();
   if (box == null || !box.attached) return false;
@@ -367,17 +375,19 @@ bool revealCentered(BuildContext item, {Duration? duration}) {
   return true;
 }
 
-/// The value of a check box after a tap: unchecked becomes checked, and
-/// checked becomes mixed with [tristate] or unchecked otherwise; mixed
-/// becomes unchecked.
+/// Returns the value of a check box after a tap: unchecked (false)
+/// becomes checked, and checked becomes mixed (null) with [tristate] or
+/// unchecked otherwise; mixed becomes unchecked.
 bool? nextCheckValue(bool? value, {required bool tristate}) => switch (value) {
   false => true,
   true => tristate ? null : false,
   null => false,
 };
 
-/// Activates the radio of [value] in a group showing [groupValue]: selects
-/// it, or clears the group when it is already selected and [toggleable].
+/// Activates the radio of [value] in a group showing [groupValue]: calls
+/// [onChanged] with [value] to select it, or with null to clear the group
+/// when it is already selected and [toggleable]. Does nothing when it is
+/// already selected and not [toggleable].
 void activateRadio<T>(
   T value,
   T? groupValue,
@@ -391,14 +401,14 @@ void activateRadio<T>(
   }
 }
 
-/// [duration], or zero when [context] asks to reduce motion.
+/// Returns [duration], or zero when [context] asks to disable animations.
 Duration motionDuration(BuildContext context, Duration duration) =>
     (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
     ? Duration.zero
     : duration;
 
-/// [height] as a button's minimum height, offset by the theme's visual
-/// density, which buttons apply on top of their minimum, so the button
-/// ends up [height] tall.
+/// Returns [height] as a button's minimum height, offset by the theme's
+/// visual density, which buttons apply on top of their minimum, so the
+/// button ends up [height] tall.
 double densityOffsetHeight(BuildContext context, double height) =>
     height - Theme.of(context).visualDensity.baseSizeAdjustment.dy;

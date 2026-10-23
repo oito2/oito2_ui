@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -52,7 +52,8 @@ class Oito2SortDescriptor {
 /// The parameters of one page load of an [Oito2AsyncListController].
 @immutable
 class Oito2AsyncListRequest<C> {
-  /// Creates a load request.
+  /// Creates a load request; [isCancelled] reports whether a newer request
+  /// superseded it.
   const Oito2AsyncListRequest({
     required this.cursor,
     required this.filterText,
@@ -99,7 +100,8 @@ class Oito2AsyncListPage<T, C> {
 /// load started while another is running supersedes it: the older result
 /// is dropped and its request reports [Oito2AsyncListRequest.isCancelled].
 class Oito2AsyncListController<T, C> extends ChangeNotifier {
-  /// Creates a controller; it doesn't load until [reload] is called.
+  /// Creates a controller with [initialItems], [initialFilterText] and
+  /// [initialSort]; it doesn't load until [reload] is called.
   Oito2AsyncListController({
     required this.load,
     this.sort,
@@ -110,7 +112,8 @@ class Oito2AsyncListController<T, C> extends ChangeNotifier {
        _filterText = initialFilterText,
        _sortDescriptor = initialSort;
 
-  /// Loads one page.
+  /// Loads the page described by its request; errors it throws are kept
+  /// in [error].
   final Future<Oito2AsyncListPage<T, C>> Function(
     Oito2AsyncListRequest<C> request,
   )
@@ -131,7 +134,7 @@ class Oito2AsyncListController<T, C> extends ChangeNotifier {
   int _generation = 0;
   bool _disposed = false;
 
-  /// The loaded items.
+  /// The loaded items, unmodifiable.
   List<T> get items => _items;
 
   /// The filter text sent with each load.
@@ -152,10 +155,11 @@ class Oito2AsyncListController<T, C> extends ChangeNotifier {
   /// The stack trace of [error], or null.
   StackTrace? get stackTrace => _stackTrace;
 
-  /// Whether more pages remain after a load.
+  /// Whether the last successful load returned a cursor for a further
+  /// page.
   bool get hasMore => _loaded && _cursor != null;
 
-  /// Replaces the items with the first page.
+  /// Replaces the items with the first page, superseding any running load.
   Future<void> reload() => _run(more: false);
 
   /// Appends the next page, when [hasMore] and no load is running.
@@ -164,15 +168,16 @@ class Oito2AsyncListController<T, C> extends ChangeNotifier {
     return _run(more: true);
   }
 
-  /// Sets the filter text and reloads.
+  /// Sets the filter text and reloads; does nothing when [text] is the
+  /// current filter text.
   Future<void> setFilterText(String text) {
     if (text == _filterText) return Future.value();
     _filterText = text;
     return reload();
   }
 
-  /// Sets the sort: sorts the items locally with [sort] when given,
-  /// otherwise reloads.
+  /// Sets the sort to [descriptor]: sorts the loaded items locally with
+  /// [sort] when both are non-null, otherwise reloads.
   Future<void> setSort(Oito2SortDescriptor? descriptor) {
     _sortDescriptor = descriptor;
     final local = sort;
@@ -184,6 +189,8 @@ class Oito2AsyncListController<T, C> extends ChangeNotifier {
     return reload();
   }
 
+  /// Loads the first page, or the next one when [more], and applies the
+  /// result unless a newer load or [dispose] superseded it.
   Future<void> _run({required bool more}) async {
     final generation = ++_generation;
     _error = null;

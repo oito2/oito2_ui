@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -70,13 +70,16 @@ enum Oito2QrErrorLevel {
 /// standard four-module quiet zone.
 ///
 /// The defaults are black on white, which every scanner reads; custom
-/// colors need strong contrast with the dark color darker. A
-/// [centerImage], such as a logo, covers the middle of the modules; the
-/// error level is then [Oito2QrErrorLevel.high], which recovers the most
-/// covered modules, so the code still reads. When [data] doesn't fit, [errorBuilder] or a
-/// message shows instead.
+/// colors need strong contrast, with [color] darker than
+/// [backgroundColor]. A [centerImage], such as a logo, covers the middle
+/// of the modules; the error level is then [Oito2QrErrorLevel.high],
+/// which recovers the most covered modules, so the code still reads. When
+/// [data] doesn't fit, [errorBuilder] or a localized message shows
+/// instead.
 class Oito2QrCode extends StatelessWidget {
   /// Creates a QR code.
+  ///
+  /// Asserts that [centerImageFraction] is above 0 and at most 0.3.
   const Oito2QrCode({
     super.key,
     required this.data,
@@ -97,7 +100,8 @@ class Oito2QrCode extends StatelessWidget {
   /// The width and height, quiet zone included.
   final double size;
 
-  /// The error correction level.
+  /// The error correction level; ignored with [centerImage], which uses
+  /// [Oito2QrErrorLevel.high].
   final Oito2QrErrorLevel errorLevel;
 
   /// The dark module color.
@@ -112,7 +116,7 @@ class Oito2QrCode extends StatelessWidget {
   /// An image drawn in the middle, such as a logo.
   final ImageProvider? centerImage;
 
-  /// The share of the code width the center image takes.
+  /// The share of the module area's width cleared for the center image.
   final double centerImageFraction;
 
   /// The accessibility label; defaults to the localized "QR code".
@@ -121,15 +125,17 @@ class Oito2QrCode extends StatelessWidget {
   /// Builds what shows when [data] doesn't fit in a QR code.
   final WidgetBuilder? errorBuilder;
 
-  /// The recently encoded codes, by data and level; null marks data that
-  /// doesn't fit. Reusing them skips the encoding on rebuilds and keeps
-  /// the module list identical, so the code isn't repainted.
+  /// Up to 32 encoded codes, by data and level, evicting the oldest first;
+  /// null marks data that doesn't fit. Reusing them skips the encoding on
+  /// rebuilds and keeps the module list identical, so the code isn't
+  /// repainted.
   static final _cache =
       <
         (String, Oito2QrErrorLevel),
         ({int moduleCount, List<List<bool>> modules})?
       >{};
 
+  /// The cached modules of [data] at [level], or null when it doesn't fit.
   static ({int moduleCount, List<List<bool>> modules})? _encode(
     String data,
     Oito2QrErrorLevel level,
@@ -200,6 +206,8 @@ class Oito2QrCode extends StatelessWidget {
   }
 }
 
+/// Paints [modules] in [color] on [background] inside a quiet zone,
+/// leaving out the modules under the center [hole].
 class _QrPainter extends CustomPainter {
   _QrPainter({
     required this.modules,
@@ -218,6 +226,7 @@ class _QrPainter extends CustomPainter {
   /// 0.
   final double hole;
 
+  /// The width of the quiet zone, in modules.
   static const int _quietZone = 4;
 
   @override

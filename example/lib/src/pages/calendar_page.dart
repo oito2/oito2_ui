@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,7 +18,8 @@ import 'package:oito2_ui/oito2_ui.dart';
 
 import '../widgets/showcase_widgets.dart';
 
-/// Shows [Oito2Calendar] and [Oito2DatePicker] for dates and ranges.
+/// Shows [Oito2Calendar] and [Oito2DatePicker] for dates and ranges, and
+/// an [Oito2DateEntry].
 class CalendarPage extends StatefulWidget {
   /// Creates the calendar page.
   const CalendarPage({super.key});

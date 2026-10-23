@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _family = 'InterAssetTest';
 
+/// Lays out a pangram in the test-loaded Inter at 20 px and [weight], and
+/// returns its width.
 double _textWidth(FontWeight weight) {
   final painter = TextPainter(
     text: TextSpan(

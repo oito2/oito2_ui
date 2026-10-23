@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../foundation/contrast.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'toggles.dart';
@@ -225,6 +226,8 @@ class Oito2SplitButton extends StatelessWidget {
   /// [Oito2Localizations.moreOptions].
   final String? menuLabel;
 
+  /// Returns a style with [radius] corners, the theme button height as
+  /// [minimumHeight], no minimum width and an optional [padding].
   ButtonStyle _shape(
     BorderRadius radius,
     double minimumHeight, {
@@ -241,6 +244,7 @@ class Oito2SplitButton extends StatelessWidget {
     );
   }
 
+  /// Builds a button of [variant] with [style], [onPressed] and [child].
   Widget _button(ButtonStyle style, VoidCallback? onPressed, Widget child) {
     return switch (variant) {
       Oito2SplitButtonVariant.elevated => ElevatedButton(
@@ -315,7 +319,8 @@ class Oito2OptionButton extends StatelessWidget {
   /// [label] used as tooltip and accessibility label.
   ///
   /// An [Icon] child needs a [label], since an icon alone has no name for
-  /// assistive technologies.
+  /// assistive technologies; an [AssertionError] is thrown in debug builds
+  /// when it is missing.
   const Oito2OptionButton({
     super.key,
     required this.onPressed,
@@ -406,7 +411,7 @@ class Oito2ColorDisk extends StatefulWidget {
   /// Whether this color is the selected one.
   final bool selected;
 
-  /// Called when the disk is activated.
+  /// Called when the disk is activated; null disables it.
   final VoidCallback? onPressed;
 
   /// The color name for assistive technologies and the tooltip.
@@ -419,6 +424,7 @@ class Oito2ColorDisk extends StatefulWidget {
   State<Oito2ColorDisk> createState() => _Oito2ColorDiskState();
 }
 
+/// Tracks hover and focus of [Oito2ColorDisk] to show its faint ring.
 class _Oito2ColorDiskState extends State<Oito2ColorDisk> {
   bool _hovered = false;
   bool _focused = false;
@@ -434,8 +440,14 @@ class _Oito2ColorDiskState extends State<Oito2ColorDisk> {
         : 0.0;
     const ring = Oito2Sizes.focusBorderWidth;
     const gap = 2.0;
+    // The ring keeps the disk's hue, adjusted when needed to stand out
+    // from the surface, so a disk close to the background still shows it.
+    final ringColor = Oito2Contrast.ensure(widget.color.withValues(alpha: 1), [
+      Theme.of(context).colorScheme.surface,
+    ], Oito2Contrast.nonTextAA);
     return Semantics(
       button: true,
+      enabled: widget.onPressed != null,
       selected: widget.selected,
       label: widget.label,
       excludeSemantics: true,
@@ -458,7 +470,7 @@ class _Oito2ColorDiskState extends State<Oito2ColorDisk> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: widget.color.withValues(
+                  color: ringColor.withValues(
                     alpha: widget.color.a * ringAlpha,
                   ),
                   width: ring,

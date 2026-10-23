@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -37,6 +37,8 @@ const _web = Oito2Platform(targetPlatform: TargetPlatform.linux, isWeb: true);
 const _focused = {WidgetState.focused};
 const _none = <WidgetState>{};
 
+/// The base light, dark and high-contrast schemes plus one scheme per
+/// sample role set, keyed by a readable name.
 Map<String, Oito2ColorTheme> _schemes() => {
   'base light': Oito2ColorTheme.light(),
   'base dark': Oito2ColorTheme.dark(),

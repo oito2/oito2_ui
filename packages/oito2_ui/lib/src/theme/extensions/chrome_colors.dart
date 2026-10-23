@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -36,11 +36,13 @@ class Oito2ChromeColors extends ThemeExtension<Oito2ChromeColors> {
   /// Takes the chrome colors from the surface roles of [colorScheme],
   /// using [background] as the page background.
   ///
-  /// - The sidebar is `surfaceContainer` and the mainbar is
-  ///   `surfaceContainerHighest`. Each is moved in lightness, when needed,
-  ///   until it reaches [minimumStep] contrast against the page background
-  ///   and the sidebar against the mainbar, so the three stay apart even
-  ///   when a scheme's background sits inside its container range.
+  /// - The mainbar is `surfaceContainerHighest`, moved in lightness when
+  ///   needed until it reaches [minimumStep] contrast against the page
+  ///   background.
+  /// - The sidebar is `surfaceContainer`, moved in lightness when needed
+  ///   until it reaches [minimumStep] contrast against both the page
+  ///   background and the mainbar, so the three stay apart even when a
+  ///   scheme's background sits inside its container range.
   /// - The title bar is [titleBar] when given, otherwise
   ///   `surfaceContainer`.
   /// - Dialogs, sheets and drawers use `surface` in a light scheme and

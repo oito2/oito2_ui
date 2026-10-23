@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -35,7 +35,11 @@ import 'widget_helpers.dart';
 /// The expanded, selected and checked nodes of an [Oito2TreeView], by
 /// node value.
 class Oito2TreeController extends ChangeNotifier {
-  /// Creates a tree controller.
+  /// Creates a tree controller with the given initial [expanded],
+  /// [selected] and [checked] node values.
+  ///
+  /// [selected] is ignored when [selectionMode] is
+  /// [Oito2SelectionMode.none].
   Oito2TreeController({
     this.selectionMode = Oito2SelectionMode.single,
     Iterable<String> expanded = const [],
@@ -56,22 +60,22 @@ class Oito2TreeController extends ChangeNotifier {
   final Set<String> _selected = {};
   final Set<String> _checked = {};
 
-  /// The open branches.
+  /// An unmodifiable copy of the values of the open branches.
   Set<String> get expanded => Set.unmodifiable(_expanded);
 
-  /// The selected nodes.
+  /// An unmodifiable copy of the values of the selected nodes.
   Set<String> get selected => Set.unmodifiable(_selected);
 
-  /// The checked leaves.
+  /// An unmodifiable copy of the values of the checked leaves.
   Set<String> get checked => Set.unmodifiable(_checked);
 
-  /// Whether [value] is open.
+  /// Whether the branch [value] is open.
   bool isExpanded(String value) => _expanded.contains(value);
 
   /// Whether [value] is selected.
   bool isSelected(String value) => _selected.contains(value);
 
-  /// Opens or closes [value].
+  /// Opens the branch [value] when [expanded] is true, or closes it.
   void setExpanded(String value, bool expanded) {
     final changed = expanded ? _expanded.add(value) : _expanded.remove(value);
     if (changed) notifyListeners();
@@ -87,7 +91,8 @@ class Oito2TreeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Opens every branch of [collection].
+  /// Opens every branch of [collection], keeping the branches already
+  /// open.
   void expandAll(Oito2TreeCollection<Object?> collection) {
     _expanded.addAll(collection.branchValues);
     notifyListeners();
@@ -99,7 +104,8 @@ class Oito2TreeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Makes [values] the selection, keeping the first one in single mode.
+  /// Makes [values] the selection: only the first one in single mode, and
+  /// none in [Oito2SelectionMode.none].
   void setSelected(Iterable<String> values) {
     _selected.clear();
     switch (selectionMode) {
@@ -113,7 +119,8 @@ class Oito2TreeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Adds [value] to the selection or removes it, in multiple mode.
+  /// Adds [value] to the selection or removes it, in multiple mode; in
+  /// the other modes it behaves as [setSelected] with [value] alone.
   void toggleSelected(String value) {
     if (selectionMode != Oito2SelectionMode.multiple) {
       setSelected([value]);
@@ -123,8 +130,9 @@ class Oito2TreeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Whether [value] is checked: true or false, or null when only some of
-  /// a branch's leaves are.
+  /// The check state of [value] in [collection]: true or false, or null
+  /// when only some of a branch's leaves are checked. A branch without
+  /// leaves is unchecked.
   bool? checkStateOf(Oito2TreeCollection<Object?> collection, String value) {
     final node = collection.find(value);
     if (node == null || !node.isBranch) return _checked.contains(value);
@@ -135,7 +143,8 @@ class Oito2TreeController extends ChangeNotifier {
   }
 
   /// Checks [value], or every leaf of a branch, unless already fully
-  /// checked, in which case it unchecks them.
+  /// checked, in which case it unchecks them. Does nothing when
+  /// [collection] has no node [value].
   void toggleChecked(Oito2TreeCollection<Object?> collection, String value) {
     if (!collection.has(value)) return;
     final leaves = collection.leavesOf(value);
@@ -162,17 +171,19 @@ typedef Oito2TreeItemBuilder<T> = Widget Function(
 ///   selects it, and Shift extends a multiple selection.
 /// - Right opens a branch or moves to its first child; Left closes it or
 ///   moves to the parent.
-/// - Space toggles the selection of a multiple-selection tree, or the
-///   check box of a [checkable] one; Control+A selects every shown node.
+/// - Space toggles the check box of a [checkable] tree, or else the
+///   selection of a multiple-selection one; Control+A (Command+A) selects
+///   every shown, enabled node of a multiple-selection tree.
 /// - Enter, or a double click, calls [onActivate], or opens or closes a
 ///   branch when it is null.
-/// - F2 renames the active node through [onRename].
+/// - F2 starts an inline rename of the active node when [onRename] is
+///   set; Enter or leaving the field confirms it and Escape cancels it.
 /// - Typing letters jumps to the next shown label that starts with them.
 ///
 /// A branch with no children yet and an [onLoadChildren] shows a spinner
 /// while its children load the first time it opens. A non-empty [query]
 /// shows only the matching nodes and their ancestors, all open, with the
-/// match highlighted.
+/// match highlighted; branches can't be opened or closed while filtering.
 class Oito2TreeView<T> extends StatefulWidget {
   /// Creates a tree view.
   const Oito2TreeView({
@@ -192,7 +203,7 @@ class Oito2TreeView<T> extends StatefulWidget {
     this.autofocus = false,
   });
 
-  /// The nodes.
+  /// The nodes of the tree.
   final Oito2TreeCollection<T> collection;
 
   /// The open, selected and checked nodes.
@@ -201,10 +212,12 @@ class Oito2TreeView<T> extends StatefulWidget {
   /// Builds a row's content; the node label by default.
   final Oito2TreeItemBuilder<T>? itemBuilder;
 
-  /// Builds the icon before the label, given whether the node is open.
+  /// Builds the icon before the label, given whether the node is open;
+  /// no icon shows when it returns null.
   final Widget? Function(Oito2TreeNode<T> node, bool expanded)? iconBuilder;
 
-  /// Called on Enter or a double click on a node.
+  /// Called on Enter or a double click on a node; when null, those open
+  /// or close a branch instead.
   final ValueChanged<Oito2TreeNode<T>>? onActivate;
 
   /// Loads the children of an empty branch the first time it opens; the
@@ -215,19 +228,22 @@ class Oito2TreeView<T> extends StatefulWidget {
   /// retries the load.
   final Future<void> Function(Oito2TreeNode<T> node)? onLoadChildren;
 
-  /// Called with a node and its new label after a rename.
+  /// Called with a node and its new, trimmed label when a rename is
+  /// confirmed with a non-empty label that differs from the old one; F2
+  /// renames nothing when null.
   final void Function(Oito2TreeNode<T> node, String label)? onRename;
 
-  /// Whether the rows have check boxes.
+  /// Whether the rows have tristate check boxes, tracked in
+  /// [Oito2TreeController.checked].
   final bool checkable;
 
-  /// The text that filters the nodes.
+  /// The text that filters the nodes; blank shows the whole tree.
   final String query;
 
   /// The row height; defaults to the control height.
   final double? rowHeight;
 
-  /// The indent of each level.
+  /// The indent of each level, in logical pixels.
   final double indent;
 
   /// The accessibility label of the tree.
@@ -286,6 +302,8 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     if (mounted) setState(() {});
   }
 
+  /// Makes the first selected row, or else the first row, active when the
+  /// tree gains focus without an active row.
   void _onFocus() {
     if (_focusNode.hasFocus && _active == null && _entries.isNotEmpty) {
       final selected = _entries.where(
@@ -296,6 +314,8 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     _refresh();
   }
 
+  /// The search result for [_filteredQuery] over [_filteredSource], reused
+  /// while neither changes.
   Oito2TreeCollection<T>? _filtered;
   String? _filteredQuery;
   Oito2TreeCollection<T>? _filteredSource;
@@ -304,6 +324,8 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
   /// checkable.
   final Map<String, bool?> _checkStates = {};
 
+  /// The rows to show: the open part of the tree, or every node of the
+  /// search result while filtering.
   List<Oito2TreeEntry<T>> _computeEntries() {
     if (!_filtering) return widget.collection.visible(_controller.expanded);
     final query = widget.query.trim();
@@ -349,6 +371,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     widget.collection.roots.forEach(visit);
   }
 
+  /// The row index of the node [value], or -1 when it isn't shown.
   int _indexOf(String? value) =>
       _entries.indexWhere((e) => e.node.value == value);
 
@@ -377,6 +400,9 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     }
   }
 
+  /// Makes the node [value] active and reveals it; a single-selection tree
+  /// selects it, and with [extend] a multiple-selection tree selects the
+  /// enabled rows from the anchor to it.
   void _activate(String value, {bool extend = false}) {
     setState(() => _active = value);
     final mode = _controller.selectionMode;
@@ -404,6 +430,8 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     _reveal(_indexOf(value));
   }
 
+  /// Opens or closes the branch [node], loading its children through
+  /// [Oito2TreeView.onLoadChildren] the first time an empty branch opens.
   Future<void> _setExpanded(Oito2TreeNode<T> node, bool expanded) async {
     if (!node.isBranch || _filtering) return;
     _controller.setExpanded(node.value, expanded);
@@ -442,6 +470,8 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     }
   }
 
+  /// Runs the primary action of [node]: [Oito2TreeView.onActivate], or
+  /// opening or closing a branch.
   void _primary(Oito2TreeNode<T> node) {
     final activate = widget.onActivate;
     if (activate != null) {
@@ -451,6 +481,8 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     }
   }
 
+  /// Toggles the check box of [node], or else its selection in a
+  /// multiple-selection tree.
   void _toggleSpace(Oito2TreeNode<T> node) {
     if (widget.checkable) {
       _controller.toggleChecked(widget.collection, node.value);
@@ -459,6 +491,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     }
   }
 
+  /// Handles the tree's keyboard navigation and commands.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (_renaming != null) return KeyEventResult.ignored;
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
@@ -539,6 +572,9 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     return KeyEventResult.handled;
   }
 
+  /// Adds [character] to the typed prefix, which resets after a pause,
+  /// and activates the next enabled row after [index] whose label starts
+  /// with it; repeating one character cycles through its matches.
   void _typeAhead(String character, int index) {
     _typeTimer?.cancel();
     _typeTimer = Timer(const Duration(milliseconds: 600), () => _typed = '');
@@ -556,9 +592,13 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     }
   }
 
+  /// Whether [node] shows as open; every branch is open while filtering.
   bool _isOpen(Oito2TreeNode<T> node) =>
       _filtering || _controller.isExpanded(node.value);
 
+  /// Focuses the tree and activates [node], toggling it with Control or
+  /// Command and extending the selection with Shift in a
+  /// multiple-selection tree.
   void _tap(Oito2TreeNode<T> node) {
     if (node.disabled) return;
     _focusNode.requestFocus();
@@ -579,6 +619,8 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     }
   }
 
+  /// Builds the row of [entry]: disclosure, check box, icon and label, or
+  /// the rename field.
   Widget _row(BuildContext context, Oito2TreeEntry<T> entry) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -635,6 +677,11 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
             widget.onRename?.call(node, text);
           }
           _focusNode.requestFocus();
+        },
+        onDiscarded: () {
+          if (mounted && _renaming == value) {
+            setState(() => _renaming = null);
+          }
         },
       );
     } else {
@@ -743,12 +790,21 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
 /// The inline field of a node being renamed: Enter or leaving it keeps
 /// the text, Escape cancels.
 class _RenameField extends StatefulWidget {
-  const _RenameField({required this.initial, required this.onDone});
+  const _RenameField({
+    required this.initial,
+    required this.onDone,
+    required this.onDiscarded,
+  });
 
   final String initial;
 
   /// Called once with the new text, or null when cancelled.
   final ValueChanged<String?> onDone;
+
+  /// Called after the frame in which the field is removed without having
+  /// reported through [onDone], such as when its row is filtered out,
+  /// removed or scrolled away.
+  final VoidCallback onDiscarded;
 
   @override
   State<_RenameField> createState() => _RenameFieldState();
@@ -776,11 +832,18 @@ class _RenameFieldState extends State<_RenameField> {
 
   @override
   void dispose() {
+    if (!_done) {
+      _done = true;
+      // The tree may still be building, so it learns after the frame.
+      final discarded = widget.onDiscarded;
+      WidgetsBinding.instance.addPostFrameCallback((_) => discarded());
+    }
     _focus.dispose();
     _controller.dispose();
     super.dispose();
   }
 
+  /// Reports [text] through [_RenameField.onDone] the first time only.
   void _finish(String? text) {
     if (_done) return;
     _done = true;

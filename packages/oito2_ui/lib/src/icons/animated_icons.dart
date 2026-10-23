@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,7 +22,8 @@ import '../tokens/colors.dart';
 
 /// How an [Oito2AnimatedIcon] plays its animation.
 enum Oito2AnimationMode {
-  /// Once, when the icon first shows and whenever its data changes.
+  /// Once, when the icon first shows and whenever its data or mode
+  /// changes.
   once,
 
   /// Over and over.
@@ -106,6 +107,7 @@ abstract final class Oito2AnimatedIcons {
 
 const _center = Offset(12, 12);
 
+/// Returns a 2-unit round stroke in the color of [paint].
 Paint _stroke(Paint paint) => Paint()
   ..color = paint.color
   ..style = PaintingStyle.stroke
@@ -113,13 +115,13 @@ Paint _stroke(Paint paint) => Paint()
   ..strokeCap = StrokeCap.round
   ..strokeJoin = StrokeJoin.round;
 
-/// The part of [segment] of the animation that [t] has reached, from 0
-/// to 1.
+/// Returns how far [t] has gone through the segment of the animation
+/// from [start] to [end], from 0 to 1.
 double _phase(double t, double start, double end) =>
     ((t - start) / (end - start)).clamp(0.0, 1.0);
 
-/// The first [fraction] of [path], by length; empty while [fraction] is 0,
-/// so round caps draw no dot.
+/// Returns the first [fraction] of [path], by length; empty while
+/// [fraction] is 0, so round caps draw no dot.
 Path _partial(Path path, double fraction) {
   final result = Path();
   if (fraction <= 0) return result;
@@ -132,7 +134,9 @@ Path _partial(Path path, double fraction) {
   return result;
 }
 
-/// Draws [path] cut out of everything painted after the layer opened.
+/// Clears [path] from the current layer, so whatever is under the layer
+/// shows through; with [stroke], clears a 2-unit stroke along [path]
+/// instead of its fill.
 void _knockOut(Canvas canvas, Path path, {bool stroke = false}) {
   final paint = Paint()..blendMode = BlendMode.clear;
   if (stroke) {
@@ -174,6 +178,8 @@ final Path _starPath = () {
   return path..close();
 }();
 
+/// Returns the compass needle, pointing north, turned by [angle] radians
+/// around the grid center.
 Path _needle(double angle) {
   final matrix = Matrix4.identity()
     ..translateByDouble(12, 12, 0, 1)
@@ -188,7 +194,8 @@ Path _needle(double angle) {
       .transform(matrix.storage);
 }
 
-/// The half of the grid on the north side of a needle turned by [angle].
+/// Returns the half of the grid on the north side of a needle turned by
+/// [angle] radians.
 Path _northHalf(double angle) {
   final matrix = Matrix4.identity()
     ..translateByDouble(12, 12, 0, 1)
@@ -199,7 +206,9 @@ Path _northHalf(double angle) {
   );
 }
 
-/// A swing that starts at 50 degrees and settles at 0.
+/// Returns the needle angle, in radians, of a damped swing at [t]: it
+/// starts and ends at 0 and stays within 50 degrees, fading as [t]
+/// approaches 1.
 double _swing(double t) =>
     (1 - t) * (1 - t) * math.sin(t * 3.5 * math.pi) * 50 * math.pi / 180;
 
@@ -345,10 +354,11 @@ class Oito2AnimatedIcon extends StatefulWidget {
   /// How the animation plays.
   final Oito2AnimationMode mode;
 
-  /// Overrides [Oito2AnimatedIconData.duration].
+  /// The length of one play; defaults to [Oito2AnimatedIconData.duration].
   final Duration? duration;
 
-  /// The accessibility label.
+  /// The accessibility label; when null the icon is hidden from assistive
+  /// technologies.
   final String? semanticLabel;
 
   @override
@@ -377,6 +387,9 @@ class _Oito2AnimatedIconState extends State<Oito2AnimatedIcon>
     }
   }
 
+  /// Plays the animation for the current mode: shows the final frame when
+  /// animations are disabled or the mode is still, starts repeating, or
+  /// plays once from the start when [restart] or when it hasn't played.
   void _play({required bool restart}) {
     final reduced = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     if (reduced || widget.mode == Oito2AnimationMode.still) {
@@ -414,6 +427,8 @@ class _Oito2AnimatedIconState extends State<Oito2AnimatedIcon>
   }
 }
 
+/// Paints [draw] at the value of [progress], scaled from the 24 × 24 grid
+/// to the paint size, repainting as [progress] changes.
 class _AnimatedIconPainter extends CustomPainter {
   _AnimatedIconPainter(this.draw, this.progress, this.color)
     : super(repaint: progress);

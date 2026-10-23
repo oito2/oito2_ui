@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -50,11 +50,17 @@ void main() {
       );
       expect(find.text('Volume'), findsOneWidget);
       expect(find.text('40%'), findsOneWidget);
+      // A tap at the middle of the track picks 50; once focused, an arrow
+      // key adds one of the ten divisions.
       await tester.tap(find.byType(Slider));
       await tester.pump();
+      expect(value, 50);
+      expect(find.text('50%'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await tester.pump();
-      expect(find.text('${value.round()}%'), findsOneWidget);
+      expect(value, 60);
+      expect(find.text('60%'), findsOneWidget);
     });
 
     testWidgets('marks sit under their values on the track', (tester) async {
@@ -113,6 +119,32 @@ void main() {
       expect(tester.getCenter(find.text('0%')).dy, track.bottom - 10);
       expect(tester.getTopLeft(find.text('50%')).dx, greaterThan(track.right));
     });
+  });
+
+  group('Oito2Slider vertical', () {
+    for (final direction in TextDirection.values) {
+      testWidgets('keeps its minimum at the bottom in ${direction.name}', (
+        tester,
+      ) async {
+        double? value;
+        await pumpOito2(
+          tester,
+          Center(
+            child: Oito2Slider(
+              value: 50,
+              max: 100,
+              orientation: Axis.vertical,
+              length: 200,
+              onChanged: (v) => value = v,
+            ),
+          ),
+          textDirection: direction,
+        );
+        final track = tester.getRect(find.byType(RotatedBox));
+        await tester.tapAt(Offset(track.center.dx, track.bottom - 12));
+        expect(value, lessThan(10));
+      });
+    }
   });
 
   group('Oito2RangeSlider', () {

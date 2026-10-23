@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -66,12 +66,15 @@ class _TreeViewPageState extends State<TreeViewPage> {
     super.dispose();
   }
 
+  /// A folder icon, open or closed, for branches and a file icon for
+  /// leaves.
   Widget? _icon(Oito2TreeNode<void> node, bool open) => Icon(
     node.isBranch
         ? (open ? LucideIcons.folder_open : LucideIcons.folder)
         : LucideIcons.file,
   );
 
+  /// A bordered box of fixed size around a tree view.
   Widget _frame(Widget child) => Container(
     width: 300,
     height: 280,

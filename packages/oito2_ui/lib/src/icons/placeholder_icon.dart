@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -54,6 +54,7 @@ class Oito2PlaceholderIcon extends StatelessWidget {
   }
 }
 
+/// Paints the rounded [fill] square and the picture outline in [ink].
 class _PlaceholderPainter extends CustomPainter {
   _PlaceholderPainter({
     required this.fill,

@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -28,8 +28,11 @@ abstract final class Oito2Downloads {
   /// not Android or iOS.
   static bool get isSupported => platform.canSaveFiles;
 
-  /// Saves [bytes] as [fileName]; false when the user cancels the "Save
-  /// as" dialog. Throws an [UnsupportedError] when not [isSupported].
+  /// Saves [bytes] as [fileName], typed as [mimeType] when given.
+  ///
+  /// Returns false when the user cancels the "Save as" dialog, and true
+  /// otherwise; a web download always returns true. Throws an
+  /// [UnsupportedError] when not [isSupported].
   static Future<bool> save({
     required String fileName,
     required Uint8List bytes,
@@ -62,16 +65,17 @@ class Oito2DownloadTrigger extends StatefulWidget {
   /// Builds the file content when the button is activated.
   final Future<Uint8List> Function() data;
 
-  /// The MIME type of the file.
+  /// The MIME type of the file, or null for a generic binary file.
   final String? mimeType;
 
-  /// The button label; defaults to "Download".
+  /// The button label; defaults to the localized "Download".
   final Widget? label;
 
   /// Called after a save with whether the file was saved.
   final ValueChanged<bool>? onSaved;
 
-  /// Called when building or saving the file fails.
+  /// Called when building or saving the file fails; without it the error
+  /// is rethrown as an unhandled asynchronous error.
   final void Function(Object error, StackTrace stackTrace)? onError;
 
   /// Whether the button can be activated.
@@ -84,6 +88,7 @@ class Oito2DownloadTrigger extends StatefulWidget {
 class _Oito2DownloadTriggerState extends State<Oito2DownloadTrigger> {
   bool _busy = false;
 
+  /// Builds and saves the file, showing the spinner meanwhile.
   Future<void> _download() async {
     setState(() => _busy = true);
     try {

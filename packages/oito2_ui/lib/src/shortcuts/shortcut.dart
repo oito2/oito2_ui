@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -38,7 +38,11 @@ class Oito2KeyChord {
     this.meta = false,
   });
 
-  /// The chord pressed by [event] with the modifiers held now.
+  /// Creates the chord of [event]'s key with the modifiers that
+  /// [HardwareKeyboard] reports as held, with numpad Enter read as Enter.
+  ///
+  /// The chord sets [control] and [meta] as pressed, never [primary];
+  /// [matches] resolves [primary] when comparing.
   factory Oito2KeyChord.fromEvent(KeyEvent event) {
     final keyboard = HardwareKeyboard.instance;
     return Oito2KeyChord(
@@ -72,8 +76,8 @@ class Oito2KeyChord {
   /// typed as text.
   bool get hasCommandModifier => primary || control || alt || meta;
 
-  /// The chord with [primary] turned into Command or Control for
-  /// [platform].
+  /// Returns the chord with [primary] turned into Command (meta) or Control
+  /// for [platform].
   Oito2KeyChord resolve(TargetPlatform platform) {
     if (!primary) return this;
     final apple = oito2UsesCommandKey(platform);
@@ -90,8 +94,8 @@ class Oito2KeyChord {
   bool matches(Oito2KeyChord other, TargetPlatform platform) =>
       resolve(platform) == other.resolve(platform);
 
-  /// The display parts of the chord on [platform]: the modifier names or
-  /// symbols, in the platform order, then the key.
+  /// Returns the display parts of the chord on [platform]: the modifier
+  /// names or symbols, in the platform order, then the key.
   List<String> parts(TargetPlatform platform) {
     final chord = resolve(platform);
     final apple = oito2UsesCommandKey(platform);
@@ -104,11 +108,14 @@ class Oito2KeyChord {
     ];
   }
 
-  /// The chord as text on [platform], such as `Ctrl+Shift+K` or `⇧⌘K`.
+  /// Returns the chord as text on [platform], such as `Ctrl+Shift+K` or
+  /// `⇧⌘K`.
   String label(TargetPlatform platform) =>
       parts(platform).join(oito2UsesCommandKey(platform) ? '' : '+');
 
-  /// The display name of [key] on [platform].
+  /// Returns the display name of [key] on [platform]: a text name or an
+  /// Apple symbol for special keys, and the upper-cased key label for
+  /// single characters.
   static String keyLabel(LogicalKeyboardKey key, TargetPlatform platform) {
     final special = _specialLabels[key];
     if (special != null) {
@@ -137,19 +144,23 @@ class Oito2KeyChord {
     LogicalKeyboardKey.end: ('End', '↘'),
   };
 
+  /// Keys read as another key when building a chord from an event.
   static final Map<LogicalKeyboardKey, LogicalKeyboardKey> _sided = {
     LogicalKeyboardKey.numpadEnter: LogicalKeyboardKey.enter,
   };
 
+  /// Returns the key that [key] is read as in a chord.
   static LogicalKeyboardKey _normalized(LogicalKeyboardKey key) =>
       _sided[key] ?? key;
 
-  /// Whether [key] is a modifier key on its own.
+  /// Whether [key] is a modifier key on its own: Control, Shift, Alt or
+  /// Meta on either side, Caps Lock or Fn.
   static bool isModifierKey(LogicalKeyboardKey key) =>
       LogicalKeyboardKey.collapseSynonyms({key}).any(_modifierKeys.contains) ||
       key == LogicalKeyboardKey.capsLock ||
       key == LogicalKeyboardKey.fn;
 
+  /// The side-independent modifier keys.
   static final Set<LogicalKeyboardKey> _modifierKeys = {
     LogicalKeyboardKey.control,
     LogicalKeyboardKey.shift,
@@ -179,10 +190,13 @@ class Oito2KeyChord {
 @immutable
 class Oito2Shortcut {
   /// Creates a shortcut from [chords].
+  ///
+  /// Throws an [AssertionError] in debug mode when [chords] is empty.
   const Oito2Shortcut(this.chords) : assert(chords.length > 0);
 
-  /// A single-chord shortcut of [key] with the platform's primary modifier
-  /// (Command on Apple platforms, Control elsewhere).
+  /// Creates a single-chord shortcut of [key] with the platform's primary
+  /// modifier (Command on Apple platforms, Control elsewhere), plus Shift
+  /// when [shift] and Alt when [alt].
   Oito2Shortcut.primary(
     LogicalKeyboardKey key, {
     bool shift = false,
@@ -198,7 +212,11 @@ class Oito2Shortcut {
   /// `Meta`/`Cmd`/`Command`/`Super`. Keys: letters, digits, `F1`–`F12`,
   /// `Enter`, `Esc`, `Space`, `Tab`, `Backspace`, `Delete`, `Up`, `Down`,
   /// `Left`, `Right`, `Home`, `End`, `PageUp`, `PageDown` and the
-  /// punctuation `,` `.` `/` `;` `-` `=` `[` `]`.
+  /// punctuation `,` `.` `/` `;` `-` `=` `[` `]`. Names are case
+  /// insensitive.
+  ///
+  /// Throws a [FormatException] when a key or modifier name is unknown,
+  /// including an empty [text].
   factory Oito2Shortcut.parse(String text) {
     final chords = <Oito2KeyChord>[];
     for (final chord in text.trim().split(RegExp(r'\s+'))) {
@@ -238,6 +256,8 @@ class Oito2Shortcut {
     return Oito2Shortcut(chords);
   }
 
+  /// Returns the key named [name] in the [Oito2Shortcut.parse] syntax, or
+  /// null when the name is unknown.
   static LogicalKeyboardKey? _keyNamed(String name) {
     final lower = name.toLowerCase();
     if (RegExp(r'^[a-z]$').hasMatch(lower)) {
@@ -288,7 +308,9 @@ class Oito2Shortcut {
   /// The chords, pressed in order.
   final List<Oito2KeyChord> chords;
 
-  /// Whether every chord, resolved for [platform], matches [other]'s.
+  /// Whether this shortcut has as many chords as [other] and each one,
+  /// resolved for [platform], matches the chord of [other] at the same
+  /// position.
   bool matches(Oito2Shortcut other, TargetPlatform platform) =>
       chords.length == other.chords.length && startsWith(other, platform);
 
@@ -302,7 +324,8 @@ class Oito2Shortcut {
     return true;
   }
 
-  /// The shortcut as text on [platform], such as `Ctrl+K` or `G H`.
+  /// Returns the shortcut as text on [platform], such as `Ctrl+K` or
+  /// `G H`.
   String label(TargetPlatform platform) =>
       [for (final chord in chords) chord.label(platform)].join(' ');
 

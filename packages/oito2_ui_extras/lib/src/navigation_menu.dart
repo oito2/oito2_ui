@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,6 +25,9 @@ import 'package:oito2_ui/oito2_ui.dart';
 @immutable
 class Oito2NavigationMenuItem {
   /// Creates a navigation menu item.
+  ///
+  /// Asserts that [onPressed] and [panelBuilder] are not both given. An
+  /// item with neither is shown disabled.
   const Oito2NavigationMenuItem({
     required this.label,
     this.onPressed,
@@ -37,10 +40,10 @@ class Oito2NavigationMenuItem {
   /// The item text.
   final String label;
 
-  /// Called when a link item is pressed.
+  /// Called when a link item is pressed; null for a panel trigger.
   final VoidCallback? onPressed;
 
-  /// Builds the panel of a trigger item.
+  /// Builds the panel of a trigger item; null for a link.
   final WidgetBuilder? panelBuilder;
 }
 
@@ -50,10 +53,12 @@ class Oito2NavigationMenuItem {
 ///
 /// A panel opens on hover after [hoverDelay], or when its trigger is
 /// pressed or gets Down, which also move the focus into it; moving the
-/// pointer to another trigger switches panels at once.
-/// The arrow keys move between the items and Escape closes a panel.
+/// pointer to another trigger switches panels at once. The arrow keys move
+/// the focus between the items and Escape closes a panel.
 class Oito2NavigationMenu extends StatefulWidget {
   /// Creates a navigation menu.
+  ///
+  /// Asserts that [selectedIndex], when given, is not negative.
   const Oito2NavigationMenu({
     super.key,
     required this.items,
@@ -66,13 +71,13 @@ class Oito2NavigationMenu extends StatefulWidget {
   /// The items, in order.
   final List<Oito2NavigationMenuItem> items;
 
-  /// The item that marks the current page, or null for none.
+  /// The index of the item that marks the current page, or null for none.
   final int? selectedIndex;
 
   /// The wait before a hovered trigger opens its panel.
   final Duration hoverDelay;
 
-  /// The largest panel width.
+  /// The largest panel width, in logical pixels.
   final double panelMaxWidth;
 
   /// The accessibility label of the menu.
@@ -119,6 +124,7 @@ class _Oito2NavigationMenuState extends State<Oito2NavigationMenu> {
     super.dispose();
   }
 
+  /// Creates a key and a popover controller per item and closes any panel.
   void _createItems() {
     _keys = [for (final _ in widget.items) GlobalKey()];
     _popovers = [for (final _ in widget.items) Oito2PopoverController()];
@@ -149,6 +155,8 @@ class _Oito2NavigationMenuState extends State<Oito2NavigationMenu> {
     if (rect != _indicator && mounted) setState(() => _indicator = rect);
   }
 
+  /// Opens the panel of the item at [index], or closes every panel when
+  /// [index] is null; [keyboard] moves the focus into the opened panel.
   void _show(int? index, {bool keyboard = false}) {
     _timer?.cancel();
     if (index == _open) return;
@@ -166,6 +174,8 @@ class _Oito2NavigationMenuState extends State<Oito2NavigationMenu> {
     });
   }
 
+  /// Switches to the panel of [index] at once when one is open, or opens it
+  /// after [Oito2NavigationMenu.hoverDelay] otherwise.
   void _hoverTrigger(int index) {
     _timer?.cancel();
     if (_open != null) {
@@ -175,11 +185,15 @@ class _Oito2NavigationMenuState extends State<Oito2NavigationMenu> {
     }
   }
 
+  /// Closes the open panel shortly after the pointer leaves the trigger or
+  /// the panel, unless it enters one of them again.
   void _leave() {
     _timer?.cancel();
     _timer = Timer(const Duration(milliseconds: 250), () => _show(null));
   }
 
+  /// Builds the button of the item at [index], wrapped in its popover when
+  /// the item has a panel.
   Widget _trigger(BuildContext context, int index) {
     final theme = Theme.of(context);
     final item = widget.items[index];

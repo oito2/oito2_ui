@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -218,6 +218,7 @@ Oito2ColorRoles _alucard(Brightness brightness) {
   );
 }
 
+/// The syntax colors shared by Dracula and Alucard, from palette [p].
 Oito2SyntaxPalette _draculaSyntax(Oito2DraculaPalette p) => Oito2SyntaxPalette(
   foreground: p.foreground,
   comment: p.comment,

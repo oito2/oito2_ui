@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ class ShowcaseOptions {
   /// accent.
   final Oito2AccentColor? accent;
 
-  /// Whether the base scheme forces high contrast, on top of the system
+  /// Whether the colors force high contrast, on top of the system
   /// preference.
   final bool highContrast;
 

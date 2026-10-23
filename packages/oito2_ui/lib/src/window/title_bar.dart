@@ -1,4 +1,4 @@
-// Copyright (C) 2026  oito2
+// Copyright (C) 2026  OITO2
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -116,7 +116,8 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
   ///
   /// [preferredSize] has no context to read the theme from, so a
   /// [Scaffold] gives the bar [Oito2Sizes.titleBarHeight] unless [height]
-  /// is set. To follow a themed height there, wrap the bar in a
+  /// is set, and reserves it even when only the theme hides the bar. To
+  /// follow a themed height or style there, wrap the bar in a
   /// [PreferredSize] sized by [preferredSizeOf].
   final double? height;
 
@@ -130,9 +131,9 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
         : height ?? Oito2Sizes.titleBarHeight,
   );
 
-  /// The size of a title bar with [style] and [height] in [context]'s
-  /// theme: zero tall when hidden, otherwise [height], the theme height or
-  /// [Oito2Sizes.titleBarHeight].
+  /// Returns the size of a title bar with [style] and [height] in
+  /// [context]'s theme: zero tall when hidden, otherwise [height], the
+  /// theme height or [Oito2Sizes.titleBarHeight].
   static Size preferredSizeOf(
     BuildContext context, {
     Oito2TitleBarStyle? style,
@@ -159,6 +160,7 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
+  /// Builds the bar for the window [state].
   Widget _build(BuildContext context, Oito2WindowState state) {
     final theme = Theme.of(context);
     final barTheme = Oito2TitleBarThemeData.of(context);
@@ -384,7 +386,8 @@ class Oito2WindowTitleBar extends StatelessWidget
 
   /// The platform used to compute [preferredSize], which is read before
   /// the widget has a context; defaults to [Oito2Platform.current]. The
-  /// layout itself follows [Oito2SystemScope].
+  /// layout itself follows [Oito2SystemScope], and [preferredSize] ignores
+  /// a themed title bar height.
   final Oito2Platform? platform;
 
   /// Which side's window buttons the bar shows, for split title bars.
