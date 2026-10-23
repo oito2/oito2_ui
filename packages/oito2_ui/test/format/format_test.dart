@@ -176,6 +176,37 @@ void main() {
       ]);
     });
 
+    test('matches several queries, phrases, case and whole words', () {
+      const text = 'Ark UI builds UI kits; the ark sails';
+      expect(
+        Oito2HighlightedText.matches(text, 'ark', queries: ['kits']),
+        const [
+          TextRange(start: 0, end: 3),
+          TextRange(start: 17, end: 21),
+          TextRange(start: 27, end: 30),
+        ],
+      );
+      expect(
+        Oito2HighlightedText.matches(text, 'ark', ignoreCase: false),
+        const [TextRange(start: 27, end: 30)],
+      );
+      expect(Oito2HighlightedText.matches(text, 'ark', matchAll: false), const [
+        TextRange(start: 0, end: 3),
+      ]);
+      expect(Oito2HighlightedText.matches(text, 'ui', wholeWords: true), const [
+        TextRange(start: 4, end: 6),
+        TextRange(start: 14, end: 16),
+      ]);
+      expect(
+        Oito2HighlightedText.matches(text, 'build', wholeWords: true),
+        isEmpty,
+      );
+      expect(
+        Oito2HighlightedText.matches(text, 'ui kits', splitWords: false),
+        const [TextRange(start: 14, end: 21)],
+      );
+    });
+
     test('merges overlapping matches', () {
       expect(Oito2HighlightedText.matches('banana', 'ana nan'), const [
         TextRange(start: 1, end: 6),

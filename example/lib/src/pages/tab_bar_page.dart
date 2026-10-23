@@ -18,7 +18,7 @@ import 'package:oito2_ui/oito2_ui.dart';
 
 import '../widgets/showcase_widgets.dart';
 
-/// Shows [Oito2TabBar] with fixed and scrollable tabs.
+/// Shows [Oito2TabBar] with fixed and scrollable tabs, in both styles.
 class TabBarPage extends StatelessWidget {
   /// Creates the tab bar page.
   const TabBarPage({super.key});
@@ -86,6 +86,42 @@ class TabBarPage extends StatelessWidget {
                       'June',
                     ])
                       Oito2Tab(label: Text(month)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        ShowcaseSection(
+          'Subtle style: accent tint, tabs at the start',
+          children: [
+            SizedBox(
+              width: 520,
+              height: 160,
+              child: DefaultTabController(
+                length: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Oito2TabBar(
+                      style: Oito2TabBarStyle.subtle,
+                      tabs: [
+                        Oito2Tab(label: Text('Account')),
+                        Oito2Tab(label: Text('Password')),
+                        Oito2Tab(label: Text('Billing')),
+                      ],
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          for (final name in ['Account', 'Password', 'Billing'])
+                            Padding(
+                              padding: const EdgeInsets.all(Oito2Spacing.md),
+                              child: Text('$name details'),
+                            ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),

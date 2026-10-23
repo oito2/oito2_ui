@@ -18,7 +18,8 @@ import 'package:oito2_ui/oito2_ui.dart';
 
 import '../widgets/showcase_widgets.dart';
 
-/// Shows [Oito2HighlightedText] matching a query as you type.
+/// Shows [Oito2HighlightedText] matching a query as you type, and its
+/// matching options.
 class HighlightedTextPage extends StatefulWidget {
   /// Creates the highlighted text page.
   const HighlightedTextPage({super.key});
@@ -30,6 +31,10 @@ class HighlightedTextPage extends StatefulWidget {
 class _HighlightedTextPageState extends State<HighlightedTextPage> {
   late final _controller = TextEditingController(text: 'acao conf');
   late String _query = _controller.text;
+  bool _ignoreCase = true;
+  bool _wholeWords = false;
+  bool _matchAll = true;
+  bool _splitWords = true;
 
   @override
   void dispose() {
@@ -69,6 +74,45 @@ class _HighlightedTextPageState extends State<HighlightedTextPage> {
                 for (final line in _lines)
                   Oito2HighlightedText(line, query: _query),
               ],
+            ),
+          ],
+        ),
+        ShowcaseSection(
+          'Options',
+          children: [
+            Oito2CheckButton(
+              value: _ignoreCase,
+              onChanged: (v) => setState(() => _ignoreCase = v ?? false),
+              title: const Text('Ignore case and accents'),
+            ),
+            Oito2CheckButton(
+              value: _wholeWords,
+              onChanged: (v) => setState(() => _wholeWords = v ?? false),
+              title: const Text('Whole words only'),
+            ),
+            Oito2CheckButton(
+              value: _matchAll,
+              onChanged: (v) => setState(() => _matchAll = v ?? false),
+              title: const Text('Every occurrence'),
+            ),
+            Oito2CheckButton(
+              value: _splitWords,
+              onChanged: (v) => setState(() => _splitWords = v ?? false),
+              title: const Text('Each word apart'),
+            ),
+          ],
+        ),
+        ShowcaseSection(
+          'Several queries: "ark", "ui" and "kit"',
+          children: [
+            Oito2HighlightedText(
+              'Ark UI builds UI kits; the ark sails past the UI kit shop.',
+              query: 'ark',
+              queries: const ['ui', 'kit'],
+              ignoreCase: _ignoreCase,
+              wholeWords: _wholeWords,
+              matchAll: _matchAll,
+              splitWords: _splitWords,
             ),
           ],
         ),

@@ -120,6 +120,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2BorderContainer.tinted`: a border and a translucent fill in one color, such as a status color.
 - `Oito2ChoiceChipBar.showCheckmark`, to mark the selection with the fill only.
 - `Oito2DialogTitleBar.leading`, such as an icon or an `Oito2AnimatedIcon` before the title.
+- `Oito2TabBar.style` with `Oito2TabBarStyle.subtle`: the selected tab tinted with a faint accent fill and accent text, the tabs sized to their labels from the leading edge.
+- `Oito2TagsField.style` with `Oito2TagsFieldStyle.subtle` (neutral tags with medium-weight text, the focused tag tinted with the accent) and `Oito2TagsField.clearable`, a button that removes every tag.
+- `Oito2Slider` and `Oito2RangeSlider`: Material sliders with a thick rounded track and ring thumbs, an optional label and value text, labeled `Oito2SliderMark`s along the track and a vertical orientation.
+- `Oito2SegmentGroup` with `Oito2Segment`: mutually exclusive choices on a recessed track with a raised marker that slides to the selected one, across or down, one stop in keyboard navigation with arrow-key selection.
+- `Oito2ToggleGroup` with `Oito2ToggleItem`: joined buttons that turn on and off, one or several at once (`multiple`, `deselectable`), across or down, with arrow-key focus and Space or Enter to toggle.
+- `Oito2ScrollArea` with `Oito2ScrollDirection`: a scrollable box with the themed scroll bars on the vertical, horizontal or both axes, and an optional undershoot shadow.
+- `Oito2HighlightedText.queries`, `splitWords`, `ignoreCase`, `wholeWords` and `matchAll`, also on `Oito2HighlightedText.matches`: several queries, whole phrases, case- and accent-sensitive matching, whole words only and the first occurrence only.
 
 ### Changed
 
@@ -149,6 +156,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2OptionButton` asserts that a button showing only an icon has a `label`.
 - `Oito2ChoiceChipBar` chips are pill-shaped.
 - `Oito2ColorDisk` is smaller (20 pixels by default) and marks the selection with a ring in its own color instead of a check mark; hover and keyboard focus show a fainter ring.
+- Menu items, including the `Oito2Select` and `Oito2PopupMenuButton` lists, show hover, keyboard focus and the selected item with the highlighted background only, without the focus ring border.
 
 ### Fixed
 

@@ -16,6 +16,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
+import 'widget_helpers.dart';
 
 /// A tab of an [Oito2TabBar]: a [label] with an optional [icon] beside
 /// it. A label wider than the tab ends with an ellipsis.
@@ -58,12 +59,24 @@ class Oito2Tab extends StatelessWidget {
   }
 }
 
-/// A row of tabs with a rounded pill marking the selected one, as in GNOME
-/// view switchers.
+/// The look of an [Oito2TabBar].
+enum Oito2TabBarStyle {
+  /// A pill in the secondary container color behind the selected tab, as in
+  /// GNOME view switchers.
+  pill,
+
+  /// The selected tab tinted with a faint accent fill and accent text, the
+  /// others plain; the tabs keep their own width and start at the leading
+  /// edge.
+  subtle,
+}
+
+/// A row of tabs with a rounded marker behind the selected one, a pill as
+/// in GNOME view switchers by default.
 ///
 /// It drives a [TabController] like Material's `TabBar`: the [controller]
-/// given, or the closest `DefaultTabController`. The pill uses the
-/// secondary container color and slides between tabs.
+/// given, or the closest `DefaultTabController`. The marker slides between
+/// tabs; [style] picks its look.
 class Oito2TabBar extends StatelessWidget implements PreferredSizeWidget {
   /// Creates a tab bar.
   const Oito2TabBar({
@@ -73,6 +86,7 @@ class Oito2TabBar extends StatelessWidget implements PreferredSizeWidget {
     this.onTap,
     this.isScrollable = false,
     this.tabHeight = Oito2Sizes.touchButtonHeight,
+    this.style = Oito2TabBarStyle.pill,
   });
 
   /// The tabs, usually [Oito2Tab]s.
@@ -93,6 +107,9 @@ class Oito2TabBar extends StatelessWidget implements PreferredSizeWidget {
   /// fits pointer platforms exactly.
   final double tabHeight;
 
+  /// The look of the selected tab marker.
+  final Oito2TabBarStyle style;
+
   @override
   Size get preferredSize => Size.fromHeight(tabHeight + 2 * Oito2Spacing.xs);
 
@@ -100,24 +117,34 @@ class Oito2TabBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final subtle = style == Oito2TabBarStyle.subtle;
+    final accent = semanticColorsOf(context).primaryText;
+    // The subtle tabs always keep their own width, so they line up at the
+    // leading edge.
+    final scrollable = isScrollable || subtle;
     return Padding(
       padding: const EdgeInsets.all(Oito2Spacing.xs),
       child: TabBar(
         controller: controller,
         onTap: onTap,
-        isScrollable: isScrollable,
-        tabAlignment: isScrollable ? TabAlignment.start : TabAlignment.fill,
+        isScrollable: scrollable,
+        tabAlignment: scrollable ? TabAlignment.start : TabAlignment.fill,
         tabs: tabs,
         dividerColor: Colors.transparent,
         indicatorSize: TabBarIndicatorSize.tab,
         indicator: ShapeDecoration(
-          color: scheme.secondaryContainer,
+          color: subtle
+              ? accent.withValues(alpha: 0.12)
+              : scheme.secondaryContainer,
           shape: const RoundedRectangleBorder(
             borderRadius: Oito2Radius.mediumAll,
           ),
         ),
+        indicatorPadding: subtle
+            ? const EdgeInsets.symmetric(horizontal: Oito2Spacing.xxs)
+            : EdgeInsets.zero,
         splashBorderRadius: Oito2Radius.mediumAll,
-        labelColor: scheme.onSecondaryContainer,
+        labelColor: subtle ? accent : scheme.onSecondaryContainer,
         unselectedLabelColor: scheme.onSurfaceVariant,
         labelStyle: theme.textTheme.labelLarge,
         unselectedLabelStyle: theme.textTheme.labelLarge,

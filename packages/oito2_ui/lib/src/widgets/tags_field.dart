@@ -24,6 +24,16 @@ import 'options_view.dart';
 import 'utilities.dart';
 import 'widget_helpers.dart';
 
+/// The look of the tags of an [Oito2TagsField].
+enum Oito2TagsFieldStyle {
+  /// Tags filled with the secondary container color.
+  filled,
+
+  /// Tags on a neutral fill with medium-weight text; the focused tag takes
+  /// a faint accent fill and accent text.
+  subtle,
+}
+
 /// A field of tags shown as chips, with a text input after them.
 ///
 /// Enter or a [delimiters] character adds the typed text as a tag; a
@@ -34,7 +44,8 @@ import 'widget_helpers.dart';
 /// Backspace or the start arrow in the empty input moves to the last tag;
 /// the arrow keys move between tags, and Backspace or Delete removes the
 /// focused one. With [suggestions], matching items not yet added show
-/// below the input as it is typed.
+/// below the input as it is typed. With [clearable], a button at the end
+/// removes every tag at once.
 class Oito2TagsField extends StatefulWidget {
   /// Creates a tags field.
   const Oito2TagsField({
@@ -49,6 +60,8 @@ class Oito2TagsField extends StatefulWidget {
     this.hintText,
     this.suggestions,
     this.focusNode,
+    this.style = Oito2TagsFieldStyle.filled,
+    this.clearable = false,
   });
 
   /// The tags, in order.
@@ -80,6 +93,13 @@ class Oito2TagsField extends StatefulWidget {
 
   /// The focus node of the text input; one is created when null.
   final FocusNode? focusNode;
+
+  /// The look of the tags.
+  final Oito2TagsFieldStyle style;
+
+  /// Whether a button at the end of the field removes every tag while the
+  /// field is editable and has tags.
+  final bool clearable;
 
   @override
   State<Oito2TagsField> createState() => _Oito2TagsFieldState();
@@ -183,6 +203,13 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
     });
   }
 
+  void _clear() {
+    if (!_enabled) return;
+    _controller.clear();
+    widget.onChanged!(const []);
+    _input.requestFocus();
+  }
+
   void _onTextChanged(String text) {
     final pattern = RegExp(widget.delimiters.map(RegExp.escape).join('|'));
     if (widget.delimiters.isEmpty || !text.contains(pattern)) return;
@@ -256,10 +283,29 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
     final scheme = theme.colorScheme;
     final tag = widget.tags[index];
     final strings = Oito2Localizations.of(context);
+    final node = _tagNodes[index];
+    final (fill, foreground, weight) = switch (widget.style) {
+      Oito2TagsFieldStyle.filled => (
+        scheme.secondaryContainer,
+        scheme.onSecondaryContainer,
+        null,
+      ),
+      Oito2TagsFieldStyle.subtle when node.hasFocus => (
+        semanticColorsOf(context).primaryText.withValues(alpha: 0.12),
+        semanticColorsOf(context).primaryText,
+        FontWeight.w500,
+      ),
+      Oito2TagsFieldStyle.subtle => (
+        scheme.surfaceContainerHighest,
+        scheme.onSurface,
+        FontWeight.w500,
+      ),
+    };
     return Oito2FocusBorder(
       borderRadius: Oito2Radius.smallAll,
       child: Focus(
-        focusNode: _tagNodes[index],
+        focusNode: node,
+        onFocusChange: (_) => setState(() {}),
         onKeyEvent: (_, event) => _onTagKey(index, event),
         child: Semantics(
           label: tag,
@@ -270,7 +316,7 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
               end: _enabled ? Oito2Spacing.xxs : Oito2Spacing.sm,
             ),
             decoration: BoxDecoration(
-              color: scheme.secondaryContainer,
+              color: fill,
               borderRadius: Oito2Radius.smallAll,
             ),
             child: Row(
@@ -280,7 +326,8 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
                   child: Text(
                     tag,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSecondaryContainer,
+                      color: foreground,
+                      fontWeight: weight,
                     ),
                   ),
                 ),
@@ -302,7 +349,7 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
                           child: Icon(
                             LucideIcons.x,
                             size: 14,
-                            color: scheme.onSecondaryContainer,
+                            color: foreground,
                           ),
                         ),
                       ),
@@ -389,6 +436,13 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
           decoration: InputDecoration(
             labelText: widget.labelText,
             enabled: _enabled,
+            suffixIcon: widget.clearable && _enabled && widget.tags.isNotEmpty
+                ? IconButton(
+                    onPressed: _clear,
+                    tooltip: Oito2Localizations.of(context).clear,
+                    icon: const Icon(LucideIcons.x),
+                  )
+                : null,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: Oito2Spacing.sm,
               vertical: Oito2Spacing.xs + 1,

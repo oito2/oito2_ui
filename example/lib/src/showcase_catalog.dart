@@ -74,12 +74,15 @@ import 'pages/qr_code_page.dart';
 import 'pages/radio_button_page.dart';
 import 'pages/radio_page.dart';
 import 'pages/rating_page.dart';
+import 'pages/scroll_area_page.dart';
 import 'pages/search_field_page.dart';
 import 'pages/section_page.dart';
+import 'pages/segment_group_page.dart';
 import 'pages/segmented_entry_page.dart';
 import 'pages/selectable_container_page.dart';
 import 'pages/sheet_page.dart';
 import 'pages/signature_pad_page.dart';
+import 'pages/slider_page.dart';
 import 'pages/split_button_page.dart';
 import 'pages/splitter_page.dart';
 import 'pages/steps_page.dart';
@@ -95,6 +98,7 @@ import 'pages/timer_page.dart';
 import 'pages/title_bar_page.dart';
 import 'pages/toast_page.dart';
 import 'pages/toggle_button_page.dart';
+import 'pages/toggle_group_page.dart';
 import 'pages/toggle_list_tile_page.dart';
 import 'pages/tour_page.dart';
 import 'pages/tree_view_page.dart';
@@ -472,6 +476,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const RatingPage()),
   ),
   ShowcasePage(
+    title: 'Oito2ScrollArea',
+    icon: LucideIcons.scroll_text,
+    source: 'scroll_area_page.dart',
+    builder: _page(const ScrollAreaPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2ScrollViewUndershoot',
     icon: LucideIcons.rows_2,
     source: 'undershoot_page.dart',
@@ -490,6 +500,12 @@ final List<ShowcasePage> showcasePages = [
     builder: _page(const SectionPage()),
   ),
   ShowcasePage(
+    title: 'Oito2SegmentGroup',
+    icon: LucideIcons.rectangle_ellipsis,
+    source: 'segment_group_page.dart',
+    builder: _page(const SegmentGroupPage()),
+  ),
+  ShowcasePage(
     title: 'Oito2SegmentedEntry',
     icon: LucideIcons.text_cursor_input,
     source: 'segmented_entry_page.dart',
@@ -506,6 +522,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.panel_right,
     source: 'sheet_page.dart',
     builder: _page(const SheetPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Slider',
+    icon: LucideIcons.sliders_horizontal,
+    source: 'slider_page.dart',
+    builder: _page(const SliderPage()),
   ),
   ShowcasePage(
     title: 'Oito2SplitButton',
@@ -590,6 +612,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.square_mouse_pointer,
     source: 'toggle_button_page.dart',
     builder: _page(const ToggleButtonPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2ToggleGroup',
+    icon: LucideIcons.toggle_left,
+    source: 'toggle_group_page.dart',
+    builder: _page(const ToggleGroupPage()),
   ),
   ShowcasePage(
     title: 'Oito2Tour',

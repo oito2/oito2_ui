@@ -55,7 +55,9 @@ MenuBarThemeData buildMenuBarTheme(ComponentThemeContext c) {
 
 /// Menu items: at least the control height, offsetting the visual density
 /// the item applies on top of it, the small radius and the medium body
-/// text.
+/// text. Items draw no border: hover, keyboard focus and the selected item
+/// show only the highlighted background, without the focus ring the button
+/// themes add.
 MenuButtonThemeData buildMenuButtonTheme(ComponentThemeContext c) {
   final density = c.platform.visualDensity.baseSizeAdjustment;
   return MenuButtonThemeData(
@@ -71,6 +73,7 @@ MenuButtonThemeData buildMenuButtonTheme(ComponentThemeContext c) {
       shape: const WidgetStatePropertyAll(
         RoundedRectangleBorder(borderRadius: Oito2Radius.smallAll),
       ),
+      side: const WidgetStatePropertyAll(BorderSide.none),
       visualDensity: c.platform.visualDensity,
     ),
   );

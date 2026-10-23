@@ -30,7 +30,8 @@ final _languages = Oito2ListCollection(const [
   'TypeScript',
 ]);
 
-/// Shows [Oito2TagsField] with suggestions and a tag limit.
+/// Shows [Oito2TagsField] with suggestions, a tag limit and the subtle
+/// style with a clear button.
 class TagsFieldPage extends StatefulWidget {
   /// Creates the tags field page.
   const TagsFieldPage({super.key});
@@ -42,6 +43,7 @@ class TagsFieldPage extends StatefulWidget {
 class _TagsFieldPageState extends State<TagsFieldPage> {
   List<String> _tags = ['Dart'];
   List<String> _emails = [];
+  List<String> _topics = ['React', 'Solid', 'Vue'];
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +76,22 @@ class _TagsFieldPageState extends State<TagsFieldPage> {
                 hintText: 'name@example.com',
                 validator: (tag) => tag.contains('@'),
                 onChanged: (v) => setState(() => _emails = v),
+              ),
+            ),
+          ],
+        ),
+        ShowcaseSection(
+          'Subtle style with a clear button; arrows focus a tag',
+          children: [
+            SizedBox(
+              width: 420,
+              child: Oito2TagsField(
+                tags: _topics,
+                labelText: 'Frameworks',
+                hintText: 'Add a framework',
+                style: Oito2TagsFieldStyle.subtle,
+                clearable: true,
+                onChanged: (v) => setState(() => _topics = v),
               ),
             ),
           ],

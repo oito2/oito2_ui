@@ -21,16 +21,22 @@ import 'widget_helpers.dart';
 /// Text with the matches of a search query emphasized, such as search
 /// results that show why each item matched.
 ///
-/// Each word of [query] is matched separately, ignoring case and accents
-/// ("acao" matches "Ação"); overlapping matches merge. Matches use
-/// [highlightStyle], which defaults to bold text in the text-safe primary
-/// tone.
+/// Each word of [query] and of [queries] is matched separately, ignoring
+/// case and accents ("acao" matches "Ação"); overlapping matches merge.
+/// [splitWords], [ignoreCase], [wholeWords] and [matchAll] change how terms
+/// match. Matches use [highlightStyle], which defaults to bold text in the
+/// text-safe primary tone.
 class Oito2HighlightedText extends StatelessWidget {
   /// Creates highlighted text.
   const Oito2HighlightedText(
     this.text, {
     super.key,
     required this.query,
+    this.queries = const [],
+    this.splitWords = true,
+    this.ignoreCase = true,
+    this.wholeWords = false,
+    this.matchAll = true,
     this.style,
     this.highlightStyle,
     this.maxLines,
@@ -43,6 +49,25 @@ class Oito2HighlightedText extends StatelessWidget {
 
   /// The search query; its words are highlighted.
   final String query;
+
+  /// More queries highlighted along with [query].
+  final List<String> queries;
+
+  /// Whether each word of a query matches on its own; when false, each
+  /// query matches as a whole phrase.
+  final bool splitWords;
+
+  /// Whether matching ignores case and accents; when false, matches must
+  /// have the same case and accents.
+  final bool ignoreCase;
+
+  /// Whether a term matches only whole words, not the start, middle or end
+  /// of a longer word.
+  final bool wholeWords;
+
+  /// Whether every occurrence of a term is highlighted; when false, only
+  /// its first occurrence.
+  final bool matchAll;
 
   /// The style of the text; defaults to the ambient text style.
   final TextStyle? style;
@@ -59,20 +84,49 @@ class Oito2HighlightedText extends StatelessWidget {
   /// The horizontal alignment.
   final TextAlign? textAlign;
 
-  /// The ranges of [text] that match the words of [query], ignoring case
-  /// and accents, sorted and merged where they overlap or touch.
-  static List<TextRange> matches(String text, String query) {
-    final (folded: haystack, :starts) = foldTextWithOffsets(text);
+  /// The ranges of [text] that match [query] and [queries], sorted and
+  /// merged where they overlap or touch. The options work as on the
+  /// widget: by default each word matches everywhere, ignoring case and
+  /// accents.
+  static List<TextRange> matches(
+    String text,
+    String query, {
+    List<String> queries = const [],
+    bool splitWords = true,
+    bool ignoreCase = true,
+    bool wholeWords = false,
+    bool matchAll = true,
+  }) {
+    final String haystack;
+    final List<int> starts;
+    if (ignoreCase) {
+      (folded: haystack, :starts) = foldTextWithOffsets(text);
+    } else {
+      haystack = text;
+      starts = List.generate(text.length + 1, (i) => i);
+    }
+    final terms = <String>[];
+    for (final raw in [query, ...queries]) {
+      final term = ignoreCase ? foldText(raw) : raw;
+      terms.addAll(splitWords ? term.split(RegExp(r'\s+')) : [term.trim()]);
+    }
+    bool isWordChar(int index) =>
+        index >= 0 &&
+        index < haystack.length &&
+        _wordChar.hasMatch(haystack[index]);
     final ranges = <TextRange>[];
-    for (final word in foldText(query).split(RegExp(r'\s+'))) {
-      if (word.isEmpty) continue;
+    for (final term in terms) {
+      if (term.isEmpty) continue;
       for (
-        var i = haystack.indexOf(word);
+        var i = haystack.indexOf(term);
         i >= 0;
-        i = haystack.indexOf(word, i + 1)
+        i = haystack.indexOf(term, i + 1)
       ) {
+        final end = i + term.length;
+        if (wholeWords && (isWordChar(i - 1) || isWordChar(end))) continue;
         // Back to indexes of [text], which may differ in length.
-        ranges.add(TextRange(start: starts[i], end: starts[i + word.length]));
+        ranges.add(TextRange(start: starts[i], end: starts[end]));
+        if (!matchAll) break;
       }
     }
     ranges.sort((a, b) => a.start - b.start);
@@ -103,7 +157,15 @@ class Oito2HighlightedText extends StatelessWidget {
         );
     final spans = <TextSpan>[];
     var position = 0;
-    for (final range in matches(text, query)) {
+    for (final range in matches(
+      text,
+      query,
+      queries: queries,
+      splitWords: splitWords,
+      ignoreCase: ignoreCase,
+      wholeWords: wholeWords,
+      matchAll: matchAll,
+    )) {
       if (range.start > position) {
         spans.add(TextSpan(text: text.substring(position, range.start)));
       }
@@ -121,3 +183,5 @@ class Oito2HighlightedText extends StatelessWidget {
     );
   }
 }
+
+final _wordChar = RegExp(r'[\p{L}\p{N}_]', unicode: true);

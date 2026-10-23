@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -164,6 +165,43 @@ void main() {
         ),
       );
       handle.dispose();
+    });
+
+    testWidgets('hovered and selected items draw no border', (tester) async {
+      await pumpOito2(
+        tester,
+        Center(
+          child: Oito2Select(
+            collection: _desktops,
+            value: 'kde',
+            onChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.tap(find.text('KDE Plasma'));
+      await tester.pumpAndSettle();
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      addTearDown(mouse.removePointer);
+      await mouse.moveTo(tester.getCenter(find.text('Xfce')));
+      await tester.pumpAndSettle();
+      BorderSide sideOf(String label) {
+        final material = tester.widget<Material>(
+          find
+              .descendant(
+                of: find.ancestor(
+                  of: find.text(label).last,
+                  matching: find.byType(MenuItemButton),
+                ),
+                matching: find.byType(Material),
+              )
+              .first,
+        );
+        return (material.shape! as OutlinedBorder).side;
+      }
+
+      expect(sideOf('Xfce'), BorderSide.none);
+      expect(sideOf('KDE Plasma'), BorderSide.none);
     });
 
     testWidgets('shows the placeholder without a value', (tester) async {
@@ -319,6 +357,33 @@ void main() {
         DefaultTabController.of(tester.element(find.text('About'))).index,
         1,
       );
+    });
+
+    testWidgets('the subtle style tints the selected tab at the start', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        const DefaultTabController(
+          length: 2,
+          child: Oito2TabBar(
+            style: Oito2TabBarStyle.subtle,
+            tabs: [
+              Oito2Tab(label: Text('General')),
+              Oito2Tab(label: Text('About')),
+            ],
+          ),
+        ),
+      );
+      final tabBar = tester.widget<TabBar>(find.byType(TabBar));
+      final scheme = Theme.of(tester.element(find.byType(TabBar))).colorScheme;
+      final fill = (tabBar.indicator! as ShapeDecoration).color!;
+      expect(fill, isNot(scheme.secondaryContainer));
+      expect(fill.a, closeTo(0.12, 0.01));
+      expect(tabBar.labelColor, fill.withValues(alpha: 1));
+      expect(tabBar.isScrollable, isTrue);
+      expect(tabBar.tabAlignment, TabAlignment.start);
+      expect(tester.getTopLeft(find.text('General')).dx, lessThan(100));
     });
 
     testWidgets('long labels end with an ellipsis instead of overflowing', (

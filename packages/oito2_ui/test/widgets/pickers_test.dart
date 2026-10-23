@@ -372,6 +372,8 @@ void main() {
       List<String> initial = const [],
       int? maxTags,
       Oito2ListCollection<String>? suggestions,
+      Oito2TagsFieldStyle style = Oito2TagsFieldStyle.filled,
+      bool clearable = false,
     }) => pumpOito2(
       tester,
       Padding(
@@ -386,11 +388,54 @@ void main() {
               maxTags: maxTags,
               suggestions: suggestions,
               hintText: 'Add tag',
+              style: style,
+              clearable: clearable,
             ),
           ),
         ),
       ),
     );
+
+    testWidgets('the subtle style tints only the focused tag', (tester) async {
+      await pumpTags(
+        tester,
+        initial: ['dart', 'linux'],
+        style: Oito2TagsFieldStyle.subtle,
+      );
+      final scheme = Theme.of(tester.element(find.text('dart'))).colorScheme;
+      Color fillOf(String tag) =>
+          (tester
+                      .widget<Container>(
+                        find
+                            .ancestor(
+                              of: find.text(tag),
+                              matching: find.byType(Container),
+                            )
+                            .first,
+                      )
+                      .decoration!
+                  as BoxDecoration)
+              .color!;
+      expect(fillOf('dart'), scheme.surfaceContainerHighest);
+      expect(fillOf('linux'), scheme.surfaceContainerHighest);
+      expect(
+        tester.widget<Text>(find.text('dart')).style?.fontWeight,
+        FontWeight.w500,
+      );
+      await tester.tap(find.byType(TextField));
+      await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+      await tester.pump();
+      expect(fillOf('linux'), isNot(scheme.surfaceContainerHighest));
+      expect(fillOf('dart'), scheme.surfaceContainerHighest);
+    });
+
+    testWidgets('the clear button removes every tag', (tester) async {
+      await pumpTags(tester, initial: ['dart', 'linux'], clearable: true);
+      await tester.tap(find.byTooltip('Clear'));
+      await tester.pump();
+      expect(_hostValue<List<String>>(tester), isEmpty);
+      expect(find.byTooltip('Clear'), findsNothing);
+    });
 
     testWidgets('Enter and delimiters add tags; repeats are refused', (
       tester,
