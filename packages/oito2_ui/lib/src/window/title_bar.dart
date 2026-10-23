@@ -64,6 +64,7 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
     this.border,
     this.height,
     this.isDraggable = true,
+    this.interactiveTitle = false,
   });
 
   /// The title, usually a [Text].
@@ -123,6 +124,11 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
 
   /// Whether dragging the bar moves the window.
   final bool isDraggable;
+
+  /// Whether [title] takes pointer input, for a title such as tabs or a
+  /// search field; otherwise pointer input over a title, such as a text,
+  /// moves the window like the rest of the bar.
+  final bool interactiveTitle;
 
   @override
   Size get preferredSize => Size.fromHeight(
@@ -257,6 +263,7 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
       middle: title == null
           ? null
           : IgnorePointer(
+              ignoring: !interactiveTitle,
               child: DefaultTextStyle(
                 style: titleStyle,
                 maxLines: 1,
@@ -360,6 +367,7 @@ class Oito2WindowTitleBar extends StatelessWidget
     this.buttonSides = Oito2WindowButtonSides.both,
     this.backgroundColor,
     this.border,
+    this.interactiveTitle = false,
   });
 
   /// The title, usually a [Text].
@@ -399,6 +407,10 @@ class Oito2WindowTitleBar extends StatelessWidget
   /// The bottom border on desktop and the web; defaults to the theme.
   final BorderSide? border;
 
+  /// Whether [title] takes pointer input; see
+  /// [Oito2TitleBar.interactiveTitle].
+  final bool interactiveTitle;
+
   @override
   Size get preferredSize {
     final target = platform ?? Oito2Platform.current();
@@ -433,6 +445,7 @@ class Oito2WindowTitleBar extends StatelessWidget
         isDraggable: false,
         backgroundColor: backgroundColor,
         border: border,
+        interactiveTitle: interactiveTitle,
       );
     }
 
@@ -461,6 +474,7 @@ class Oito2WindowTitleBar extends StatelessWidget
           : 0,
       backgroundColor: backgroundColor,
       border: border,
+      interactiveTitle: interactiveTitle,
     );
 
     if (controller == null || !nativeButtons) {

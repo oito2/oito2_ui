@@ -66,7 +66,9 @@ class UndershootPage extends StatelessWidget {
         const DocText(
           'The shadows follow the scroll direction: in a horizontal scroll '
           'view they sit at the start and end sides, mirrored in '
-          'right-to-left layouts.',
+          'right-to-left layouts. The vertical mouse wheel and mouse drags '
+          'scroll it too, which Flutter otherwise leaves to Shift+wheel and '
+          'touch; `pointerScrolling: false` turns that off.',
         ),
         ExamplePanel(
           region: 'horizontal',

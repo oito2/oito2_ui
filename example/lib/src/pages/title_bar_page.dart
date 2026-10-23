@@ -13,46 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
 import '../docs/doc_widgets.dart';
-
-/// A window controller for the title bar previews: it toggles the
-/// maximized state and ignores the other actions, so the previews never
-/// affect the real window.
-class _PreviewWindowController implements Oito2WindowController {
-  final ValueNotifier<Oito2WindowState> _state = ValueNotifier(
-    const Oito2WindowState(),
-  );
-
-  @override
-  ValueListenable<Oito2WindowState> get state => _state;
-
-  /// Sets whether the previewed window is active.
-  set isActive(bool value) =>
-      _state.value = _state.value.copyWith(isActive: value);
-
-  @override
-  Future<void> toggleMaximize() async => _state.value = _state.value.copyWith(
-    isMaximized: !_state.value.isMaximized,
-  );
-
-  @override
-  Future<void> minimize() async {}
-
-  @override
-  Future<void> close() async {}
-
-  @override
-  Future<void> startDrag() async {}
-
-  @override
-  Future<void> showMenu() async {}
-
-  void dispose() => _state.dispose();
-}
+import '../widgets/preview_window_controller.dart';
 
 /// Documents [Oito2TitleBar], [Oito2WindowTitleBar] and the window
 /// controls in every control style and button layout, and the inactive
@@ -66,7 +31,7 @@ class TitleBarPage extends StatefulWidget {
 }
 
 class _TitleBarPageState extends State<TitleBarPage> {
-  final _preview = _PreviewWindowController();
+  final _preview = PreviewWindowController();
   bool _active = true;
 
   static const _styles = [

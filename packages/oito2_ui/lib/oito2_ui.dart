@@ -109,6 +109,7 @@ export 'src/widgets/toggles.dart';
 export 'src/widgets/tour.dart';
 export 'src/widgets/tree_view.dart';
 export 'src/widgets/utilities.dart';
+export 'src/window/header_bar.dart';
 export 'src/window/title_bar.dart';
 export 'src/window/title_bar_gesture_detector.dart';
 export 'src/window/title_bar_theme.dart';

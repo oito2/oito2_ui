@@ -131,6 +131,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2HighlightedText.queries`, `splitWords`, `ignoreCase`, `wholeWords` and `matchAll`, also on `Oito2HighlightedText.matches`: several queries, whole phrases, case- and accent-sensitive matching, whole words only and the first occurrence only.
 - `Oito2CopyButton.onError` and `Oito2CopyField.onError`: a copy the platform refuses shows a cross and "Couldn't copy" and reports the error.
 - `Oito2Draggable.semanticLabel`, with a hint about the arrow keys and accessibility actions that move it up, down, left and right.
+- `Oito2HeaderBar` and `Oito2HeaderBarSearch`: a window title bar with buttons and menus at both ends, a title or centered tabs in the middle, a search that replaces the title, and a main menu button.
+- `Oito2TitleBar.interactiveTitle` and `Oito2WindowTitleBar.interactiveTitle`, for a title that takes clicks, such as tabs or a search field.
+- `Oito2ChoiceChipBar.shape`, such as a `StadiumBorder` for pill-shaped chips.
+- `Oito2ScrollViewUndershoot.pointerScrolling` (on by default): a horizontal scroll view also scrolls with the vertical mouse wheel and with mouse drags.
 
 ### Changed
 
@@ -158,7 +162,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2Rating` aligns values to its step and takes the focus on a click.
 - `Oito2TagsField` keeps a single tag refused as its delimiter is typed in the field, as with Enter.
 - `Oito2OptionButton` asserts that a button showing only an icon has a `label`.
-- `Oito2ChoiceChipBar` chips are pill-shaped.
+- `Oito2ChoiceChipBar` chips take the chip theme's rounded corners, like the other chips; `shape` gives them another outline.
 - `Oito2ColorDisk` is smaller (20 pixels by default) and marks the selection with a ring in its own color instead of a check mark; hover and keyboard focus show a fainter ring.
 - Menu items, including the `Oito2Select` and `Oito2PopupMenuButton` lists, show hover, keyboard focus and the selected item with the highlighted background only, without the focus ring border.
 - `Oito2ExpansionPanel.onExpansionChanged` also reports the sections `collapseOnExpand` closes, before the one that opened; the length check of `headers` and `children` runs on every build.

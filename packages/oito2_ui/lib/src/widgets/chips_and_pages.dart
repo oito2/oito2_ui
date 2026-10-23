@@ -32,7 +32,8 @@ enum Oito2ChoiceChipBarStyle {
   wrap,
 }
 
-/// A bar of pill-shaped [ChoiceChip]s for picking one or more filters.
+/// A bar of [ChoiceChip]s for picking one or more filters, shaped by the
+/// chip theme unless [shape] is given.
 ///
 /// A selected chip shows the secondary container fill and, with
 /// [showCheckmark], a check mark before its label.
@@ -56,6 +57,7 @@ class Oito2ChoiceChipBar extends StatefulWidget {
     this.previousLabel,
     this.nextLabel,
     this.showCheckmark = true,
+    this.shape,
   }) : assert(labels.length == isSelected.length);
 
   /// The chip labels, usually [Text]s.
@@ -87,6 +89,10 @@ class Oito2ChoiceChipBar extends StatefulWidget {
   /// Whether a selected chip shows a check mark; without it only the fill
   /// marks the selection.
   final bool showCheckmark;
+
+  /// The outline of the chips, such as a `StadiumBorder` for pills; the
+  /// chip theme's rounded rectangle when null.
+  final OutlinedBorder? shape;
 
   @override
   State<Oito2ChoiceChipBar> createState() => _Oito2ChoiceChipBarState();
@@ -151,7 +157,7 @@ class _Oito2ChoiceChipBarState extends State<Oito2ChoiceChipBar> {
         label: widget.labels[i],
         selected: widget.isSelected[i],
         showCheckmark: widget.showCheckmark,
-        shape: const StadiumBorder(),
+        shape: widget.shape,
         onSelected: widget.onSelected == null
             ? null
             : (_) => widget.onSelected!(i),

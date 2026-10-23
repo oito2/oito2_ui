@@ -217,6 +217,9 @@ abstract class Oito2Localizations {
   /// The hint of a widget the arrow keys move.
   String get moveWithArrowKeys;
 
+  /// The tooltip of the button that opens an app's main menu.
+  String get mainMenu;
+
   /// The accessibility action that moves a widget up.
   String get moveUp;
 
@@ -555,6 +558,9 @@ class Oito2LocalizationsEn extends Oito2Localizations {
   String get moveWithArrowKeys => 'Use the arrow keys to move it';
 
   @override
+  String get mainMenu => 'Main menu';
+
+  @override
   String get moveUp => 'Move up';
 
   @override
@@ -881,6 +887,9 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String get moveWithArrowKeys => 'Use as setas do teclado para mover';
+
+  @override
+  String get mainMenu => 'Menu principal';
 
   @override
   String get moveUp => 'Mover para cima';

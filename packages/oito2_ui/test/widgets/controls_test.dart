@@ -413,20 +413,34 @@ void main() {
         Text(name),
     ];
 
-    testWidgets('chips are pills; the check mark is optional', (tester) async {
-      Widget bar({required bool check}) => SizedBox(
+    testWidgets('chips follow the chip theme unless shaped; the check mark '
+        'is optional', (tester) async {
+      Widget bar({required bool check, OutlinedBorder? shape}) => SizedBox(
         width: 360,
         child: Oito2ChoiceChipBar(
           labels: labels,
           isSelected: [for (var i = 0; i < labels.length; i++) i == 0],
           onSelected: (_) {},
           showCheckmark: check,
+          shape: shape,
         ),
       );
       await pumpOito2(tester, bar(check: true));
       final chip = tester.widget<ChoiceChip>(find.byType(ChoiceChip).first);
-      expect(chip.shape, isA<StadiumBorder>());
+      // Without a shape, the chip theme's rounded rectangle applies.
+      expect(chip.shape, isNull);
+      final themed = ChipTheme.of(tester.element(find.byType(ChoiceChip).first))
+          .shape;
+      expect(
+        (themed! as RoundedRectangleBorder).borderRadius,
+        Oito2Radius.mediumAll,
+      );
       expect(chip.showCheckmark, isTrue);
+      await pumpOito2(tester, bar(check: true, shape: const StadiumBorder()));
+      expect(
+        tester.widget<ChoiceChip>(find.byType(ChoiceChip).first).shape,
+        isA<StadiumBorder>(),
+      );
       await pumpOito2(tester, bar(check: false));
       expect(
         tester.widget<ChoiceChip>(find.byType(ChoiceChip).first).showCheckmark,

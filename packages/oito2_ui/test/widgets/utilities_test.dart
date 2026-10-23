@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -220,6 +221,76 @@ void main() {
           .toList(),
       [1, 0],
     );
+  });
+
+  testWidgets('Oito2ScrollViewUndershoot scrolls a horizontal view with '
+      'the mouse wheel and mouse drags', (tester) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    await pumpOito2(
+      tester,
+      SizedBox(
+        height: 100,
+        width: 300,
+        child: Oito2ScrollViewUndershoot(
+          child: ListView(
+            controller: controller,
+            scrollDirection: Axis.horizontal,
+            children: [
+              for (var i = 0; i < 40; i++)
+                SizedBox(width: 60, child: Text('$i')),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final center = tester.getCenter(find.byType(ListView));
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    await tester.sendEventToBinding(pointer.hover(center));
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, 120)));
+    await tester.pumpAndSettle();
+    expect(controller.offset, 120);
+    await tester.dragFrom(
+      center,
+      const Offset(-100, 0),
+      kind: PointerDeviceKind.mouse,
+    );
+    await tester.pumpAndSettle();
+    expect(controller.offset, greaterThan(150));
+  });
+
+  testWidgets('Oito2ScrollViewUndershoot leaves the wheel alone when asked', (
+    tester,
+  ) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    await pumpOito2(
+      tester,
+      SizedBox(
+        height: 100,
+        width: 300,
+        child: Oito2ScrollViewUndershoot(
+          pointerScrolling: false,
+          child: ListView(
+            controller: controller,
+            scrollDirection: Axis.horizontal,
+            children: [
+              for (var i = 0; i < 40; i++)
+                SizedBox(width: 60, child: Text('$i')),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    await tester.sendEventToBinding(
+      pointer.hover(tester.getCenter(find.byType(ListView))),
+    );
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, 120)));
+    await tester.pumpAndSettle();
+    expect(controller.offset, 0);
   });
 
   testWidgets('Oito2ScrollViewUndershoot ignores nested scroll views', (

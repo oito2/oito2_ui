@@ -58,7 +58,7 @@ class _ChoiceChipBarPageState extends State<ChoiceChipBarPage> {
     return DocPage(
       title: 'Choice Chip Bar',
       description:
-          'A bar of pill-shaped chips for picking one or more filters, in a '
+          'A bar of chips for picking one or more filters, in a '
           'scrolling row or wrapped over several rows.',
       source: 'lib/src/pages/choice_chip_bar_page.dart',
       children: [
@@ -131,6 +131,29 @@ class _ChoiceChipBarPageState extends State<ChoiceChipBarPage> {
             // #region wrap
             child: Oito2ChoiceChipBar(
               style: Oito2ChoiceChipBarStyle.wrap,
+              labels: [for (final name in _categories) Text(name)],
+              isSelected: [
+                for (var i = 0; i < _categories.length; i++)
+                  _selected.contains(i),
+              ],
+              onSelected: _toggle,
+            ),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Pills', level: 3),
+        const DocText(
+          'The chips take the chip theme\'s rounded corners. `shape` '
+          'replaces them, such as a `StadiumBorder` for pill-shaped chips.',
+        ),
+        ExamplePanel(
+          region: 'pills',
+          child: SizedBox(
+            width: 420,
+            // #region pills
+            child: Oito2ChoiceChipBar(
+              style: Oito2ChoiceChipBarStyle.wrap,
+              shape: const StadiumBorder(),
               labels: [for (final name in _categories) Text(name)],
               isSelected: [
                 for (var i = 0; i < _categories.length; i++)

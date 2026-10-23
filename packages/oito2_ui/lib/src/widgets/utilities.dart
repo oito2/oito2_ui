@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -141,7 +142,10 @@ class _Oito2EdgeFocusInterceptorState extends State<Oito2EdgeFocusInterceptor> {
 /// Fades a soft shadow in at the start and end edges of a scrollable
 /// [child] while there is more content beyond them.
 ///
-/// Works with any scroll view below it; no controller is needed.
+/// Works with any scroll view below it; no controller is needed. With
+/// [pointerScrolling], a horizontal scroll view also scrolls with the
+/// vertical mouse wheel and with mouse drags, which Flutter leaves to
+/// Shift+wheel and touch by default.
 class Oito2ScrollViewUndershoot extends StatefulWidget {
   /// Creates a scroll undershoot.
   const Oito2ScrollViewUndershoot({
@@ -150,6 +154,7 @@ class Oito2ScrollViewUndershoot extends StatefulWidget {
     this.start = true,
     this.end = true,
     this.extent = Oito2Spacing.md,
+    this.pointerScrolling = true,
   });
 
   /// The scroll view.
@@ -164,6 +169,10 @@ class Oito2ScrollViewUndershoot extends StatefulWidget {
   /// The depth of the shadows, in logical pixels.
   final double extent;
 
+  /// Whether a horizontal scroll view below scrolls with the vertical
+  /// mouse wheel and with mouse drags.
+  final bool pointerScrolling;
+
   @override
   State<Oito2ScrollViewUndershoot> createState() =>
       _Oito2ScrollViewUndershootState();
@@ -173,6 +182,9 @@ class _Oito2ScrollViewUndershootState extends State<Oito2ScrollViewUndershoot> {
   bool _before = false;
   bool _after = false;
   AxisDirection _direction = AxisDirection.down;
+
+  /// The position of the direct scroll view, read from its notifications.
+  ScrollPosition? _position;
 
   Axis get _axis => axisDirectionToAxis(_direction);
 
@@ -206,6 +218,32 @@ class _Oito2ScrollViewUndershootState extends State<Oito2ScrollViewUndershoot> {
       update();
     }
     return false;
+  }
+
+  /// Remembers the position of the scroll view that notified from
+  /// [context], then records its [metrics]. Returns false so the
+  /// notification keeps bubbling.
+  bool _onNotification(BuildContext? context, ScrollMetrics metrics) {
+    if (context != null) _position = Scrollable.maybeOf(context)?.position;
+    return _onMetrics(metrics);
+  }
+
+  /// Scrolls a horizontal scroll view by the vertical part of a mouse
+  /// wheel event that the scroll view itself doesn't take.
+  void _onPointerSignal(PointerSignalEvent event) {
+    final position = _position;
+    if (!widget.pointerScrolling ||
+        event is! PointerScrollEvent ||
+        position == null ||
+        _axis != Axis.horizontal) {
+      return;
+    }
+    final delta = event.scrollDelta;
+    if (delta.dy == 0 || delta.dx.abs() >= delta.dy.abs()) return;
+    GestureBinding.instance.pointerSignalResolver.register(
+      event,
+      (_) => position.pointerScroll(delta.dy),
+    );
   }
 
   /// Whether the scroll's leading end, where [_before] counts, lies at the
@@ -271,16 +309,35 @@ class _Oito2ScrollViewUndershootState extends State<Oito2ScrollViewUndershoot> {
 
   @override
   Widget build(BuildContext context) {
+    final ambient = ScrollConfiguration.of(context);
+    final mouseDrags = widget.pointerScrolling && _axis == Axis.horizontal;
     // Only the direct scroll view counts, not scroll views nested in it.
     return NotificationListener<ScrollMetricsNotification>(
       onNotification: (notification) =>
-          notification.depth == 0 && _onMetrics(notification.metrics),
+          notification.depth == 0 &&
+          _onNotification(notification.context, notification.metrics),
       child: NotificationListener<ScrollNotification>(
         onNotification: (notification) =>
-            notification.depth == 0 && _onMetrics(notification.metrics),
+            notification.depth == 0 &&
+            _onNotification(notification.context, notification.metrics),
         child: Stack(
           children: [
-            widget.child,
+            Listener(
+              onPointerSignal: _onPointerSignal,
+              // The configuration stays in the tree either way, so turning
+              // mouse drags on keeps the scroll view and its position.
+              child: ScrollConfiguration(
+                behavior: mouseDrags
+                    ? ambient.copyWith(
+                        dragDevices: {
+                          ...ambient.dragDevices,
+                          PointerDeviceKind.mouse,
+                        },
+                      )
+                    : ambient,
+                child: widget.child,
+              ),
+            ),
             if (widget.start) _shadow(true),
             if (widget.end) _shadow(false),
           ],
