@@ -16,9 +16,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
-/// Shows [Oito2SwitchButton] with and without a subtitle.
+/// Documents [Oito2SwitchButton]: plain, with a subtitle and disabled.
 class SwitchButtonPage extends StatefulWidget {
   /// Creates the switch button page.
   const SwitchButtonPage({super.key});
@@ -28,41 +28,92 @@ class SwitchButtonPage extends StatefulWidget {
 }
 
 class _SwitchButtonPageState extends State<SwitchButtonPage> {
-  bool _dark = false;
   bool _sounds = true;
+  bool _dark = false;
 
   @override
   Widget build(BuildContext context) {
-    return ShowcasePageBody(
+    return DocPage(
+      title: 'Switch Button',
+      description:
+          'A switch with a clickable label before it, for a setting that '
+          'takes effect at once.',
+      source: 'lib/src/pages/switch_button_page.dart',
       children: [
-        ShowcaseSection(
-          'Switch buttons',
-          children: [
-            SizedBox(
-              width: 320,
-              child: Column(
-                children: [
-                  Oito2SwitchButton(
-                    value: _dark,
-                    onChanged: (v) => setState(() => _dark = v),
-                    title: const Text('Dark style'),
-                    subtitle: const Text('Applies to this window'),
-                  ),
-                  Oito2SwitchButton(
-                    value: _sounds,
-                    onChanged: (v) => setState(() => _sounds = v),
-                    title: const Text('Alert sounds'),
-                  ),
-                  const Oito2SwitchButton(
-                    value: false,
-                    onChanged: null,
-                    title: Text('Unavailable option'),
-                  ),
-                ],
-              ),
+        ExamplePanel(
+          region: 'preview',
+          // #region preview
+          child: Oito2SwitchButton(
+            value: _sounds,
+            onChanged: (value) => setState(() => _sounds = value),
+            title: const Text('Alert sounds'),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Usage'),
+        const DocText(
+          'Give `Oito2SwitchButton` a `title` and the current `value`, and '
+          'update the value in `onChanged`. The label comes first and the '
+          'switch after it; a click anywhere on the row toggles it. A null '
+          '`onChanged` disables the button and dims its text.',
+        ),
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocNote(
+          'The switch button is an `Oito2Switch` inside an '
+          '`Oito2ToggleButton`. In a list of tiles, use '
+          '`Oito2SwitchListTile`.',
+        ),
+        const DocHeading('Examples'),
+        const DocHeading('With a subtitle', level: 3),
+        const DocText(
+          'A `subtitle` adds secondary text under the label. Give the button '
+          'a bounded width so the text wraps.',
+        ),
+        ExamplePanel(
+          region: 'subtitle',
+          child: SizedBox(
+            width: 320,
+            // #region subtitle
+            child: Oito2SwitchButton(
+              value: _dark,
+              onChanged: (value) => setState(() => _dark = value),
+              title: const Text('Dark style'),
+              subtitle: const Text('Applies to this window'),
             ),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Disabled', level: 3),
+        const DocText(
+          'Without `onChanged`, the button keeps showing its value but '
+          'can\'t be changed.',
+        ),
+        const ExamplePanel(
+          region: 'disabled',
+          // #region disabled
+          child: Oito2SwitchButton(
+            value: false,
+            onChanged: null,
+            title: Text('Unavailable option'),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'The row reads as one element to assistive technologies: the '
+          'label with the on or off state of the switch. It takes keyboard '
+          'focus as a whole and shows the focus ring around itself; the '
+          'switch inside is kept out of focus traversal.',
+        ),
+        const DocHeading('Keyboard', level: 3),
+        const DocTable(
+          header: ['Key', 'Action'],
+          rows: [
+            ['`Tab`', 'Moves the focus to the button, and out of it.'],
+            ['`Space` / `Enter`', 'Toggles the focused button.'],
           ],
         ),
+        ...apiReferenceWidgets(['Oito2SwitchButton']),
       ],
     );
   }

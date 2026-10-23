@@ -16,54 +16,138 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
-/// Shows [Oito2ExpansionPanel] as an accordion and with independent
-/// sections.
-class ExpansionPanelPage extends StatelessWidget {
+// #region data
+const _headers = [
+  Text('What is oito2_ui?'),
+  Text('Which platforms does it support?'),
+  Text('Is it free software?'),
+];
+const _answers = [
+  Text('A Material 3 design system for the oito2 Flutter apps.'),
+  Text('Linux desktops, Windows, macOS, Android, iOS and the web.'),
+  Text('Yes, under the GNU GPL version 3 or later.'),
+];
+// #endregion
+
+/// Documents [Oito2ExpansionPanel]: an accordion, independent sections
+/// and change reports.
+class ExpansionPanelPage extends StatefulWidget {
   /// Creates the expansion panel page.
   const ExpansionPanelPage({super.key});
 
   @override
+  State<ExpansionPanelPage> createState() => _ExpansionPanelPageState();
+}
+
+class _ExpansionPanelPageState extends State<ExpansionPanelPage> {
+  final List<String> _log = [];
+
+  @override
   Widget build(BuildContext context) {
-    const headers = [
-      Text('What is oito2_ui?'),
-      Text('Which platforms does it support?'),
-      Text('Is it free software?'),
-    ];
-    const answers = [
-      Text('A Material 3 design system for the oito2 Flutter apps.'),
-      Text('Linux desktops, Windows, macOS, Android, iOS and the web.'),
-      Text('Yes, under the GNU GPL version 3 or later.'),
-    ];
-    return const ShowcasePageBody(
+    return DocPage(
+      title: 'Expansion Panel',
+      description:
+          'A bordered stack of sections whose headers show or hide their '
+          'content, as an accordion.',
+      source: 'lib/src/pages/expansion_panel_page.dart',
       children: [
-        ShowcaseSection(
-          'Accordion: one section open at a time',
-          children: [
-            SizedBox(
-              width: 480,
-              child: Oito2ExpansionPanel(
-                initiallyExpanded: {0},
-                headers: headers,
-                children: answers,
-              ),
+        const ExamplePanel(
+          regions: ['data', 'preview'],
+          child: SizedBox(
+            width: 480,
+            // #region preview
+            child: Oito2ExpansionPanel(
+              initiallyExpanded: {0},
+              headers: _headers,
+              children: _answers,
             ),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Usage'),
+        const DocText(
+          'Give `Oito2ExpansionPanel` the section `headers` and their '
+          '`children`, paired by index; there must be one child per header. '
+          '`initiallyExpanded` lists the indexes of the sections open at '
+          'start. The panel keeps which sections are open itself, and each '
+          'section is an `Oito2Expandable`.',
+        ),
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocText(
+          'By default `collapseOnExpand` is true: opening a section closes '
+          'the others, so at most one is open, and only the first index of '
+          '`initiallyExpanded` opens. Dividers separate the sections unless '
+          '`placeDividers` is false, and `padding` sets the space around '
+          'each one.',
+        ),
+        const DocHeading('Examples'),
+        const DocHeading('Independent sections', level: 3),
+        const DocText(
+          'With `collapseOnExpand: false`, each section opens and closes on '
+          'its own.',
+        ),
+        const ExamplePanel(
+          region: 'independent',
+          child: SizedBox(
+            width: 480,
+            // #region independent
+            child: Oito2ExpansionPanel(
+              collapseOnExpand: false,
+              headers: _headers,
+              children: _answers,
+            ),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Reacting to changes', level: 3),
+        const DocText(
+          '`onExpansionChanged` receives the index of each section that '
+          'opens or closes and whether it is now open. The sections that '
+          '`collapseOnExpand` closes are reported first, then the one that '
+          'opened.',
+        ),
+        ExamplePanel(
+          region: 'callback',
+          child: SizedBox(
+            width: 480,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: Oito2Spacing.sm,
+              children: [
+                // #region callback
+                Oito2ExpansionPanel(
+                  headers: _headers,
+                  onExpansionChanged: (index, expanded) => setState(
+                    () => _log.add('${index + 1} ${expanded ? '+' : '−'}'),
+                  ),
+                  children: _answers,
+                ),
+                Text(
+                  'Changes: ${_log.reversed.take(6).join(', ')}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                // #endregion
+              ],
+            ),
+          ),
+        ),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'Each header is a button that reports whether its section is '
+          'expanded, as in `Oito2Expandable`.',
+        ),
+        const DocHeading('Keyboard', level: 3),
+        const DocTable(
+          header: ['Key', 'Action'],
+          rows: [
+            ['`Tab`', 'Moves the focus to the next header.'],
+            ['`Enter` / `Space`', 'Opens or closes the focused section.'],
           ],
         ),
-        ShowcaseSection(
-          'Independent sections',
-          children: [
-            SizedBox(
-              width: 480,
-              child: Oito2ExpansionPanel(
-                collapseOnExpand: false,
-                headers: headers,
-                children: answers,
-              ),
-            ),
-          ],
-        ),
+        ...apiReferenceWidgets(['Oito2ExpansionPanel', 'Oito2Expandable']),
       ],
     );
   }

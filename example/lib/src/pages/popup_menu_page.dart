@@ -16,8 +16,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
+// #region select-data
 final _desktops = Oito2ListCollection(
   const [
     ('gnome', 'GNOME', 'GTK'),
@@ -31,8 +32,9 @@ final _desktops = Oito2ListCollection(
   groupOf: (d) => d.$3,
   isDisabled: (d) => d.$1 == 'lxqt',
 );
+// #endregion
 
-/// Shows [Oito2PopupMenuButton] with single and multiple choices, and
+/// Documents [Oito2PopupMenuButton] with single and multiple choices, and
 /// [Oito2Select] over a grouped collection.
 class PopupMenuPage extends StatefulWidget {
   /// Creates the popup menu page.
@@ -49,59 +51,129 @@ class _PopupMenuPageState extends State<PopupMenuPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ShowcasePageBody(
+    return DocPage(
+      title: 'Popup Menu',
+      description:
+          'A button that looks like a field and opens a menu of choices '
+          'below it.',
+      source: 'lib/src/pages/popup_menu_page.dart',
       children: [
-        ShowcaseSection(
-          'Single choice',
-          children: [
-            Oito2PopupMenuButton(
-              leading: const Icon(LucideIcons.arrow_down_up, size: 18),
-              menuChildren: [
-                for (final option in ['Name', 'Size', 'Modified'])
-                  Oito2CheckedMenuItem(
-                    checked: _sort == option,
-                    onPressed: () => setState(() => _sort = option),
-                    child: Text(option),
+        ExamplePanel(
+          region: 'preview',
+          // #region preview
+          child: Oito2PopupMenuButton(
+            leading: const Icon(LucideIcons.arrow_down_up, size: 18),
+            menuChildren: [
+              for (final option in ['Name', 'Size', 'Modified'])
+                Oito2CheckedMenuItem(
+                  checked: _sort == option,
+                  onPressed: () => setState(() => _sort = option),
+                  child: Text(option),
+                ),
+            ],
+            child: Text('Sort by: $_sort'),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Usage'),
+        const DocText(
+          '`Oito2PopupMenuButton` shows its `child`, usually the current '
+          'choice, with a chevron, and opens `menuChildren` below it. The '
+          'menu is a `MenuAnchor`: use `Oito2CheckedMenuItem` for a single '
+          'choice, `Oito2MultiSelectMenuItem` for several, or any '
+          '`MenuItemButton`. The button is as tall as the text fields, and '
+          'long labels end with an ellipsis.',
+        ),
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocNote(
+          'For a few short choices that fit side by side, a segmented button '
+          'is quicker to use. To pick a value of a collection, use '
+          '`Oito2Select`.',
+        ),
+        const DocHeading('Examples'),
+        const DocHeading('Multiple choices', level: 3),
+        const DocText(
+          '`Oito2MultiSelectMenuItem` shows a check box and calls '
+          '`onChanged` with the new state. The menu stays open, so several '
+          'items can be toggled in a row.',
+        ),
+        ExamplePanel(
+          region: 'multiple',
+          // #region multiple
+          child: Oito2PopupMenuButton(
+            menuChildren: [
+              for (final column in ['Size', 'Type', 'Modified', 'Owner'])
+                Oito2MultiSelectMenuItem(
+                  checked: _columns.contains(column),
+                  onChanged: (on) => setState(
+                    () => on ? _columns.add(column) : _columns.remove(column),
                   ),
-              ],
-              child: Text('Sort by: $_sort'),
-            ),
+                  child: Text(column),
+                ),
+            ],
+            child: Text('Columns (${_columns.length})'),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Select', level: 3),
+        const DocText(
+          '`Oito2Select` picks one value of an `Oito2ListCollection`. The '
+          'button shows the selected item\'s label, or `placeholder` when '
+          'nothing is selected; the menu lists the items under their group '
+          'names, with a check mark on the selected one and disabled items '
+          'greyed out. A null `onChanged` disables it.',
+        ),
+        ExamplePanel(
+          region: 'select-data',
+          regions: const ['select'],
+          // #region select
+          child: Oito2Select(
+            collection: _desktops,
+            value: _desktop,
+            placeholder: const Text('Desktop'),
+            onChanged: (v) => setState(() => _desktop = v),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Disabled', level: 3),
+        const DocText(
+          'With `enabled: false` the button greys out and does not open its '
+          'menu.',
+        ),
+        const ExamplePanel(
+          region: 'disabled',
+          // #region disabled
+          child: Oito2PopupMenuButton(
+            enabled: false,
+            menuChildren: [],
+            child: Text('Disabled'),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'The button reports whether its menu is expanded, and is labeled '
+          'by the text of its child unless `semanticLabel` is given. '
+          '`Oito2CheckedMenuItem` reports its checked state as one of a '
+          'group of exclusive choices, and `Oito2MultiSelectMenuItem` as a '
+          'checked item.',
+        ),
+        const DocHeading('Keyboard', level: 3),
+        const DocTable(
+          header: ['Key', 'Action'],
+          rows: [
+            ['`Enter` / `Space`', 'Opens or closes the menu from the button.'],
+            ['`Down arrow`', 'Opens the menu from the button.'],
+            ['Arrow keys', 'Move between the menu entries.'],
+            ['`Escape`', 'Closes the menu.'],
           ],
         ),
-        ShowcaseSection(
-          'Multiple choices: the menu stays open',
-          children: [
-            Oito2PopupMenuButton(
-              menuChildren: [
-                for (final column in ['Size', 'Type', 'Modified', 'Owner'])
-                  Oito2MultiSelectMenuItem(
-                    checked: _columns.contains(column),
-                    onChanged: (on) => setState(
-                      () => on ? _columns.add(column) : _columns.remove(column),
-                    ),
-                    child: Text(column),
-                  ),
-              ],
-              child: Text('Columns (${_columns.length})'),
-            ),
-          ],
-        ),
-        ShowcaseSection(
-          'Select over a grouped collection',
-          children: [
-            Oito2Select(
-              collection: _desktops,
-              value: _desktop,
-              placeholder: const Text('Desktop'),
-              onChanged: (v) => setState(() => _desktop = v),
-            ),
-            const Oito2PopupMenuButton(
-              enabled: false,
-              menuChildren: [],
-              child: Text('Disabled'),
-            ),
-          ],
-        ),
+        ...apiReferenceWidgets([
+          'Oito2PopupMenuButton',
+          'Oito2CheckedMenuItem',
+          'Oito2MultiSelectMenuItem',
+          'Oito2Select',
+        ]),
       ],
     );
   }

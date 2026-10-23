@@ -280,7 +280,12 @@ class Oito2Tile extends StatelessWidget {
         child: InkWell(onTap: enabled ? onTap : null, child: content),
       );
     }
-    return Semantics(container: true, enabled: enabled, child: content);
+    return Semantics(
+      container: true,
+      button: onTap != null,
+      enabled: enabled,
+      child: content,
+    );
   }
 }
 

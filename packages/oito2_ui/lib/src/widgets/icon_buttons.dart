@@ -18,9 +18,9 @@ import 'package:material_ui/material_ui.dart';
 
 import 'widget_helpers.dart';
 
-/// A square icon button sized to the oito2 control height: 34 pixels on
-/// pointer platforms and 40 on touch platforms, where the tap target is
-/// padded to 48.
+/// A square icon button sized by the oito2 icon button theme to the
+/// control height: 34 pixels on pointer platforms and 40 on touch
+/// platforms, where the tap target is padded to 48.
 ///
 /// With [isSelected], it is a toggle: the selected state fills the button
 /// with the secondary container and shows [selectedIcon] when given, and

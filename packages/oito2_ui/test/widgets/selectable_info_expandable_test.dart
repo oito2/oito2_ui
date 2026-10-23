@@ -34,6 +34,33 @@ void main() {
   final colors = Oito2ColorTheme.light();
 
   group('Oito2SelectableContainer', () {
+    testWidgets('changes at once when animations are disabled', (tester) async {
+      await pumpOito2(
+        tester,
+        MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: Center(
+            child: Oito2SelectableContainer(
+              selected: true,
+              onTap: () {},
+              child: const Text('Dark'),
+            ),
+          ),
+        ),
+      );
+      expect(
+        tester
+            .widget<AnimatedContainer>(
+              find.descendant(
+                of: find.byType(Oito2SelectableContainer),
+                matching: find.byType(AnimatedContainer),
+              ),
+            )
+            .duration,
+        Duration.zero,
+      );
+    });
+
     testWidgets('shows the selection border and exposes it', (tester) async {
       final handle = tester.ensureSemantics();
       var taps = 0;

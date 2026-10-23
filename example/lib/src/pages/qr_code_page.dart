@@ -19,9 +19,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_extras/oito2_ui_extras.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
-/// Shows [Oito2QrCode] for typed text, levels and styles.
+/// Documents [Oito2QrCode]: typed content, error levels, module styles,
+/// colors and a center image.
 class QrCodePage extends StatefulWidget {
   /// Creates the QR code page.
   const QrCodePage({super.key});
@@ -79,65 +80,157 @@ class _QrCodePageState extends State<QrCodePage> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return ShowcasePageBody(
+    return DocPage(
+      title: 'QR Code',
+      description:
+          'Draws a QR code of a text or link, with a choice of error '
+          'correction, module shape, colors and a center logo.',
+      source: 'lib/src/pages/qr_code_page.dart',
       children: [
-        ShowcaseSection(
-          'Content and options',
-          children: [
-            SizedBox(
-              width: 360,
-              child: TextField(
-                controller: _text,
-                onChanged: (_) => setState(() {}),
-                decoration: const InputDecoration(labelText: 'Text or link'),
-              ),
-            ),
-            SizedBox(
-              width: 360,
-              child: Oito2ChoiceChipBar(
-                style: Oito2ChoiceChipBarStyle.wrap,
-                labels: [
-                  for (final level in Oito2QrErrorLevel.values)
-                    Text(level.name),
-                ],
-                isSelected: [
-                  for (final level in Oito2QrErrorLevel.values) level == _level,
-                ],
-                onSelected: (i) =>
-                    setState(() => _level = Oito2QrErrorLevel.values[i]),
-              ),
-            ),
-            Oito2CheckButton(
-              value: _rounded,
-              onChanged: (v) => setState(() => _rounded = v ?? false),
-              title: const Text('Rounded modules'),
-            ),
-          ],
+        const ExamplePanel(
+          region: 'preview',
+          // #region preview
+          child: Oito2QrCode(data: 'https://oito2.github.io/oito2_ui/'),
+          // #endregion
         ),
-        ShowcaseSection(
-          'Standard, themed and with a center icon',
-          children: [
-            Oito2QrCode(
-              data: _text.text,
-              errorLevel: _level,
-              roundedModules: _rounded,
-            ),
-            Oito2QrCode(
-              data: _text.text,
-              errorLevel: _level,
-              roundedModules: _rounded,
-              color: scheme.onSurface,
-              backgroundColor: scheme.surface,
-            ),
-            Oito2QrCode(
-              data: _text.text,
-              errorLevel: _level,
-              roundedModules: _rounded,
-              centerImage: _logo,
-            ),
-          ],
+        const DocHeading('Usage'),
+        const DocText(
+          'Give `Oito2QrCode` the `data` to encode. It paints a square of '
+          '`size` pixels, 160 by default, with the standard four-module '
+          'quiet zone included. The code is encoded again only when the '
+          'data or the error level changes.',
         ),
+        const DocCode("import 'package:oito2_ui_extras/oito2_ui_extras.dart';"),
+        const DocNote(
+          'The default black on white is what every scanner reads. Custom '
+          'colors need strong contrast, with `color` darker than '
+          '`backgroundColor`.',
+        ),
+        const DocHeading('Examples'),
+        const DocHeading('Content, level and modules', level: 3),
+        const DocText(
+          '`errorLevel` sets how much of the code can be damaged or covered '
+          'and still read: `low` about 7%, `medium` (the default) about '
+          '15%, `quartile` about 25% and `high` about 30%. Higher levels '
+          'take more modules. `roundedModules` draws the dark modules as '
+          'rounded squares.',
+        ),
+        ExamplePanel(
+          region: 'options',
+          child: SizedBox(
+            width: 360,
+            child: Column(
+              spacing: Oito2Spacing.md,
+              children: [
+                TextField(
+                  controller: _text,
+                  onChanged: (_) => setState(() {}),
+                  decoration: const InputDecoration(labelText: 'Text or link'),
+                ),
+                Oito2ChoiceChipBar(
+                  style: Oito2ChoiceChipBarStyle.wrap,
+                  labels: [
+                    for (final level in Oito2QrErrorLevel.values)
+                      Text(level.name),
+                  ],
+                  isSelected: [
+                    for (final level in Oito2QrErrorLevel.values)
+                      level == _level,
+                  ],
+                  onSelected: (i) =>
+                      setState(() => _level = Oito2QrErrorLevel.values[i]),
+                ),
+                Oito2CheckButton(
+                  value: _rounded,
+                  onChanged: (v) => setState(() => _rounded = v ?? false),
+                  title: const Text('Rounded modules'),
+                ),
+                // #region options
+                Oito2QrCode(
+                  data: _text.text,
+                  errorLevel: _level,
+                  roundedModules: _rounded,
+                ),
+                // #endregion
+              ],
+            ),
+          ),
+        ),
+        const DocHeading('Colors', level: 3),
+        const DocText(
+          '`color` paints the dark modules and `backgroundColor` the light '
+          'modules and the quiet zone.',
+        ),
+        ExamplePanel(
+          region: 'colors',
+          // #region colors
+          child: Oito2QrCode(
+            data: _text.text,
+            errorLevel: _level,
+            roundedModules: _rounded,
+            color: const Color(0xFF1A3A6B),
+            backgroundColor: const Color(0xFFF1F5FB),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Center image', level: 3),
+        const DocText(
+          'A `centerImage`, such as a logo, covers the middle of the '
+          'modules, a `centerImageFraction` of their width (0.22 by '
+          'default, at most 0.3). The error level is then always `high`, '
+          'which recovers the most covered modules, so the code still '
+          'reads.',
+        ),
+        ExamplePanel(
+          region: 'image',
+          // #region image
+          child: Oito2QrCode(
+            data: _text.text,
+            roundedModules: _rounded,
+            centerImage: _logo,
+          ),
+          // #endregion
+        ),
+        const DocHeading('Data that doesn\'t fit', level: 3),
+        const DocText(
+          'When the data is too long for a QR code at the chosen level, a '
+          'localized message shows in its place, or what `errorBuilder` '
+          'builds.',
+        ),
+        ExamplePanel(
+          region: 'error',
+          // #region error
+          child: Oito2QrCode(
+            data: 'oito2 ' * 600,
+            errorBuilder: (context) => const SizedBox.square(
+              dimension: 160,
+              child: Center(child: Text('Too long to encode')),
+            ),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Modules only', level: 3),
+        const DocText(
+          '`oito2QrModules` returns the module grid of a text without '
+          'painting it, for exporting a code or drawing it another way. '
+          'It throws an `ArgumentError` when the data doesn\'t fit.',
+        ),
+        const DocCode('''
+final qr = oito2QrModules('oito2', errorLevel: Oito2QrErrorLevel.high);
+for (final row in qr.modules) {
+  print(row.map((dark) => dark ? '#' : ' ').join());
+}'''),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'The code is a single image for assistive technologies, labeled '
+          'with `semanticLabel`, by default the localized "QR code". Name '
+          'what it leads to when the data isn\'t shown next to it.',
+        ),
+        ...apiReferenceWidgets([
+          'Oito2QrCode',
+          'Oito2QrErrorLevel',
+          'oito2QrModules',
+        ]),
       ],
     );
   }

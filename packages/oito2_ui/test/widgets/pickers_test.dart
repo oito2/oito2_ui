@@ -98,6 +98,26 @@ void main() {
       expect(_hostValue<double>(tester), 6);
     });
 
+    testWidgets('Home and End leave a read-only entry alone', (tester) async {
+      await pumpOito2(
+        tester,
+        const Center(
+          child: SizedBox(
+            width: 220,
+            child: Oito2NumberEntry(value: 5, onChanged: null, min: 0, max: 10),
+          ),
+        ),
+      );
+      await tester.tap(find.byType(TextField));
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.home);
+      await tester.pump();
+      expect(find.text('5'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.end);
+      await tester.pump();
+      expect(find.text('5'), findsOneWidget);
+    });
+
     test('rejects more decimals than a number can show', () {
       expect(
         () => Oito2NumberEntry(value: 1, onChanged: null, decimals: 21),
@@ -1055,6 +1075,41 @@ void main() {
       expect(find.bySemanticsLabel(RegExp(r'Week 9\b')), findsNothing);
       expect(find.bySemanticsLabel(RegExp(r'Week 15\b')), findsNothing);
       handle.dispose();
+    });
+
+    testWidgets('the month arrows point the reading way', (tester) async {
+      for (final (direction, back, forward) in [
+        (
+          TextDirection.ltr,
+          LucideIcons.chevron_left,
+          LucideIcons.chevron_right,
+        ),
+        (
+          TextDirection.rtl,
+          LucideIcons.chevron_right,
+          LucideIcons.chevron_left,
+        ),
+      ]) {
+        await pumpOito2(
+          tester,
+          Center(
+            child: Oito2Calendar(
+              firstDate: DateTime(2026),
+              lastDate: DateTime(2026, 12, 31),
+              initialMonth: DateTime(2026, 6),
+            ),
+          ),
+          textDirection: direction,
+        );
+        Icon iconOf(String tooltip) => tester.widget<Icon>(
+          find.descendant(
+            of: find.byTooltip(tooltip),
+            matching: find.byType(Icon),
+          ),
+        );
+        expect(iconOf('Previous month').icon, back, reason: direction.name);
+        expect(iconOf('Next month').icon, forward, reason: direction.name);
+      }
     });
 
     testWidgets('days carry their full date', (tester) async {

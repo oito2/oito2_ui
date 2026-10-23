@@ -20,9 +20,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_extras/oito2_ui_extras.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
-/// Shows [Oito2ImageCropper] with a live preview and the cropped result.
+/// Documents [Oito2ImageCropper], [Oito2CropController] and
+/// [Oito2CropPreview]: zoom, pan, rotation, a circle crop, a live preview
+/// and the cropped result.
 class ImageCropperPage extends StatefulWidget {
   /// Creates the image cropper page.
   const ImageCropperPage({super.key});
@@ -32,7 +34,9 @@ class ImageCropperPage extends StatefulWidget {
 }
 
 class _ImageCropperPageState extends State<ImageCropperPage> {
+  final _previewController = Oito2CropController();
   final _controller = Oito2CropController();
+  final _plainController = Oito2CropController(maxZoom: 3);
   ImageProvider? _image;
   bool _circle = false;
   ui.Image? _result;
@@ -47,7 +51,9 @@ class _ImageCropperPageState extends State<ImageCropperPage> {
 
   @override
   void dispose() {
+    _previewController.dispose();
     _controller.dispose();
+    _plainController.dispose();
     _result?.dispose();
     super.dispose();
   }
@@ -96,6 +102,7 @@ class _ImageCropperPageState extends State<ImageCropperPage> {
     return MemoryImage(bytes!.buffer.asUint8List());
   }
 
+  // #region crop-method
   /// Crops the image to a 240-pixel-wide result, replacing and disposing
   /// the previous one.
   Future<void> _crop() async {
@@ -106,49 +113,195 @@ class _ImageCropperPageState extends State<ImageCropperPage> {
       _result = image;
     });
   }
+  // #endregion
+
+  /// Shows a spinner of the cropper's default height while the sample
+  /// image is painted, and [builder] with the image once it is ready.
+  Widget _whenLoaded(Widget Function(ImageProvider image) builder) {
+    final image = _image;
+    if (image == null) {
+      return const SizedBox(
+        height: 320,
+        child: Center(child: Oito2CircularProgressIndicator()),
+      );
+    }
+    return builder(image);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final image = _image;
-    return ShowcasePageBody(
+    return DocPage(
+      title: 'Image Cropper',
+      description:
+          'Zooms, pans, rotates and flips an image under a crop box, and '
+          'returns the cropped part as an image.',
+      source: 'lib/src/pages/image_cropper_page.dart',
       children: [
-        ShowcaseSection(
-          'Drag to move, wheel or pinch to zoom; focus it for the keys',
-          children: [
-            Oito2CheckButton(
-              value: _circle,
-              onChanged: (v) => setState(() => _circle = v ?? false),
-              title: const Text('Circle'),
+        ExamplePanel(
+          region: 'preview',
+          child: SizedBox(
+            width: 400,
+            child: _whenLoaded(
+              (image) =>
+                  // #region preview
+                  Oito2ImageCropper(
+                    image: image,
+                    controller: _previewController,
+                    aspectRatio: 4 / 3,
+                  ),
+              // #endregion
             ),
-            SizedBox(
-              width: 520,
-              child: image == null
-                  ? const SizedBox(
-                      height: 320,
-                      child: Center(child: Oito2CircularProgressIndicator()),
-                    )
-                  : Oito2ImageCropper(
-                      image: image,
+          ),
+        ),
+        const DocHeading('Usage'),
+        const DocText(
+          'Give the cropper an `ImageProvider` and an `Oito2CropController`, '
+          'and dispose the controller with its owner. The controller holds '
+          'the `zoom`, from 1, where the image just covers the box, to '
+          '`maxZoom` (5 by default), the pan, the quarter turns and the '
+          'flip; the image always covers the box. Call `crop` on it to get '
+          'the result.',
+        ),
+        const DocCode("import 'package:oito2_ui_extras/oito2_ui_extras.dart';"),
+        const DocText(
+          'The crop box has the `aspectRatio` (width over height, 1 by '
+          'default) and fits the crop area, which takes the available width '
+          'and `height` pixels, 320 by default. Drag to move the image, and '
+          'pinch or scroll the mouse wheel to zoom. A new picture starts '
+          'with the transform reset. Images are decoded at most '
+          '`maxDecodedDimension` pixels on their longest side, 4096 by '
+          'default, and a load failure goes to `onError`, or to '
+          '`FlutterError.reportError` without it.',
+        ),
+        const DocHeading('Examples'),
+        const DocHeading('Circle, live preview and crop', level: 3),
+        const DocText(
+          'With `circle` the crop box is a circle and `aspectRatio` is '
+          'ignored. `Oito2CropPreview` shows the crop of a controller at '
+          '`width`, updated as the user moves the image. `crop` returns the '
+          'cropped image at the decoded resolution, or `width` pixels wide, '
+          'cut to a circle with `circle`; it returns null before the image '
+          'loads, and the caller must dispose the image.',
+        ),
+        ExamplePanel(
+          regions: const ['circle', 'crop-method'],
+          child: SizedBox(
+            width: 400,
+            // #region circle
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: Oito2Spacing.sm,
+              children: [
+                Oito2CheckButton(
+                  value: _circle,
+                  onChanged: (v) => setState(() => _circle = v ?? false),
+                  title: const Text('Circle'),
+                ),
+                _whenLoaded(
+                  (image) => Oito2ImageCropper(
+                    image: image,
+                    controller: _controller,
+                    circle: _circle,
+                    aspectRatio: 4 / 3,
+                  ),
+                ),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: Oito2Spacing.md,
+                  runSpacing: Oito2Spacing.sm,
+                  children: [
+                    Oito2CropPreview(
                       controller: _controller,
+                      width: 120,
                       circle: _circle,
-                      aspectRatio: 4 / 3,
                     ),
+                    FilledButton(onPressed: _crop, child: const Text('Crop')),
+                    if (_result != null)
+                      RawImage(image: _result, width: 120, fit: BoxFit.contain),
+                  ],
+                ),
+              ],
             ),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Without the toolbar', level: 3),
+        const DocText(
+          'The toolbar under the crop area zooms, rotates, flips and resets. '
+          'With `showToolbar: false` only the crop area shows, and the app '
+          'drives the controller itself: `zoomBy`, `panBy`, `rotateLeft`, '
+          '`rotateRight`, `flipHorizontally` and `reset`. Here `maxZoom` '
+          'is 3.',
+        ),
+        ExamplePanel(
+          region: 'plain',
+          child: SizedBox(
+            width: 400,
+            // #region plain
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: Oito2Spacing.sm,
+              children: [
+                _whenLoaded(
+                  (image) => Oito2ImageCropper(
+                    image: image,
+                    controller: _plainController,
+                    height: 240,
+                    showToolbar: false,
+                  ),
+                ),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: Oito2Spacing.sm,
+                  runSpacing: Oito2Spacing.sm,
+                  children: [
+                    OutlinedButton(
+                      onPressed: () => _plainController.zoomBy(1.5),
+                      child: const Text('Zoom in'),
+                    ),
+                    OutlinedButton(
+                      onPressed: _plainController.rotateRight,
+                      child: const Text('Rotate'),
+                    ),
+                    OutlinedButton(
+                      onPressed: _plainController.reset,
+                      child: const Text('Reset'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'The crop area takes the keyboard focus, showing the focus ring, '
+          'and is labeled by `semanticLabel` ("Image cropper" by default) '
+          'with the zoom percentage as its value. The toolbar buttons are '
+          'labeled by their tooltips. `Oito2CropPreview` is hidden from '
+          'assistive technologies.',
+        ),
+        const DocHeading('Keyboard', level: 3),
+        const DocTable(
+          header: ['Key', 'Action'],
+          rows: [
+            ['`Tab`', 'Moves the focus to the crop area.'],
+            ['Arrow keys', 'Move the image by 8 pixels.'],
+            ['`Shift` + arrow keys', 'Move the image by 32 pixels.'],
+            ['`+` / `=`', 'Zooms in by 10%.'],
+            ['`-`', 'Zooms out by 10%.'],
+            ['`R`', 'Turns the image a quarter clockwise.'],
+            ['`Shift` + `R`', 'Turns the image a quarter counterclockwise.'],
+            ['`H`', 'Flips the image horizontally.'],
           ],
         ),
-        ShowcaseSection(
-          'Live preview and crop',
-          children: [
-            Oito2CropPreview(
-              controller: _controller,
-              width: 120,
-              circle: _circle,
-            ),
-            FilledButton(onPressed: _crop, child: const Text('Crop')),
-            if (_result != null)
-              RawImage(image: _result, width: 120, fit: BoxFit.contain),
-          ],
-        ),
+        ...apiReferenceWidgets([
+          'Oito2ImageCropper',
+          'Oito2CropController',
+          'Oito2CropPreview',
+        ]),
       ],
     );
   }

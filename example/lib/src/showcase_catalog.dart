@@ -37,6 +37,7 @@ import 'pages/copy_button_page.dart';
 import 'pages/date_time_entry_page.dart';
 import 'pages/diagonal_clip_page.dart';
 import 'pages/dialog_title_bar_page.dart';
+import 'pages/docs_pages.dart';
 import 'pages/download_trigger_page.dart';
 import 'pages/draggable_page.dart';
 import 'pages/editable_label_page.dart';
@@ -109,6 +110,12 @@ import 'pages/watermark_page.dart';
 
 /// The group a showcase page is listed under.
 enum ShowcaseGroup {
+  /// Getting started, the changelog and the project.
+  overview('Overview'),
+
+  /// The patterns every component shares.
+  guides('Guides'),
+
   /// One page per oito2_ui widget.
   components('Components'),
 
@@ -142,6 +149,7 @@ class ShowcasePage {
     required this.source,
     required this.builder,
     this.group = ShowcaseGroup.components,
+    this.id,
   });
 
   /// The page title, usually the widget name.
@@ -160,9 +168,13 @@ class ShowcasePage {
   /// The group the page is listed under.
   final ShowcaseGroup group;
 
-  /// The page identifier in links: [source] without the `_page.dart`
-  /// suffix, with dashes, such as `check-button`.
+  /// The page identifier in links, for pages that share a [source] file.
+  final String? id;
+
+  /// The page identifier in links: [id], or else [source] without the
+  /// `_page.dart` suffix, with dashes, such as `check-button`.
   String get slug =>
+      id ??
       source.replaceFirst(RegExp(r'_page\.dart$'), '').replaceAll('_', '-');
 
   /// The asset path of [source].
@@ -174,9 +186,95 @@ class ShowcasePage {
 Widget Function(BuildContext, Oito2ColorTheme) _page(Widget page) =>
     (_, _) => page;
 
+/// The guides: title, Markdown file name, icon and lead paragraph.
+const _guides = [
+  (
+    'Styling',
+    'styling',
+    LucideIcons.palette,
+    'Themes, color schemes, tokens and component variants.',
+  ),
+  (
+    'Composition',
+    'composition',
+    LucideIcons.blocks,
+    'Slots, builders, collections and wrappers.',
+  ),
+  (
+    'Component State',
+    'component_state',
+    LucideIcons.toggle_right,
+    'Controlled values, controllers and reading their state.',
+  ),
+  (
+    'Animations',
+    'animations',
+    LucideIcons.sparkles,
+    'Reduced motion, swaps, animated icons and page transitions.',
+  ),
+  (
+    'Forms',
+    'forms',
+    LucideIcons.text_cursor_input,
+    'Entries, values, errors and validation.',
+  ),
+  (
+    'Refs',
+    'refs',
+    LucideIcons.crosshair,
+    'Focus nodes, keys and component state.',
+  ),
+];
+
 /// Every showcase page: the components in alphabetical order, then the
 /// extras, files, utilities and theme pages.
 final List<ShowcasePage> showcasePages = [
+  ShowcasePage(
+    title: 'Getting Started',
+    icon: LucideIcons.rocket,
+    source: 'docs_pages.dart',
+    id: 'getting-started',
+    group: ShowcaseGroup.overview,
+    builder: _page(
+      const MarkdownDocPage(
+        title: 'Getting Started',
+        asset: 'assets/docs/getting_started.md',
+      ),
+    ),
+  ),
+  ShowcasePage(
+    title: 'Changelog',
+    icon: LucideIcons.file_clock,
+    source: 'docs_pages.dart',
+    id: 'changelog',
+    group: ShowcaseGroup.overview,
+    builder: _page(const ChangelogPage()),
+  ),
+  ShowcasePage(
+    title: 'About',
+    icon: LucideIcons.info,
+    source: 'docs_pages.dart',
+    id: 'about',
+    group: ShowcaseGroup.overview,
+    builder: _page(
+      const MarkdownDocPage(title: 'About', asset: 'assets/docs/about.md'),
+    ),
+  ),
+  for (final (title, file, icon, description) in _guides)
+    ShowcasePage(
+      title: title,
+      icon: icon,
+      source: 'docs_pages.dart',
+      id: 'guides-${file.replaceAll('_', '-')}',
+      group: ShowcaseGroup.guides,
+      builder: _page(
+        MarkdownDocPage(
+          title: title,
+          description: description,
+          asset: 'assets/docs/guides/$file.md',
+        ),
+      ),
+    ),
   ShowcasePage(
     title: 'Oito2AngleSlider',
     icon: LucideIcons.compass,

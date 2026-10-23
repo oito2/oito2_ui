@@ -16,9 +16,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
-/// Shows [Oito2NumberEntry] with whole and decimal steps.
+/// Documents [Oito2NumberEntry]: whole numbers, decimal steps and a
+/// read-only entry.
 class NumberEntryPage extends StatefulWidget {
   /// Creates the number entry page.
   const NumberEntryPage({super.key});
@@ -33,49 +34,113 @@ class _NumberEntryPageState extends State<NumberEntryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ShowcasePageBody(
+    return DocPage(
+      title: 'Number Entry',
+      description:
+          'A number field with decrease and increase buttons, stepped with '
+          'the keyboard, the mouse wheel or by dragging the buttons.',
+      source: 'lib/src/pages/number_entry_page.dart',
       children: [
-        ShowcaseSection(
-          'Whole numbers from 1 to 99: arrows, Page Up/Down, wheel or drag '
-          'the buttons sideways',
-          children: [
-            SizedBox(
-              width: 200,
-              child: Oito2NumberEntry(
-                value: _copies,
-                min: 1,
-                max: 99,
-                labelText: 'Copies',
-                onChanged: (v) => setState(() => _copies = v),
-              ),
+        ExamplePanel(
+          region: 'preview',
+          child: SizedBox(
+            width: 200,
+            // #region preview
+            child: Oito2NumberEntry(
+              value: _copies,
+              min: 1,
+              max: 99,
+              labelText: 'Copies',
+              onChanged: (value) => setState(() => _copies = value),
             ),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Usage'),
+        const DocText(
+          'The entry is controlled: give it the `value` and update it in '
+          '`onChanged`. It shows the value in the locale\'s number format. '
+          'Typed text is read when the field loses the focus or on Enter: '
+          'it is rounded, kept between `min` and `max` and reported, and '
+          'text that isn\'t a number is replaced by the current value.',
+        ),
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocText(
+          'The buttons change the value by `step`, 1 by default, and turn '
+          'off at the bounds. While the field has the focus the mouse '
+          'wheel steps too, and dragging sideways on the buttons changes '
+          'the value one step per 4 pixels.',
+        ),
+        const DocHeading('Examples'),
+        const DocHeading('Decimals and step', level: 3),
+        const DocText(
+          '`decimals` sets the decimal places shown and kept, 0 by default, '
+          'and `step` the change of the buttons, the arrow keys and the '
+          'wheel. `pageStep`, ten steps by default, is the change of Page '
+          'Up and Page Down.',
+        ),
+        ExamplePanel(
+          region: 'decimals',
+          child: SizedBox(
+            width: 200,
+            // #region decimals
+            child: Oito2NumberEntry(
+              value: _scale,
+              min: 0.25,
+              max: 4,
+              step: 0.25,
+              decimals: 2,
+              labelText: 'Scale',
+              onChanged: (value) => setState(() => _scale = value),
+            ),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Read-only', level: 3),
+        const DocText(
+          'A null `onChanged` makes the entry read-only: the text can\'t '
+          'be edited and the buttons, the arrow keys and the wheel do nothing.',
+        ),
+        const ExamplePanel(
+          region: 'read-only',
+          child: SizedBox(
+            width: 200,
+            // #region read-only
+            child: Oito2NumberEntry(
+              value: 42,
+              onChanged: null,
+              labelText: 'Read-only',
+            ),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'The buttons have the tooltips "Decrease" and "Increase", which '
+          'also name them for assistive technologies. The field opens a '
+          'numeric keyboard, with a sign key when `min` is negative and a '
+          'decimal key when `decimals` is above 0.',
+        ),
+        const DocHeading('Keyboard', level: 3),
+        const DocTable(
+          header: ['Key', 'Action'],
+          rows: [
+            [
+              '`Up arrow` / `Down arrow`',
+              'Raises or lowers the value by `step`.',
+            ],
+            [
+              '`Page Up` / `Page Down`',
+              'Raises or lowers the value by `pageStep`.',
+            ],
+            [
+              '`Home` / `End`',
+              'Sets the value to `min` or `max`, when that bound is finite.',
+            ],
+            ['`Enter`', 'Applies the typed text.'],
           ],
         ),
-        ShowcaseSection(
-          'Two decimals, step 0.25',
-          children: [
-            SizedBox(
-              width: 200,
-              child: Oito2NumberEntry(
-                value: _scale,
-                min: 0.25,
-                max: 4,
-                step: 0.25,
-                decimals: 2,
-                labelText: 'Scale',
-                onChanged: (v) => setState(() => _scale = v),
-              ),
-            ),
-            const SizedBox(
-              width: 200,
-              child: Oito2NumberEntry(
-                value: 42,
-                onChanged: null,
-                labelText: 'Read-only',
-              ),
-            ),
-          ],
-        ),
+        ...apiReferenceWidgets(['Oito2NumberEntry']),
       ],
     );
   }

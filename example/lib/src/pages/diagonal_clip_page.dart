@@ -16,10 +16,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
-/// Shows [Oito2DiagonalClip] cutting each of the four corners, and two
-/// clips combined into a split square.
+/// Documents [Oito2DiagonalClip]: two clips combined into a split square,
+/// and each of the four corners.
 class DiagonalClipPage extends StatelessWidget {
   /// Creates the diagonal clip page.
   const DiagonalClipPage({super.key});
@@ -27,54 +27,83 @@ class DiagonalClipPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    Widget sample(Oito2DiagonalCorner corner) => Column(
-      mainAxisSize: MainAxisSize.min,
-      spacing: Oito2Spacing.sm,
+    return DocPage(
+      title: 'Diagonal Clip',
+      description:
+          'Clips content along a diagonal, keeping the triangle of one '
+          'corner, for example to split a swatch between two themes.',
+      source: 'lib/src/pages/diagonal_clip_page.dart',
       children: [
-        SizedBox.square(
-          dimension: 96,
-          child: Oito2BorderContainer(
-            color: scheme.surfaceContainerHigh,
-            child: Oito2DiagonalClip(
-              corner: corner,
-              child: ColoredBox(color: scheme.primary),
+        ExamplePanel(
+          region: 'preview',
+          child: SizedBox.square(
+            dimension: 160,
+            child: Oito2BorderContainer(
+              // #region preview
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Oito2DiagonalClip(
+                    corner: Oito2DiagonalCorner.topLeft,
+                    child: const ColoredBox(color: Color(0xFFFAFAFA)),
+                  ),
+                  Oito2DiagonalClip(
+                    corner: Oito2DiagonalCorner.bottomRight,
+                    child: const ColoredBox(color: Color(0xFF242424)),
+                  ),
+                ],
+              ),
+              // #endregion
             ),
           ),
         ),
-        Text(corner.name),
-      ],
-    );
-    return ShowcasePageBody(
-      children: [
-        ShowcaseSection(
-          'Corners',
-          children: [
-            for (final corner in Oito2DiagonalCorner.values) sample(corner),
-          ],
+        const DocHeading('Usage'),
+        const DocText(
+          '`Oito2DiagonalClip` cuts its `child` along the diagonal between '
+          'the two corners next to `corner`, and keeps the triangle on the '
+          'side of `corner`. Stack two clips of opposite corners to split '
+          'an area in two, as in the preview of a light and a dark theme.',
         ),
-        ShowcaseSection(
-          'Two clips combined',
-          children: [
-            SizedBox.square(
-              dimension: 160,
-              child: Oito2BorderContainer(
-                child: Stack(
-                  fit: StackFit.expand,
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocNote(
+          'The corners are physical: `topLeft` stays at the top left in '
+          'right-to-left layouts too.',
+        ),
+        const DocHeading('Examples'),
+        const DocHeading('Corners', level: 3),
+        const DocText(
+          'Each `Oito2DiagonalCorner` keeps a different half of the square.',
+        ),
+        ExamplePanel(
+          region: 'corners',
+          child: Wrap(
+            spacing: Oito2Spacing.lg,
+            runSpacing: Oito2Spacing.lg,
+            children: [
+              // #region corners
+              for (final corner in Oito2DiagonalCorner.values)
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: Oito2Spacing.sm,
                   children: [
-                    Oito2DiagonalClip(
-                      corner: Oito2DiagonalCorner.topLeft,
-                      child: const ColoredBox(color: Color(0xFFFAFAFA)),
+                    SizedBox.square(
+                      dimension: 96,
+                      child: Oito2BorderContainer(
+                        color: scheme.surfaceContainerHigh,
+                        child: Oito2DiagonalClip(
+                          corner: corner,
+                          child: ColoredBox(color: scheme.primary),
+                        ),
+                      ),
                     ),
-                    Oito2DiagonalClip(
-                      corner: Oito2DiagonalCorner.bottomRight,
-                      child: const ColoredBox(color: Color(0xFF242424)),
-                    ),
+                    Text(corner.name),
                   ],
                 ),
-              ),
-            ),
-          ],
+              // #endregion
+            ],
+          ),
         ),
+        ...apiReferenceWidgets(['Oito2DiagonalClip', 'Oito2DiagonalCorner']),
       ],
     );
   }

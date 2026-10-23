@@ -100,6 +100,7 @@ void main() {
 
   testWidgets('selecting a page in the list shows it', (tester) async {
     await pumpShowcase(tester);
+    await _scrollToPage(tester, 'Oito2CheckButton');
     await tester.tap(find.text('Oito2CheckButton'));
     await _settle(tester);
     expect(find.text('Show hidden files'), findsOneWidget);
@@ -144,12 +145,14 @@ void main() {
     tester,
   ) async {
     await pumpShowcase(tester, size: const Size(500, 900));
+    await _scrollToPage(tester, 'Oito2CheckButton');
     await tester.tap(find.text('Oito2CheckButton'));
     await _settle(tester);
     expect(find.text('Show hidden files'), findsOneWidget);
     await tester.tap(find.byType(Oito2BackButton));
     await _settle(tester);
     expect(find.text('Show hidden files'), findsNothing);
+    await _scrollToPage(tester, 'Oito2CheckButton');
     expect(find.text('Oito2CheckButton'), findsOneWidget);
   });
 
@@ -226,7 +229,14 @@ void main() {
     await _settle(tester);
     expect(find.text('banner_page.dart'), findsOneWidget);
     expect(find.text('Open on GitHub'), findsOneWidget);
-    expect(find.byType(Oito2CodeBlock), findsOneWidget);
+    // The page itself shows code blocks too; one is in the dialog.
+    expect(
+      find.descendant(
+        of: find.byType(Dialog),
+        matching: find.byType(Oito2CodeBlock),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Material dialogs use the chrome dialog tone', (tester) async {
@@ -298,7 +308,10 @@ void main() {
 
   testWidgets('the app toaster shows toasts from a page', (tester) async {
     await pumpShowcase(tester, slug: 'toast');
-    await tester.tap(find.widgetWithText(OutlinedButton, 'success'));
+    final success = find.widgetWithText(OutlinedButton, 'success');
+    await tester.ensureVisible(success);
+    await _settle(tester);
+    await tester.tap(success);
     await _settle(tester);
     expect(find.text('A success message.'), findsOneWidget);
     await tester.tap(find.byTooltip('Dismiss'));
@@ -429,3 +442,17 @@ void main() {
     });
   });
 }
+
+/// Scrolls the page list until the entry titled [title] is built and in
+/// view.
+Future<void> _scrollToPage(WidgetTester tester, String title) =>
+    tester.scrollUntilVisible(
+      find.text(title),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(Oito2MasterListView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );

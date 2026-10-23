@@ -29,8 +29,8 @@ import 'widget_helpers.dart';
 /// gives the half value. Hovering previews the value under the pointer.
 /// The arrow keys change the value by one step, Home and End jump to 0
 /// and [max], and the digit keys 0 to 9 pick that whole value, up to
-/// [max]. A star animates when
-/// it fills. Assistive technologies see it as a slider.
+/// [max]. A star animates when it fills. Assistive technologies see it as
+/// a slider.
 class Oito2Rating extends StatefulWidget {
   /// Creates a rating.
   ///

@@ -16,40 +16,117 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
-/// Shows [Oito2ScrollViewUndershoot] on a scrolling list.
+/// Documents [Oito2ScrollViewUndershoot] on vertical and horizontal
+/// scrolling lists.
 class UndershootPage extends StatelessWidget {
   /// Creates the scroll view undershoot page.
   const UndershootPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ShowcasePageBody(
+    return DocPage(
+      title: 'Scroll View Undershoot',
+      description:
+          'Fades soft shadows in at the edges of a scroll view while there '
+          'is more content beyond them.',
+      source: 'lib/src/pages/undershoot_page.dart',
       children: [
-        ShowcaseSection(
-          'Scroll view undershoot',
-          children: [
-            SizedBox(
-              width: 260,
-              height: 200,
-              child: Oito2BorderContainer(
-                child: Oito2ScrollViewUndershoot(
-                  child: ListView(
-                    children: [
-                      for (var i = 1; i <= 20; i++)
-                        ListTile(dense: true, title: Text('Item $i')),
-                    ],
-                  ),
+        ExamplePanel(
+          region: 'preview',
+          child: SizedBox(
+            width: 260,
+            height: 200,
+            child: Oito2BorderContainer(
+              // #region preview
+              child: Oito2ScrollViewUndershoot(
+                child: ListView(
+                  children: [
+                    for (var i = 1; i <= 20; i++)
+                      ListTile(dense: true, title: Text('Item $i')),
+                  ],
                 ),
               ),
+              // #endregion
             ),
-            Text(
-              'Shadows mark the edges where more content is hidden.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
+          ),
         ),
+        const DocHeading('Usage'),
+        const DocText(
+          'Wrap a scroll view in `Oito2ScrollViewUndershoot`; it needs no '
+          'controller. A shadow fades in at each edge with content hidden '
+          'beyond it, and out when the scroll reaches that edge. Only the '
+          'scroll view directly below it counts, not scroll views nested '
+          'inside that one.',
+        ),
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocHeading('Examples'),
+        const DocHeading('Horizontal', level: 3),
+        const DocText(
+          'The shadows follow the scroll direction: in a horizontal scroll '
+          'view they sit at the start and end sides, mirrored in '
+          'right-to-left layouts.',
+        ),
+        ExamplePanel(
+          region: 'horizontal',
+          child: SizedBox(
+            width: 320,
+            height: 72,
+            child: Oito2BorderContainer(
+              // #region horizontal
+              child: Oito2ScrollViewUndershoot(
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.all(Oito2Spacing.sm),
+                  children: [
+                    for (var i = 1; i <= 12; i++)
+                      Padding(
+                        padding: const EdgeInsetsDirectional.only(
+                          end: Oito2Spacing.sm,
+                        ),
+                        child: Chip(label: Text('Tag $i')),
+                      ),
+                  ],
+                ),
+              ),
+              // #endregion
+            ),
+          ),
+        ),
+        const DocHeading('One edge and depth', level: 3),
+        const DocText(
+          '`start` and `end` turn the shadow of each edge on or off, and '
+          '`extent` sets how deep the shadows reach, 12 pixels by default.',
+        ),
+        ExamplePanel(
+          region: 'edges',
+          child: SizedBox(
+            width: 260,
+            height: 200,
+            child: Oito2BorderContainer(
+              // #region edges
+              child: Oito2ScrollViewUndershoot(
+                start: false,
+                extent: 32,
+                child: ListView(
+                  children: [
+                    for (var i = 1; i <= 20; i++)
+                      ListTile(dense: true, title: Text('Message $i')),
+                  ],
+                ),
+              ),
+              // #endregion
+            ),
+          ),
+        ),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'The shadows are decorative: they ignore the pointer and add '
+          'nothing for assistive technologies. When animations are '
+          'disabled they appear and disappear at once, without fading.',
+        ),
+        ...apiReferenceWidgets(['Oito2ScrollViewUndershoot']),
       ],
     );
   }

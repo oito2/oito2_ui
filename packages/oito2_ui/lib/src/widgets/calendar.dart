@@ -466,12 +466,18 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
               IconButton(
                 tooltip: l10n.previousMonthTooltip,
                 onPressed: _canGoBack ? () => _showMonth(-1) : null,
-                icon: const Icon(LucideIcons.chevron_left, size: 18),
+                icon: Icon(
+                  directionalChevron(context, forward: false),
+                  size: 18,
+                ),
               ),
               IconButton(
                 tooltip: l10n.nextMonthTooltip,
                 onPressed: _canGoForward ? () => _showMonth(1) : null,
-                icon: const Icon(LucideIcons.chevron_right, size: 18),
+                icon: Icon(
+                  directionalChevron(context, forward: true),
+                  size: 18,
+                ),
               ),
             ],
           ),

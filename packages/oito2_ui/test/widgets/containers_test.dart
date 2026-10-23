@@ -121,6 +121,19 @@ void main() {
       expect(subtitle.color, colors.colorScheme.onSurfaceVariant);
     });
 
+    testWidgets('a tappable tile reads as a button', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpOito2(
+        tester,
+        Oito2Tile(title: const Text('Wi-Fi'), onTap: () {}),
+      );
+      expect(
+        tester.getSemantics(find.bySemanticsLabel(RegExp('Wi-Fi'))),
+        isSemantics(isButton: true, hasTapAction: true),
+      );
+      handle.dispose();
+    });
+
     testWidgets('disabled tiles are dimmed and ignore taps', (tester) async {
       var taps = 0;
       await pumpOito2(

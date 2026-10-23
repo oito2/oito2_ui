@@ -16,37 +16,86 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
-/// Shows [Oito2Watermark] behind an empty state.
+/// Documents [Oito2Watermark] behind an empty state.
 class WatermarkPage extends StatelessWidget {
   /// Creates the watermark page.
   const WatermarkPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ShowcasePageBody(
+    final textTheme = Theme.of(context).textTheme;
+    return DocPage(
+      title: 'Watermark',
+      description:
+          'Places a faint decorative widget, such as a large icon, behind '
+          'content like an empty state.',
+      source: 'lib/src/pages/watermark_page.dart',
       children: [
-        ShowcaseSection(
-          'Watermark',
-          children: [
-            SizedBox(
-              width: 420,
-              height: 200,
-              child: Oito2BorderContainer(
-                child: Oito2Watermark(
-                  watermark: const Icon(LucideIcons.inbox, size: 120),
-                  child: Center(
-                    child: Text(
-                      'No messages',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
+        ExamplePanel(
+          region: 'preview',
+          child: SizedBox(
+            width: 420,
+            height: 200,
+            child: Oito2BorderContainer(
+              // #region preview
+              child: Oito2Watermark(
+                watermark: const Icon(LucideIcons.inbox, size: 120),
+                child: Center(
+                  child: Text('No messages', style: textTheme.titleMedium),
                 ),
               ),
+              // #endregion
             ),
-          ],
+          ),
         ),
+        const DocHeading('Usage'),
+        const DocText(
+          'Give `Oito2Watermark` the decorative `watermark` and the `child` '
+          'drawn over it. The watermark covers the area the child takes, so '
+          'to watermark a whole area give the child the full size, for '
+          'example with `Center` or `Align`.',
+        ),
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocText(
+          'By default the watermark sits at the center of the end side, '
+          '`AlignmentDirectional.centerEnd`, 20 pixels from the edges, at '
+          '10% opacity.',
+        ),
+        const DocHeading('Examples'),
+        const DocHeading('Alignment and opacity', level: 3),
+        const DocText(
+          '`alignment` places the watermark, `padding` keeps it away from '
+          'the edges and `opacity`, from 0 to 1, sets how faint it is.',
+        ),
+        ExamplePanel(
+          region: 'alignment',
+          child: SizedBox(
+            width: 420,
+            height: 200,
+            child: Oito2BorderContainer(
+              // #region alignment
+              child: Oito2Watermark(
+                watermark: const Icon(LucideIcons.cloud_off, size: 96),
+                alignment: Alignment.center,
+                padding: EdgeInsets.zero,
+                opacity: 0.2,
+                child: Center(
+                  child: Text('You are offline', style: textTheme.titleMedium),
+                ),
+              ),
+              // #endregion
+            ),
+          ),
+        ),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'The watermark is hidden from assistive technologies and ignores '
+          'pointer events, so it never hides or blocks the content. Say '
+          'what it shows in the content itself when it matters.',
+        ),
+        ...apiReferenceWidgets(['Oito2Watermark']),
       ],
     );
   }

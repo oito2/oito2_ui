@@ -18,8 +18,9 @@ import 'dart:typed_data';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
+// #region people
 const _people = [
   'Ana Souza',
   'Bruno Lima',
@@ -28,8 +29,9 @@ const _people = [
   'Elisa Prado',
   'Fábio Nunes',
 ];
+// #endregion
 
-/// Shows [Oito2Avatar] sizes, shapes, statuses and fallbacks, and
+/// Documents [Oito2Avatar] sizes, shapes, statuses and fallbacks, and
 /// [Oito2AvatarGroup].
 class AvatarPage extends StatelessWidget {
   /// Creates the avatar page.
@@ -37,36 +39,115 @@ class AvatarPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ShowcasePageBody(
+    return DocPage(
+      title: 'Avatar',
+      description:
+          'A picture of a person or thing, falling back to initials or an '
+          'icon, with an optional presence status.',
+      source: 'lib/src/pages/avatar_page.dart',
       children: [
-        ShowcaseSection(
-          'Initials, statuses and sizes',
-          children: [
-            for (final (i, status) in Oito2AvatarStatus.values.indexed)
-              Oito2Avatar(name: _people[i], status: status, size: 32.0 + i * 8),
-          ],
+        const ExamplePanel(
+          region: 'preview',
+          // #region preview
+          child: Oito2Avatar(
+            name: 'Ana Souza',
+            status: Oito2AvatarStatus.online,
+            size: 56,
+          ),
+          // #endregion
         ),
-        ShowcaseSection(
-          'Square, no name, and an image that fails falling back to initials',
-          children: [
-            const Oito2Avatar(
-              name: 'Grupo oito2',
-              shape: Oito2AvatarShape.square,
-            ),
-            const Oito2Avatar(),
-            Oito2Avatar(name: 'Helena Costa', image: MemoryImage(Uint8List(0))),
-          ],
+        const DocHeading('Usage'),
+        const DocText(
+          '`Oito2Avatar` shows `image` once it loads. Until then, and if it '
+          'fails, it shows the initials of `name`, the first letters of its '
+          'first and last words, on a color picked from the name, so the '
+          'same name always gets the same color. Without a name it shows '
+          '`icon` on a neutral surface. `size` sets the width and height, '
+          '40 pixels by default.',
         ),
-        ShowcaseSection(
-          'Group of six, four shown',
-          children: [
-            Oito2AvatarGroup(
-              avatars: [
-                for (final name in _people) Oito2Avatar(name: name, size: 32),
-              ],
-            ),
-          ],
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocHeading('Examples'),
+        const DocHeading('Statuses and sizes', level: 3),
+        const DocText(
+          'A `status` adds a presence dot at the bottom end: `online`, '
+          '`away`, `busy` or `offline`. The dot grows with the avatar.',
         ),
+        ExamplePanel(
+          regions: const ['people', 'statuses'],
+          child: Wrap(
+            spacing: Oito2Spacing.md,
+            runSpacing: Oito2Spacing.md,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              // #region statuses
+              for (final (i, status) in Oito2AvatarStatus.values.indexed)
+                Oito2Avatar(
+                  name: _people[i],
+                  status: status,
+                  size: 32.0 + i * 8,
+                ),
+              // #endregion
+            ],
+          ),
+        ),
+        const DocHeading('Shape and fallbacks', level: 3),
+        const DocText(
+          '`shape: Oito2AvatarShape.square` rounds the corners instead of '
+          'making a circle. Without a name the avatar shows its `icon`, and '
+          'an image that fails to load falls back to the initials.',
+        ),
+        ExamplePanel(
+          region: 'fallbacks',
+          child: Wrap(
+            spacing: Oito2Spacing.md,
+            runSpacing: Oito2Spacing.md,
+            children: [
+              // #region fallbacks
+              const Oito2Avatar(
+                name: 'Grupo oito2',
+                shape: Oito2AvatarShape.square,
+              ),
+              const Oito2Avatar(),
+              Oito2Avatar(
+                name: 'Helena Costa',
+                image: MemoryImage(Uint8List(0)),
+              ),
+              // #endregion
+            ],
+          ),
+        ),
+        const DocHeading('Group', level: 3),
+        const DocText(
+          '`Oito2AvatarGroup` overlaps its `avatars` in a row, each with a '
+          'ring in the background color, and shows at most `max`, four by '
+          'default, followed by a "+N" bubble for the rest. Give it the '
+          '`size` and `shape` of the avatars.',
+        ),
+        ExamplePanel(
+          regions: const ['people', 'group'],
+          // #region group
+          child: Oito2AvatarGroup(
+            semanticLabel: 'Project members',
+            avatars: [
+              for (final name in _people) Oito2Avatar(name: name, size: 32),
+            ],
+          ),
+          // #endregion
+        ),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'Assistive technologies read an avatar as an image labeled with '
+          'its `name` and the localized status, such as "Ana Souza, '
+          'Online". The "+N" bubble of a group reads as "N more", and '
+          '`semanticLabel` names the whole group.',
+        ),
+        ...apiReferenceWidgets([
+          'Oito2Avatar',
+          'Oito2AvatarGroup',
+          'Oito2AvatarStatus',
+          'Oito2AvatarShape',
+          'oito2Initials',
+        ]),
       ],
     );
   }

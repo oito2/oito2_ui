@@ -65,8 +65,9 @@ Color? oito2ColorFromHex(String text) {
 /// and optional [swatches].
 ///
 /// Every part works by pointer and by keyboard: the arrow keys move the
-/// area and the sliders by 1%, or 10% with Shift, and the fields apply
-/// on Enter or when they lose focus. Use [Oito2ColorPickerButton] to show
+/// area and the sliders by 1%, or 10% with Shift (on the sliders, only the
+/// reading-direction arrows take Shift), and the fields apply on Enter or
+/// when they lose focus. Use [Oito2ColorPickerButton] to show
 /// it in a popover.
 class Oito2ColorPicker extends StatefulWidget {
   /// Creates a color picker.

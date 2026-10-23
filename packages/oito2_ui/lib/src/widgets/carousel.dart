@@ -82,7 +82,7 @@ class Oito2CarouselController extends PageController {
 /// an [Oito2PageIndicator] below.
 ///
 /// Pages change by the buttons, the dots, the Left and Right arrow keys
-/// while the carousel has focus (it takes focus as a whole and shows the
+/// (swapped in right-to-left text) while the carousel has focus (it takes focus as a whole and shows the
 /// focus ring), or a swipe (also with a mouse). The buttons and arrows
 /// wrap around when [loop] is true, jumping straight to the other end.
 /// Automatic scrolling comes from an [Oito2CarouselController].

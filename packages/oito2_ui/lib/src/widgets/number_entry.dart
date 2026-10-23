@@ -31,11 +31,11 @@ import 'widget_helpers.dart';
 /// [onChanged]; text that isn't a number is replaced by the current
 /// value.
 ///
-/// The arrow keys change the value by [step], Page Up and Page Down by
-/// [pageStep], Home and End jump to [min] and [max] when they are finite.
-/// With the focus in
-/// the field the mouse wheel steps too, and dragging sideways on the
-/// buttons scrubs the value one [step] per 4 pixels.
+/// While the entry is enabled, the Up and Down arrow keys change the value
+/// by [step], Page Up and Page Down by [pageStep], and Home and End jump to
+/// [min] and [max] when they are finite. With the focus in the field the
+/// mouse wheel steps too, and dragging sideways on the buttons scrubs the
+/// value one [step] per 4 pixels.
 class Oito2NumberEntry extends StatefulWidget {
   /// Creates a number entry.
   ///
@@ -296,10 +296,10 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry>
               _stepBy(widget.pageStep),
           const SingleActivator(LogicalKeyboardKey.pageDown): () =>
               _stepBy(-widget.pageStep),
-          if (widget.min.isFinite)
+          if (_enabled && widget.min.isFinite)
             const SingleActivator(LogicalKeyboardKey.home): () =>
                 _set(widget.min),
-          if (widget.max.isFinite)
+          if (_enabled && widget.max.isFinite)
             const SingleActivator(LogicalKeyboardKey.end): () =>
                 _set(widget.max),
         },

@@ -242,3 +242,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2Steps`: assistive technologies read a step's description.
 - `Oito2TimerController.pause` and `reset` do nothing after `dispose`.
 - `Oito2ScrollViewUndershoot` shades the right edges of reversed scroll views.
+- `Oito2ScrollViewUndershoot` no longer rebuilds in the middle of a layout when its scroll view settles while laying out, which failed inside an `Oito2MasterDetailPage` opening on an item far down its list.
+- `Oito2Calendar`: the previous and next month arrows point the reading way in right-to-left layouts.
+- `Oito2NumberEntry`: Home and End no longer change the text of a read-only entry.
+- `Oito2Tile` with `onTap` reads as a button to assistive technologies.
+- `Oito2SelectableContainer` and `Oito2Banner` change their border at once when animations are disabled.

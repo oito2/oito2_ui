@@ -16,9 +16,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
-/// Shows [Oito2HoverCard] previewing a profile and a link.
+/// Documents [Oito2HoverCard]: a profile preview, a placement without an
+/// arrow and custom delays.
 class HoverCardPage extends StatelessWidget {
   /// Creates the hover card page.
   const HoverCardPage({super.key});
@@ -26,52 +27,141 @@ class HoverCardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ShowcasePageBody(
+    return DocPage(
+      title: 'Hover Card',
+      description:
+          'A card of extra detail that opens while the pointer rests on a '
+          'widget or the focus is inside it, such as a profile preview on a '
+          'user name.',
+      source: 'lib/src/pages/hover_card_page.dart',
       children: [
-        ShowcaseSection(
-          'Hover or focus the names',
-          children: [
-            for (final (name, role) in [
-              ('Ana Souza', 'Maintainer'),
-              ('Bruno Lima', 'Designer'),
-            ])
-              Oito2HoverCard(
-                cardBuilder: (context) => Row(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: Oito2Spacing.md,
-                  children: [
-                    const Oito2PlaceholderIcon(
-                      size: 48,
-                      borderRadius: BorderRadius.all(Radius.circular(24)),
-                    ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(name, style: theme.textTheme.titleMedium),
-                        Text(role),
-                      ],
-                    ),
-                  ],
+        ExamplePanel(
+          region: 'preview',
+          // #region preview
+          child: Oito2HoverCard(
+            cardBuilder: (context) => const Text('github.com/oito2/oito2_ui'),
+            child: TextButton(onPressed: () {}, child: const Text('oito2_ui')),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Usage'),
+        const DocText(
+          'Wrap the widget in `Oito2HoverCard` and build the card in '
+          '`cardBuilder`. The card opens `openDelay` after the pointer enters '
+          'the child or the focus moves inside it, 500 ms by default, and '
+          'closes `closeDelay` after the pointer leaves both the child and '
+          'the card, or the focus leaves the child, 300 ms by default.',
+        ),
+        const DocText(
+          'A long press opens the card on touch screens; Escape and a tap '
+          'outside close it.',
+        ),
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocNote(
+          'The card does not take the focus, so its content must only '
+          'repeat or preview what the child leads to. For interactive '
+          'content, use `Oito2Popover`.',
+          type: Oito2InfoType.warning,
+        ),
+        const DocHeading('Examples'),
+        const DocHeading('Profile preview', level: 3),
+        const DocText(
+          'The card content can be any widget, up to `maxWidth` wide, 320 by '
+          'default.',
+        ),
+        ExamplePanel(
+          region: 'profile',
+          child: Wrap(
+            spacing: Oito2Spacing.sm,
+            runSpacing: Oito2Spacing.sm,
+            alignment: WrapAlignment.center,
+            children: [
+              // #region profile
+              for (final (name, role) in [
+                ('Ana Souza', 'Maintainer'),
+                ('Bruno Lima', 'Designer'),
+              ])
+                Oito2HoverCard(
+                  cardBuilder: (context) => Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: Oito2Spacing.md,
+                    children: [
+                      const Oito2PlaceholderIcon(
+                        size: 48,
+                        borderRadius: BorderRadius.all(Radius.circular(24)),
+                      ),
+                      Flexible(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(name, style: theme.textTheme.titleMedium),
+                            Text(role),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  child: TextButton(onPressed: () {}, child: Text(name)),
                 ),
-                child: TextButton(onPressed: () {}, child: Text(name)),
-              ),
-          ],
+              // #endregion
+            ],
+          ),
         ),
-        ShowcaseSection(
-          'Above, without an arrow',
-          children: [
-            Oito2HoverCard(
-              placement: Oito2PopoverPlacement.top,
-              showArrow: false,
-              cardBuilder: (context) => const Text('github.com/oito2/oito2_ui'),
-              child: TextButton(
-                onPressed: () {},
-                child: const Text('Repository'),
-              ),
+        const DocHeading('Above, without an arrow', level: 3),
+        const DocText(
+          '`placement` and `alignment` position the card as in '
+          '`Oito2Popover`, below and centered by default; `showArrow: false` '
+          'removes the arrow.',
+        ),
+        ExamplePanel(
+          region: 'placement',
+          // #region placement
+          child: Oito2HoverCard(
+            placement: Oito2PopoverPlacement.top,
+            showArrow: false,
+            cardBuilder: (context) => const Text('github.com/oito2/oito2_ui'),
+            child: TextButton(
+              onPressed: () {},
+              child: const Text('Repository'),
             ),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Delays', level: 3),
+        const DocText(
+          'Shorter delays make the card feel quicker; longer ones avoid '
+          'opening it while the pointer only passes over the child.',
+        ),
+        ExamplePanel(
+          region: 'delays',
+          // #region delays
+          child: Oito2HoverCard(
+            openDelay: Duration.zero,
+            closeDelay: const Duration(seconds: 1),
+            cardBuilder: (context) =>
+                const Text('Opens at once, closes after a second.'),
+            child: TextButton(
+              onPressed: () {},
+              child: const Text('Quick card'),
+            ),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'The card opens when the keyboard focus moves inside the child, '
+          'not only on hover, and leaves the focus where it is.',
+        ),
+        const DocHeading('Keyboard', level: 3),
+        const DocTable(
+          header: ['Key', 'Action'],
+          rows: [
+            ['`Tab`', 'Focusing the child opens the card after `openDelay`.'],
+            ['`Escape`', 'Closes the open card, wherever the focus is.'],
           ],
         ),
+        ...apiReferenceWidgets(['Oito2HoverCard']),
       ],
     );
   }

@@ -597,8 +597,10 @@ class Oito2EntrySegment {
 /// IP addresses or license keys.
 ///
 /// Focus moves to the next segment when one fills up or when the first
-/// visible character of the delimiter is typed, and back to the previous one on Backspace in an
-/// empty segment or on the left arrow at its start.
+/// visible character of the delimiter is typed, and back to the previous
+/// one on Backspace in an empty segment or on the arrow toward the start
+/// of the reading direction (the left arrow in left-to-right text) at its
+/// start.
 class Oito2SegmentedEntry extends StatefulWidget {
   /// Creates a segmented entry.
   const Oito2SegmentedEntry({

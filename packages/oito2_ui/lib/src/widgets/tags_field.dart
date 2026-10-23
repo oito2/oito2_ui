@@ -43,8 +43,8 @@ enum Oito2TagsFieldStyle {
 /// to be fixed; the refused tags of a pasted list are dropped.
 ///
 /// Backspace in the empty input, or the start arrow with the caret at the
-/// start of the input, moves to the last tag;
-/// the arrow keys move between tags, and Backspace or Delete removes the
+/// start of the input, moves to the last tag; the arrow keys move between
+/// tags, and Backspace or Delete removes the
 /// focused one. With [suggestions], matching items not yet added show
 /// below the input as it is typed. With [clearable], a button at the end
 /// removes every tag at once.

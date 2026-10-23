@@ -192,6 +192,26 @@ void main() {
   });
 
   group('Oito2MasterDetailPage', () {
+    testWidgets('opens on an item far down a long list', (tester) async {
+      final controller = Oito2PageController(length: 120, initialIndex: 110);
+      addTearDown(controller.dispose);
+      await pumpOito2(
+        tester,
+        Oito2MasterDetailPage(
+          controller: controller,
+          tileBuilder: (context, index, selected, width) =>
+              Oito2MasterTile(title: Text('Item $index')),
+          pageBuilder: (context, index) => Text('Detail $index'),
+        ),
+        size: const Size(1280, 900),
+      );
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(tester.takeException(), isNull);
+      expect(find.text('Item 110'), findsOneWidget);
+    });
+
     testWidgets('an empty list keeps the bar and the footer', (tester) async {
       await pumpOito2(
         tester,

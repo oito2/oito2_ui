@@ -16,33 +16,101 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
-/// Shows [Oito2PasswordField] for signing in and for a new password.
+/// Documents [Oito2PasswordField]: signing in, a new password, an error
+/// and the Caps Lock warning.
 class PasswordFieldPage extends StatelessWidget {
   /// Creates the password field page.
   const PasswordFieldPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const ShowcasePageBody(
+    return DocPage(
+      title: 'Password Field',
+      description:
+          'A text field for a password, with a button that shows or hides '
+          'it and a warning while Caps Lock is on.',
+      source: 'lib/src/pages/password_field_page.dart',
       children: [
-        ShowcaseSection(
-          'Turn on Caps Lock while typing to see the warning',
-          children: [
-            SizedBox(
-              width: 280,
-              child: Oito2PasswordField(labelText: 'Password'),
-            ),
-            SizedBox(
-              width: 280,
-              child: Oito2PasswordField(
-                labelText: 'New password',
-                autofillHints: [AutofillHints.newPassword],
-              ),
-            ),
-          ],
+        const ExamplePanel(
+          region: 'preview',
+          child: SizedBox(
+            width: 300,
+            // #region preview
+            child: Oito2PasswordField(labelText: 'Password'),
+            // #endregion
+          ),
         ),
+        const DocHeading('Usage'),
+        const DocText(
+          'The field hides its text until the eye button is pressed. Read '
+          'the text through `onChanged`, `onSubmitted` or your own '
+          '`controller`. Suggestions and autocorrect are off, and '
+          '`autofillHints` lets password managers fill it; the default is '
+          '`AutofillHints.password`.',
+        ),
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocHeading('Examples'),
+        const DocHeading('New password', level: 3),
+        const DocText(
+          'For a field that sets a new password, pass '
+          '`AutofillHints.newPassword` so password managers can offer to '
+          'generate and save one.',
+        ),
+        const ExamplePanel(
+          region: 'new-password',
+          child: SizedBox(
+            width: 300,
+            // #region new-password
+            child: Oito2PasswordField(
+              labelText: 'New password',
+              autofillHints: [AutofillHints.newPassword],
+            ),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Caps Lock warning', level: 3),
+        const DocText(
+          'While the field has the focus and Caps Lock is on, a warning '
+          'shows below it; with an `errorText`, the warning shows under '
+          'the error. Turn on Caps Lock while typing in any field on this '
+          'page to see it. Set `showCapsLockWarning` to false to hide it.',
+        ),
+        const ExamplePanel(
+          region: 'error',
+          child: SizedBox(
+            width: 300,
+            // #region error
+            child: Oito2PasswordField(
+              labelText: 'Password',
+              errorText: 'Wrong password',
+            ),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Disabled', level: 3),
+        const DocText(
+          'With `enabled` set to false, the field and its eye button '
+          'ignore input.',
+        ),
+        const ExamplePanel(
+          region: 'disabled',
+          child: SizedBox(
+            width: 300,
+            // #region disabled
+            child: Oito2PasswordField(labelText: 'Password', enabled: false),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'The eye button has the tooltip "Show password" or "Hide '
+          'password", which also names it for assistive technologies. The '
+          'Caps Lock warning is a live region, so screen readers announce '
+          'it when it appears.',
+        ),
+        ...apiReferenceWidgets(['Oito2PasswordField']),
       ],
     );
   }

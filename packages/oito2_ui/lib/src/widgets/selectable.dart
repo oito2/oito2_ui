@@ -86,7 +86,7 @@ class _InteractiveSurfaceState extends State<_InteractiveSurface> {
         onEnter: (_) => hover(true),
         onExit: (_) => hover(false),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
+          duration: motionDuration(context, const Duration(milliseconds: 120)),
           decoration: BoxDecoration(
             borderRadius: widget.borderRadius,
             border: _focused

@@ -31,3 +31,7 @@ flutter:
   assets:
     # The page sources, shown by the "View source" action.
     - lib/src/pages/
+    # The documentation pages and the package changelogs.
+    - assets/docs/
+    - assets/docs/guides/
+    - assets/docs/changelog/

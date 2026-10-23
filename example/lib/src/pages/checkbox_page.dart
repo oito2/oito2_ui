@@ -16,9 +16,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
-/// Shows [Oito2Checkbox] in every state.
+/// Documents [Oito2Checkbox]: two states, three states and disabled.
 class CheckboxPage extends StatefulWidget {
   /// Creates the check box page.
   const CheckboxPage({super.key});
@@ -33,41 +33,99 @@ class _CheckboxPageState extends State<CheckboxPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ShowcasePageBody(
+    return DocPage(
+      title: 'Checkbox',
+      description:
+          'A box that is checked or unchecked, with an optional mixed '
+          'state, painted in the oito2 style.',
+      source: 'lib/src/pages/checkbox_page.dart',
       children: [
-        ShowcaseSection(
-          'Two states',
-          children: [
-            Oito2Checkbox(
-              value: _checked,
-              semanticLabel: 'Two-state check box',
-              onChanged: (v) => setState(() => _checked = v ?? false),
-            ),
+        ExamplePanel(
+          region: 'preview',
+          // #region preview
+          child: Oito2Checkbox(
+            value: _checked,
+            semanticLabel: 'Two-state check box',
+            onChanged: (value) => setState(() => _checked = value ?? false),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Usage'),
+        const DocText(
+          'Pass the current `value` and update it in `onChanged`, which '
+          'receives the next value. A null `onChanged` disables the box, '
+          'which then shows dimmed. When no label around the box names it, '
+          'give it a `semanticLabel`.',
+        ),
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocNote(
+          'A check box usually comes with a label. `Oito2CheckButton` adds a '
+          'clickable one beside the box, and `Oito2CheckboxListTile` puts '
+          'the box in a list tile.',
+        ),
+        const DocHeading('Examples'),
+        const DocHeading('Three states', level: 3),
+        const DocText(
+          'With `tristate: true`, a null `value` is the mixed state, shown '
+          'as a dash. A tap moves from unchecked to checked, from checked '
+          'to mixed, and from mixed back to unchecked. A null `value` '
+          'without `tristate` fails an assertion in debug builds.',
+        ),
+        ExamplePanel(
+          region: 'tristate',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // #region tristate
+              Oito2Checkbox(
+                value: _tristate,
+                tristate: true,
+                semanticLabel: 'Three-state check box',
+                onChanged: (value) => setState(() => _tristate = value),
+              ),
+              // #endregion
+              Text(
+                'Value: $_tristate',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+        const DocHeading('Disabled', level: 3),
+        const DocText(
+          'Without `onChanged`, the box shows its value dimmed and ignores '
+          'taps and keys.',
+        ),
+        const ExamplePanel(
+          region: 'disabled',
+          // #region disabled
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Oito2Checkbox(value: false, onChanged: null),
+              Oito2Checkbox(value: true, onChanged: null),
+              Oito2Checkbox(value: null, tristate: true, onChanged: null),
+            ],
+          ),
+          // #endregion
+        ),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'Assistive technologies read the box as checked, unchecked or '
+          'mixed, with its `semanticLabel`. The box is 20 pixels in a '
+          '34-pixel target on pointer platforms, and 24 pixels in a '
+          '48-pixel target on touch platforms. The focus ring shows in '
+          'keyboard navigation.',
+        ),
+        const DocHeading('Keyboard', level: 3),
+        const DocTable(
+          header: ['Key', 'Action'],
+          rows: [
+            ['`Tab`', 'Moves the focus to the box, and out of it.'],
+            ['`Space` / `Enter`', 'Toggles the focused box.'],
           ],
         ),
-        ShowcaseSection(
-          'Three states',
-          children: [
-            Oito2Checkbox(
-              value: _tristate,
-              tristate: true,
-              semanticLabel: 'Three-state check box',
-              onChanged: (v) => setState(() => _tristate = v),
-            ),
-            Text(
-              'Value: $_tristate',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-        const ShowcaseSection(
-          'Disabled',
-          children: [
-            Oito2Checkbox(value: false, onChanged: null),
-            Oito2Checkbox(value: true, onChanged: null),
-            Oito2Checkbox(value: null, tristate: true, onChanged: null),
-          ],
-        ),
+        ...apiReferenceWidgets(['Oito2Checkbox']),
       ],
     );
   }

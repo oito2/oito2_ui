@@ -16,9 +16,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
-/// Shows [Oito2PageIndicator] with dots and, when narrow, as a counter.
+/// Documents [Oito2PageIndicator]: interactive dots, the spacing layouts,
+/// the dot size and the counter shown when the dots do not fit.
 class PageIndicatorPage extends StatefulWidget {
   /// Creates the page indicator page.
   const PageIndicatorPage({super.key});
@@ -29,51 +30,153 @@ class PageIndicatorPage extends StatefulWidget {
 
 class _PageIndicatorPageState extends State<PageIndicatorPage> {
   int _page = 0;
+  int _large = 1;
 
   @override
   Widget build(BuildContext context) {
-    return ShowcasePageBody(
+    final textTheme = Theme.of(context).textTheme;
+    return DocPage(
+      title: 'Page Indicator',
+      description:
+          'Dots that show the current page of a carousel or a paged view, '
+          'and can move to another page.',
+      source: 'lib/src/pages/page_indicator_page.dart',
       children: [
-        ShowcaseSection(
-          'Dots',
-          children: [
-            Oito2PageIndicator(
-              length: 6,
-              page: _page % 6,
-              onTap: (i) => setState(() => _page = i),
-            ),
-          ],
+        ExamplePanel(
+          region: 'preview',
+          // #region preview
+          child: Oito2PageIndicator(
+            length: 6,
+            page: _page % 6,
+            onTap: (index) => setState(() => _page = index),
+          ),
+          // #endregion
         ),
-        ShowcaseSection(
-          'Layouts with 12 pages, showing the page only: fixed, stepped and '
-          'bounded in 160 px',
-          children: [
-            // Without onTap the dots keep their size; interactive dots are
-            // 24-pixel targets, which 12 of don't fit in 160 pixels.
-            for (final layout in Oito2PageIndicatorLayout.values)
-              SizedBox(
-                width: 160,
-                child: Oito2PageIndicator(
-                  length: 12,
-                  page: _page % 12,
-                  layout: layout,
+        const DocHeading('Usage'),
+        const DocText(
+          'Give `Oito2PageIndicator` the number of pages in `length` and the '
+          'current `page`, counting from 0. The current page is a wider '
+          'pill in the accent color. With `onTap`, each dot is a button '
+          'that reports its index; a null `onTap` makes the dots a plain '
+          'display.',
+        ),
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocNote(
+          '`Oito2Carousel` shows a page indicator below its pages. For pages '
+          'with numbered buttons, use `Oito2Pagination`.',
+        ),
+        const DocHeading('Examples'),
+        const DocHeading('Spacing layouts', level: 3),
+        const DocText(
+          '`layout` picks how the dots are spaced: `fixed` always keeps '
+          '`spacing` between them; `stepped` brings them closer as pages '
+          'are added, the full spacing up to 5 pages, three quarters up to '
+          '10 and half beyond; `bounded` keeps the full spacing when it fits '
+          'and otherwise draws the dots as close as needed to fit the '
+          'width, down to half the dot size. Here each indicator shows 12 '
+          'pages in 200 pixels: the `fixed` dots do not fit, so it shows '
+          'the counter described below.',
+        ),
+        const DocNote(
+          'These indicators have no `onTap`, so they only show the page. '
+          'An interactive dot sits in a target at least 24 pixels wide, and '
+          'twelve of those do not fit in 200 pixels, so interactive dots '
+          'would all turn into the counter.',
+        ),
+        ExamplePanel(
+          region: 'layouts',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: Oito2Spacing.sm,
+            children: [
+              // #region layouts
+              for (final layout in Oito2PageIndicatorLayout.values)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: Oito2Spacing.md,
+                  children: [
+                    SizedBox(
+                      width: 80,
+                      child: Text(layout.name, style: textTheme.labelMedium),
+                    ),
+                    SizedBox(
+                      width: 200,
+                      child: Oito2PageIndicator(
+                        length: 12,
+                        page: _page % 12,
+                        layout: layout,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-          ],
+              // #endregion
+            ],
+          ),
         ),
-        ShowcaseSection(
-          'Counter when the dots do not fit',
-          children: [
-            SizedBox(
-              width: 72,
-              child: Oito2PageIndicator(
-                length: 24,
-                page: _page,
-                onTap: (i) => setState(() => _page = i),
-              ),
+        const DocHeading('Counter', level: 3),
+        const DocText(
+          'When the dots do not fit the available width, the indicator shows '
+          'the page as "page / length" text instead. Here 24 pages are given '
+          '72 pixels.',
+        ),
+        ExamplePanel(
+          region: 'counter',
+          child: SizedBox(
+            width: 72,
+            // #region counter
+            child: Oito2PageIndicator(
+              length: 24,
+              page: _page,
+              onTap: (index) => setState(() => _page = index),
             ),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Dot size', level: 3),
+        const DocText(
+          '`dotSize` sets the diameter of the dots, 8 pixels by default; '
+          'the current page is three times as wide. `spacing` sets the '
+          'space between them.',
+        ),
+        ExamplePanel(
+          region: 'size',
+          // #region size
+          child: Oito2PageIndicator(
+            length: 4,
+            page: _large,
+            dotSize: 12,
+            spacing: Oito2Spacing.md,
+            onTap: (index) => setState(() => _large = index),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'Each dot is labeled "Page 2 of 6", or by `pageLabel`, and the '
+          'current one is reported as selected; interactive dots are '
+          'buttons. The counter reads with the same label. Interactive '
+          'dots are a single stop in keyboard navigation and show the '
+          'focus ring around the whole row.',
+        ),
+        const DocHeading('Keyboard', level: 3),
+        const DocTable(
+          header: ['Key', 'Action'],
+          rows: [
+            ['`Tab`', 'Moves the focus to the dots.'],
+            [
+              '`Left arrow` / `Right arrow`',
+              'Moves to the previous or next page, in the reading '
+                  'direction: `Right arrow` moves back in right-to-left '
+                  'layouts.',
+            ],
+            ['`Home`', 'Moves to the first page.'],
+            ['`End`', 'Moves to the last page.'],
           ],
         ),
+        ...apiReferenceWidgets([
+          'Oito2PageIndicator',
+          'Oito2PageIndicatorLayout',
+        ]),
       ],
     );
   }

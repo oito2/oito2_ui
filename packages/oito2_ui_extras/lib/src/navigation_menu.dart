@@ -53,8 +53,8 @@ class Oito2NavigationMenuItem {
 ///
 /// A panel opens on hover after [hoverDelay], or when its trigger is
 /// pressed or gets Down, which also move the focus into it; moving the
-/// pointer to another trigger switches panels at once. The arrow keys move
-/// the focus between the items and Escape closes a panel.
+/// pointer to another trigger switches panels at once. Tab moves the focus
+/// between the items and Escape closes a panel.
 class Oito2NavigationMenu extends StatefulWidget {
   /// Creates a navigation menu.
   ///

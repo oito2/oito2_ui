@@ -40,6 +40,8 @@ jobs:
       - run: flutter pub get --enforce-lockfile
       - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze
+      - name: Documentation data is up to date
+        run: dart run tool/generate_docs.dart --check
 
   test:
     name: Test ${{ matrix.package }}

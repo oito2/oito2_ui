@@ -16,9 +16,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
-/// Shows [Oito2ToggleButton] with a custom control: the whole row is
+/// Documents [Oito2ToggleButton] with a custom control: the whole row is
 /// clickable and takes keyboard focus as one element.
 class ToggleButtonPage extends StatefulWidget {
   /// Creates the toggle button page.
@@ -31,40 +31,107 @@ class ToggleButtonPage extends StatefulWidget {
 class _ToggleButtonPageState extends State<ToggleButtonPage> {
   bool _sync = true;
   bool _notify = false;
+  bool _preview = false;
 
   @override
   Widget build(BuildContext context) {
-    return ShowcasePageBody(
+    return DocPage(
+      title: 'Toggle Button',
+      description:
+          'A clickable row that pairs any toggle control with a label, the '
+          'base of the check, radio and switch buttons.',
+      source: 'lib/src/pages/toggle_button_page.dart',
       children: [
-        ShowcaseSection(
-          'Toggle buttons',
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Oito2ToggleButton(
-                  control: Oito2Checkbox(
-                    value: _sync,
-                    onChanged: (v) => setState(() => _sync = v ?? false),
-                  ),
-                  title: const Text('Sync files'),
-                  subtitle: const Text('Control before the text'),
-                  onToggled: () => setState(() => _sync = !_sync),
-                ),
-                Oito2ToggleButton(
-                  control: Oito2Switch(
-                    value: _notify,
-                    onChanged: (v) => setState(() => _notify = v),
-                  ),
-                  controlAtEnd: true,
-                  title: const Text('Notify me'),
-                  subtitle: const Text('Control after the text'),
-                  onToggled: () => setState(() => _notify = !_notify),
-                ),
-              ],
+        ExamplePanel(
+          region: 'preview',
+          // #region preview
+          child: Oito2ToggleButton(
+            control: Oito2Checkbox(
+              value: _sync,
+              onChanged: (value) => setState(() => _sync = value ?? false),
             ),
+            title: const Text('Sync files'),
+            subtitle: const Text('Control before the text'),
+            onToggled: () => setState(() => _sync = !_sync),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Usage'),
+        const DocText(
+          'Pass the toggle as `control`, the label as `title` and, '
+          'optionally, a `subtitle`. A click on the row, or `Space` or '
+          '`Enter` while it has focus, calls `onToggled`, where you change '
+          'the value the control shows. The control keeps its own callback, '
+          'which runs when the control itself is clicked.',
+        ),
+        const DocText(
+          'A null `onToggled` disables the row and dims its text, but not '
+          'the control: give the control a null callback too.',
+        ),
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocNote(
+          'For a check box, radio or switch, `Oito2CheckButton`, '
+          '`Oito2RadioButton` and `Oito2SwitchButton` already wire the '
+          'control and the row together. Use `Oito2ToggleButton` for another '
+          'control, or a different arrangement.',
+        ),
+        const DocHeading('Examples'),
+        const DocHeading('Control at the end', level: 3),
+        const DocText(
+          'With `controlAtEnd: true`, the control follows the text, as in a '
+          'switch button.',
+        ),
+        ExamplePanel(
+          region: 'end',
+          // #region end
+          child: Oito2ToggleButton(
+            control: Oito2Switch(
+              value: _notify,
+              onChanged: (value) => setState(() => _notify = value),
+            ),
+            controlAtEnd: true,
+            title: const Text('Notify me'),
+            subtitle: const Text('Control after the text'),
+            onToggled: () => setState(() => _notify = !_notify),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Custom control', level: 3),
+        const DocText(
+          'The control can be any widget. Here an `Oito2Swap` changes an '
+          'eye icon, and the row handles the clicks.',
+        ),
+        ExamplePanel(
+          region: 'custom',
+          // #region custom
+          child: Oito2ToggleButton(
+            control: Oito2Swap(
+              swapped: _preview,
+              effect: Oito2SwapEffect.scale,
+              off: const Icon(LucideIcons.eye_off),
+              on: const Icon(LucideIcons.eye),
+            ),
+            title: Text(_preview ? 'Preview shown' : 'Preview hidden'),
+            onToggled: () => setState(() => _preview = !_preview),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'The row reads as one element to assistive technologies, merging '
+          'the label with the state the control reports. It takes keyboard '
+          'focus as a whole and shows the focus ring around itself; the '
+          'control is kept out of focus traversal.',
+        ),
+        const DocHeading('Keyboard', level: 3),
+        const DocTable(
+          header: ['Key', 'Action'],
+          rows: [
+            ['`Tab`', 'Moves the focus to the row, and out of it.'],
+            ['`Space` / `Enter`', 'Calls `onToggled`.'],
           ],
         ),
+        ...apiReferenceWidgets(['Oito2ToggleButton']),
       ],
     );
   }

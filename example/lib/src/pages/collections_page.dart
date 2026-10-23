@@ -13,11 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
 const _languages = [
   ('dart', 'Dart', 'Compiled'),
@@ -29,8 +28,8 @@ const _languages = [
   ('lua', 'Lua', 'Interpreted'),
 ];
 
-/// Shows the pure Dart collections: a list with multiple selection, a
-/// tree built from file paths and a list loaded page by page.
+/// Documents the pure Dart collections: a list with selection, a tree
+/// built from file paths and a list loaded page by page.
 class CollectionsPage extends StatefulWidget {
   /// Creates the collections page.
   const CollectionsPage({super.key});
@@ -40,17 +39,20 @@ class CollectionsPage extends StatefulWidget {
 }
 
 class _CollectionsPageState extends State<CollectionsPage> {
+  // #region list-data
   final _list = Oito2ListCollection(
     _languages,
-    valueOf: (l) => l.$1,
-    labelOf: (l) => l.$2,
-    groupOf: (l) => l.$3,
-    isDisabled: (l) => l.$1 == 'cobol',
+    valueOf: (language) => language.$1,
+    labelOf: (language) => language.$2,
+    groupOf: (language) => language.$3,
+    isDisabled: (language) => language.$1 == 'cobol',
   );
   late final _selection = Oito2SelectionController(
     collection: _list,
     mode: Oito2SelectionMode.multiple,
   );
+  // #endregion
+  // #region tree-data
   final _tree = Oito2TreeCollection<void>.fromPaths(const [
     'lib/main.dart',
     'lib/src/app.dart',
@@ -60,6 +62,8 @@ class _CollectionsPageState extends State<CollectionsPage> {
     'pubspec.yaml',
   ]);
   final Set<String> _expanded = {'lib'};
+  // #endregion
+  // #region async-data
   late final _numbers = Oito2AsyncListController<int, int>(
     load: (request) async {
       await Future<void>.delayed(const Duration(milliseconds: 400));
@@ -70,6 +74,7 @@ class _CollectionsPageState extends State<CollectionsPage> {
       ], cursor: next < 100 ? next : null);
     },
   )..reload();
+  // #endregion
 
   @override
   void dispose() {
@@ -81,141 +86,157 @@ class _CollectionsPageState extends State<CollectionsPage> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return ShowcasePageBody(
+    return DocPage(
+      title: 'Collections',
+      description:
+          'Pure Dart descriptions of lists and trees of items, with their '
+          'selection and loading, that the list, select, tree and '
+          'autocomplete components share.',
+      source: 'lib/src/pages/collections_page.dart',
       children: [
-        ShowcaseSection(
-          'List collection and selection: click, Ctrl+click, Shift+click',
-          children: [
-            SizedBox(
-              width: 360,
-              child: Oito2BorderContainer(
-                child: ListenableBuilder(
+        const DocHeading('Usage'),
+        const DocText(
+          'A collection wraps your own items and says how to read them: '
+          'the `valueOf` that identifies each one, the `labelOf` to show '
+          'and search, an optional `groupOf` and `isDisabled`. Components '
+          'take the collection instead of a list of widgets, so the same '
+          'items feed several of them.',
+        ),
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocTable(
+          header: ['Collection', 'Describes'],
+          rows: [
+            ['`Oito2ListCollection`', 'A flat list, optionally grouped'],
+            ['`Oito2TreeCollection`', 'A tree of `Oito2TreeNode`s'],
+            [
+              '`Oito2AsyncListController`',
+              'A list loaded from a source page by page',
+            ],
+            [
+              '`Oito2SelectionController`',
+              'The selected values of a list, single or multiple',
+            ],
+          ],
+        ),
+        const DocHeading('Examples'),
+        const DocHeading('List and selection', level: 3),
+        const DocText(
+          'An `Oito2SelectionController` keeps the selected values of a '
+          'list collection, skipping disabled items. In `multiple` mode, '
+          'Control or Command+click toggles an item and Shift+click '
+          'selects a range, as in `Oito2ListBox`.',
+        ),
+        ExamplePanel(
+          regions: const ['list-data', 'list-ui'],
+          child: SizedBox(
+            width: 320,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: Oito2Spacing.sm,
+              children: [
+                // #region list-ui
+                Oito2ListBox(
+                  collection: _list,
+                  controller: _selection,
+                  maxHeight: 280,
+                ),
+                ListenableBuilder(
                   listenable: _selection,
-                  builder: (context, _) => Column(
-                    children: [
-                      Oito2CheckboxListTile(
-                        value: _selection.isAllSelected
-                            ? true
-                            : _selection.isSomeSelected
-                            ? null
-                            : false,
-                        tristate: true,
-                        title: const Text('Select all'),
-                        onChanged: (_) => _selection.isAllSelected
-                            ? _selection.clear()
-                            : _selection.selectAll(),
-                      ),
-                      const Divider(height: 1),
-                      for (final group in _list.groups) ...[
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(
-                              group.group ?? '',
-                              style: textTheme.labelMedium,
-                            ),
-                          ),
-                        ),
-                        for (final item in group.items)
-                          ListTile(
-                            title: Text(_list.labelOf(item)),
-                            enabled: !_list.isDisabled(item),
-                            selected: _selection.isSelected(
-                              _list.valueOf(item),
-                            ),
-                            onTap: () {
-                              final keyboard = HardwareKeyboard.instance;
-                              _selection.click(
-                                _list.valueOf(item),
-                                extend: keyboard.isShiftPressed,
-                                toggle:
-                                    keyboard.isControlPressed ||
-                                    keyboard.isMetaPressed,
-                              );
-                            },
-                          ),
-                      ],
-                    ],
-                  ),
+                  builder: (context, _) =>
+                      Text('Selected: ${_selection.selectedValues.join(', ')}'),
                 ),
-              ),
+                // #endregion
+              ],
             ),
-            ListenableBuilder(
-              listenable: _selection,
-              builder: (context, _) => Text(
-                'Selected: ${_selection.selectedValues.join(', ')}',
-                style: textTheme.bodySmall,
-              ),
-            ),
-          ],
+          ),
         ),
-        ShowcaseSection(
-          'Tree collection from file paths',
-          children: [
-            SizedBox(
-              width: 360,
-              child: Oito2BorderContainer(
-                child: Column(
-                  children: [
-                    for (final entry in _tree.visible(_expanded))
-                      ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsetsDirectional.only(
-                          start: 12.0 + entry.depth * 20,
-                          end: 12,
-                        ),
-                        leading: Icon(
-                          entry.node.isBranch
-                              ? (_expanded.contains(entry.node.value)
-                                    ? LucideIcons.folder_open
-                                    : LucideIcons.folder)
-                              : LucideIcons.file,
-                          size: 18,
-                        ),
-                        title: Text(entry.node.label),
-                        onTap: entry.node.isBranch
-                            ? () => setState(
-                                () => _expanded.contains(entry.node.value)
-                                    ? _expanded.remove(entry.node.value)
-                                    : _expanded.add(entry.node.value),
-                              )
-                            : null,
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        const DocHeading('Tree from paths', level: 3),
+        const DocText(
+          '`Oito2TreeCollection.fromPaths` builds folders from slash '
+          'separated paths. `visible` lists the nodes to show for a set of '
+          'open branches, each with its depth, which is all a custom tree '
+          'needs; `Oito2TreeView` adds the keyboard, selection and '
+          'filtering.',
         ),
-        ShowcaseSection(
-          'Async list loaded page by page',
-          children: [
-            ListenableBuilder(
-              listenable: _numbers,
-              builder: (context, _) => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: Oito2Spacing.sm,
-                children: [
-                  Text(
-                    '${_numbers.items.length} of 100 items loaded',
-                    style: textTheme.bodyMedium,
-                  ),
-                  if (_numbers.isLoading || _numbers.isLoadingMore)
-                    const SizedBox(
-                      width: 200,
-                      child: Oito2LinearProgressIndicator(),
-                    )
-                  else
-                    OutlinedButton(
-                      onPressed: _numbers.hasMore ? _numbers.loadMore : null,
-                      child: const Text('Load more'),
+        ExamplePanel(
+          regions: const ['tree-data', 'tree-ui'],
+          child: SizedBox(
+            width: 320,
+            child: Column(
+              children: [
+                // #region tree-ui
+                for (final entry in _tree.visible(_expanded))
+                  ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsetsDirectional.only(
+                      start: 12.0 + entry.depth * 20,
+                      end: 12,
                     ),
-                ],
-              ),
+                    leading: Icon(
+                      entry.node.isBranch
+                          ? LucideIcons.folder
+                          : LucideIcons.file,
+                      size: 18,
+                    ),
+                    title: Text(entry.node.label),
+                    onTap: entry.node.isBranch
+                        ? () => setState(
+                            () => _expanded.contains(entry.node.value)
+                                ? _expanded.remove(entry.node.value)
+                                : _expanded.add(entry.node.value),
+                          )
+                        : null,
+                  ),
+                // #endregion
+              ],
             ),
-          ],
+          ),
         ),
+        const DocHeading('Loading page by page', level: 3),
+        const DocText(
+          '`Oito2AsyncListController` calls `load` with a cursor for each '
+          'page and keeps the items, the loading state and the error. '
+          '`reload` starts over and `loadMore` asks for the next page; a '
+          'null cursor in the result means there is no more.',
+        ),
+        ExamplePanel(
+          regions: const ['async-data', 'async-ui'],
+          // #region async-ui
+          child: ListenableBuilder(
+            listenable: _numbers,
+            builder: (context, _) => Column(
+              spacing: Oito2Spacing.sm,
+              children: [
+                Text('${_numbers.items.length} of 100 items loaded'),
+                if (_numbers.isLoading || _numbers.isLoadingMore)
+                  const SizedBox(
+                    width: 200,
+                    child: Oito2LinearProgressIndicator(),
+                  )
+                else
+                  OutlinedButton(
+                    onPressed: _numbers.hasMore ? _numbers.loadMore : null,
+                    child: const Text('Load more'),
+                  ),
+              ],
+            ),
+          ),
+          // #endregion
+        ),
+        DocText(
+          'The collections are plain Dart: they have no widgets and can be '
+          'tested and filtered without a `BuildContext`.',
+          style: textTheme.bodyMedium,
+        ),
+        ...apiReferenceWidgets([
+          'Oito2ListCollection',
+          'Oito2SelectionController',
+          'Oito2SelectionMode',
+          'Oito2TreeCollection',
+          'Oito2TreeNode',
+          'Oito2AsyncListController',
+          'Oito2AsyncListPage',
+        ]),
       ],
     );
   }

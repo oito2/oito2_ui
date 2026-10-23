@@ -16,10 +16,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-import '../widgets/showcase_widgets.dart';
+import '../docs/doc_widgets.dart';
 
-/// Shows [Oito2Banner]: selectable app cards, and tiles that change on
-/// hover, carry a tint and open a dialog.
+/// Documents [Oito2Banner]: a tile, selectable app cards, a watermark,
+/// and tiles that change on hover, carry a tint and open a dialog.
 class BannerPage extends StatefulWidget {
   /// Creates the banner page.
   const BannerPage({super.key});
@@ -35,84 +35,170 @@ class _BannerPageState extends State<BannerPage> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    return ShowcasePageBody(
+    return DocPage(
+      title: 'Banner',
+      description:
+          'A card-like clickable surface for promoting content, such as an '
+          'app in a store grid.',
+      source: 'lib/src/pages/banner_page.dart',
       children: [
-        ShowcaseSection(
-          'Selectable',
-          children: [
-            for (final (index, (title, subtitle)) in const [
-              ('Text Editor', 'Edit plain text files'),
-              ('Files', 'Access and organize files'),
-              ('Calculator', 'Perform calculations'),
-            ].indexed)
-              SizedBox(
-                width: 240,
-                child: Oito2Banner(
-                  selected: _selected == index,
-                  onTap: () => setState(() => _selected = index),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: textTheme.titleMedium),
-                      const SizedBox(height: Oito2Spacing.xs),
-                      Text(subtitle, style: textTheme.bodyMedium),
-                    ],
+        ExamplePanel(
+          region: 'preview',
+          child: SizedBox(
+            width: 320,
+            // #region preview
+            child: Oito2Banner.tile(
+              icon: Icon(LucideIcons.sun, size: 48, color: scheme.primary),
+              title: const Text('Weather'),
+              subtitle: const Text('Forecasts for your places'),
+              onTap: () {},
+            ),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Usage'),
+        const DocText(
+          '`Oito2Banner` draws its `child` on a bordered surface with large '
+          'rounded corners. With `onTap` it is a button whose border '
+          'strengthens on hover. `Oito2Banner.tile` lays out an `icon` '
+          'before a `title` and an optional `subtitle`.',
+        ),
+        const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocNote(
+          'For a choice without a border at rest, such as an option in a '
+          'picker, use `Oito2SelectableContainer`.',
+        ),
+        const DocHeading('Examples'),
+        const DocHeading('Selectable', level: 3),
+        const DocText(
+          'With `selected`, the banner takes a tinted background and a '
+          '2-pixel border in the text-safe primary tone. Keep the selection '
+          'in your state and change it in `onTap`.',
+        ),
+        ExamplePanel(
+          region: 'selectable',
+          child: Wrap(
+            spacing: Oito2Spacing.md,
+            runSpacing: Oito2Spacing.md,
+            children: [
+              // #region selectable
+              for (final (index, (title, subtitle)) in const [
+                ('Text Editor', 'Edit plain text files'),
+                ('Files', 'Access and organize files'),
+                ('Calculator', 'Perform calculations'),
+              ].indexed)
+                SizedBox(
+                  width: 240,
+                  child: Oito2Banner(
+                    selected: _selected == index,
+                    onTap: () => setState(() => _selected = index),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: textTheme.titleMedium),
+                        const SizedBox(height: Oito2Spacing.xs),
+                        Text(subtitle, style: textTheme.bodyMedium),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-          ],
+              // #endregion
+            ],
+          ),
         ),
-        ShowcaseSection(
-          'With a watermark',
-          children: [
-            for (final (title, description, icon) in _apps.take(2))
-              SizedBox(
-                width: 320,
-                height: 140,
-                child: Oito2Banner(
-                  padding: EdgeInsets.zero,
-                  onTap: () {},
-                  child: Oito2Watermark(
-                    watermark: Icon(icon, size: 96),
-                    child: Padding(
-                      padding: const EdgeInsets.all(Oito2Spacing.lg),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(title, style: textTheme.titleMedium),
-                          const SizedBox(height: Oito2Spacing.xs),
-                          Text(description, style: textTheme.bodyMedium),
-                        ],
+        const DocHeading('With a watermark', level: 3),
+        const DocText(
+          'A banner takes any content. Here an `Oito2Watermark` fills it, '
+          'with `padding: EdgeInsets.zero` on the banner so the watermark '
+          'reaches its edges.',
+        ),
+        ExamplePanel(
+          regions: const ['apps', 'watermark'],
+          child: Wrap(
+            spacing: Oito2Spacing.md,
+            runSpacing: Oito2Spacing.md,
+            children: [
+              // #region watermark
+              for (final (title, description, icon) in _apps.take(2))
+                SizedBox(
+                  width: 320,
+                  height: 140,
+                  child: Oito2Banner(
+                    padding: EdgeInsets.zero,
+                    onTap: () {},
+                    child: Oito2Watermark(
+                      watermark: Icon(icon, size: 96),
+                      child: Padding(
+                        padding: const EdgeInsets.all(Oito2Spacing.lg),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(title, style: textTheme.titleMedium),
+                            const SizedBox(height: Oito2Spacing.xs),
+                            Text(description, style: textTheme.bodyMedium),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+              // #endregion
+            ],
+          ),
         ),
-        ShowcaseSection(
-          'Tiles: hover for details, click for a dialog',
-          children: [
-            for (var i = 0; i < 6; i++)
-              SizedBox(
-                width: 320,
-                height: 170,
-                child: _HoverTile(
-                  index: i,
-                  tint: switch (i % 3) {
-                    1 => scheme.primary,
-                    2 => scheme.tertiary,
-                    _ => null,
-                  },
+        const DocHeading('Hover, tint and a dialog', level: 3),
+        const DocText(
+          '`onHover` is called with `true` when the pointer enters the '
+          'banner and `false` when it leaves, so the content can change on '
+          'hover: these tiles hide their icon and show a longer '
+          'description. `tint` washes the background lightly with a color. '
+          'A click opens a dialog.',
+        ),
+        ExamplePanel(
+          regions: const ['apps', 'hover-state', 'hover-tile'],
+          child: Wrap(
+            spacing: Oito2Spacing.md,
+            runSpacing: Oito2Spacing.md,
+            children: [
+              for (var i = 0; i < 6; i++)
+                SizedBox(
+                  width: 320,
+                  height: 170,
+                  child: _HoverTile(
+                    index: i,
+                    tint: switch (i % 3) {
+                      1 => scheme.primary,
+                      2 => scheme.tertiary,
+                      _ => null,
+                    },
+                  ),
                 ),
-              ),
+            ],
+          ),
+        ),
+        const DocHeading('Accessibility'),
+        const DocText(
+          'Assistive technologies read a banner with `onTap` as a button, '
+          'and report whether it is selected. With keyboard focus it shows '
+          'the focus ring around its border. Content that only appears on '
+          'hover can\'t be reached without a pointer, so keep it available '
+          'another way, as the dialog of these tiles does.',
+        ),
+        const DocHeading('Keyboard', level: 3),
+        const DocTable(
+          header: ['Key', 'Action'],
+          rows: [
+            ['`Tab`', 'Moves the focus to the next banner.'],
+            ['`Enter` / `Space`', 'Calls `onTap`.'],
           ],
         ),
+        ...apiReferenceWidgets(['Oito2Banner']),
       ],
     );
   }
 }
 
+// #region apps
 /// The sample apps: a title, a description and an icon.
 const _apps = [
   ('Weather', 'Forecasts for your places', LucideIcons.sun),
@@ -122,6 +208,7 @@ const _apps = [
   ('Mail', 'Read and send messages', LucideIcons.mail),
   ('Notes', 'Write things down', LucideIcons.notebook_pen),
 ];
+// #endregion
 
 const _details =
     'Shows more on hover: the icon steps aside and the description grows '
@@ -139,7 +226,9 @@ class _HoverTile extends StatefulWidget {
 }
 
 class _HoverTileState extends State<_HoverTile> {
+  // #region hover-state
   bool _hovered = false;
+  // #endregion
 
   void _open(String title, IconData icon) => showDialog<void>(
     context: context,
@@ -167,6 +256,7 @@ class _HoverTileState extends State<_HoverTile> {
     final (title, description, icon) = _apps[widget.index % _apps.length];
     final scheme = Theme.of(context).colorScheme;
     return SizedBox.expand(
+      // #region hover-tile
       child: Oito2Banner.tile(
         tint: widget.tint,
         onHover: (value) => setState(() => _hovered = value),
@@ -181,6 +271,7 @@ class _HoverTileState extends State<_HoverTile> {
           overflow: TextOverflow.ellipsis,
         ),
       ),
+      // #endregion
     );
   }
 }

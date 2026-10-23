@@ -176,6 +176,52 @@ void main() {
     });
   }
 
+  testWidgets('Oito2ScrollViewUndershoot follows a scroll view that shrinks '
+      'while scrolled', (tester) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    var count = 40;
+    late StateSetter setCount;
+    await pumpOito2(
+      tester,
+      SizedBox(
+        height: 300,
+        child: StatefulBuilder(
+          builder: (context, setState) {
+            setCount = setState;
+            // Laid out inside a LayoutBuilder, the list settles while the
+            // tree is still being built.
+            return LayoutBuilder(
+              builder: (context, _) => Oito2ScrollViewUndershoot(
+                child: ListView(
+                  controller: controller,
+                  children: [
+                    for (var i = 0; i < count; i++)
+                      SizedBox(height: 40, child: Text('$i')),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    controller.jumpTo(controller.position.maxScrollExtent);
+    await tester.pumpAndSettle();
+    // Fewer items leave the position past the end, so the list settles
+    // back while it lays out.
+    setCount(() => count = 10);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(
+      tester
+          .widgetList<AnimatedOpacity>(find.byType(AnimatedOpacity))
+          .map((o) => o.opacity)
+          .toList(),
+      [1, 0],
+    );
+  });
+
   testWidgets('Oito2ScrollViewUndershoot ignores nested scroll views', (
     tester,
   ) async {

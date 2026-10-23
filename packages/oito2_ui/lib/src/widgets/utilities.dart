@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
@@ -178,17 +179,31 @@ class _Oito2ScrollViewUndershootState extends State<Oito2ScrollViewUndershoot> {
   /// Records which ends of the scroll have content beyond them and the
   /// direction the content runs in, rebuilding when either changes.
   /// Returns false so the notification keeps bubbling.
+  ///
+  /// A scroll view can notify while it lays out, such as when it settles
+  /// back after its content shrank; the rebuild then waits for the end of
+  /// the frame.
   bool _onMetrics(ScrollMetrics metrics) {
     final before = metrics.extentBefore > 0;
     final after = metrics.extentAfter > 0;
-    if (before != _before ||
-        after != _after ||
-        metrics.axisDirection != _direction) {
+    final direction = metrics.axisDirection;
+    if (before == _before && after == _after && direction == _direction) {
+      return false;
+    }
+    void update() {
+      if (!mounted) return;
       setState(() {
         _before = before;
         _after = after;
-        _direction = metrics.axisDirection;
+        _direction = direction;
       });
+    }
+
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      SchedulerBinding.instance.addPostFrameCallback((_) => update());
+    } else {
+      update();
     }
     return false;
   }
