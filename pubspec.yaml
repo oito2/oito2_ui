@@ -12,6 +12,7 @@ workspace:
   - packages/oito2_ui_syntax
   - packages/oito2_ui_themes
   - packages/oito2_ui_extras
+  - packages/oito2_ui_files
   - packages/oito2_ui_test_utils
   - example
 

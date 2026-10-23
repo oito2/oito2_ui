@@ -105,6 +105,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2TimerController`, `Oito2TimerText` and `oito2FormatDuration`: a stopwatch or countdown with ticks and completion.
 - `Oito2Localizations` strings for the copy, page, step, loading, presence and "more" labels.
 - `Oito2Localizations` strings for the `oito2_ui_extras` components: QR code, signature, crop and navigation labels.
+- `Oito2Localizations` strings for the `oito2_ui_files` components: drop zone, file chooser, upload limits and refusals, and download labels.
 - `onErrorChanged` on `Oito2DateEntry`, `Oito2TimeEntry` and `Oito2DateTimeEntry`: called with the error message when the text stops parsing and with null when it parses again, since `onChanged` keeps the last valid value.
 - `Oito2TitleBar.preferredSizeOf`: the title bar size in a context's theme, for a `PreferredSize` in a `Scaffold`.
 - `oito2UsesCommandKey`: whether a platform's primary shortcut modifier is Command.

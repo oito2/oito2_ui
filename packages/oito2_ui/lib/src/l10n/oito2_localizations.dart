@@ -312,6 +312,36 @@ abstract class Oito2Localizations {
 
   /// The button that restores the initial state.
   String get reset;
+
+  /// The invitation of a file drop zone where files can be dropped.
+  String get dropFilesHere;
+
+  /// The button that opens the file chooser for several files.
+  String get chooseFiles;
+
+  /// The button that opens the file chooser for one file.
+  String get chooseFile;
+
+  /// The file types a file upload accepts, listed in [types].
+  String acceptedFileTypes(String types);
+
+  /// The largest file a file upload accepts, as a formatted [size].
+  String maxFileSizeHint(String size);
+
+  /// Why the file [name] was refused: its type isn't accepted.
+  String fileTypeNotAccepted(String name);
+
+  /// Why the file [name] was refused: it is larger than [size].
+  String fileTooLarge(String name, String size);
+
+  /// Why the file [name] was refused: the upload already holds [max] files.
+  String tooManyFiles(String name, int max);
+
+  /// The button that saves a file to the device.
+  String get download;
+
+  /// Why a download button is disabled on platforms that can't save files.
+  String get downloadUnavailable;
 }
 
 /// The units of a relative time, from [second] to [year].
@@ -596,6 +626,40 @@ class Oito2LocalizationsEn extends Oito2Localizations {
 
   @override
   String get reset => 'Reset';
+
+  @override
+  String get dropFilesHere => 'Drop files here';
+
+  @override
+  String get chooseFiles => 'Choose files';
+
+  @override
+  String get chooseFile => 'Choose a file';
+
+  @override
+  String acceptedFileTypes(String types) => 'Accepted: $types';
+
+  @override
+  String maxFileSizeHint(String size) => 'Up to $size each';
+
+  @override
+  String fileTypeNotAccepted(String name) =>
+      '$name: this file type is not accepted';
+
+  @override
+  String fileTooLarge(String name, String size) => '$name: larger than $size';
+
+  @override
+  String tooManyFiles(String name, int max) => max == 1
+      ? '$name: only 1 file can be added'
+      : '$name: only $max files can be added';
+
+  @override
+  String get download => 'Download';
+
+  @override
+  String get downloadUnavailable =>
+      'Downloads are not available on this device';
 }
 
 /// The Brazilian Portuguese [Oito2Localizations].
@@ -869,6 +933,40 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String get reset => 'Redefinir';
+
+  @override
+  String get dropFilesHere => 'Solte os arquivos aqui';
+
+  @override
+  String get chooseFiles => 'Escolher arquivos';
+
+  @override
+  String get chooseFile => 'Escolher um arquivo';
+
+  @override
+  String acceptedFileTypes(String types) => 'Aceitos: $types';
+
+  @override
+  String maxFileSizeHint(String size) => 'Até $size cada';
+
+  @override
+  String fileTypeNotAccepted(String name) =>
+      '$name: este tipo de arquivo não é aceito';
+
+  @override
+  String fileTooLarge(String name, String size) => '$name: maior que $size';
+
+  @override
+  String tooManyFiles(String name, int max) => max == 1
+      ? '$name: só é possível adicionar 1 arquivo'
+      : '$name: só é possível adicionar $max arquivos';
+
+  @override
+  String get download => 'Baixar';
+
+  @override
+  String get downloadUnavailable =>
+      'Downloads não estão disponíveis neste dispositivo';
 }
 
 class _Oito2LocalizationsDelegate

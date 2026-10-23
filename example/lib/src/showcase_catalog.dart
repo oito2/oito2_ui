@@ -37,10 +37,12 @@ import 'pages/copy_button_page.dart';
 import 'pages/date_time_entry_page.dart';
 import 'pages/diagonal_clip_page.dart';
 import 'pages/dialog_title_bar_page.dart';
+import 'pages/download_trigger_page.dart';
 import 'pages/draggable_page.dart';
 import 'pages/editable_label_page.dart';
 import 'pages/expandable_page.dart';
 import 'pages/expansion_panel_page.dart';
+import 'pages/file_upload_page.dart';
 import 'pages/floating_panel_page.dart';
 import 'pages/focus_border_page.dart';
 import 'pages/format_page.dart';
@@ -112,6 +114,9 @@ enum ShowcaseGroup {
 
   /// The optional components of the oito2_ui_extras package.
   extras('Extras'),
+
+  /// The file components of the oito2_ui_files package.
+  files('Files'),
 
   /// Collections, formatting and keyboard commands.
   utilities('Utilities'),
@@ -664,6 +669,20 @@ final List<ShowcasePage> showcasePages = [
     source: 'signature_pad_page.dart',
     group: ShowcaseGroup.extras,
     builder: _page(const SignaturePadPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2DownloadTrigger',
+    icon: LucideIcons.download,
+    source: 'download_trigger_page.dart',
+    group: ShowcaseGroup.files,
+    builder: _page(const DownloadTriggerPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2FileUpload',
+    icon: LucideIcons.upload,
+    source: 'file_upload_page.dart',
+    group: ShowcaseGroup.files,
+    builder: _page(const FileUploadPage()),
   ),
   ShowcasePage(
     title: 'Collections',

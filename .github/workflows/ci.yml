@@ -57,6 +57,7 @@ jobs:
           - packages/oito2_ui_syntax
           - packages/oito2_ui_themes
           - packages/oito2_ui_extras
+          - packages/oito2_ui_files
           - example
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -190,6 +191,7 @@ jobs:
           - packages/oito2_ui_syntax
           - packages/oito2_ui_themes
           - packages/oito2_ui_extras
+          - packages/oito2_ui_files
           - example
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

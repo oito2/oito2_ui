@@ -1,0 +1,26 @@
+name: oito2_ui_files
+description: "oito2_ui file components on the official file_selector plugin: a file upload with a drop zone, previews and validation, and a download trigger."
+version: 0.1.0
+homepage: https://oito2.github.io/oito2_ui/
+repository: https://github.com/oito2/oito2_ui/tree/main/packages/oito2_ui_files
+issue_tracker: https://github.com/oito2/oito2_ui/issues
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  file_selector: ^1.1.0
+  flutter:
+    sdk: flutter
+  material_ui: ^1.7.0
+  oito2_ui: ^0.1.0
+  web: ^1.1.1
+
+dev_dependencies:
+  file_selector_platform_interface: ^2.7.0
+  flutter_test:
+    sdk: flutter
+  oito2_ui_test_utils: any
