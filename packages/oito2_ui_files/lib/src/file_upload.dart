@@ -133,6 +133,7 @@ class _Oito2FileUploadState extends State<Oito2FileUpload> {
         name,
         controller.maxFiles ?? 0,
       ),
+      Oito2FileRejection.directory => strings.folderNotAccepted(name),
     };
   }
 

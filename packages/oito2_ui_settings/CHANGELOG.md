@@ -17,6 +17,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Accepts `dbus` 0.7 and 0.8 and `gsettings` 0.2.8 and 0.2.9, so apps can also depend on plugins that still require `dbus` 0.7.
 - `Oito2GSettingsSource` gains `close()`; `Oito2DconfGSettingsSource` shares one session and one system D-Bus connection between schemas and accepts existing connections.
 - `Oito2SystemSettingsReader.close()` releases the system store connections. `Oito2Settings.load()` releases its reader after reading, `Oito2Settings.watch()` when the subscription is cancelled, and `Oito2SystemSettingsScope` closes the reader it creates.
 

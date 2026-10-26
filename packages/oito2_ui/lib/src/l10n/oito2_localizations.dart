@@ -361,6 +361,9 @@ abstract class Oito2Localizations {
   /// Why the file [name] was refused: the upload already holds [max] files.
   String tooManyFiles(String name, int max);
 
+  /// Why [name] was refused: it is a folder, not a file.
+  String folderNotAccepted(String name);
+
   /// The button that saves a file to the device.
   String get download;
 
@@ -704,6 +707,9 @@ class Oito2LocalizationsEn extends Oito2Localizations {
       : '$name: only $max files can be added';
 
   @override
+  String folderNotAccepted(String name) => '$name: folders are not accepted';
+
+  @override
   String get download => 'Download';
 
   @override
@@ -1034,6 +1040,9 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
   String tooManyFiles(String name, int max) => max == 1
       ? '$name: só é possível adicionar 1 arquivo'
       : '$name: só é possível adicionar $max arquivos';
+
+  @override
+  String folderNotAccepted(String name) => '$name: pastas não são aceitas';
 
   @override
   String get download => 'Baixar';

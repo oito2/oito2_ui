@@ -14,10 +14,13 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'dart:js_interop';
+import 'dart:typed_data';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:web/web.dart' as web;
+
+import 'directories.dart';
 
 /// Files dragged from the desktop can be dropped on the page.
 const bool canDropFiles = true;
@@ -120,25 +123,40 @@ class _WebDropTargetState extends State<_WebDropTarget> {
     if (event.relatedTarget == null) _setHovering(false);
   }
 
-  /// Takes the files dropped inside this widget and keeps the browser from
-  /// opening them.
+  /// Takes the items dropped inside this widget and keeps the browser from
+  /// opening them; the items must be collected before the event handler
+  /// returns.
   void _drop(web.DragEvent event) {
     final accepts = _accepts(event);
     _setHovering(false);
     if (!accepts) return;
     event.preventDefault();
-    final list = event.dataTransfer?.files;
+    final list = event.dataTransfer?.items;
     if (list == null) return;
-    final files = [for (var i = 0; i < list.length; i++) ?list.item(i)];
-    _read(files);
+    final items = <_DroppedItem>[];
+    for (var i = 0; i < list.length; i++) {
+      final item = list[i];
+      if (item.kind != 'file') continue;
+      final entry = item.webkitGetAsEntry();
+      if (entry != null && entry.isDirectory) {
+        items.add((name: entry.name, file: null));
+      } else if (item.getAsFile() case final file?) {
+        items.add((name: file.name, file: file));
+      }
+    }
+    _read(items);
   }
 
   /// Reads the dropped files into memory, so they don't depend on blob
-  /// URLs, and hands over the ones that could be read; items the browser
-  /// can't read, such as folders, are skipped.
-  Future<void> _read(List<web.File> files) async {
+  /// URLs, and hands them over in order with the dropped directories,
+  /// which are marked as such; files the browser can't read are skipped.
+  Future<void> _read(List<_DroppedItem> items) async {
     final read = <XFile>[];
-    for (final file in files) {
+    for (final (:name, :file) in items) {
+      if (file == null) {
+        read.add(markAsDirectory(XFile.fromData(Uint8List(0), name: name)));
+        continue;
+      }
       final JSArrayBuffer buffer;
       try {
         buffer = await file.arrayBuffer().toDart;
@@ -161,3 +179,6 @@ class _WebDropTargetState extends State<_WebDropTarget> {
   @override
   Widget build(BuildContext context) => widget.child;
 }
+
+/// A dropped item: a file, or a directory when [file] is null.
+typedef _DroppedItem = ({String name, web.File? file});

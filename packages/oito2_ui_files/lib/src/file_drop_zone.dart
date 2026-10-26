@@ -25,8 +25,8 @@ import 'drop_target.dart';
 /// The chosen or dropped files go to [onFiles] unchecked; an
 /// `Oito2FileUploadController` checks them against its limits. [accept]
 /// filters the file chooser. Drops come from [dropTargetBuilder], or from
-/// [oito2PlatformDropTarget] (the web only) when it is null, and pass
-/// every dropped file even when [multiple] is false.
+/// [oito2PlatformDropTarget] (the web, Linux, Windows and macOS) when it is
+/// null, and pass every dropped file even when [multiple] is false.
 class Oito2FileDropZone extends StatefulWidget {
   /// Creates a file drop zone.
   const Oito2FileDropZone({

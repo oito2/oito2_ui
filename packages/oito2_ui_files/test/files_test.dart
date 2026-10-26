@@ -17,7 +17,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_selector_platform_interface/file_selector_platform_interface.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui_files/oito2_ui_files.dart';
@@ -273,6 +273,72 @@ void main() {
       source.drop!([_file('a.png', 1)]);
       expect(received.single.single.name, 'a.png');
     });
+  });
+
+  group('desktop drops', () {
+    late Directory dir;
+    late File file;
+    late Directory folder;
+
+    setUp(() {
+      dir = Directory.systemTemp.createTempSync('oito2_drop');
+      file = File('${dir.path}/dot.png')..writeAsBytesSync(_png);
+      folder = Directory('${dir.path}/photos')..createSync();
+    });
+    tearDown(() => dir.deleteSync(recursive: true));
+
+    /// Sends [method] with [arguments] as the desktop_drop plugin does.
+    Future<void> send(WidgetTester tester, String method, Object arguments) =>
+        tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+          'desktop_drop',
+          const StandardMethodCodec().encodeMethodCall(
+            MethodCall(method, arguments),
+          ),
+          (_) {},
+        );
+
+    testWidgets('the zone receives files and refuses folders', (tester) async {
+      expect(oito2CanDropFiles, Platform.isLinux || Platform.isWindows);
+      final controller = Oito2FileUploadController();
+      addTearDown(controller.dispose);
+      await pumpOito2(
+        tester,
+        SizedBox(width: 400, child: Oito2FileUpload(controller: controller)),
+      );
+      expect(find.text('Drop files here'), findsOneWidget);
+      final center = tester.getCenter(find.byType(Oito2FileDropZone));
+      final scheme = Theme.of(tester.element(find.byType(Oito2FileDropZone)))
+          .colorScheme;
+      Color? fill() =>
+          (tester
+                      .widget<AnimatedContainer>(find.byType(AnimatedContainer))
+                      .decoration!
+                  as BoxDecoration)
+              .color;
+
+      await send(tester, 'entered', [center.dx, center.dy]);
+      await tester.pumpAndSettle();
+      expect(fill(), isNot(scheme.surfaceContainerLow));
+
+      final uris = [
+        Uri.file(file.path),
+        Uri.file(folder.path),
+        Uri.file('${dir.path}/missing.txt'),
+        Uri.parse('https://example.com/page'),
+      ].join('\r\n');
+      await tester.runAsync(() async {
+        await send(tester, 'performOperation_linux', [
+          uris,
+          [center.dx, center.dy],
+        ]);
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      });
+      await tester.pumpAndSettle();
+      expect(controller.files.map((f) => f.path), [file.path]);
+      expect(controller.rejected.single.reason, Oito2FileRejection.directory);
+      expect(find.text('photos: folders are not accepted'), findsOneWidget);
+      expect(fill(), scheme.surfaceContainerLow);
+    }, skip: !Platform.isLinux);
   });
 
   group('Oito2FileUpload', () {

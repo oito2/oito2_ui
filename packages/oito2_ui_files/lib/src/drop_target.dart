@@ -18,6 +18,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'drop_target_stub.dart'
     if (dart.library.js_interop) 'drop_target_web.dart'
+    if (dart.library.io) 'drop_target_io.dart'
     as platform;
 
 /// Builds a widget that receives files dropped on [child]: [onHover]
@@ -25,7 +26,7 @@ import 'drop_target_stub.dart'
 /// dropped files while [enabled].
 ///
 /// Pass one to [Oito2FileDropZone.dropTargetBuilder] to receive drops from
-/// another source, such as a desktop drag-and-drop plugin.
+/// another source than [oito2PlatformDropTarget].
 typedef Oito2FileDropTargetBuilder = Widget Function({
   required Widget child,
   required bool enabled,
@@ -34,11 +35,16 @@ typedef Oito2FileDropTargetBuilder = Widget Function({
 });
 
 /// Whether [oito2PlatformDropTarget] receives dropped files on this
-/// platform: true on the web only.
+/// platform: true on the web, Linux, Windows and macOS.
 bool get oito2CanDropFiles => platform.canDropFiles;
 
-/// The drop target of the platform: on the web, files dragged from the
-/// desktop onto [child]; elsewhere, [child] alone, without drops.
+/// The drop target of the platform: files dragged from the desktop onto
+/// [child], received through the browser on the web and through the
+/// desktop_drop plugin on Linux, Windows and macOS; elsewhere, [child]
+/// alone, without drops.
+///
+/// Dropped directories are handed over with the files, marked so that an
+/// `Oito2FileUploadController` refuses them.
 Widget oito2PlatformDropTarget({
   required Widget child,
   required bool enabled,

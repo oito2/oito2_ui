@@ -97,11 +97,11 @@ class _FileUploadPageState extends State<FileUploadPage> {
           'limit.',
         ),
         const DocNote(
-          'Files can be dropped on the zone in the web build only. On other '
-          'platforms the zone opens the file chooser, unless a '
-          '`dropTargetBuilder` brings drops from another source, such as a '
-          'desktop drag-and-drop plugin. `oito2CanDropFiles` says whether '
-          'the platform receives drops.',
+          'Files can be dropped on the zone on the web, Linux, Windows and '
+          'macOS. On other platforms the zone opens the file chooser, unless '
+          'a `dropTargetBuilder` brings drops from another source. '
+          '`oito2CanDropFiles` says whether the platform receives drops. '
+          'Dropped folders are refused with the `directory` reason.',
         ),
         const DocHeading('Examples'),
         const DocHeading('One file of any type', level: 3),
@@ -162,7 +162,7 @@ class _FileUploadPageState extends State<FileUploadPage> {
                   hint: Text(
                     oito2CanDropFiles
                         ? 'Drag files from your desktop or click'
-                        : 'Dropping files works in the web build',
+                        : 'Dropping files works on the web and desktop',
                   ),
                   onFiles: (files) => setState(
                     () => _received = [

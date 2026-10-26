@@ -138,6 +138,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2VerticalTabs` and `Oito2VerticalTabBar`: a column of tabs with a sliding marker in the pill or subtle style, beside the content of the selected tab; the selected tab is one keyboard stop and the arrow keys, Home and End move between tabs.
 - `Oito2PageIndicator.minTargetSize` (24 by default): smaller interactive dot targets for indicators whose pages other controls also reach.
 - `Oito2BackButton.enabled` and `Oito2CloseButton.enabled`, to show the buttons disabled.
+- `Oito2Localizations.folderNotAccepted`, the reason a file upload refuses a folder.
 
 ### Changed
 

@@ -17,6 +17,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Files dragged from the desktop can be dropped on `Oito2FileDropZone` and `Oito2FileUpload` on Linux, Windows and macOS, through the `desktop_drop` plugin, as well as on the web; `oito2CanDropFiles` is true on those platforms.
+- `Oito2FileUploadController` refuses dropped folders with the new `Oito2FileRejection.directory` reason, on the desktop and on the web.
 - `Oito2FileDropZone` shows the click (hand) cursor on every platform while enabled.
 
 ### Fixed

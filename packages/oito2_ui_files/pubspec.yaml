@@ -12,6 +12,7 @@ environment:
 resolution: workspace
 
 dependencies:
+  desktop_drop: ^0.8.4
   file_selector: ^1.1.0
   flutter:
     sdk: flutter

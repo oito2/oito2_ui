@@ -16,6 +16,8 @@
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
 
+import 'directories.dart';
+
 /// Why an [Oito2FileUploadController] refused a file.
 enum Oito2FileRejection {
   /// The file type is not one of the accepted types.
@@ -26,6 +28,9 @@ enum Oito2FileRejection {
 
   /// The upload already holds the largest number of files.
   count,
+
+  /// The item is a directory, not a file.
+  directory,
 }
 
 /// A file an [Oito2FileUploadController] refused, with the reason.
@@ -77,7 +82,8 @@ bool oito2FileMatchesTypes(XFile file, List<XTypeGroup> accept) {
 }
 
 /// The files of a file upload, checked against the [accept]ed types,
-/// [maxFileSize] and [maxFiles] as they are added.
+/// [maxFileSize] and [maxFiles] as they are added; directories dropped on
+/// an `Oito2FileDropZone` are always refused.
 ///
 /// [add] keeps the files that pass the checks and lists the others in
 /// [rejected], which holds the refusals of the last [add] only.
@@ -139,7 +145,9 @@ class Oito2FileUploadController extends ChangeNotifier {
     final rejected = <Oito2RejectedFile>[];
     for (final file in incoming) {
       final Oito2FileRejection? reason;
-      if (!oito2FileMatchesTypes(file, accept)) {
+      if (isDirectory(file)) {
+        reason = Oito2FileRejection.directory;
+      } else if (!oito2FileMatchesTypes(file, accept)) {
         reason = Oito2FileRejection.type;
       } else if (maxFileSize != null && await file.length() > maxFileSize!) {
         reason = Oito2FileRejection.size;
