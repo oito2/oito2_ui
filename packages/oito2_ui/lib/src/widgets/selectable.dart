@@ -105,6 +105,7 @@ class _InteractiveSurfaceState extends State<_InteractiveSurface> {
             ),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
+              mouseCursor: WidgetStateMouseCursor.clickable,
               onTap: widget.onTap,
               onFocusChange: (value) => setState(() => _focused = value),
               child: Padding(padding: widget.padding, child: widget.child),

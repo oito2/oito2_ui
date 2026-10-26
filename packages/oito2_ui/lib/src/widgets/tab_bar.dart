@@ -391,6 +391,7 @@ class _Oito2VerticalTabBarState extends State<Oito2VerticalTabBar> {
           child: Material(
             type: MaterialType.transparency,
             child: InkWell(
+              mouseCursor: WidgetStateMouseCursor.clickable,
               focusNode: _nodes[index],
               onTap: () => _select(index),
               borderRadius: Oito2Radius.mediumAll,

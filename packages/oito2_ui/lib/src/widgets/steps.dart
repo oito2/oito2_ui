@@ -361,6 +361,7 @@ class _StepHeader extends StatelessWidget {
       child: Oito2FocusBorder(
         borderRadius: Oito2Radius.smallAll,
         child: InkWell(
+          mouseCursor: WidgetStateMouseCursor.clickable,
           onTap: reachable ? () => steps.onStepTapped!(index) : null,
           borderRadius: Oito2Radius.smallAll,
           child: Padding(

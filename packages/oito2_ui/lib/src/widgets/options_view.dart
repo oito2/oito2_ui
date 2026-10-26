@@ -88,6 +88,7 @@ class AutocompleteOptionsView<T extends Object> extends StatelessWidget {
                   selected: selected,
                   button: true,
                   child: InkWell(
+                    mouseCursor: WidgetStateMouseCursor.clickable,
                     onTap: () => onSelected(option),
                     child: Container(
                       color: selected ? scheme.secondaryContainer : null,

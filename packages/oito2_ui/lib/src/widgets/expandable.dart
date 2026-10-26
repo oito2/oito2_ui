@@ -142,6 +142,7 @@ class _Oito2ExpandableState extends State<Oito2Expandable> {
           child: Material(
             type: MaterialType.transparency,
             child: InkWell(
+              mouseCursor: WidgetStateMouseCursor.clickable,
               onTap: _toggle,
               borderRadius: Oito2Radius.mediumAll,
               child: Padding(

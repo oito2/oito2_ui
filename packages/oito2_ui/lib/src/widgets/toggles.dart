@@ -824,6 +824,7 @@ class Oito2ToggleButton extends StatelessWidget {
         child: Material(
           type: MaterialType.transparency,
           child: InkWell(
+            mouseCursor: WidgetStateMouseCursor.clickable,
             onTap: onToggled,
             focusNode: focusNode,
             autofocus: autofocus,

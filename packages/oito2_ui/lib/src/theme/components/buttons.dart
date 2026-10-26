@@ -18,9 +18,9 @@ import 'package:material_ui/material_ui.dart';
 import '../../tokens/geometry.dart';
 import 'component_context.dart';
 
-/// Returns the shape, size, padding and text style shared by every text
-/// button variant, with the focus ring under keyboard focus and [side]
-/// otherwise.
+/// Returns the shape, size, padding, text style and click cursor shared by
+/// every text button variant, with the focus ring under keyboard focus and
+/// [side] otherwise.
 ///
 /// Buttons are at least [ComponentThemeContext.controlHeight] tall and grow
 /// when the label needs more room, such as under a large text scale. The
@@ -43,6 +43,7 @@ ButtonStyle _baseButtonStyle(ComponentThemeContext c, {BorderSide? side}) {
         ? MaterialTapTargetSize.padded
         : MaterialTapTargetSize.shrinkWrap,
     visualDensity: c.platform.visualDensity,
+    mouseCursor: WidgetStateMouseCursor.clickable,
   );
 }
 
@@ -144,6 +145,7 @@ IconButtonThemeData buildIconButtonTheme(ComponentThemeContext c) {
       tapTargetSize: c.isTouch
           ? MaterialTapTargetSize.padded
           : MaterialTapTargetSize.shrinkWrap,
+      mouseCursor: WidgetStateMouseCursor.clickable,
     ),
   );
 }
@@ -174,6 +176,7 @@ SegmentedButtonThemeData buildSegmentedButtonTheme(ComponentThemeContext c) {
           ? MaterialTapTargetSize.padded
           : MaterialTapTargetSize.shrinkWrap,
       visualDensity: density,
+      mouseCursor: WidgetStateMouseCursor.clickable,
     ),
   );
 }
@@ -190,5 +193,6 @@ FloatingActionButtonThemeData buildFloatingActionButtonTheme(
     elevation: 2,
     hoverElevation: 3,
     focusElevation: 3,
+    mouseCursor: WidgetStateMouseCursor.clickable,
   );
 }

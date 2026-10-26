@@ -47,12 +47,15 @@ class FocusBorderPage extends StatelessWidget {
                     Oito2FocusBorder(
                       child: Focus(
                         child: Builder(
-                          builder: (context) => GestureDetector(
-                            onTap: () => Focus.of(context).requestFocus(),
-                            child: Oito2BorderContainer(
-                              width: 140,
-                              height: 72,
-                              child: Center(child: Text(label)),
+                          builder: (context) => MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: GestureDetector(
+                              onTap: () => Focus.of(context).requestFocus(),
+                              child: Oito2BorderContainer(
+                                width: 140,
+                                height: 72,
+                                child: Center(child: Text(label)),
+                              ),
                             ),
                           ),
                         ),

@@ -76,6 +76,7 @@ MenuButtonThemeData buildMenuButtonTheme(ComponentThemeContext c) {
       ),
       side: const WidgetStatePropertyAll(BorderSide.none),
       visualDensity: c.platform.visualDensity,
+      mouseCursor: WidgetStateMouseCursor.clickable,
     ),
   );
 }
@@ -93,5 +94,6 @@ PopupMenuThemeData buildPopupMenuTheme(ComponentThemeContext c) {
     ),
     textStyle: c.textTheme.bodyMedium,
     menuPadding: const EdgeInsets.symmetric(vertical: Oito2Spacing.xs),
+    mouseCursor: WidgetStateMouseCursor.clickable,
   );
 }

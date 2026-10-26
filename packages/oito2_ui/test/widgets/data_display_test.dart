@@ -14,6 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -972,6 +973,26 @@ void main() {
       );
       return controller;
     }
+
+    testWidgets('rows and disclosure arrows show the click cursor', (
+      tester,
+    ) async {
+      await pumpTree(tester);
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      addTearDown(mouse.removePointer);
+      for (final finder in [
+        find.text('README.md'),
+        find.byIcon(LucideIcons.chevron_right).first,
+      ]) {
+        await mouse.moveTo(tester.getCenter(finder));
+        await tester.pump();
+        expect(
+          RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1),
+          SystemMouseCursors.click,
+        );
+      }
+    });
 
     testWidgets('the arrow keys move, open and close branches', (tester) async {
       final controller = await pumpTree(tester);

@@ -652,17 +652,21 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
                 semanticsLabel: Oito2Localizations.of(context).loading,
               ),
             )
-          : GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _filtering ? null : () => _setExpanded(node, !open),
-              child: AnimatedRotation(
-                turns: open ? (rtl ? -0.25 : 0.25) : 0,
-                duration: MediaQuery.maybeDisableAnimationsOf(context) ?? false
-                    ? Duration.zero
-                    : const Duration(milliseconds: 150),
-                child: Icon(
-                  rtl ? LucideIcons.chevron_left : LucideIcons.chevron_right,
-                  size: 16,
+          : MouseRegion(
+              cursor: _filtering ? MouseCursor.defer : SystemMouseCursors.click,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _filtering ? null : () => _setExpanded(node, !open),
+                child: AnimatedRotation(
+                  turns: open ? (rtl ? -0.25 : 0.25) : 0,
+                  duration:
+                      MediaQuery.maybeDisableAnimationsOf(context) ?? false
+                      ? Duration.zero
+                      : const Duration(milliseconds: 150),
+                  child: Icon(
+                    rtl ? LucideIcons.chevron_left : LucideIcons.chevron_right,
+                    size: 16,
+                  ),
                 ),
               ),
             ),
@@ -707,52 +711,55 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
       label: node.label,
       excludeSemantics: _renaming != value,
       onTap: node.disabled ? null : () => _tap(node),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapUp: (details) {
-          _tap(node);
-          if (!node.disabled && _clicks.click(value)) _primary(node);
-        },
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: Oito2Spacing.xs),
-          padding: EdgeInsetsDirectional.only(
-            start: Oito2Spacing.xs + entry.depth * widget.indent,
-            end: Oito2Spacing.sm,
-          ),
-          decoration: BoxDecoration(
-            color: selected ? scheme.secondaryContainer : null,
-            borderRadius: Oito2Radius.smallAll,
-            border: active && keyboard
-                ? Border.all(
-                    color: semanticColorsOf(context).primaryText,
-                    width: Oito2Sizes.focusBorderWidth,
-                  )
-                : null,
-          ),
-          child: IconTheme.merge(
-            data: IconThemeData(color: foreground, size: 16),
-            child: DefaultTextStyle.merge(
-              style: theme.textTheme.bodyMedium?.copyWith(color: foreground),
-              child: Row(
-                spacing: Oito2Spacing.xs,
-                children: [
-                  disclosure,
-                  if (widget.checkable)
-                    ExcludeFocus(
-                      child: Oito2Checkbox(
-                        value: checkState,
-                        tristate: true,
-                        onChanged: node.disabled
-                            ? null
-                            : (_) => _controller.toggleChecked(
-                                widget.collection,
-                                value,
-                              ),
+      child: MouseRegion(
+        cursor: node.disabled ? MouseCursor.defer : SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapUp: (details) {
+            _tap(node);
+            if (!node.disabled && _clicks.click(value)) _primary(node);
+          },
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: Oito2Spacing.xs),
+            padding: EdgeInsetsDirectional.only(
+              start: Oito2Spacing.xs + entry.depth * widget.indent,
+              end: Oito2Spacing.sm,
+            ),
+            decoration: BoxDecoration(
+              color: selected ? scheme.secondaryContainer : null,
+              borderRadius: Oito2Radius.smallAll,
+              border: active && keyboard
+                  ? Border.all(
+                      color: semanticColorsOf(context).primaryText,
+                      width: Oito2Sizes.focusBorderWidth,
+                    )
+                  : null,
+            ),
+            child: IconTheme.merge(
+              data: IconThemeData(color: foreground, size: 16),
+              child: DefaultTextStyle.merge(
+                style: theme.textTheme.bodyMedium?.copyWith(color: foreground),
+                child: Row(
+                  spacing: Oito2Spacing.xs,
+                  children: [
+                    disclosure,
+                    if (widget.checkable)
+                      ExcludeFocus(
+                        child: Oito2Checkbox(
+                          value: checkState,
+                          tristate: true,
+                          onChanged: node.disabled
+                              ? null
+                              : (_) => _controller.toggleChecked(
+                                  widget.collection,
+                                  value,
+                                ),
+                        ),
                       ),
-                    ),
-                  ?icon,
-                  Expanded(child: label),
-                ],
+                    ?icon,
+                    Expanded(child: label),
+                  ],
+                ),
               ),
             ),
           ),

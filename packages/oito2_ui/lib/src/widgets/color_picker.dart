@@ -299,12 +299,15 @@ class _SaturationArea extends StatelessWidget {
                     .withSaturation((p.dx / size.width).clamp(0.0, 1.0))
                     .withValue((1 - p.dy / size.height).clamp(0.0, 1.0)),
               );
-              return GestureDetector(
-                onTapDown: (d) => pick(d.localPosition),
-                onPanStart: (d) => pick(d.localPosition),
-                onPanUpdate: (d) => pick(d.localPosition),
-                child: ExcludeSemantics(
-                  child: CustomPaint(size: size, painter: _AreaPainter(hsv)),
+              return MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTapDown: (d) => pick(d.localPosition),
+                  onPanStart: (d) => pick(d.localPosition),
+                  onPanUpdate: (d) => pick(d.localPosition),
+                  child: ExcludeSemantics(
+                    child: CustomPaint(size: size, painter: _AreaPainter(hsv)),
+                  ),
                 ),
               );
             },
@@ -452,18 +455,21 @@ class _ChannelSlider extends StatelessWidget {
                   onChanged(rtl ? 1 - x : x);
                 }
 
-                return GestureDetector(
-                  onTapDown: (d) => pick(d.localPosition),
-                  onHorizontalDragStart: (d) => pick(d.localPosition),
-                  onHorizontalDragUpdate: (d) => pick(d.localPosition),
-                  child: ExcludeSemantics(
-                    child: CustomPaint(
-                      size: Size(width, 18),
-                      painter: _SliderPainter(
-                        value: rtl ? 1 - value : value,
-                        colors: rtl ? colors.reversed.toList() : colors,
-                        thumb: thumb,
-                        checkerboard: checkerboard,
+                return MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTapDown: (d) => pick(d.localPosition),
+                    onHorizontalDragStart: (d) => pick(d.localPosition),
+                    onHorizontalDragUpdate: (d) => pick(d.localPosition),
+                    child: ExcludeSemantics(
+                      child: CustomPaint(
+                        size: Size(width, 18),
+                        painter: _SliderPainter(
+                          value: rtl ? 1 - value : value,
+                          colors: rtl ? colors.reversed.toList() : colors,
+                          thumb: thumb,
+                          checkerboard: checkerboard,
+                        ),
                       ),
                     ),
                   ),

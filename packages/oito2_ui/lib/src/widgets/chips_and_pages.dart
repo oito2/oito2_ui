@@ -158,6 +158,7 @@ class _Oito2ChoiceChipBarState extends State<Oito2ChoiceChipBar> {
         selected: widget.isSelected[i],
         showCheckmark: widget.showCheckmark,
         shape: widget.shape,
+        mouseCursor: WidgetStateMouseCursor.clickable,
         onSelected: widget.onSelected == null
             ? null
             : (_) => widget.onSelected!(i),

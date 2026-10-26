@@ -112,6 +112,7 @@ class Oito2NavigationRailItem extends StatelessWidget {
             shape: const RoundedRectangleBorder(borderRadius: pillRadius),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
+              mouseCursor: WidgetStateMouseCursor.clickable,
               onTap: onTap,
               focusColor: Colors.transparent,
               child: SizedBox(width: width, height: height, child: child),

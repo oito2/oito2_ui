@@ -217,6 +217,7 @@ class _Oito2TableOfContentsState extends State<Oito2TableOfContents> {
           Semantics(
             selected: i == _active,
             child: InkWell(
+              mouseCursor: WidgetStateMouseCursor.clickable,
               onTap: () => _select(i),
               child: Container(
                 padding: EdgeInsetsDirectional.only(

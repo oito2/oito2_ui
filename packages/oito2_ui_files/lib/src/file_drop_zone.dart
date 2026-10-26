@@ -142,6 +142,7 @@ class _Oito2FileDropZoneState extends State<Oito2FileDropZone> {
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
+          mouseCursor: WidgetStateMouseCursor.clickable,
           onTap: enabled ? _choose : null,
           borderRadius: Oito2Radius.largeAll,
           child: AnimatedContainer(

@@ -54,6 +54,7 @@ CheckboxThemeData buildCheckboxTheme(ComponentThemeContext c) {
       return _activeSelected(states) ? c.indicator : null;
     }),
     checkColor: WidgetStatePropertyAll(c.onIndicator),
+    mouseCursor: WidgetStateMouseCursor.clickable,
     materialTapTargetSize: _tapTarget(c),
     visualDensity: c.platform.visualDensity,
   );
@@ -71,6 +72,7 @@ RadioThemeData buildRadioTheme(ComponentThemeContext c) {
           ? c.indicator
           : c.scheme.outline;
     }),
+    mouseCursor: WidgetStateMouseCursor.clickable,
     materialTapTargetSize: _tapTarget(c),
     visualDensity: c.platform.visualDensity,
   );
@@ -93,6 +95,7 @@ SwitchThemeData buildSwitchTheme(ComponentThemeContext c) {
           ? null
           : c.scheme.outline,
     ),
+    mouseCursor: WidgetStateMouseCursor.clickable,
     materialTapTargetSize: _tapTarget(c),
   );
 }

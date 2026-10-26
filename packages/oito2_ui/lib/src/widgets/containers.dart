@@ -277,7 +277,11 @@ class Oito2Tile extends StatelessWidget {
     if (onTap != null) {
       content = Material(
         type: MaterialType.transparency,
-        child: InkWell(onTap: enabled ? onTap : null, child: content),
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          mouseCursor: WidgetStateMouseCursor.clickable,
+          child: content,
+        ),
       );
     }
     return Semantics(

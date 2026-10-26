@@ -272,6 +272,7 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
       button: true,
       onTap: disabled ? null : () => _click(value),
       child: InkWell(
+        mouseCursor: WidgetStateMouseCursor.clickable,
         onTap: disabled ? null : () {},
         onTapUp: disabled
             ? null

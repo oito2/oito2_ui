@@ -363,6 +363,7 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
                       message: strings.removeItem(tag),
                       excludeFromSemantics: true,
                       child: InkResponse(
+                        mouseCursor: WidgetStateMouseCursor.clickable,
                         onTap: () => _remove(index),
                         canRequestFocus: false,
                         radius: 12,
@@ -450,48 +451,51 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
       canRequestFocus: false,
       skipTraversal: true,
       onFocusChange: (focused) => setState(() => _hasFocus = focused),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: _input.requestFocus,
-        child: InputDecorator(
-          isFocused: _hasFocus,
-          isEmpty: widget.tags.isEmpty && _controller.text.isEmpty,
-          decoration: InputDecoration(
-            labelText: widget.labelText,
-            enabled: _enabled,
-            suffixIcon: widget.clearable && _enabled && widget.tags.isNotEmpty
-                ? IconButton(
-                    onPressed: _clear,
-                    tooltip: Oito2Localizations.of(context).clear,
-                    icon: const Icon(LucideIcons.x),
-                  )
-                : null,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: Oito2Spacing.sm,
-              vertical: Oito2Spacing.xs + 1,
+      child: MouseRegion(
+        cursor: _enabled ? SystemMouseCursors.text : MouseCursor.defer,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _input.requestFocus,
+          child: InputDecorator(
+            isFocused: _hasFocus,
+            isEmpty: widget.tags.isEmpty && _controller.text.isEmpty,
+            decoration: InputDecoration(
+              labelText: widget.labelText,
+              enabled: _enabled,
+              suffixIcon: widget.clearable && _enabled && widget.tags.isNotEmpty
+                  ? IconButton(
+                      onPressed: _clear,
+                      tooltip: Oito2Localizations.of(context).clear,
+                      icon: const Icon(LucideIcons.x),
+                    )
+                  : null,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: Oito2Spacing.sm,
+                vertical: Oito2Spacing.xs + 1,
+              ),
             ),
-          ),
-          child: Wrap(
-            spacing: Oito2Spacing.xs,
-            runSpacing: Oito2Spacing.xs,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              for (var i = 0; i < widget.tags.length; i++) _tag(i),
-              ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 24),
-                child: Align(
-                  widthFactor: 1,
-                  heightFactor: 1,
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: Oito2Spacing.xs,
+            child: Wrap(
+              spacing: Oito2Spacing.xs,
+              runSpacing: Oito2Spacing.xs,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                for (var i = 0; i < widget.tags.length; i++) _tag(i),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 24),
+                  child: Align(
+                    widthFactor: 1,
+                    heightFactor: 1,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Oito2Spacing.xs,
+                      ),
+                      child: input,
                     ),
-                    child: input,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

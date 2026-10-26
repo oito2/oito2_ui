@@ -141,6 +141,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Clickable controls show the click (hand) cursor on every platform, not only on the web: the `Oito2Theme` buttons, icon buttons, segmented buttons, floating action buttons, menu items, popup menus, check boxes, radio buttons and switches, plus the library's own clickable widgets (tiles, list rows, tree rows and disclosure arrows, tabs, steps, table of contents entries, expandable headers, choice chips and the color picker's area and sliders). Disabled controls keep the arrow. `Oito2TagsField` shows the text cursor over its input area.
 - `Oito2ContextMenuRegion` opened from the keyboard focuses the first menu item.
 - `Oito2TableOfContents` moves its highlight in the same frame as the scroll.
 - `Oito2ColorDisk` outlines a disk whose color has less than 3:1 contrast with the surface.

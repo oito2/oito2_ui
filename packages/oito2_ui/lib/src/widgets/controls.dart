@@ -467,6 +467,7 @@ class _Oito2ColorDiskState extends State<Oito2ColorDisk> {
         child: Material(
           type: MaterialType.transparency,
           child: InkWell(
+            mouseCursor: WidgetStateMouseCursor.clickable,
             onTap: widget.onPressed,
             onHover: (value) => setState(() => _hovered = value),
             onFocusChange: (value) => setState(() => _focused = value),

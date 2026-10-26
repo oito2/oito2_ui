@@ -15,6 +15,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2FileUpload`: a drop zone with a hint built from the limits, the refusals of the last addition and the file list with sizes, image previews and remove buttons.
 - `Oito2Downloads` and `Oito2DownloadTrigger`: saving bytes as a file through a download on the web and the "Save as" dialog on Linux, Windows and macOS; the trigger builds the data on demand, shows a spinner and is disabled where files can't be saved.
 
+### Changed
+
+- `Oito2FileDropZone` shows the click (hand) cursor on every platform while enabled.
+
 ### Fixed
 
 - `Oito2FileUploadController.add` calls made while an earlier one is still checking files wait for it, so `maxFiles` holds across them.

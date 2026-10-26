@@ -220,6 +220,7 @@ class Oito2ListTile extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: borderRadius),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
+            mouseCursor: WidgetStateMouseCursor.clickable,
             onTap: interactive ? onTap : null,
             canRequestFocus: interactive,
             focusNode: focusNode,

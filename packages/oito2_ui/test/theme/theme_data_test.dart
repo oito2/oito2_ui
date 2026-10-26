@@ -14,6 +14,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
@@ -357,6 +359,54 @@ void main() {
         ),
       );
     }
+
+    testWidgets('clickable controls show the click cursor on Linux', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        _linux,
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FilledButton(onPressed: () {}, child: const Text('Filled')),
+            TextButton(onPressed: () {}, child: const Text('Text')),
+            IconButton(
+              onPressed: () {},
+              tooltip: 'Icon',
+              icon: const Icon(Icons.add),
+            ),
+            Checkbox(value: false, onChanged: (_) {}),
+            Switch(value: false, onChanged: (_) {}),
+            Oito2Expandable(
+              header: const Text('Header'),
+              child: const SizedBox(),
+            ),
+            TextButton(onPressed: null, child: const Text('Disabled')),
+          ],
+        ),
+      );
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      addTearDown(mouse.removePointer);
+      Future<MouseCursor?> cursorOver(Finder finder) async {
+        await mouse.moveTo(tester.getCenter(finder));
+        await tester.pump();
+        return RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1);
+      }
+
+      for (final finder in [
+        find.byType(FilledButton),
+        find.text('Text'),
+        find.byType(IconButton),
+        find.byType(Checkbox),
+        find.byType(Switch),
+        find.text('Header'),
+      ]) {
+        expect(await cursorOver(finder), SystemMouseCursors.click);
+      }
+      expect(await cursorOver(find.text('Disabled')), SystemMouseCursors.basic);
+    });
 
     testWidgets('buttons are 34 tall on pointer platforms', (tester) async {
       await pump(
