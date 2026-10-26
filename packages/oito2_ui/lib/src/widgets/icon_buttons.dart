@@ -99,11 +99,20 @@ class Oito2IconButton extends StatelessWidget {
 /// closest [Navigator] route.
 class Oito2BackButton extends StatelessWidget {
   /// Creates a back button.
-  const Oito2BackButton({super.key, this.onPressed, this.tooltip});
+  const Oito2BackButton({
+    super.key,
+    this.onPressed,
+    this.tooltip,
+    this.enabled = true,
+  });
 
   /// Called when the button is pressed; defaults to popping the current
   /// route.
   final VoidCallback? onPressed;
+
+  /// Whether the button responds to presses; when false it is shown
+  /// disabled and neither calls [onPressed] nor pops.
+  final bool enabled;
 
   /// The tooltip; defaults to the localized "Back".
   final String? tooltip;
@@ -113,7 +122,9 @@ class Oito2BackButton extends StatelessWidget {
     return Oito2IconButton(
       icon: Icon(directionalChevron(context, forward: false)),
       tooltip: tooltip ?? MaterialLocalizations.of(context).backButtonTooltip,
-      onPressed: onPressed ?? () => Navigator.maybePop(context),
+      onPressed: enabled
+          ? onPressed ?? () => Navigator.maybePop(context)
+          : null,
     );
   }
 }
@@ -122,11 +133,20 @@ class Oito2BackButton extends StatelessWidget {
 /// tooltip. By default it pops the closest [Navigator] route.
 class Oito2CloseButton extends StatelessWidget {
   /// Creates a close button.
-  const Oito2CloseButton({super.key, this.onPressed, this.tooltip});
+  const Oito2CloseButton({
+    super.key,
+    this.onPressed,
+    this.tooltip,
+    this.enabled = true,
+  });
 
   /// Called when the button is pressed; defaults to popping the current
   /// route.
   final VoidCallback? onPressed;
+
+  /// Whether the button responds to presses; when false it is shown
+  /// disabled and neither calls [onPressed] nor pops.
+  final bool enabled;
 
   /// The tooltip; defaults to the localized "Close".
   final String? tooltip;
@@ -136,7 +156,9 @@ class Oito2CloseButton extends StatelessWidget {
     return Oito2IconButton(
       icon: const Icon(LucideIcons.x),
       tooltip: tooltip ?? MaterialLocalizations.of(context).closeButtonTooltip,
-      onPressed: onPressed ?? () => Navigator.maybePop(context),
+      onPressed: enabled
+          ? onPressed ?? () => Navigator.maybePop(context)
+          : null,
     );
   }
 }

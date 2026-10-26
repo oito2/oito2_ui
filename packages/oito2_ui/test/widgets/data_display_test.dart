@@ -469,7 +469,6 @@ void main() {
       expect(selected(0), isTrue);
       controller.jumpTo(650);
       await tester.pump();
-      await tester.pump();
       expect(selected(1), isTrue);
       await tester.tap(find.text('Section 2'));
       await tester.pumpAndSettle();

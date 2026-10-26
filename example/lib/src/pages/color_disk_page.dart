@@ -124,7 +124,7 @@ class _ColorDiskPageState extends State<ColorDiskPage> {
           'Assistive technologies read each disk as a button named by its '
           '`label`, selected or not; the label is also the tooltip. When '
           'the color is close to the surface, the ring is adjusted to stand '
-          'out from it.',
+          'out from it, and the disk gets a thin outline.',
         ),
         const DocHeading('Keyboard', level: 3),
         const DocTable(

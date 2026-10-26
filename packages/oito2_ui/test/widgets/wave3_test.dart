@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:ui' show Tristate;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -339,6 +341,141 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('First body'), findsOneWidget);
       expect(find.text('Second body'), findsOneWidget);
+    });
+  });
+
+  group('Oito2VerticalTabs', () {
+    Future<TabController> pumpTabs(
+      WidgetTester tester, {
+      ValueChanged<int>? onTap,
+      Oito2TabBarStyle style = Oito2TabBarStyle.pill,
+    }) async {
+      late TabController controller;
+      await pumpOito2(
+        tester,
+        SizedBox(
+          width: 600,
+          height: 300,
+          child: DefaultTabController(
+            length: 3,
+            child: Builder(
+              builder: (context) {
+                controller = DefaultTabController.of(context);
+                return Oito2VerticalTabs(
+                  onTap: onTap,
+                  style: style,
+                  tabs: const [
+                    Oito2Tab(
+                      icon: Icon(LucideIcons.user),
+                      label: Text('Account'),
+                    ),
+                    Oito2Tab(label: Text('Password')),
+                    Oito2Tab(label: Text('Billing')),
+                  ],
+                  children: [
+                    TextButton(
+                      onPressed: () {},
+                      child: const Text('Account page'),
+                    ),
+                    const Text('Password page'),
+                    const Text('Billing page'),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      return controller;
+    }
+
+    testWidgets('a tap selects the tab and shows its content', (tester) async {
+      final taps = <int>[];
+      final controller = await pumpTabs(tester, onTap: taps.add);
+      expect(find.text('Account page'), findsOneWidget);
+      await tester.tap(find.text('Billing'));
+      await tester.pumpAndSettle();
+      expect(controller.index, 2);
+      expect(taps, [2]);
+      expect(find.text('Billing page'), findsOneWidget);
+      expect(find.text('Account page'), findsNothing);
+    });
+
+    testWidgets('the marker slides to the selected tab', (tester) async {
+      await pumpTabs(tester);
+      Rect marker() => tester.getRect(
+        find
+            .descendant(
+              of: find.byType(Oito2VerticalTabBar),
+              matching: find.byType(DecoratedBox),
+            )
+            .first,
+      );
+      Rect tab(String label) => tester.getRect(
+        find.ancestor(of: find.text(label), matching: find.byType(InkWell)),
+      );
+      expect(marker(), tab('Account'));
+      await tester.tap(find.text('Password'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(marker().top, greaterThan(tab('Account').top));
+      expect(marker().top, lessThan(tab('Password').top));
+      await tester.pumpAndSettle();
+      expect(marker(), tab('Password'));
+    });
+
+    testWidgets('the selected tab is the keyboard stop and the arrows move', (
+      tester,
+    ) async {
+      final controller = await pumpTabs(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      FocusNode focused() => FocusManager.instance.primaryFocus!;
+      expect(focused().debugLabel, 'Vertical tab 0');
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      expect(controller.index, 1);
+      expect(focused().debugLabel, 'Vertical tab 1');
+      await tester.sendKeyEvent(LogicalKeyboardKey.end);
+      await tester.pumpAndSettle();
+      expect(controller.index, 2);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.sendKeyEvent(LogicalKeyboardKey.home);
+      await tester.pumpAndSettle();
+      expect(controller.index, 0);
+      expect(focused().debugLabel, 'Vertical tab 0');
+      // Tab leaves the bar instead of visiting the other tabs.
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      expect(
+        Focus.of(tester.element(find.text('Account page'))).hasPrimaryFocus,
+        isTrue,
+      );
+    });
+
+    testWidgets('tabs have the tab role and report the selection', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpTabs(tester, style: Oito2TabBarStyle.subtle);
+      final data = tester
+          .getSemantics(find.text('Password'))
+          .getSemanticsData();
+      expect(data.role, SemanticsRole.tab);
+      expect(data.flagsCollection.isSelected, Tristate.isFalse);
+      final account = tester
+          .getSemantics(find.text('Account'))
+          .getSemanticsData();
+      expect(account.flagsCollection.isSelected, Tristate.isTrue);
+      handle.dispose();
+    });
+
+    testWidgets('without a controller the bar throws', (tester) async {
+      await pumpOito2(
+        tester,
+        const Oito2VerticalTabBar(tabs: [Oito2Tab(label: Text('One'))]),
+      );
+      expect(tester.takeException(), isFlutterError);
     });
   });
 

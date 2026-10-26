@@ -241,7 +241,9 @@ class Oito2PageIndicator extends StatelessWidget {
     this.spacing = Oito2Spacing.sm,
     this.layout = Oito2PageIndicatorLayout.fixed,
     this.pageLabel,
-  }) : assert(page >= 0 && page < length);
+    this.minTargetSize = 24,
+  }) : assert(page >= 0 && page < length),
+       assert(minTargetSize >= 0);
 
   /// The number of pages.
   final int length;
@@ -266,8 +268,13 @@ class Oito2PageIndicator extends StatelessWidget {
   /// and the page count; defaults to [Oito2Localizations.pageOf].
   final String Function(int page, int length)? pageLabel;
 
-  /// The smallest width and height of an interactive dot's target.
-  static const double _minTarget = 24;
+  /// The smallest width and height of an interactive dot's target; the
+  /// spacing between dots absorbs as much of it as it can.
+  ///
+  /// Defaults to 24 logical pixels. A smaller value, down to 0 for targets
+  /// the size of the dots, suits an indicator whose pages another control,
+  /// such as previous and next buttons, also reaches.
+  final double minTargetSize;
 
   /// Moves to the page the arrow, Home or End key of [event] points at.
   KeyEventResult _onKey(BuildContext context, KeyEvent event) {
@@ -300,12 +307,11 @@ class Oito2PageIndicator extends StatelessWidget {
     final pageLabel = this.pageLabel ?? Oito2Localizations.of(context).pageOf;
     final interactive = onTap != null;
     final selectedWidth = dotSize * 3;
-    // Interactive dots sit in boxes at least _minTarget wide, which the
+    // Interactive dots sit in boxes at least minTargetSize wide, which the
     // spacing between them absorbs as far as it can.
     double boxWidth(double width) =>
-        interactive ? math.max(width, _minTarget) : width;
-    final boxes =
-        boxWidth(selectedWidth) + (length - 1) * boxWidth(dotSize) + 16;
+        interactive ? math.max(width, minTargetSize) : width;
+    final boxes = boxWidth(selectedWidth) + (length - 1) * boxWidth(dotSize);
     final absorbed = boxWidth(dotSize) - dotSize;
     final gaps = math.max(1, length - 1);
 
@@ -358,9 +364,7 @@ class Oito2PageIndicator extends StatelessWidget {
                         : SystemMouseCursors.basic,
                     child: Container(
                       width: boxWidth(i == page ? selectedWidth : dotSize),
-                      padding: EdgeInsets.symmetric(
-                        vertical: math.max(0, (_minTarget - dotSize) / 2),
-                      ),
+                      height: math.max(minTargetSize, dotSize),
                       alignment: Alignment.center,
                       child: AnimatedContainer(
                         duration: motionDuration(

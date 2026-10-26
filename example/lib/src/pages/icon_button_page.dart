@@ -137,7 +137,7 @@ class _IconButtonPageState extends State<IconButtonPage> {
           '`Oito2BackButton` shows a chevron pointing to the start side, and '
           '`Oito2CloseButton` an "x", with the localized "Back" and "Close" '
           'tooltips. Without `onPressed`, both pop the closest `Navigator` '
-          'route.',
+          'route; `enabled: false` shows them disabled.',
         ),
         ExamplePanel(
           region: 'back-close',
@@ -147,6 +147,7 @@ class _IconButtonPageState extends State<IconButtonPage> {
             children: [
               Oito2BackButton(onPressed: () {}),
               Oito2CloseButton(onPressed: () {}),
+              const Oito2CloseButton(enabled: false),
             ],
           ),
           // #endregion

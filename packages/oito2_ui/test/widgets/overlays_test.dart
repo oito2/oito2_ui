@@ -718,6 +718,42 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Copy'), findsOneWidget);
     });
+
+    testWidgets('from the keyboard it focuses the first item', (tester) async {
+      final picked = <String>[];
+      await pumpOito2(tester, region(picked.add));
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
+      await tester.pumpAndSettle();
+      final copy = find.ancestor(
+        of: find.text('Copy'),
+        matching: find.byType(MenuItemButton),
+      );
+      expect(
+        Focus.of(tester.element(find.text('Copy'))).hasPrimaryFocus,
+        isTrue,
+        reason: 'the first item should hold the focus',
+      );
+      expect(copy, findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(picked, ['copy']);
+    });
+
+    testWidgets('a secondary click leaves the focus where it was', (
+      tester,
+    ) async {
+      await pumpOito2(tester, region((_) {}));
+      await tester.tap(find.text('Target'), buttons: kSecondaryButton);
+      await tester.pumpAndSettle();
+      expect(
+        Focus.of(tester.element(find.text('Copy'))).hasPrimaryFocus,
+        isFalse,
+      );
+    });
   });
 
   group('Oito2Tour', () {

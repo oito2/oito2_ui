@@ -31,6 +31,7 @@ class PageIndicatorPage extends StatefulWidget {
 class _PageIndicatorPageState extends State<PageIndicatorPage> {
   int _page = 0;
   int _large = 1;
+  int _small = 2;
 
   @override
   Widget build(BuildContext context) {
@@ -147,6 +148,41 @@ class _PageIndicatorPageState extends State<PageIndicatorPage> {
             dotSize: 12,
             spacing: Oito2Spacing.md,
             onTap: (index) => setState(() => _large = index),
+          ),
+          // #endregion
+        ),
+        const DocHeading('Target size', level: 3),
+        const DocText(
+          'An interactive dot sits in a target at least `minTargetSize` '
+          'wide and tall, 24 pixels by default. When other controls, such '
+          'as previous and next buttons, also move between the pages, a '
+          'smaller value keeps the dots close together; 0 makes each '
+          'target the size of its dot.',
+        ),
+        ExamplePanel(
+          region: 'targets',
+          // #region targets
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: Oito2Spacing.sm,
+            children: [
+              Oito2IconButton(
+                icon: const Icon(LucideIcons.chevron_left),
+                tooltip: 'Previous',
+                onPressed: _small > 0 ? () => setState(() => _small--) : null,
+              ),
+              Oito2PageIndicator(
+                length: 8,
+                page: _small,
+                minTargetSize: 0,
+                onTap: (index) => setState(() => _small = index),
+              ),
+              Oito2IconButton(
+                icon: const Icon(LucideIcons.chevron_right),
+                tooltip: 'Next',
+                onPressed: _small < 7 ? () => setState(() => _small++) : null,
+              ),
+            ],
           ),
           // #endregion
         ),

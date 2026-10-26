@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_syntax/oito2_ui_syntax.dart';
@@ -97,6 +98,7 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
     super.initState();
     widget.location.addListener(_onLocation);
     widget.controller.addListener(_onOptionsChanged);
+    _listController.addListener(_onListSelection);
   }
 
   @override
@@ -146,6 +148,21 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
     if (slug == _selected.slug && _listController.hasSelection) return;
     final page = showcasePages.where((p) => p.slug == slug).firstOrNull;
     if (page != null) _goTo(page);
+  }
+
+  /// Whether the last master-detail layout showed both panes.
+  bool _wide = true;
+
+  /// Clears the address when the narrow layout goes back from a page to
+  /// the list, after the current frame since the list can change while
+  /// the navigator rebuilds.
+  void _onListSelection() {
+    if (_wide || _listController.hasSelection) return;
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_wide && !_listController.hasSelection) {
+        widget.location.value = '';
+      }
+    });
   }
 
   /// Filters the page list by [query], keeping the selected page selected
@@ -331,6 +348,7 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
   /// The page list beside the selected page, with a search field above the
   /// list; [wide] tells whether both panes are visible.
   Widget _masterDetail(Oito2Platform platform, {required bool wide}) {
+    _wide = wide;
     final filtered = _filtered;
     final chrome = Oito2ChromeColors.maybeOf(context);
     final bar = Oito2WindowTitleBar(

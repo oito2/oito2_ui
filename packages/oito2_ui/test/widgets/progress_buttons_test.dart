@@ -251,5 +251,33 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Open'), findsOneWidget);
     });
+
+    testWidgets('disabled back and close buttons neither call nor pop', (
+      tester,
+    ) async {
+      var pressed = 0;
+      await pushPage(
+        tester,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Oito2BackButton(enabled: false, onPressed: () => pressed++),
+            const Oito2CloseButton(enabled: false),
+          ],
+        ),
+      );
+      for (final type in [Oito2BackButton, Oito2CloseButton]) {
+        final button = find.descendant(
+          of: find.byType(type),
+          matching: find.byType(IconButton),
+        );
+        expect(tester.widget<IconButton>(button).onPressed, isNull);
+        await tester.tap(find.byType(type), warnIfMissed: false);
+        await tester.pumpAndSettle();
+      }
+      expect(pressed, 0);
+      expect(find.text('Open'), findsNothing);
+      expect(find.byType(Oito2BackButton), findsOneWidget);
+    });
   });
 }

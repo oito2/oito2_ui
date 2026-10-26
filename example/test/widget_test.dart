@@ -440,6 +440,37 @@ void main() {
       await _settle(tester);
       expect(reported.last, '/carousel');
     });
+
+    testWidgets('going back to the narrow list clears the address', (
+      tester,
+    ) async {
+      final reported = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.navigation,
+        (call) async {
+          if (call.method == 'routeInformationUpdated') {
+            reported.add((call.arguments as Map)['uri'] as String);
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.navigation,
+          null,
+        ),
+      );
+      await pumpShowcase(
+        tester,
+        slug: 'check-button',
+        size: const Size(500, 900),
+      );
+      expect(find.text('Show hidden files'), findsOneWidget);
+      await tester.tap(find.byType(Oito2BackButton));
+      await _settle(tester);
+      expect(find.text('Show hidden files'), findsNothing);
+      expect(reported.last, '/');
+    });
   });
 }
 

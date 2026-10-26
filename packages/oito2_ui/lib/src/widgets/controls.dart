@@ -393,7 +393,9 @@ class Oito2OptionButton extends StatelessWidget {
 /// A round color swatch that can be selected, as in accent color pickers.
 ///
 /// A ring in [color] itself surrounds the selected disk, and a fainter one
-/// shows while the pointer hovers it or the keyboard focus is on it.
+/// shows while the pointer hovers it or the keyboard focus is on it. A
+/// disk whose color has less than 3:1 contrast with the surface gets a
+/// thin outline, so it doesn't blend into the background.
 class Oito2ColorDisk extends StatefulWidget {
   /// Creates a color disk.
   const Oito2ColorDisk({
@@ -442,9 +444,16 @@ class _Oito2ColorDiskState extends State<Oito2ColorDisk> {
     const gap = 2.0;
     // The ring keeps the disk's hue, adjusted when needed to stand out
     // from the surface, so a disk close to the background still shows it.
+    final scheme = Theme.of(context).colorScheme;
     final ringColor = Oito2Contrast.ensure(widget.color.withValues(alpha: 1), [
-      Theme.of(context).colorScheme.surface,
+      scheme.surface,
     ], Oito2Contrast.nonTextAA);
+    final blends =
+        Oito2Contrast.ratio(
+          Color.alphaBlend(widget.color, scheme.surface),
+          scheme.surface,
+        ) <
+        Oito2Contrast.nonTextAA;
     return Semantics(
       button: true,
       enabled: widget.onPressed != null,
@@ -480,6 +489,9 @@ class _Oito2ColorDiskState extends State<Oito2ColorDisk> {
                 decoration: BoxDecoration(
                   color: widget.color,
                   shape: BoxShape.circle,
+                  border: blends
+                      ? Border.all(color: scheme.outlineVariant)
+                      : null,
                 ),
               ),
             ),

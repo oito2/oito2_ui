@@ -107,6 +107,7 @@ import 'pages/toggle_list_tile_page.dart';
 import 'pages/tour_page.dart';
 import 'pages/tree_view_page.dart';
 import 'pages/undershoot_page.dart';
+import 'pages/vertical_tabs_page.dart';
 import 'pages/watermark_page.dart';
 
 /// The group a showcase page is listed under.
@@ -743,6 +744,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.folder_tree,
     source: 'tree_view_page.dart',
     builder: _page(const TreeViewPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2VerticalTabs',
+    icon: LucideIcons.panel_left_dashed,
+    source: 'vertical_tabs_page.dart',
+    builder: _page(const VerticalTabsPage()),
   ),
   ShowcasePage(
     title: 'Oito2Watermark',

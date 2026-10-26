@@ -398,6 +398,46 @@ void main() {
     handle.dispose();
   });
 
+  testWidgets('Oito2ColorDisk outlines only a color close to the surface', (
+    tester,
+  ) async {
+    Border? outline(Color color) {
+      final disk = tester.widget<DecoratedBox>(
+        find
+            .descendant(
+              of: find.byKey(ValueKey(color)),
+              matching: find.byType(DecoratedBox),
+            )
+            .last,
+      );
+      return (disk.decoration as BoxDecoration).border as Border?;
+    }
+
+    const white = Color(0xFFFFFFFF);
+    const blue = Color(0xFF1A5FB4);
+    await pumpOito2(
+      tester,
+      Center(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final color in [white, blue])
+              Oito2ColorDisk(
+                key: ValueKey(color),
+                color: color,
+                selected: false,
+                label: 'Color',
+                onPressed: () {},
+              ),
+          ],
+        ),
+      ),
+    );
+    final scheme = Theme.of(tester.element(find.byType(Row))).colorScheme;
+    expect(outline(white)?.top.color, scheme.outlineVariant);
+    expect(outline(blue), isNull);
+  });
+
   group('Oito2ChoiceChipBar', () {
     final labels = [
       for (final name in [
@@ -534,7 +574,7 @@ void main() {
       for (var i = 0; i < 5; i++) {
         final size = tester.getSize(dots.at(i));
         expect(size.width, greaterThanOrEqualTo(24));
-        expect(size.height, greaterThanOrEqualTo(24));
+        expect(size.height, 24);
       }
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
@@ -556,6 +596,59 @@ void main() {
       );
       expect(find.text('3 / 30'), findsOneWidget);
       expect(find.bySemanticsLabel('Page 3 of 30'), findsOneWidget);
+    });
+
+    testWidgets('shows the dots when they fit the width exactly', (
+      tester,
+    ) async {
+      // A 24-pixel current pill, four 8-pixel dots and four 8-pixel gaps.
+      await pumpOito2(
+        tester,
+        const Center(
+          child: SizedBox(
+            width: 88,
+            child: Oito2PageIndicator(length: 5, page: 0),
+          ),
+        ),
+      );
+      expect(find.text('1 / 5'), findsNothing);
+      expect(find.byType(AnimatedContainer), findsNWidgets(5));
+    });
+
+    testWidgets('minTargetSize shrinks the interactive targets', (
+      tester,
+    ) async {
+      final taps = <int>[];
+      await pumpOito2(
+        tester,
+        Center(
+          child: Oito2PageIndicator(
+            length: 5,
+            page: 0,
+            minTargetSize: 0,
+            onTap: taps.add,
+          ),
+        ),
+      );
+      final dots = find.descendant(
+        of: find.byType(Oito2PageIndicator),
+        matching: find.byType(GestureDetector),
+      );
+      expect(tester.getSize(dots.at(0)), const Size(24, 8));
+      expect(tester.getSize(dots.at(1)), const Size(8, 8));
+      expect(
+        tester
+            .widget<Row>(
+              find.descendant(
+                of: find.byType(Oito2PageIndicator),
+                matching: find.byType(Row),
+              ),
+            )
+            .spacing,
+        8,
+      );
+      await tester.tap(dots.at(2));
+      expect(taps, [2]);
     });
   });
 }

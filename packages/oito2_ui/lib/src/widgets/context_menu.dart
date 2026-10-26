@@ -14,6 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -23,7 +24,8 @@ import 'package:material_ui/material_ui.dart';
 /// The menu is a `MenuAnchor`, so [menuChildren] are `MenuItemButton`s,
 /// `SubmenuButton`s for nested menus, `Oito2CheckedMenuItem`s and
 /// dividers. It opens where the pointer is, or over the center of
-/// [child] from the keyboard, which needs the focus inside [child]. On
+/// [child] from the keyboard, which needs the focus inside [child] and
+/// moves it to the first item that can take it. On
 /// the web, the browser's own menu is turned off while the pointer is
 /// over [child].
 class Oito2ContextMenuRegion extends StatefulWidget {
@@ -63,10 +65,51 @@ class _Oito2ContextMenuRegionState extends State<Oito2ContextMenuRegion> {
   final _controller = MenuController();
   bool _browserMenuOff = false;
 
+  /// One non-focusable node around each menu child, through which the
+  /// focusable items inside are found.
+  final _itemNodes = <FocusNode>[];
+
   @override
   void dispose() {
     _setBrowserMenu(enabled: true);
+    for (final node in _itemNodes) {
+      node.dispose();
+    }
     super.dispose();
+  }
+
+  /// Grows or shrinks [_itemNodes] to one node per menu child.
+  void _syncItemNodes() {
+    final count = widget.menuChildren.length;
+    while (_itemNodes.length > count) {
+      _itemNodes.removeLast().dispose();
+    }
+    while (_itemNodes.length < count) {
+      _itemNodes.add(
+        FocusNode(
+          debugLabel: 'Context menu item ${_itemNodes.length}',
+          canRequestFocus: false,
+          skipTraversal: true,
+        ),
+      );
+    }
+  }
+
+  /// Focuses the first menu item that can take the focus, once the open
+  /// menu is built.
+  void _focusFirstItem() {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_controller.isOpen) return;
+      for (final node in _itemNodes) {
+        final item = node.descendants
+            .where((d) => d.canRequestFocus && !d.skipTraversal)
+            .firstOrNull;
+        if (item != null) {
+          item.requestFocus();
+          return;
+        }
+      }
+    });
   }
 
   /// The number of regions under the pointer that turned the browser menu
@@ -89,19 +132,25 @@ class _Oito2ContextMenuRegionState extends State<Oito2ContextMenuRegion> {
     }
   }
 
-  /// Opens the menu at [position], or at the center of the region when
-  /// null; does nothing when the region is disabled.
+  /// Opens the menu at [position], or at the center of the region with
+  /// the first item focused when null; does nothing when the region is
+  /// disabled.
   void _open([Offset? position]) {
     if (!widget.enabled) return;
     final box = context.findRenderObject() as RenderBox?;
     _controller.open(position: position ?? box?.size.center(Offset.zero));
+    if (position == null) _focusFirstItem();
   }
 
   @override
   Widget build(BuildContext context) {
+    _syncItemNodes();
     return MenuAnchor(
       controller: _controller,
-      menuChildren: widget.menuChildren,
+      menuChildren: [
+        for (var i = 0; i < widget.menuChildren.length; i++)
+          Focus(focusNode: _itemNodes[i], child: widget.menuChildren[i]),
+      ],
       onOpen: widget.onOpen,
       onClose: widget.onClose,
       consumeOutsideTap: true,

@@ -135,9 +135,15 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2TitleBar.interactiveTitle` and `Oito2WindowTitleBar.interactiveTitle`, for a title that takes clicks, such as tabs or a search field.
 - `Oito2ChoiceChipBar.shape`, such as a `StadiumBorder` for pill-shaped chips.
 - `Oito2ScrollViewUndershoot.pointerScrolling` (on by default): a horizontal scroll view also scrolls with the vertical mouse wheel and with mouse drags.
+- `Oito2VerticalTabs` and `Oito2VerticalTabBar`: a column of tabs with a sliding marker in the pill or subtle style, beside the content of the selected tab; the selected tab is one keyboard stop and the arrow keys, Home and End move between tabs.
+- `Oito2PageIndicator.minTargetSize` (24 by default): smaller interactive dot targets for indicators whose pages other controls also reach.
+- `Oito2BackButton.enabled` and `Oito2CloseButton.enabled`, to show the buttons disabled.
 
 ### Changed
 
+- `Oito2ContextMenuRegion` opened from the keyboard focuses the first menu item.
+- `Oito2TableOfContents` moves its highlight in the same frame as the scroll.
+- `Oito2ColorDisk` outlines a disk whose color has less than 3:1 contrast with the surface.
 - `Oito2ListBox` reacts to a click at once: double clicks are told apart without delaying single clicks.
 - `Oito2DateEntry` opens an `Oito2Calendar` in a popover instead of the Material date picker dialog.
 - `Oito2Contrast.foregroundFor` returns black or white by the higher contrast ratio instead of a 0.5 luminance threshold.
@@ -176,6 +182,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- `Oito2PageIndicator` shows its dots whenever they fit, without 16 hidden pixels of extra width, and its interactive dots no longer stretch to the full available height.
 - `Oito2TreeView`: Shift+click or Shift+arrow no longer throws when the anchor node is hidden (its branch closed, filtered out or removed).
 - `Oito2TreeView` and `Oito2ListBox`: a double click is detected on a real 300 ms timeout instead of frame times, so two slow clicks no longer activate an item.
 - `oito2IsoWeekNumber` and the `Oito2Calendar` week column: week numbers are right in time zones with daylight saving time.

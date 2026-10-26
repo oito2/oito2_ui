@@ -90,7 +90,7 @@ class _Oito2TableOfContentsState extends State<Oito2TableOfContents> {
   @override
   void initState() {
     super.initState();
-    widget.controller.addListener(_scheduleUpdate);
+    widget.controller.addListener(_onScroll);
     SchedulerBinding.instance.addPostFrameCallback((_) => _update());
   }
 
@@ -99,8 +99,8 @@ class _Oito2TableOfContentsState extends State<Oito2TableOfContents> {
     super.didUpdateWidget(oldWidget);
     final controllerChanged = oldWidget.controller != widget.controller;
     if (controllerChanged) {
-      oldWidget.controller.removeListener(_scheduleUpdate);
-      widget.controller.addListener(_scheduleUpdate);
+      oldWidget.controller.removeListener(_onScroll);
+      widget.controller.addListener(_onScroll);
     }
     // Measuring the headings costs a layout query each, so it runs again
     // only when what it depends on changes.
@@ -113,7 +113,7 @@ class _Oito2TableOfContentsState extends State<Oito2TableOfContents> {
 
   @override
   void dispose() {
-    widget.controller.removeListener(_scheduleUpdate);
+    widget.controller.removeListener(_onScroll);
     super.dispose();
   }
 
@@ -129,6 +129,18 @@ class _Oito2TableOfContentsState extends State<Oito2TableOfContents> {
 
   bool _updateScheduled = false;
 
+  /// Follows a scroll change at once, from the headings as last laid out,
+  /// so the highlight moves in the same frame as the content. During
+  /// layout, or when a heading isn't laid out, it measures again after
+  /// the next layout instead.
+  void _onScroll() {
+    if (SchedulerBinding.instance.schedulerPhase ==
+            SchedulerPhase.persistentCallbacks ||
+        !_update()) {
+      _scheduleUpdate();
+    }
+  }
+
   /// Measures the headings after the next layout, once per frame, so a
   /// jump that builds new headings sees them laid out.
   void _scheduleUpdate() {
@@ -142,10 +154,13 @@ class _Oito2TableOfContentsState extends State<Oito2TableOfContents> {
 
   /// Recomputes the current section from the scroll position and the
   /// measured headings, rebuilding only when it changes.
-  void _update() {
-    if (!mounted || !widget.controller.hasClients) return;
+  ///
+  /// Returns whether every heading could be measured.
+  bool _update() {
+    if (!mounted || !widget.controller.hasClients) return true;
     final position = widget.controller.position;
     var active = -1;
+    var complete = true;
     if (position.hasContentDimensions &&
         position.pixels >= position.maxScrollExtent - 1 &&
         position.maxScrollExtent > 0) {
@@ -154,7 +169,10 @@ class _Oito2TableOfContentsState extends State<Oito2TableOfContents> {
       var firstBelow = -1;
       for (var i = 0; i < widget.entries.length; i++) {
         final offset = _offsetOf(widget.entries[i]);
-        if (offset == null) continue;
+        if (offset == null) {
+          complete = false;
+          continue;
+        }
         if (offset <= position.pixels + widget.activationOffset) {
           active = i;
         } else if (firstBelow < 0) {
@@ -164,11 +182,12 @@ class _Oito2TableOfContentsState extends State<Oito2TableOfContents> {
       // Without a built heading above the activation line, the section
       // before the first built heading below it is the current one.
       if (active < 0) {
-        if (firstBelow < 0) return;
+        if (firstBelow < 0) return complete;
         active = math.max(firstBelow - 1, 0);
       }
     }
     if (active != _active) setState(() => _active = active);
+    return complete;
   }
 
   /// Reports [index] to [Oito2TableOfContents.onSelected] and scrolls its
