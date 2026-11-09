@@ -20,11 +20,13 @@ import 'package:oito2_ui/oito2_ui.dart';
 import 'settings_reader.dart';
 
 /// Creates a reader for platforms without `dart:io`, such as the web: no
-/// desktop stores, only the platform high-contrast preference.
+/// desktop stores, only the platform high-contrast and brightness
+/// preferences.
 Oito2SystemSettingsReader createReader(Oito2Platform platform) {
   return Oito2SystemSettingsReader(
     platform: platform,
     platformHighContrast: () =>
         PlatformDispatcher.instance.accessibilityFeatures.highContrast,
+    platformBrightness: () => PlatformDispatcher.instance.platformBrightness,
   );
 }

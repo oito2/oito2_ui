@@ -15,7 +15,7 @@
 
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui' show Color;
+import 'dart:ui' show Brightness, Color;
 
 import 'package:dbus/dbus.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
@@ -196,5 +196,109 @@ class Oito2SystemThemeAccentSource implements Oito2AccentSource {
     } on Object {
       return const Stream.empty();
     }
+  }
+}
+
+/// Reads the color scheme preference through the XDG desktop portal
+/// (`org.freedesktop.appearance color-scheme`), which every Linux desktop
+/// with a settings portal exposes.
+///
+/// The connection stays open until [close]; a process with an open
+/// connection may not exit.
+class Oito2PortalColorSchemeSource implements Oito2ColorSchemeSource {
+  /// Creates a source on [sessionBus], or on a connection of its own when
+  /// it is null.
+  ///
+  /// [close] closes the connection the source opened itself and leaves
+  /// the one it was given open.
+  Oito2PortalColorSchemeSource({DBusClient? sessionBus})
+    : _ownsBus = sessionBus == null,
+      _bus = sessionBus ?? DBusClient.session();
+
+  static const _namespace = 'org.freedesktop.appearance';
+  static const _key = 'color-scheme';
+  static const _interface = 'org.freedesktop.portal.Settings';
+
+  final bool _ownsBus;
+  final DBusClient _bus;
+
+  /// The portal's settings object.
+  late final DBusRemoteObject _portal = DBusRemoteObject(
+    _bus,
+    name: 'org.freedesktop.portal.Desktop',
+    path: DBusObjectPath('/org/freedesktop/portal/desktop'),
+  );
+
+  /// Reads the preference with `ReadOne`, or with `Read` on a portal that
+  /// predates it. Returns null without a portal or when it reports no
+  /// preference.
+  @override
+  Future<Brightness?> read() async {
+    try {
+      DBusValue value;
+      try {
+        value = await _call('ReadOne');
+      } on DBusUnknownMethodException {
+        value = await _call('Read');
+      }
+      return brightnessOf(value);
+    } on Object {
+      return null;
+    }
+  }
+
+  /// Calls [method] for the color scheme setting and returns its value.
+  Future<DBusValue> _call(String method) async {
+    final response = await _portal.callMethod(_interface, method, const [
+      DBusString(_namespace),
+      DBusString(_key),
+    ], replySignature: DBusSignature('v'));
+    return response.values.single;
+  }
+
+  /// Maps a portal `color-scheme` value to a brightness: 1 asks for dark,
+  /// 2 for light and any other value states no preference.
+  ///
+  /// The value may be wrapped in one or more variants, as `Read` and
+  /// `ReadOne` return it.
+  static Brightness? brightnessOf(DBusValue value) {
+    var inner = value;
+    while (inner is DBusVariant) {
+      inner = inner.value;
+    }
+    return switch (inner) {
+      DBusUint32(value: 1) => Brightness.dark,
+      DBusUint32(value: 2) => Brightness.light,
+      _ => null,
+    };
+  }
+
+  /// Emits on the portal's `SettingChanged` signal for the color scheme
+  /// key; never emits without a portal.
+  @override
+  Stream<void> changes() {
+    try {
+      return DBusRemoteObjectSignalStream(
+            object: _portal,
+            interface: _interface,
+            name: 'SettingChanged',
+            signature: DBusSignature('ssv'),
+          )
+          .where(
+            (signal) =>
+                signal.values[0].asString() == _namespace &&
+                signal.values[1].asString() == _key,
+          )
+          .map((_) {})
+          .handleError((Object _) {});
+    } on Object {
+      return const Stream.empty();
+    }
+  }
+
+  /// Closes the bus connection when the source opened it.
+  @override
+  Future<void> close() async {
+    if (_ownsBus) await _bus.close();
   }
 }

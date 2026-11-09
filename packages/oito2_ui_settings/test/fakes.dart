@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'dart:async';
-import 'dart:ui' show Color;
+import 'dart:ui' show Brightness, Color;
 
 import 'package:oito2_ui_settings/oito2_ui_settings.dart';
 
@@ -102,6 +102,35 @@ class FakeAccent implements Oito2AccentSource {
   /// Changes the color and notifies listeners.
   void change(Color? value) {
     color = value;
+    _controller.add(null);
+  }
+}
+
+/// A color scheme preference held in memory.
+class FakeColorScheme implements Oito2ColorSchemeSource {
+  /// Creates a fake source starting with [brightness].
+  FakeColorScheme([this.brightness]);
+
+  /// The current preference.
+  Brightness? brightness;
+
+  /// Whether [close] was called.
+  bool closed = false;
+
+  final StreamController<void> _controller = StreamController.broadcast();
+
+  @override
+  Future<Brightness?> read() async => brightness;
+
+  @override
+  Stream<void> changes() => _controller.stream;
+
+  @override
+  Future<void> close() async => closed = true;
+
+  /// Changes the preference and notifies listeners.
+  void change(Brightness? value) {
+    brightness = value;
     _controller.add(null);
   }
 }

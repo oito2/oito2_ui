@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'dart:async';
-import 'dart:ui' show Color;
+import 'dart:ui' show Brightness, Color;
 
 import 'package:oito2_ui/oito2_ui.dart';
 
@@ -45,25 +45,40 @@ import 'sources.dart';
 /// theme. Without a desktop accent, the accent comes from the toolkit
 /// theme through [accent].
 ///
+/// The color scheme comes from [colorScheme], the desktop portal's
+/// `org.freedesktop.appearance color-scheme`. When the portal states no
+/// preference, the desktop store decides: `org.gnome.desktop.interface
+/// color-scheme` (`prefer-dark` or `prefer-light`) on the GNOME family,
+/// Cinnamon and MATE; a `kdeglobals` color scheme or look-and-feel package
+/// whose name contains "dark" on KDE Plasma; the
+/// `com.system76.CosmicTheme.Mode/v1/is_dark` flag on COSMIC. Xfce and
+/// LXQt have no store beyond the portal.
+///
 /// Missing values fall back to each desktop's defaults. On other
-/// platforms only the accent comes from [accent]. [platformHighContrast]
-/// is combined with the desktop preference on every platform.
+/// platforms the accent comes from [accent] and the color scheme from
+/// [platformBrightness]. [platformHighContrast] is combined with the
+/// desktop preference on every platform.
 class Oito2SystemSettingsReader {
   /// Creates a reader for [platform] over the given sources.
   ///
-  /// Every source defaults to an [Oito2EmptySource], and
-  /// [platformHighContrast] to a function that returns false.
+  /// Every source defaults to an [Oito2EmptySource], [platformHighContrast]
+  /// to a function that returns false and [platformBrightness] to one that
+  /// returns null.
   Oito2SystemSettingsReader({
     required this.platform,
     this.environment = const {},
     this.gsettings = const Oito2EmptySource(),
     this.configFiles = const Oito2EmptySource(),
     this.accent = const Oito2EmptySource(),
+    this.colorScheme = const Oito2EmptySource(),
     this.platformHighContrast = _never,
+    this.platformBrightness = _noBrightness,
     this.debounce = const Duration(milliseconds: 150),
   });
 
   static bool _never() => false;
+
+  static Brightness? _noBrightness() => null;
 
   /// The platform the settings are read for.
   final Oito2Platform platform;
@@ -80,8 +95,15 @@ class Oito2SystemSettingsReader {
   /// The toolkit or operating system accent color.
   final Oito2AccentSource accent;
 
+  /// The desktop portal's color scheme preference.
+  final Oito2ColorSchemeSource colorScheme;
+
   /// Whether the platform accessibility settings ask for high contrast.
   final bool Function() platformHighContrast;
+
+  /// The light or dark scheme the platform reports outside native Linux,
+  /// or null when it reports none.
+  final Brightness? Function() platformBrightness;
 
   /// How long [watch] waits after a change before reading again, so a
   /// burst of changes produces one update.
@@ -99,6 +121,7 @@ class Oito2SystemSettingsReader {
       'cosmic/com.system76.CosmicTk/v1/show_minimize';
   static const _cosmicMaximize =
       'cosmic/com.system76.CosmicTk/v1/show_maximize';
+  static const _cosmicDark = 'cosmic/com.system76.CosmicTheme.Mode/v1/is_dark';
 
   bool get _isLinuxDesktop => platform.isLinux && platform.isDesktopNative;
 
@@ -129,12 +152,16 @@ class Oito2SystemSettingsReader {
     final highContrast =
         platformHighContrast() ||
         (environment != null && await _linuxHighContrast(environment));
+    final scheme = environment == null
+        ? platformBrightness()
+        : await _linuxColorScheme(environment);
     return Oito2SystemSettings(
       platform: platform,
       desktopEnvironment: environment,
       windowControlStyle: fallback.windowControlStyle,
       windowButtonLayout: layout ?? fallback.windowButtonLayout,
       accentColor: accentColor,
+      colorScheme: scheme,
       highContrast: highContrast,
     );
   }
@@ -190,8 +217,12 @@ class Oito2SystemSettingsReader {
   }
 
   /// Releases the connections the system stores hold, such as the D-Bus
-  /// connections of GSettings. The reader can't be used afterwards.
-  Future<void> close() => gsettings.close();
+  /// connections of GSettings and of the desktop portal. The reader can't
+  /// be used afterwards.
+  Future<void> close() async {
+    await gsettings.close();
+    await colorScheme.close();
+  }
 
   /// The change streams of the sources that [read] uses on this platform
   /// and desktop.
@@ -199,6 +230,7 @@ class Oito2SystemSettingsReader {
     yield accent.changes();
     final environment = desktopEnvironment;
     if (environment == null) return;
+    yield colorScheme.changes();
     switch (environment) {
       case Oito2DesktopEnvironment.kde:
         yield configFiles.changes(_kwinrc);
@@ -208,6 +240,7 @@ class Oito2SystemSettingsReader {
       case Oito2DesktopEnvironment.cosmic:
         yield configFiles.changes(_cosmicMinimize);
         yield configFiles.changes(_cosmicMaximize);
+        yield configFiles.changes(_cosmicDark);
       case Oito2DesktopEnvironment.cinnamon:
         yield gsettings.changes(_cinnamonWm);
       case Oito2DesktopEnvironment.mate:
@@ -314,6 +347,46 @@ class Oito2SystemSettingsReader {
       () => gsettings.read(_gnomeInterface, 'gtk-theme'),
     );
     return theme is String && theme.toLowerCase().contains('highcontrast');
+  }
+
+  /// Reads the color scheme of [environment]: the desktop portal first,
+  /// then the desktop's own store. Returns null when neither states a
+  /// preference.
+  Future<Brightness?> _linuxColorScheme(
+    Oito2DesktopEnvironment environment,
+  ) async {
+    final portal = await _safe(colorScheme.read);
+    if (portal != null) return portal;
+    switch (environment) {
+      case Oito2DesktopEnvironment.kde:
+        final globals = await _safe(() => configFiles.read(_kdeglobals)) ?? '';
+        final scheme =
+            Oito2ConfigParsers.iniValue(globals, 'General', 'ColorScheme') ??
+            Oito2ConfigParsers.iniValue(globals, 'KDE', 'LookAndFeelPackage') ??
+            '';
+        return scheme.toLowerCase().contains('dark') ? Brightness.dark : null;
+      case Oito2DesktopEnvironment.cosmic:
+        final content = await _safe(() => configFiles.read(_cosmicDark));
+        return switch (content == null
+            ? null
+            : Oito2ConfigParsers.cosmicBool(content)) {
+          true => Brightness.dark,
+          false => Brightness.light,
+          null => null,
+        };
+      case Oito2DesktopEnvironment.xfce:
+      case Oito2DesktopEnvironment.lxqt:
+        return null;
+      default:
+        final value = await _safe(
+          () => gsettings.read(_gnomeInterface, 'color-scheme'),
+        );
+        return switch (value) {
+          'prefer-dark' => Brightness.dark,
+          'prefer-light' => Brightness.light,
+          _ => null,
+        };
+    }
   }
 
   /// Runs [read], turning any error into null so one broken store never

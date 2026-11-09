@@ -34,7 +34,11 @@ Oito2SystemSettingsReader createReader(Oito2Platform platform) {
         ? Oito2HomeConfigFileSource.fromEnvironment(environment)
         : const Oito2EmptySource(),
     accent: Oito2SystemThemeAccentSource(),
+    colorScheme: isLinux
+        ? Oito2PortalColorSchemeSource()
+        : const Oito2EmptySource(),
     platformHighContrast: () =>
         PlatformDispatcher.instance.accessibilityFeatures.highContrast,
+    platformBrightness: () => PlatformDispatcher.instance.platformBrightness,
   );
 }

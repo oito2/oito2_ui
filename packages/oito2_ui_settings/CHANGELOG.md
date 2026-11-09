@@ -14,10 +14,12 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Linux desktop support: window button layout for GNOME, Budgie, Pantheon, Unity, Cinnamon, MATE (GSettings), KDE Plasma (`kwinrc`), Xfce (`xfwm4.xml`) and COSMIC; accent from GNOME 47+ `accent-color`, KDE `AccentColor` or the GTK theme; high contrast from GNOME a11y settings, a `HighContrast` GTK theme or a KDE contrast color scheme.
 - System accent on Windows, macOS and Android through `system_theme`; platform high-contrast preference everywhere.
 - `Oito2SystemSettingsReader`, the source interfaces and `Oito2ConfigParsers` for custom sources and testing.
+- Color scheme preference: `Oito2PortalColorSchemeSource` reads `org.freedesktop.appearance color-scheme` from the XDG desktop portal on Linux, falling back to GNOME `color-scheme`, a dark KDE color scheme or look-and-feel package, or the COSMIC theme mode; other platforms report the platform brightness. `Oito2SystemSettingsScope` reads again when the platform brightness changes.
 
 ### Changed
 
 - Accepts `dbus` 0.7 and 0.8 and `gsettings` 0.2.8 and 0.2.9, so apps can also depend on plugins that still require `dbus` 0.7.
+- `Oito2SystemSettingsReader` takes a `colorScheme` source and a `platformBrightness` callback; `Oito2EmptySource` also implements the new `Oito2ColorSchemeSource`.
 - `Oito2GSettingsSource` gains `close()`; `Oito2DconfGSettingsSource` shares one session and one system D-Bus connection between schemas and accepts existing connections.
 - `Oito2SystemSettingsReader.close()` releases the system store connections. `Oito2Settings.load()` releases its reader after reading, `Oito2Settings.watch()` when the subscription is cancelled, and `Oito2SystemSettingsScope` closes the reader it creates.
 

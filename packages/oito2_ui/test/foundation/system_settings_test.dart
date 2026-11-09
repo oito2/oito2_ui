@@ -34,6 +34,7 @@ void main() {
         Oito2WindowButtonLayout.defaultFor(Oito2WindowControlStyle.gnome),
       );
       expect(settings.accentColor, isNull);
+      expect(settings.colorScheme, isNull);
       expect(settings.highContrast, isFalse);
     });
 
@@ -73,14 +74,26 @@ void main() {
     final base = Oito2SystemSettings.fallback(_linux);
     final changed = base.copyWith(
       accentColor: Oito2AccentColor.green.color,
+      colorScheme: Brightness.dark,
       highContrast: true,
     );
     expect(changed.accentColor, Oito2AccentColor.green.color);
+    expect(changed.colorScheme, Brightness.dark);
     expect(changed.highContrast, isTrue);
     expect(changed.platform, base.platform);
     expect(changed, isNot(base));
     expect(changed.copyWith(), changed);
     expect(changed.copyWith().hashCode, changed.hashCode);
+  });
+
+  test('the color scheme takes part in equality', () {
+    final base = Oito2SystemSettings.fallback(_linux);
+    final dark = base.copyWith(colorScheme: Brightness.dark);
+    final light = base.copyWith(colorScheme: Brightness.light);
+    expect(dark, isNot(base));
+    expect(dark, isNot(light));
+    expect(dark, base.copyWith(colorScheme: Brightness.dark));
+    expect(dark.toString(), contains('colorScheme: dark'));
   });
 
   group('Oito2SystemScope', () {

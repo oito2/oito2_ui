@@ -14,6 +14,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2DesktopEnvironment` with detection from `XDG_CURRENT_DESKTOP` and `DESKTOP_SESSION`.
 - `Oito2WindowControlStyle`, `Oito2WindowButton` and `Oito2WindowButtonLayout`, with parsers for the GNOME, KDE and Xfce button layout formats.
 - `Oito2SystemSettings` and the `Oito2SystemScope` inherited widget.
+- `Oito2SystemSettings.colorScheme`: the light or dark scheme the system asks for, or null without a preference.
 - `Oito2Contrast` WCAG contrast helpers.
 - Design tokens: `Oito2Radius`, `Oito2Spacing`, `Oito2Sizes`, `Oito2NeutralPalette`, `Oito2AccentColor`, `Oito2StatusPalette` and `Oito2Typography`.
 - `Oito2ColorTheme` and `Oito2ColorScheme`: the oito2 base scheme (GTK-style neutrals, custom accent, high contrast) mapped to Material 3, with WCAG AA text roles on every surface.

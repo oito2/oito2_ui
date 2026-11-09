@@ -20,7 +20,8 @@ import 'platform_info.dart';
 import 'window_button_layout.dart';
 
 /// The operating system preferences that shape an `oito2_ui` app: platform,
-/// desktop environment, window controls, accent color and contrast.
+/// desktop environment, window controls, accent color, color scheme and
+/// contrast.
 ///
 /// [Oito2SystemSettings.fallback] derives every value from the platform
 /// alone. The `oito2_ui_settings` package reads the real values from the
@@ -34,6 +35,7 @@ class Oito2SystemSettings {
     required this.windowButtonLayout,
     this.desktopEnvironment,
     this.accentColor,
+    this.colorScheme,
     this.highContrast = false,
   });
 
@@ -43,8 +45,8 @@ class Oito2SystemSettings {
   /// [Oito2DesktopEnvironment.unknown]; on other platforms it stays null.
   /// The window control style and button layout follow
   /// [Oito2WindowControlStyle.resolve] and
-  /// [Oito2WindowButtonLayout.defaultFor]. There is no accent color and high
-  /// contrast is off.
+  /// [Oito2WindowButtonLayout.defaultFor]. There is no accent color, no
+  /// color scheme preference and high contrast is off.
   factory Oito2SystemSettings.fallback(
     Oito2Platform platform, {
     Oito2DesktopEnvironment? desktopEnvironment,
@@ -80,19 +82,24 @@ class Oito2SystemSettings {
   /// unknown.
   final Color? accentColor;
 
+  /// The light or dark scheme the system asks for, or null when it states
+  /// no preference or the preference is unknown.
+  final Brightness? colorScheme;
+
   /// Whether the system asks for high contrast.
   final bool highContrast;
 
   /// Returns a copy with the given fields replaced.
   ///
-  /// [accentColor] and [desktopEnvironment] can't be reset to null through
-  /// this method; create a new instance for that.
+  /// [accentColor], [colorScheme] and [desktopEnvironment] can't be reset to
+  /// null through this method; create a new instance for that.
   Oito2SystemSettings copyWith({
     Oito2Platform? platform,
     Oito2DesktopEnvironment? desktopEnvironment,
     Oito2WindowControlStyle? windowControlStyle,
     Oito2WindowButtonLayout? windowButtonLayout,
     Color? accentColor,
+    Brightness? colorScheme,
     bool? highContrast,
   }) {
     return Oito2SystemSettings(
@@ -101,6 +108,7 @@ class Oito2SystemSettings {
       windowControlStyle: windowControlStyle ?? this.windowControlStyle,
       windowButtonLayout: windowButtonLayout ?? this.windowButtonLayout,
       accentColor: accentColor ?? this.accentColor,
+      colorScheme: colorScheme ?? this.colorScheme,
       highContrast: highContrast ?? this.highContrast,
     );
   }
@@ -113,6 +121,7 @@ class Oito2SystemSettings {
       other.windowControlStyle == windowControlStyle &&
       other.windowButtonLayout == windowButtonLayout &&
       other.accentColor == accentColor &&
+      other.colorScheme == colorScheme &&
       other.highContrast == highContrast;
 
   @override
@@ -122,6 +131,7 @@ class Oito2SystemSettings {
     windowControlStyle,
     windowButtonLayout,
     accentColor,
+    colorScheme,
     highContrast,
   );
 
@@ -131,7 +141,8 @@ class Oito2SystemSettings {
       'desktopEnvironment: ${desktopEnvironment?.name}, '
       'windowControlStyle: ${windowControlStyle.name}, '
       'windowButtonLayout: $windowButtonLayout, '
-      'accentColor: $accentColor, highContrast: $highContrast)';
+      'accentColor: $accentColor, colorScheme: ${colorScheme?.name}, '
+      'highContrast: $highContrast)';
 }
 
 /// Exposes [Oito2SystemSettings] to the widgets below it.

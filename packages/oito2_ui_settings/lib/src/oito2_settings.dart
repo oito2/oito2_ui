@@ -69,7 +69,8 @@ abstract final class Oito2Settings {
 ///
 /// Shows [initialSettings] (or the platform fallback) until the first read
 /// completes, then rebuilds [child] whenever the desktop environment
-/// settings, the accent color or the accessibility preferences change.
+/// settings, the accent color, the platform brightness or the accessibility
+/// preferences change.
 class Oito2SystemSettingsScope extends StatefulWidget {
   /// Creates a scope that watches the system settings for [child].
   const Oito2SystemSettingsScope({
@@ -138,7 +139,13 @@ class _Oito2SystemSettingsScopeState extends State<Oito2SystemSettingsScope>
   }
 
   @override
-  void didChangeAccessibilityFeatures() {
+  void didChangeAccessibilityFeatures() => _reread();
+
+  @override
+  void didChangePlatformBrightness() => _reread();
+
+  /// Reads the settings again after a platform-level change.
+  void _reread() {
     _reader.read().then(_apply, onError: (Object _) {});
   }
 

@@ -83,6 +83,41 @@ void main() {
     expect(seen, Oito2SystemSettings.fallback(_linux));
   });
 
+  testWidgets('reads again when the platform brightness changes', (
+    tester,
+  ) async {
+    const windows = Oito2Platform(
+      targetPlatform: TargetPlatform.windows,
+      isWeb: false,
+    );
+    final reader = Oito2SystemSettingsReader(
+      platform: windows,
+      platformBrightness: () => tester.platformDispatcher.platformBrightness,
+      debounce: Duration.zero,
+    );
+    Oito2SystemSettings? seen;
+    await tester.pumpWidget(
+      Oito2SystemSettingsScope(
+        reader: reader,
+        child: Builder(
+          builder: (context) {
+            seen = Oito2SystemScope.of(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(seen!.colorScheme, Brightness.light);
+
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+    addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+    await tester.pump();
+    await tester.pump();
+    expect(seen!.colorScheme, Brightness.dark);
+  });
+
   test('Oito2Settings.reader targets the given platform', () {
     expect(Oito2Settings.reader(platform: _linux).platform, _linux);
   });

@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'dart:ui' show Color;
+import 'dart:ui' show Brightness, Color;
 
 /// Reads values from GSettings, the settings store of GNOME and the
 /// desktops derived from it.
@@ -50,10 +50,27 @@ abstract interface class Oito2AccentSource {
   Stream<void> changes();
 }
 
+/// Reads the light or dark color scheme the desktop asks for.
+abstract interface class Oito2ColorSchemeSource {
+  /// Returns the requested scheme, or null when the desktop states no
+  /// preference or none is available.
+  Future<Brightness?> read();
+
+  /// Emits whenever the requested scheme changes.
+  Stream<void> changes();
+
+  /// Releases the connections the source holds.
+  Future<void> close();
+}
+
 /// A source with no values and no changes, used where a platform has no
 /// such store.
 class Oito2EmptySource
-    implements Oito2GSettingsSource, Oito2ConfigFileSource, Oito2AccentSource {
+    implements
+        Oito2GSettingsSource,
+        Oito2ConfigFileSource,
+        Oito2AccentSource,
+        Oito2ColorSchemeSource {
   /// Creates an empty source.
   const Oito2EmptySource();
 

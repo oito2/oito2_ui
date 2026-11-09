@@ -39,6 +39,7 @@ const _kwinrc = 'kwinrc';
 const _kdeglobals = 'kdeglobals';
 const _xfwm = 'xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml';
 const _cosmic = 'cosmic/com.system76.CosmicTk/v1';
+const _cosmicDark = 'cosmic/com.system76.CosmicTheme.Mode/v1/is_dark';
 
 const _min = Oito2WindowButton.minimize;
 const _max = Oito2WindowButton.maximize;
@@ -50,14 +51,18 @@ Oito2SystemSettingsReader _reader({
   FakeGSettings? gsettings,
   FakeConfigFiles? files,
   FakeAccent? accent,
+  FakeColorScheme? colorScheme,
   bool platformHighContrast = false,
+  Brightness? platformBrightness,
 }) => Oito2SystemSettingsReader(
   platform: platform,
   environment: {'XDG_CURRENT_DESKTOP': desktop},
   gsettings: gsettings ?? FakeGSettings(),
   configFiles: files ?? FakeConfigFiles(),
   accent: accent ?? FakeAccent(),
+  colorScheme: colorScheme ?? FakeColorScheme(),
   platformHighContrast: () => platformHighContrast,
+  platformBrightness: () => platformBrightness,
   debounce: const Duration(milliseconds: 10),
 );
 
@@ -278,6 +283,82 @@ void main() {
     });
   });
 
+  group('color scheme', () {
+    test('the desktop portal wins over the desktop store', () async {
+      final settings = await _reader(
+        colorScheme: FakeColorScheme(Brightness.dark),
+        gsettings: FakeGSettings({'$_interface/color-scheme': 'prefer-light'}),
+      ).read();
+      expect(settings.colorScheme, Brightness.dark);
+    });
+
+    test('the GNOME family falls back to color-scheme', () async {
+      for (final (value, expected) in [
+        ('prefer-dark', Brightness.dark),
+        ('prefer-light', Brightness.light),
+        ('default', null),
+        (null, null),
+      ]) {
+        for (final desktop in ['GNOME', 'Budgie:GNOME', 'X-Cinnamon', 'MATE']) {
+          final settings = await _reader(
+            desktop: desktop,
+            gsettings: FakeGSettings({'$_interface/color-scheme': value}),
+          ).read();
+          expect(settings.colorScheme, expected, reason: '$desktop $value');
+        }
+      }
+    });
+
+    test('KDE falls back to a dark color scheme or look-and-feel', () async {
+      Future<Brightness?> read(String globals) async => (await _reader(
+        desktop: 'KDE',
+        files: FakeConfigFiles({_kdeglobals: globals}),
+      ).read()).colorScheme;
+      expect(
+        await read('[General]\nColorScheme=BreezeDark\n'),
+        Brightness.dark,
+      );
+      expect(await read('[General]\nColorScheme=BreezeLight\n'), isNull);
+      expect(
+        await read('[KDE]\nLookAndFeelPackage=org.kde.breezedark.desktop\n'),
+        Brightness.dark,
+      );
+      expect(await read(''), isNull);
+    });
+
+    test('COSMIC falls back to its theme mode', () async {
+      Future<Brightness?> read(Map<String, String> files) async =>
+          (await _reader(
+            desktop: 'COSMIC',
+            files: FakeConfigFiles(files),
+          ).read()).colorScheme;
+      expect(await read({_cosmicDark: 'true'}), Brightness.dark);
+      expect(await read({_cosmicDark: 'false'}), Brightness.light);
+      expect(await read({}), isNull);
+    });
+
+    test('Xfce and LXQt rely on the portal alone', () async {
+      for (final desktop in ['XFCE', 'LXQt']) {
+        final settings = await _reader(
+          desktop: desktop,
+          gsettings: FakeGSettings({'$_interface/color-scheme': 'prefer-dark'}),
+        ).read();
+        expect(settings.colorScheme, isNull, reason: desktop);
+      }
+    });
+
+    test('other platforms report the platform brightness', () async {
+      final settings = await _reader(
+        platform: _windows,
+        colorScheme: FakeColorScheme(Brightness.light),
+        platformBrightness: Brightness.dark,
+      ).read();
+      expect(settings.colorScheme, Brightness.dark);
+      final none = await _reader(platform: _windows).read();
+      expect(none.colorScheme, isNull);
+    });
+  });
+
   test('a failing store never breaks the others', () async {
     final gsettings = FakeGSettings()..broken = true;
     final settings = await _reader(
@@ -359,14 +440,30 @@ void main() {
       await subscription.cancel();
       expect(files.isWatched(_kwinrc), isFalse);
     });
+
+    test('follows the portal color scheme', () async {
+      final colorScheme = FakeColorScheme();
+      final reader = _reader(colorScheme: colorScheme);
+      final events = <Oito2SystemSettings>[];
+      final subscription = reader.watch().listen(events.add);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(events.last.colorScheme, isNull);
+
+      colorScheme.change(Brightness.dark);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(events.last.colorScheme, Brightness.dark);
+      await subscription.cancel();
+    });
   });
 
-  test('close releases the GSettings connections', () async {
+  test('close releases the GSettings and portal connections', () async {
     final gsettings = FakeGSettings();
-    final reader = _reader(gsettings: gsettings);
+    final colorScheme = FakeColorScheme();
+    final reader = _reader(gsettings: gsettings, colorScheme: colorScheme);
     await reader.read();
     await reader.close();
     expect(gsettings.closed, isTrue);
+    expect(colorScheme.closed, isTrue);
   });
 }
 

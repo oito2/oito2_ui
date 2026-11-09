@@ -40,6 +40,7 @@ class FoundationPage extends StatelessWidget {
       'Window control style': settings.windowControlStyle.name,
       'Leading window buttons': names(layout.leading),
       'Trailing window buttons': names(layout.trailing),
+      'Color scheme': settings.colorScheme?.name ?? '— (no preference)',
       'High contrast': '${settings.highContrast}',
       'Accent color': switch (settings.accentColor) {
         null => '— (none reported)',

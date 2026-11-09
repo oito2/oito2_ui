@@ -189,4 +189,140 @@ void main() {
       await expectLater(system.ping(), completes);
     });
   });
+
+  group('Oito2PortalColorSchemeSource', () {
+    late DBusServer server;
+    late DBusClient session;
+    late DBusClient portalBus;
+    late Directory socketDir;
+
+    setUp(() async {
+      socketDir = await Directory.systemTemp.createTemp('oito2_portal');
+      server = DBusServer();
+      final address = await server.listenAddress(
+        DBusAddress.unix(dir: socketDir),
+      );
+      session = DBusClient(address);
+      portalBus = DBusClient(address);
+    });
+
+    tearDown(() async {
+      await session.close();
+      await portalBus.close();
+      await server.close();
+      await socketDir.delete(recursive: true);
+    });
+
+    Future<_FakePortal> servePortal(int value, {bool readOne = true}) async {
+      final portal = _FakePortal(value, readOne: readOne);
+      await portalBus.registerObject(portal);
+      await portalBus.requestName('org.freedesktop.portal.Desktop');
+      return portal;
+    }
+
+    test('maps the portal values to a brightness', () async {
+      for (final (value, expected) in [
+        (0, null),
+        (1, Brightness.dark),
+        (2, Brightness.light),
+        (7, null),
+      ]) {
+        final portal = await servePortal(value);
+        final source = Oito2PortalColorSchemeSource(sessionBus: session);
+        expect(await source.read(), expected, reason: '$value');
+        await source.close();
+        await portalBus.unregisterObject(portal);
+      }
+    });
+
+    test('falls back to Read on a portal without ReadOne', () async {
+      final portal = await servePortal(1, readOne: false);
+      final source = Oito2PortalColorSchemeSource(sessionBus: session);
+      expect(await source.read(), Brightness.dark);
+      expect(portal.calls, ['ReadOne', 'Read']);
+      await source.close();
+    });
+
+    test('reads null without a portal', () async {
+      final source = Oito2PortalColorSchemeSource(sessionBus: session);
+      expect(await source.read(), isNull);
+      await source.close();
+    });
+
+    test('emits only for the color scheme setting', () async {
+      final portal = await servePortal(1);
+      final source = Oito2PortalColorSchemeSource(sessionBus: session);
+      final events = <void>[];
+      final subscription = source.changes().listen(events.add);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      await portal.change('org.freedesktop.appearance', 'accent-color');
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(events, isEmpty);
+
+      await portal.change('org.freedesktop.appearance', 'color-scheme');
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(events, hasLength(1));
+
+      await subscription.cancel();
+      await source.close();
+    });
+
+    test('closing leaves a bus it was given open', () async {
+      final source = Oito2PortalColorSchemeSource(sessionBus: session);
+      await source.read();
+      await source.close();
+      await expectLater(session.ping(), completes);
+    });
+
+    test('brightnessOf unwraps nested variants', () {
+      expect(
+        Oito2PortalColorSchemeSource.brightnessOf(
+          DBusVariant(DBusVariant(DBusUint32(2))),
+        ),
+        Brightness.light,
+      );
+      expect(
+        Oito2PortalColorSchemeSource.brightnessOf(DBusString('dark')),
+        isNull,
+      );
+    });
+  });
+}
+
+/// A settings portal that answers `ReadOne` (unless [readOne] is false)
+/// and `Read` with [value] for every setting.
+class _FakePortal extends DBusObject {
+  _FakePortal(this.value, {this.readOne = true})
+    : super(DBusObjectPath('/org/freedesktop/portal/desktop'));
+
+  static const _interface = 'org.freedesktop.portal.Settings';
+
+  final int value;
+  final bool readOne;
+  final List<String> calls = [];
+
+  @override
+  Future<DBusMethodResponse> handleMethodCall(DBusMethodCall methodCall) async {
+    if (methodCall.interface != _interface) {
+      return DBusMethodErrorResponse.unknownInterface();
+    }
+    calls.add(methodCall.name);
+    return switch (methodCall.name) {
+      'ReadOne' when readOne => DBusMethodSuccessResponse([
+        DBusVariant(DBusUint32(value)),
+      ]),
+      'Read' => DBusMethodSuccessResponse([
+        DBusVariant(DBusVariant(DBusUint32(value))),
+      ]),
+      _ => DBusMethodErrorResponse.unknownMethod(),
+    };
+  }
+
+  /// Emits `SettingChanged` for [namespace] and [key].
+  Future<void> change(String namespace, String key) => emitSignal(
+    _interface,
+    'SettingChanged',
+    [DBusString(namespace), DBusString(key), DBusVariant(DBusUint32(value))],
+  );
 }
