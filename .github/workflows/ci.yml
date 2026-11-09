@@ -20,7 +20,7 @@ concurrency:
 
 env:
   # Pinned Flutter release for push and pull request runs.
-  FLUTTER_VERSION: 3.47.7
+  FLUTTER_VERSION: 3.47.8
 
 jobs:
   checks:

@@ -334,7 +334,7 @@ class _ProgressButtonsScene extends StatelessWidget {
                     onPressed: () {},
                   ),
                   Oito2IconButton(
-                    icon: const Icon(LucideIcons.bold),
+                    icon: const Icon(LucideIcons.letter_b),
                     isSelected: true,
                     onPressed: () {},
                   ),

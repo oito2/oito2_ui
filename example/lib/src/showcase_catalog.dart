@@ -609,7 +609,7 @@ final List<ShowcasePage> showcasePages = [
   ),
   ShowcasePage(
     title: 'Oito2Section',
-    icon: LucideIcons.heading,
+    icon: LucideIcons.letter_h,
     source: 'section_page.dart',
     builder: _page(const SectionPage()),
   ),

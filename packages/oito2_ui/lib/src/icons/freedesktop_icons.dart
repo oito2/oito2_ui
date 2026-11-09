@@ -133,7 +133,7 @@ enum Oito2FreedesktopIcons {
   formatJustifyRight('format-justify-right', LucideIcons.text_align_end),
 
   /// `format-text-bold`.
-  formatTextBold('format-text-bold', LucideIcons.bold),
+  formatTextBold('format-text-bold', LucideIcons.letter_b),
 
   /// `format-text-italic`.
   formatTextItalic('format-text-italic', LucideIcons.italic),
@@ -467,7 +467,7 @@ enum Oito2FreedesktopIcons {
   emblemFavorite('emblem-favorite', LucideIcons.heart),
 
   /// `emblem-important`.
-  emblemImportant('emblem-important', LucideIcons.circle_alert),
+  emblemImportant('emblem-important', LucideIcons.circle_exclamation_point),
 
   /// `emblem-mail`.
   emblemMail('emblem-mail', LucideIcons.mail),
@@ -535,7 +535,7 @@ enum Oito2FreedesktopIcons {
   audioVolumeMuted('audio-volume-muted', LucideIcons.volume_x),
 
   /// `battery-caution`.
-  batteryCaution('battery-caution', LucideIcons.battery_warning),
+  batteryCaution('battery-caution', LucideIcons.battery_exclamation_point),
 
   /// `battery-low`.
   batteryLow('battery-low', LucideIcons.battery_low),
@@ -553,7 +553,7 @@ enum Oito2FreedesktopIcons {
   dialogQuestion('dialog-question', LucideIcons.circle_question_mark),
 
   /// `dialog-warning`.
-  dialogWarning('dialog-warning', LucideIcons.triangle_alert),
+  dialogWarning('dialog-warning', LucideIcons.triangle_exclamation_point),
 
   /// `folder-drag-accept`.
   folderDragAccept('folder-drag-accept', LucideIcons.folder_input),
@@ -598,7 +598,10 @@ enum Oito2FreedesktopIcons {
   ),
 
   /// `software-update-urgent`.
-  softwareUpdateUrgent('software-update-urgent', LucideIcons.circle_alert),
+  softwareUpdateUrgent(
+    'software-update-urgent',
+    LucideIcons.circle_exclamation_point,
+  ),
 
   /// `sync-error`.
   syncError('sync-error', LucideIcons.refresh_cw_off),
@@ -607,7 +610,7 @@ enum Oito2FreedesktopIcons {
   syncSynchronizing('sync-synchronizing', LucideIcons.refresh_cw),
 
   /// `task-due`.
-  taskDue('task-due', LucideIcons.clock_alert),
+  taskDue('task-due', LucideIcons.clock_exclamation_point),
 
   /// `user-available`.
   userAvailable('user-available', LucideIcons.circle_check),
@@ -637,7 +640,10 @@ enum Oito2FreedesktopIcons {
   weatherOvercast('weather-overcast', LucideIcons.cloud),
 
   /// `weather-severe-alert`.
-  weatherSevereAlert('weather-severe-alert', LucideIcons.cloud_alert),
+  weatherSevereAlert(
+    'weather-severe-alert',
+    LucideIcons.cloud_exclamation_point,
+  ),
 
   /// `weather-showers`.
   weatherShowers('weather-showers', LucideIcons.cloud_rain),

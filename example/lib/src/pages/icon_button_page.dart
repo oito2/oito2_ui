@@ -108,7 +108,7 @@ class _IconButtonPageState extends State<IconButtonPage> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _toggle('bold', LucideIcons.bold),
+              _toggle('bold', LucideIcons.letter_b),
               _toggle('italic', LucideIcons.italic),
               _toggle('underline', LucideIcons.underline),
             ],

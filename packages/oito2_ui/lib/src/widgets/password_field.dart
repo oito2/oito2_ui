@@ -137,7 +137,11 @@ class _Oito2PasswordFieldState extends State<Oito2PasswordField>
               mainAxisSize: MainAxisSize.min,
               spacing: 4,
               children: [
-                Icon(LucideIcons.triangle_alert, size: 14, color: warning),
+                Icon(
+                  LucideIcons.triangle_exclamation_point,
+                  size: 14,
+                  color: warning,
+                ),
                 Text(strings.capsLockOn, style: TextStyle(color: warning)),
               ],
             ),

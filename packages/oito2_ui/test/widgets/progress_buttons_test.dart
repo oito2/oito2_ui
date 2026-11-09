@@ -171,7 +171,7 @@ void main() {
         StatefulBuilder(
           builder: (context, setState) => Center(
             child: Oito2IconButton(
-              icon: const Icon(LucideIcons.bold),
+              icon: const Icon(LucideIcons.letter_b),
               selectedIcon: const Icon(LucideIcons.italic),
               tooltip: 'Bold',
               isSelected: selected,

@@ -27,7 +27,11 @@ const _fruits = [
 ];
 
 const _styles = [
-  Oito2ToggleItem(value: 'b', child: Icon(LucideIcons.bold), tooltip: 'Bold'),
+  Oito2ToggleItem(
+    value: 'b',
+    child: Icon(LucideIcons.letter_b),
+    tooltip: 'Bold',
+  ),
   Oito2ToggleItem(
     value: 'i',
     child: Icon(LucideIcons.italic),
@@ -154,7 +158,7 @@ void main() {
       tester,
     ) async {
       final changes = await pumpGroup(tester);
-      await tester.tap(find.byIcon(LucideIcons.bold));
+      await tester.tap(find.byIcon(LucideIcons.letter_b));
       await tester.pump();
       await tester.tap(find.byIcon(LucideIcons.italic));
       await tester.pump();
@@ -175,18 +179,18 @@ void main() {
         deselectable: false,
         initial: {'b'},
       );
-      await tester.tap(find.byIcon(LucideIcons.bold));
+      await tester.tap(find.byIcon(LucideIcons.letter_b));
       await tester.pump();
       expect(changes, isEmpty);
     });
 
     testWidgets('multiple mode toggles items on their own', (tester) async {
       final changes = await pumpGroup(tester, multiple: true);
-      await tester.tap(find.byIcon(LucideIcons.bold));
+      await tester.tap(find.byIcon(LucideIcons.letter_b));
       await tester.pump();
       await tester.tap(find.byIcon(LucideIcons.underline));
       await tester.pump();
-      await tester.tap(find.byIcon(LucideIcons.bold));
+      await tester.tap(find.byIcon(LucideIcons.letter_b));
       await tester.pump();
       expect(changes, [
         {'b'},

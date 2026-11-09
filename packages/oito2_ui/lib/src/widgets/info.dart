@@ -31,7 +31,7 @@ enum Oito2InfoType {
   success(LucideIcons.circle_check),
 
   /// Something that needs attention.
-  warning(LucideIcons.triangle_alert),
+  warning(LucideIcons.triangle_exclamation_point),
 
   /// An error or a destructive consequence.
   danger(LucideIcons.circle_x),

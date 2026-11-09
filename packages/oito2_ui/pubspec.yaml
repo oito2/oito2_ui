@@ -14,9 +14,9 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  flutter_lucide: ^1.59.0
+  flutter_lucide: ^1.70.0
   intl: ^0.20.2
-  material_ui: ^1.7.0
+  material_ui: ^1.10.0
 
 dev_dependencies:
   flutter_test:

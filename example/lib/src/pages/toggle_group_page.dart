@@ -53,7 +53,7 @@ class _ToggleGroupPageState extends State<ToggleGroupPage> {
               Oito2ToggleItem(
                 value: 'bold',
                 tooltip: 'Bold',
-                child: Icon(LucideIcons.bold),
+                child: Icon(LucideIcons.letter_b),
               ),
               Oito2ToggleItem(
                 value: 'italic',
