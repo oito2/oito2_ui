@@ -30,12 +30,12 @@ migrate_working_dir/
 build/
 coverage/
 
-# Local planning notes, reference clones and machine-specific tool config
-.dev/
+# Reference clones and machine-specific tool config
 .references/
 .sync82.json
 
-# AI assistant local-only settings
+# AI assistant settings (machine-specific)
+.claude/
 *.local.json
 
 # Golden test diffs written on failure
