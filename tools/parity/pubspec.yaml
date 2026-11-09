@@ -1,0 +1,39 @@
+# Copyright (C) 2026  OITO2
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+name: oito2_ui_parity
+description: Exports the oito2_ui design data (tokens, schemes, foundation results, strings, formats, syntax tokens and QR modules) as the JSON parity fixtures the sibling implementations test against.
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  oito2_ui: ^0.1.0
+  oito2_ui_extras: ^0.1.0
+  oito2_ui_syntax: ^0.1.0
+  oito2_ui_themes: ^0.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  # Imported directly by the exporters.
+  catppuccin_flutter: ^1.0.0
+  material_ui: ^1.10.0
+  re_highlight: ^0.0.3

@@ -31,7 +31,7 @@ Rules defined for this project. They take precedence over `AGENTS.md` and over t
 
 - Every observable fix gets a regression test proven to fail against the previous code: extract HEAD with `git archive HEAD | tar -x` into the scratchpad (never `git stash`).
 - Run package tests per package, never from the workspace root (the `ink_sparkle.frag` asset fails there).
-- Run the full checks before reporting: `dart format`, `dart analyze`, per-package tests, `dart run tool/generate_docs.dart --check`, and the web build with `tool/check_web_build.dart` when the showcase changes.
+- Run the full checks before reporting: `dart format`, `dart analyze`, per-package tests, `dart run tool/generate_docs.dart --check`, `flutter test` in `tools/parity` followed by `git diff --exit-code -- tools/parity/fixtures` (the fixtures are committed; a change in design data must come with regenerated fixtures), and the web build with `tool/check_web_build.dart` when the showcase changes.
 - After any lib doc comment or CHANGELOG change, regenerate the showcase docs with `dart run tool/generate_docs.dart`.
 - Goldens use the tolerant comparator from `oito2_ui_test_utils`; avoid indeterminate spinners and `DateTime.now()` in goldens.
 - Local web checks: copy `example/build/web` to the scratchpad, serve with `python3 -m http.server`, stop it by its listening PID (`ss -ltnp`); never `pkill -f`.

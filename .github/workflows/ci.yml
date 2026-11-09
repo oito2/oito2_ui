@@ -42,6 +42,17 @@ jobs:
       - run: flutter analyze
       - name: Documentation data is up to date
         run: dart run tool/generate_docs.dart --check
+      - name: Regenerate the parity fixtures
+        working-directory: tools/parity
+        run: flutter test
+      - name: Parity fixtures are up to date
+        run: |
+          git status --porcelain -- tools/parity/fixtures
+          git diff --exit-code --stat -- tools/parity/fixtures
+          if [ -n "$(git status --porcelain -- tools/parity/fixtures)" ]; then
+            echo "The parity fixtures are stale: run 'flutter test' in tools/parity and commit the result." >&2
+            exit 1
+          fi
 
   test:
     name: Test ${{ matrix.package }}

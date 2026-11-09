@@ -1,0 +1,2498 @@
+{
+	"en": {
+		"bytes": [
+			{
+				"bytes": 0,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1023,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1024,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1536,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "2 kB"
+			},
+			{
+				"bytes": 999949,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 999950,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 999999,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "3 MB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 GB"
+			},
+			{
+				"bytes": -2000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "-2 kB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "123 GB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "2 PB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "5,000 PB"
+			},
+			{
+				"bytes": 0,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1023,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1024,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1536,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1.5 kB"
+			},
+			{
+				"bytes": 999949,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "999.9 kB"
+			},
+			{
+				"bytes": 999950,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 999999,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "2.5 MB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1.1 GB"
+			},
+			{
+				"bytes": -2000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "-2 kB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "123.5 GB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "2 PB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "5,000 PB"
+			},
+			{
+				"bytes": 0,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1023,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1.02 kB"
+			},
+			{
+				"bytes": 1024,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1.02 kB"
+			},
+			{
+				"bytes": 1536,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1.54 kB"
+			},
+			{
+				"bytes": 999949,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "999.95 kB"
+			},
+			{
+				"bytes": 999950,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "999.95 kB"
+			},
+			{
+				"bytes": 999999,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "2.5 MB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1.05 MB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1.05 MB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1.07 GB"
+			},
+			{
+				"bytes": -2000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "-2 kB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "123.46 GB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "2 PB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "5,000 PB"
+			},
+			{
+				"bytes": 0,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1,000 B"
+			},
+			{
+				"bytes": 1023,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1,023 B"
+			},
+			{
+				"bytes": 1024,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 KiB"
+			},
+			{
+				"bytes": 1536,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "2 KiB"
+			},
+			{
+				"bytes": 999949,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "977 KiB"
+			},
+			{
+				"bytes": 999950,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "977 KiB"
+			},
+			{
+				"bytes": 999999,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "977 KiB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "977 KiB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "2 MiB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 GiB"
+			},
+			{
+				"bytes": -2000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "-2 KiB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "115 GiB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "2 PiB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "4,441 PiB"
+			},
+			{
+				"bytes": 0,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1,000 B"
+			},
+			{
+				"bytes": 1023,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1,023 B"
+			},
+			{
+				"bytes": 1024,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 KiB"
+			},
+			{
+				"bytes": 1536,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1.5 KiB"
+			},
+			{
+				"bytes": 999949,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "976.5 KiB"
+			},
+			{
+				"bytes": 999950,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "976.5 KiB"
+			},
+			{
+				"bytes": 999999,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "976.6 KiB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "976.6 KiB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "2.4 MiB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 GiB"
+			},
+			{
+				"bytes": -2000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "-2 KiB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "115 GiB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1.8 PiB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "4,440.9 PiB"
+			},
+			{
+				"bytes": 0,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1,000 B"
+			},
+			{
+				"bytes": 1023,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1,023 B"
+			},
+			{
+				"bytes": 1024,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 KiB"
+			},
+			{
+				"bytes": 1536,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1.5 KiB"
+			},
+			{
+				"bytes": 999949,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "976.51 KiB"
+			},
+			{
+				"bytes": 999950,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "976.51 KiB"
+			},
+			{
+				"bytes": 999999,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "976.56 KiB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "976.56 KiB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "2.38 MiB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 GiB"
+			},
+			{
+				"bytes": -2000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "-1.95 KiB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "114.98 GiB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1.78 PiB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "4,440.89 PiB"
+			}
+		],
+		"compactNumber": [
+			{
+				"value": 0,
+				"result": "0"
+			},
+			{
+				"value": 7,
+				"result": "7"
+			},
+			{
+				"value": 999,
+				"result": "999"
+			},
+			{
+				"value": 1000,
+				"result": "1K"
+			},
+			{
+				"value": 1234,
+				"result": "1.23K"
+			},
+			{
+				"value": 12345,
+				"result": "12.3K"
+			},
+			{
+				"value": 999999,
+				"result": "1M"
+			},
+			{
+				"value": 1500000,
+				"result": "1.5M"
+			},
+			{
+				"value": -4321,
+				"result": "-4.32K"
+			},
+			{
+				"value": 2.5,
+				"result": "2.5"
+			}
+		],
+		"relativeTime": [
+			{
+				"offsetSeconds": 0,
+				"result": "now"
+			},
+			{
+				"offsetSeconds": -10,
+				"result": "now"
+			},
+			{
+				"offsetSeconds": 44,
+				"result": "now"
+			},
+			{
+				"offsetSeconds": -45,
+				"result": "1 minute ago"
+			},
+			{
+				"offsetSeconds": -60,
+				"result": "1 minute ago"
+			},
+			{
+				"offsetSeconds": -89,
+				"result": "1 minute ago"
+			},
+			{
+				"offsetSeconds": -90,
+				"result": "2 minutes ago"
+			},
+			{
+				"offsetSeconds": -180,
+				"result": "3 minutes ago"
+			},
+			{
+				"offsetSeconds": 2699,
+				"result": "in 45 minutes"
+			},
+			{
+				"offsetSeconds": -2700,
+				"result": "1 hour ago"
+			},
+			{
+				"offsetSeconds": 7200,
+				"result": "in 2 hours"
+			},
+			{
+				"offsetSeconds": -79199,
+				"result": "22 hours ago"
+			},
+			{
+				"offsetSeconds": -79200,
+				"result": "1 day ago"
+			},
+			{
+				"offsetSeconds": -259200,
+				"result": "3 days ago"
+			},
+			{
+				"offsetSeconds": -561600,
+				"result": "1 week ago"
+			},
+			{
+				"offsetSeconds": -518400,
+				"result": "6 days ago"
+			},
+			{
+				"offsetSeconds": -1209600,
+				"result": "2 weeks ago"
+			},
+			{
+				"offsetSeconds": -2591999,
+				"result": "4 weeks ago"
+			},
+			{
+				"offsetSeconds": -2592000,
+				"result": "1 month ago"
+			},
+			{
+				"offsetSeconds": 2678400,
+				"result": "in 1 month"
+			},
+			{
+				"offsetSeconds": -5184000,
+				"result": "2 months ago"
+			},
+			{
+				"offsetSeconds": -7776000,
+				"result": "3 months ago"
+			},
+			{
+				"offsetSeconds": -31535999,
+				"result": "12 months ago"
+			},
+			{
+				"offsetSeconds": -31536000,
+				"result": "1 year ago"
+			},
+			{
+				"offsetSeconds": 69120000,
+				"result": "in 2 years"
+			}
+		]
+	},
+	"pt-BR": {
+		"bytes": [
+			{
+				"bytes": 0,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1023,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1024,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1536,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "2 kB"
+			},
+			{
+				"bytes": 999949,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 999950,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 999999,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "3 MB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 GB"
+			},
+			{
+				"bytes": -2000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "-2 kB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "123 GB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "2 PB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "5.000 PB"
+			},
+			{
+				"bytes": 0,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1023,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1024,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1536,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1,5 kB"
+			},
+			{
+				"bytes": 999949,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "999,9 kB"
+			},
+			{
+				"bytes": 999950,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 999999,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "2,5 MB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1,1 GB"
+			},
+			{
+				"bytes": -2000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "-2 kB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "123,5 GB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "2 PB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "5.000 PB"
+			},
+			{
+				"bytes": 0,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1023,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1,02 kB"
+			},
+			{
+				"bytes": 1024,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1,02 kB"
+			},
+			{
+				"bytes": 1536,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1,54 kB"
+			},
+			{
+				"bytes": 999949,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "999,95 kB"
+			},
+			{
+				"bytes": 999950,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "999,95 kB"
+			},
+			{
+				"bytes": 999999,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "2,5 MB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1,05 MB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1,05 MB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1,07 GB"
+			},
+			{
+				"bytes": -2000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "-2 kB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "123,46 GB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "2 PB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "5.000 PB"
+			},
+			{
+				"bytes": 0,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1.000 B"
+			},
+			{
+				"bytes": 1023,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1.023 B"
+			},
+			{
+				"bytes": 1024,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 KiB"
+			},
+			{
+				"bytes": 1536,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "2 KiB"
+			},
+			{
+				"bytes": 999949,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "977 KiB"
+			},
+			{
+				"bytes": 999950,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "977 KiB"
+			},
+			{
+				"bytes": 999999,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "977 KiB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "977 KiB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "2 MiB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 GiB"
+			},
+			{
+				"bytes": -2000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "-2 KiB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "115 GiB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "2 PiB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "4.441 PiB"
+			},
+			{
+				"bytes": 0,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1.000 B"
+			},
+			{
+				"bytes": 1023,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1.023 B"
+			},
+			{
+				"bytes": 1024,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 KiB"
+			},
+			{
+				"bytes": 1536,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1,5 KiB"
+			},
+			{
+				"bytes": 999949,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "976,5 KiB"
+			},
+			{
+				"bytes": 999950,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "976,5 KiB"
+			},
+			{
+				"bytes": 999999,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "976,6 KiB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "976,6 KiB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "2,4 MiB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 GiB"
+			},
+			{
+				"bytes": -2000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "-2 KiB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "115 GiB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1,8 PiB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "4.440,9 PiB"
+			},
+			{
+				"bytes": 0,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1.000 B"
+			},
+			{
+				"bytes": 1023,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1.023 B"
+			},
+			{
+				"bytes": 1024,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 KiB"
+			},
+			{
+				"bytes": 1536,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1,5 KiB"
+			},
+			{
+				"bytes": 999949,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "976,51 KiB"
+			},
+			{
+				"bytes": 999950,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "976,51 KiB"
+			},
+			{
+				"bytes": 999999,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "976,56 KiB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "976,56 KiB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "2,38 MiB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 GiB"
+			},
+			{
+				"bytes": -2000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "-1,95 KiB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "114,98 GiB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1,78 PiB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "4.440,89 PiB"
+			}
+		],
+		"compactNumber": [
+			{
+				"value": 0,
+				"result": "0"
+			},
+			{
+				"value": 7,
+				"result": "7"
+			},
+			{
+				"value": 999,
+				"result": "999"
+			},
+			{
+				"value": 1000,
+				"result": "1 mil"
+			},
+			{
+				"value": 1234,
+				"result": "1,23 mil"
+			},
+			{
+				"value": 12345,
+				"result": "12,3 mil"
+			},
+			{
+				"value": 999999,
+				"result": "1 mi"
+			},
+			{
+				"value": 1500000,
+				"result": "1,5 mi"
+			},
+			{
+				"value": -4321,
+				"result": "-4,32 mil"
+			},
+			{
+				"value": 2.5,
+				"result": "2,5"
+			}
+		],
+		"relativeTime": [
+			{
+				"offsetSeconds": 0,
+				"result": "agora"
+			},
+			{
+				"offsetSeconds": -10,
+				"result": "agora"
+			},
+			{
+				"offsetSeconds": 44,
+				"result": "agora"
+			},
+			{
+				"offsetSeconds": -45,
+				"result": "há 1 minuto"
+			},
+			{
+				"offsetSeconds": -60,
+				"result": "há 1 minuto"
+			},
+			{
+				"offsetSeconds": -89,
+				"result": "há 1 minuto"
+			},
+			{
+				"offsetSeconds": -90,
+				"result": "há 2 minutos"
+			},
+			{
+				"offsetSeconds": -180,
+				"result": "há 3 minutos"
+			},
+			{
+				"offsetSeconds": 2699,
+				"result": "em 45 minutos"
+			},
+			{
+				"offsetSeconds": -2700,
+				"result": "há 1 hora"
+			},
+			{
+				"offsetSeconds": 7200,
+				"result": "em 2 horas"
+			},
+			{
+				"offsetSeconds": -79199,
+				"result": "há 22 horas"
+			},
+			{
+				"offsetSeconds": -79200,
+				"result": "há 1 dia"
+			},
+			{
+				"offsetSeconds": -259200,
+				"result": "há 3 dias"
+			},
+			{
+				"offsetSeconds": -561600,
+				"result": "há 1 semana"
+			},
+			{
+				"offsetSeconds": -518400,
+				"result": "há 6 dias"
+			},
+			{
+				"offsetSeconds": -1209600,
+				"result": "há 2 semanas"
+			},
+			{
+				"offsetSeconds": -2591999,
+				"result": "há 4 semanas"
+			},
+			{
+				"offsetSeconds": -2592000,
+				"result": "há 1 mês"
+			},
+			{
+				"offsetSeconds": 2678400,
+				"result": "em 1 mês"
+			},
+			{
+				"offsetSeconds": -5184000,
+				"result": "há 2 meses"
+			},
+			{
+				"offsetSeconds": -7776000,
+				"result": "há 3 meses"
+			},
+			{
+				"offsetSeconds": -31535999,
+				"result": "há 12 meses"
+			},
+			{
+				"offsetSeconds": -31536000,
+				"result": "há 1 ano"
+			},
+			{
+				"offsetSeconds": 69120000,
+				"result": "em 2 anos"
+			}
+		]
+	},
+	"xx": {
+		"bytes": [
+			{
+				"bytes": 0,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1023,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1024,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1536,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "2 kB"
+			},
+			{
+				"bytes": 999949,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 999950,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 999999,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "3 MB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "1 GB"
+			},
+			{
+				"bytes": -2000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "-2 kB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "123 GB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "2 PB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "si",
+				"fractionDigits": 0,
+				"result": "5,000 PB"
+			},
+			{
+				"bytes": 0,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1023,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1024,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1536,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1.5 kB"
+			},
+			{
+				"bytes": 999949,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "999.9 kB"
+			},
+			{
+				"bytes": 999950,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 999999,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "2.5 MB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "1.1 GB"
+			},
+			{
+				"bytes": -2000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "-2 kB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "123.5 GB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "2 PB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "si",
+				"fractionDigits": 1,
+				"result": "5,000 PB"
+			},
+			{
+				"bytes": 0,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1 kB"
+			},
+			{
+				"bytes": 1023,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1.02 kB"
+			},
+			{
+				"bytes": 1024,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1.02 kB"
+			},
+			{
+				"bytes": 1536,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1.54 kB"
+			},
+			{
+				"bytes": 999949,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "999.95 kB"
+			},
+			{
+				"bytes": 999950,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "999.95 kB"
+			},
+			{
+				"bytes": 999999,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1 MB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "2.5 MB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1.05 MB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1.05 MB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "1.07 GB"
+			},
+			{
+				"bytes": -2000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "-2 kB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "123.46 GB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "2 PB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "si",
+				"fractionDigits": 2,
+				"result": "5,000 PB"
+			},
+			{
+				"bytes": 0,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1,000 B"
+			},
+			{
+				"bytes": 1023,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1,023 B"
+			},
+			{
+				"bytes": 1024,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 KiB"
+			},
+			{
+				"bytes": 1536,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "2 KiB"
+			},
+			{
+				"bytes": 999949,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "977 KiB"
+			},
+			{
+				"bytes": 999950,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "977 KiB"
+			},
+			{
+				"bytes": 999999,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "977 KiB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "977 KiB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "2 MiB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "1 GiB"
+			},
+			{
+				"bytes": -2000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "-2 KiB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "115 GiB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "2 PiB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "iec",
+				"fractionDigits": 0,
+				"result": "4,441 PiB"
+			},
+			{
+				"bytes": 0,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1,000 B"
+			},
+			{
+				"bytes": 1023,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1,023 B"
+			},
+			{
+				"bytes": 1024,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 KiB"
+			},
+			{
+				"bytes": 1536,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1.5 KiB"
+			},
+			{
+				"bytes": 999949,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "976.5 KiB"
+			},
+			{
+				"bytes": 999950,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "976.5 KiB"
+			},
+			{
+				"bytes": 999999,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "976.6 KiB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "976.6 KiB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "2.4 MiB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1 GiB"
+			},
+			{
+				"bytes": -2000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "-2 KiB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "115 GiB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "1.8 PiB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "iec",
+				"fractionDigits": 1,
+				"result": "4,440.9 PiB"
+			},
+			{
+				"bytes": 0,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "0 B"
+			},
+			{
+				"bytes": 1,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 B"
+			},
+			{
+				"bytes": 999,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "999 B"
+			},
+			{
+				"bytes": 1000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1,000 B"
+			},
+			{
+				"bytes": 1023,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1,023 B"
+			},
+			{
+				"bytes": 1024,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 KiB"
+			},
+			{
+				"bytes": 1536,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1.5 KiB"
+			},
+			{
+				"bytes": 999949,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "976.51 KiB"
+			},
+			{
+				"bytes": 999950,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "976.51 KiB"
+			},
+			{
+				"bytes": 999999,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "976.56 KiB"
+			},
+			{
+				"bytes": 1000000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "976.56 KiB"
+			},
+			{
+				"bytes": 2500000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "2.38 MiB"
+			},
+			{
+				"bytes": 1048575,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1048576,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 MiB"
+			},
+			{
+				"bytes": 1073741824,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1 GiB"
+			},
+			{
+				"bytes": -2000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "-1.95 KiB"
+			},
+			{
+				"bytes": 123456789012,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "114.98 GiB"
+			},
+			{
+				"bytes": 1999999999999999,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "1.78 PiB"
+			},
+			{
+				"bytes": 5000000000000000000,
+				"units": "iec",
+				"fractionDigits": 2,
+				"result": "4,440.89 PiB"
+			}
+		],
+		"compactNumber": [
+			{
+				"value": 0,
+				"result": "0"
+			},
+			{
+				"value": 7,
+				"result": "7"
+			},
+			{
+				"value": 999,
+				"result": "999"
+			},
+			{
+				"value": 1000,
+				"result": "1K"
+			},
+			{
+				"value": 1234,
+				"result": "1.23K"
+			},
+			{
+				"value": 12345,
+				"result": "12.3K"
+			},
+			{
+				"value": 999999,
+				"result": "1M"
+			},
+			{
+				"value": 1500000,
+				"result": "1.5M"
+			},
+			{
+				"value": -4321,
+				"result": "-4.32K"
+			},
+			{
+				"value": 2.5,
+				"result": "2.5"
+			}
+		],
+		"relativeTime": [
+			{
+				"offsetSeconds": 0,
+				"result": "now"
+			},
+			{
+				"offsetSeconds": -10,
+				"result": "now"
+			},
+			{
+				"offsetSeconds": 44,
+				"result": "now"
+			},
+			{
+				"offsetSeconds": -45,
+				"result": "1 minute ago"
+			},
+			{
+				"offsetSeconds": -60,
+				"result": "1 minute ago"
+			},
+			{
+				"offsetSeconds": -89,
+				"result": "1 minute ago"
+			},
+			{
+				"offsetSeconds": -90,
+				"result": "2 minutes ago"
+			},
+			{
+				"offsetSeconds": -180,
+				"result": "3 minutes ago"
+			},
+			{
+				"offsetSeconds": 2699,
+				"result": "in 45 minutes"
+			},
+			{
+				"offsetSeconds": -2700,
+				"result": "1 hour ago"
+			},
+			{
+				"offsetSeconds": 7200,
+				"result": "in 2 hours"
+			},
+			{
+				"offsetSeconds": -79199,
+				"result": "22 hours ago"
+			},
+			{
+				"offsetSeconds": -79200,
+				"result": "1 day ago"
+			},
+			{
+				"offsetSeconds": -259200,
+				"result": "3 days ago"
+			},
+			{
+				"offsetSeconds": -561600,
+				"result": "1 week ago"
+			},
+			{
+				"offsetSeconds": -518400,
+				"result": "6 days ago"
+			},
+			{
+				"offsetSeconds": -1209600,
+				"result": "2 weeks ago"
+			},
+			{
+				"offsetSeconds": -2591999,
+				"result": "4 weeks ago"
+			},
+			{
+				"offsetSeconds": -2592000,
+				"result": "1 month ago"
+			},
+			{
+				"offsetSeconds": 2678400,
+				"result": "in 1 month"
+			},
+			{
+				"offsetSeconds": -5184000,
+				"result": "2 months ago"
+			},
+			{
+				"offsetSeconds": -7776000,
+				"result": "3 months ago"
+			},
+			{
+				"offsetSeconds": -31535999,
+				"result": "12 months ago"
+			},
+			{
+				"offsetSeconds": -31536000,
+				"result": "1 year ago"
+			},
+			{
+				"offsetSeconds": 69120000,
+				"result": "in 2 years"
+			}
+		]
+	}
+}

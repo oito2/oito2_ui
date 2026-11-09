@@ -1,0 +1,6227 @@
+{
+	"scopeRoles": {
+		"comment": "comment",
+		"quote": "comment",
+		"keyword": "keyword",
+		"doctag": "keyword",
+		"template-tag": "keyword",
+		"bullet": "keyword",
+		"string": "string",
+		"regexp": "string",
+		"regex": "string",
+		"character": "string",
+		"code": "string",
+		"addition": "string",
+		"number": "number",
+		"title": "function",
+		"title.function": "function",
+		"title.function.invoke": "function",
+		"function": "function",
+		"function.dispatch": "function",
+		"type": "type",
+		"built_in": "type",
+		"title.class": "type",
+		"title.class.inherited": "type",
+		"tag": "tag",
+		"name": "tag",
+		"selector-tag": "tag",
+		"section": "tag",
+		"attr": "attribute",
+		"attribute": "attribute",
+		"property": "attribute",
+		"meta": "attribute",
+		"selector-attr": "attribute",
+		"selector-class": "attribute",
+		"selector-id": "attribute",
+		"selector-pseudo": "attribute",
+		"template-variable": "attribute",
+		"variable": "attribute",
+		"literal": "constant",
+		"symbol": "constant",
+		"char.escape": "constant",
+		"variable.constant": "constant",
+		"variable.language": "constant",
+		"link": "constant",
+		"label": "constant",
+		"deletion": "invalid",
+		"delete": "invalid"
+	},
+	"languages": [
+		"bash",
+		"c",
+		"cpp",
+		"csharp",
+		"css",
+		"dart",
+		"diff",
+		"dockerfile",
+		"go",
+		"html",
+		"ini",
+		"java",
+		"javascript",
+		"json",
+		"kotlin",
+		"markdown",
+		"php",
+		"plaintext",
+		"python",
+		"rust",
+		"scss",
+		"shell",
+		"sql",
+		"swift",
+		"typescript",
+		"xml",
+		"yaml"
+	],
+	"samples": [
+		{
+			"language": "bash",
+			"code": "#!/bin/bash\n# Greets everyone\nNAME=\"world\"\nfor i in 1 2 3; do\n  echo \"Hello, $NAME #$i\" > /dev/null\ndone\nif [ -f ~/.bashrc ]; then source ~/.bashrc; fi\n",
+			"runs": [
+				{
+					"text": "#!/bin/bash",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "# Greets everyone",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\nNAME=",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"world\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "for",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " i ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "in",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " 1 2 3; ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "do",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "echo",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"Hello, ",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "$NAME",
+					"scope": "variable",
+					"role": "attribute"
+				},
+				{
+					"text": " #",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "$i",
+					"scope": "variable",
+					"role": "attribute"
+				},
+				{
+					"text": "\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": " > ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "/dev/null",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "done",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "if",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " [ -f ~",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "/.bashrc",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " ]; ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "then",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "source",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": " ~",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "/.bashrc",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "; ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "fi",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "c",
+			"code": "#include <stdio.h>\n/* Entry point */\nint main(int argc, char **argv) {\n  const double ratio = 0.5;\n  printf(\"%d args\\n\", argc);\n  return 0;\n}\n",
+			"runs": [
+				{
+					"text": "#",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "include",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "<stdio.h>",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "/* Entry point */",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "int",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "main",
+					"scope": "title.function",
+					"role": "function"
+				},
+				{
+					"text": "(",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": "int",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": " argc, ",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": "char",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": " **argv)",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "{\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "const",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "double",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": " ratio ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "= ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "0.5",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ";",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "printf",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"%d args",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "\\n",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ", argc)",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": ";\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "return",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "0",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ";",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n}\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "cpp",
+			"code": "#include <vector>\nnamespace demo {\ntemplate <typename T>\nclass Box : public Base {\n public:\n  explicit Box(T value) : value_(value) {}\n  auto get() const -> T { return value_; } // getter\n private:\n  T value_ = nullptr;\n};\n}\n",
+			"runs": [
+				{
+					"text": "#",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "include",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "<vector>",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "namespace",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " demo {\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "template",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " <",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "typename",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " T>\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "class",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Box",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": " : ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "public",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " Base {\n ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "public",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": ":\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "explicit",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "Box",
+					"scope": "title",
+					"role": "function"
+				},
+				{
+					"text": "(T value)",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": ": value_(value) {",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "}\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "auto",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "get",
+					"scope": "title",
+					"role": "function"
+				},
+				{
+					"text": "()",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "const",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": " -> T ",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "{ ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "return",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " value_;",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " } ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "// getter",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "private",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": ":\n  T value_ ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "= ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "nullptr",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": ";",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n};\n}\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "csharp",
+			"code": "using System;\n// A greeter\n[Serializable]\npublic sealed class Greeter : IGreeter {\n  public string Name { get; init; } = \"world\";\n  public async Task<int> RunAsync() => await Task.FromResult(42);\n  private bool _ready = true;\n}\n",
+			"runs": [
+				{
+					"text": "using",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " System;\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "// A greeter",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n[",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Serializable",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "]\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "public",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "sealed",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "class",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Greeter",
+					"scope": "title",
+					"role": "function"
+				},
+				{
+					"text": " : ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "IGreeter",
+					"scope": "title",
+					"role": "function"
+				},
+				{
+					"text": " {",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "public",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "string",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": " Name { ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "get",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": "; ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "init",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": "; } = ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"world\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ";\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "public",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "async",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " Task<",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "int",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": "> ",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "RunAsync",
+					"scope": "title",
+					"role": "function"
+				},
+				{
+					"text": "()",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": " => ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "await",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " Task.FromResult(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "42",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ");\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "private",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "bool",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": " _ready = ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "true",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": ";\n}\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "css",
+			"code": "/* Layout */\n@media (min-width: 600px) {\n  .card > h1#title:hover, a[href^=\"https\"] {\n    color: #3584e4;\n    margin: 0 auto !important;\n    font-family: \"Inter\", sans-serif;\n  }\n}\n",
+			"runs": [
+				{
+					"text": "/* Layout */",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "@media",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " (",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "min-width",
+					"scope": "attribute",
+					"role": "attribute"
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "600px",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ") ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "{\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": ".card",
+					"scope": "selector-class",
+					"role": "attribute"
+				},
+				{
+					"text": " > ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "h1",
+					"scope": "selector-tag",
+					"role": "tag"
+				},
+				{
+					"text": "#title",
+					"scope": "selector-id",
+					"role": "attribute"
+				},
+				{
+					"text": ":hover",
+					"scope": "selector-pseudo",
+					"role": "attribute"
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "a",
+					"scope": "selector-tag",
+					"role": "tag"
+				},
+				{
+					"text": "[href^=",
+					"scope": "selector-attr",
+					"role": "attribute"
+				},
+				{
+					"text": "\"https\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "]",
+					"scope": "selector-attr",
+					"role": "attribute"
+				},
+				{
+					"text": " {\n    ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "color",
+					"scope": "attribute",
+					"role": "attribute"
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "#3584e4",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ";",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n    ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "margin",
+					"scope": "attribute",
+					"role": "attribute"
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "0",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": " auto ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "!important",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": ";",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n    ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "font-family",
+					"scope": "attribute",
+					"role": "attribute"
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"Inter\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ", sans-serif;",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n  }\n}\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "dart",
+			"code": "// A comment\n@override\nclass Greeter extends Base {\n  final int count = 42;\n  String greet(String name) => 'Hello, $name';\n  bool get ready => true;\n}\n",
+			"runs": [
+				{
+					"text": "// A comment",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "@override",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "class",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "class",
+					"role": null
+				},
+				{
+					"text": "Greeter",
+					"scope": "title",
+					"role": "function"
+				},
+				{
+					"text": " ",
+					"scope": "class",
+					"role": null
+				},
+				{
+					"text": "extends",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "class",
+					"role": null
+				},
+				{
+					"text": "Base",
+					"scope": "title",
+					"role": "function"
+				},
+				{
+					"text": " ",
+					"scope": "class",
+					"role": null
+				},
+				{
+					"text": "{\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "final",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "int",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": " count = ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "42",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ";\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "String",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": " greet(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "String",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": " name) ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "=>",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "'Hello, ",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "$name",
+					"scope": "subst",
+					"role": null
+				},
+				{
+					"text": "'",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ";\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "bool",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "get",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ready ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "=>",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "true",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": ";\n}\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "diff",
+			"code": "diff --git a/a.txt b/a.txt\n--- a/a.txt\n+++ b/a.txt\n@@ -1,3 +1,3 @@\n unchanged\n-removed line\n+added line\n",
+			"runs": [
+				{
+					"text": "diff --git a/a.txt b/a.txt",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "--- a/a.txt",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "+++ b/a.txt",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "@@ -1,3 +1,3 @@",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\n unchanged\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "-removed line",
+					"scope": "deletion",
+					"role": "invalid"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "+added line",
+					"scope": "addition",
+					"role": "string"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "dockerfile",
+			"code": "# Build stage\nFROM node:24-alpine AS build\nWORKDIR /app\nCOPY package.json ./\nRUN npm ci && npm run build\nENV NODE_ENV=production\nEXPOSE 8080\nCMD [\"node\", \"dist/index.js\"]\n",
+			"runs": [
+				{
+					"text": "# Build stage",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "FROM",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " node:",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "24",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": "-alpine AS build\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "WORKDIR",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "language:bash",
+					"role": null
+				},
+				{
+					"text": "/app",
+					"scope": "language:bash",
+					"role": null
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "COPY",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " package.json ./",
+					"scope": "language:bash",
+					"role": null
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "RUN",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " npm ci && npm run build",
+					"scope": "language:bash",
+					"role": null
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "ENV",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " NODE_ENV=production\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "EXPOSE",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "8080",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "CMD",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " [",
+					"scope": "language:bash",
+					"role": null
+				},
+				{
+					"text": "\"node\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ", ",
+					"scope": "language:bash",
+					"role": null
+				},
+				{
+					"text": "\"dist/index.js\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "]",
+					"scope": "language:bash",
+					"role": null
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "go",
+			"code": "package main\n\nimport \"fmt\"\n\n// Point is a position.\ntype Point struct{ X, Y int }\n\nfunc (p *Point) Move(dx int) error {\n\tp.X += dx\n\tfmt.Println(\"moved\", true, nil, 3.14)\n\treturn nil\n}\n",
+			"runs": [
+				{
+					"text": "package",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " main\n\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "import",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"fmt\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "\n\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "//",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": " Point is a ",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "position.",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "type",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " Point ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "struct",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": "{ X, Y ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "int",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": " }\n\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "func",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "(p *Point)",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": " Move(dx ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "int",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": ") ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "error",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": " {\n\tp.X += dx\n\tfmt.Println(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"moved\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "true",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "nil",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "3.14",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ")\n\t",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "return",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "nil",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": "\n}\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "html",
+			"code": "<!DOCTYPE html>\n<html lang=\"en\">\n<!-- A page -->\n<head><style>body { color: red; }</style></head>\n<body class=\"main\" data-id='7'>\n  <p>Hello &amp; welcome</p>\n  <script>const x = 1;</script>\n</body>\n</html>\n",
+			"runs": [
+				{
+					"text": "<!DOCTYPE",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": " ",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "html",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": ">",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "<",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "html",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": " ",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "lang",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": "=",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\"en\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "<!-- A page -->",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "<",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "head",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "<",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "style",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "body",
+					"scope": "selector-tag",
+					"role": "tag"
+				},
+				{
+					"text": " { ",
+					"scope": "language:css",
+					"role": null
+				},
+				{
+					"text": "color",
+					"scope": "attribute",
+					"role": "attribute"
+				},
+				{
+					"text": ": red;",
+					"scope": "language:css",
+					"role": null
+				},
+				{
+					"text": " }",
+					"scope": "language:css",
+					"role": null
+				},
+				{
+					"text": "</",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "style",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "</",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "head",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "<",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "body",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": " ",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "class",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": "=",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\"main\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": " ",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "data-id",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": "=",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "'7'",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "<",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "p",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "Hello ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "&amp;",
+					"scope": "symbol",
+					"role": "constant"
+				},
+				{
+					"text": " welcome",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "</",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "p",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "<",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "script",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "const",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " x ",
+					"scope": "language:javascript",
+					"role": null
+				},
+				{
+					"text": "= ",
+					"scope": "language:javascript",
+					"role": null
+				},
+				{
+					"text": "1",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ";",
+					"scope": "language:javascript",
+					"role": null
+				},
+				{
+					"text": "</",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "script",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "</",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "body",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "</",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "html",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "ini",
+			"code": "; Settings\n[server]\nhost = \"localhost\"\nport = 8080\nenabled = true\npath = /var/www\n",
+			"runs": [
+				{
+					"text": "; Settings",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "[server]",
+					"scope": "section",
+					"role": "tag"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "host",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": " = ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"localhost\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "port",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": " = ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "8080",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "enabled",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": " = ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "true",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "path",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": " = /var/www",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "java",
+			"code": "package demo;\nimport java.util.List;\n/** A greeter. */\n@FunctionalInterface\npublic class Greeter<T> extends Base implements Runnable {\n  private static final int MAX = 10;\n  public String greet(String name) { return \"Hi \" + name; }\n  @Override public void run() { if (MAX > 0L) throw new IllegalStateException(); }\n}\n",
+			"runs": [
+				{
+					"text": "package",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " demo;\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "import",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " java.util.",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "List;\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "/** A greeter. */",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "@FunctionalInterface",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "public",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "class",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Greeter",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": "<T> ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "extends",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Base",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "implements",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Runnable",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": " {\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "private",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "static",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "final",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "int",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "MAX",
+					"scope": "variable",
+					"role": "attribute"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "=",
+					"scope": "operator",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "10",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ";\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "public",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "String ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "greet",
+					"scope": "title.function",
+					"role": "function"
+				},
+				{
+					"text": "(String name)",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": " { ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "return",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"Hi \"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": " + name; }\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "@Override",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "public",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "void",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "run",
+					"scope": "title.function",
+					"role": "function"
+				},
+				{
+					"text": "()",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": " { ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "if",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " (MAX > ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "0L",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ") ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "throw",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "new",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "IllegalStateException",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": "(); }\n}\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "javascript",
+			"code": "// Greets\nimport { readFile } from 'node:fs/promises';\nexport async function greet(name = 'world') {\n  const re = /^h(i|ello)$/gi;\n  let count = 0x1f + 1.5e3;\n  console.log(`Hello, ${name}!`, null, undefined, true);\n  return new Map([[1, 'a']]);\n}\nclass Thing extends Base { static #secret = 1; get value() { return this.x; } }\n",
+			"runs": [
+				{
+					"text": "// Greets",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "import",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "{ ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "readFile } ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "from",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "'node:fs/promises'",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ";\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "export",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "async",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "function",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "greet",
+					"scope": "title.function",
+					"role": "function"
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "name = ",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": "'world'",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ")",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "{\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "const",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " re ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "= ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "/^h(i|ello)$/gi",
+					"scope": "regexp",
+					"role": "string"
+				},
+				{
+					"text": ";\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "let",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " count ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "= ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "0x1f",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "+ ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "1.5e3",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ";\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "console",
+					"scope": "variable.language",
+					"role": "constant"
+				},
+				{
+					"text": ".",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "log",
+					"scope": "title.function",
+					"role": "function"
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "`Hello, ",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "${name}",
+					"scope": "subst",
+					"role": null
+				},
+				{
+					"text": "!`",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "null",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "undefined",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "true",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": ")",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": ";\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "return",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "new",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Map",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "[",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "[",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "1",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "'a'",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "]])",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": ";\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "}\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "class",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Thing",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "extends",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Base",
+					"scope": "title.class.inherited",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "{ ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "static",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " #secret ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "= ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "1",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": "; ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "get",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "value",
+					"scope": "title.function",
+					"role": "function"
+				},
+				{
+					"text": "()",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "{ ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "return",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "this",
+					"scope": "variable.language",
+					"role": "constant"
+				},
+				{
+					"text": ".",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "x",
+					"scope": "property",
+					"role": "attribute"
+				},
+				{
+					"text": "; ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "} }\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "json",
+			"code": "{\n  \"name\": \"oito2\",\n  \"version\": 1.5,\n  \"private\": true,\n  \"tags\": [\"ui\", null],\n  \"nested\": { \"a\": -2e3 }\n}\n",
+			"runs": [
+				{
+					"text": "{",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"name\"",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": ":",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"oito2\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ",",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"version\"",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": ":",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "1.5",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ",",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"private\"",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": ":",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "true",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": ",",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"tags\"",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": ":",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "[",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": "\"ui\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ",",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "null",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": "]",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": ",",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"nested\"",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": ":",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "{",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"a\"",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": ":",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "-2e3",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "}",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "}",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "kotlin",
+			"code": "package demo\n// A data class\n@JvmInline\ndata class Point(val x: Int, var y: Double = 0.0) : Shape {\n  fun move(dx: Int): Point = copy(x = x + dx)\n  override fun toString() = \"Point($x, ${y})\"\n}\nval ok = true && null == null\n",
+			"runs": [
+				{
+					"text": "package",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " demo\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "// A data class",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "@JvmInline",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "data",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "class",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Point",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "val",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " x: ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Int",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "var",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " y: ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Double",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": " = ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "0.0",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ") : Shape {\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "fun",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "move",
+					"scope": "title",
+					"role": "function"
+				},
+				{
+					"text": "(dx",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": ": ",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": "Int",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": ")",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": ": Point = copy(x = x + dx)\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "override",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "fun",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "toString",
+					"scope": "title",
+					"role": "function"
+				},
+				{
+					"text": "()",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": " = ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"Point(",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "$x",
+					"scope": "variable",
+					"role": "attribute"
+				},
+				{
+					"text": ", ",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "${y}",
+					"scope": "subst",
+					"role": null
+				},
+				{
+					"text": ")\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "\n}\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "val",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ok = ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "true",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": " && ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "null",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": " == ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "null",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "markdown",
+			"code": "# Title\n\nSome *emphasis*, **strong** and `code`.\n\n- item one\n- [a link](https://example.com)\n\n> A quote\n\n```dart\nvoid main() {}\n```\n",
+			"runs": [
+				{
+					"text": "# Title",
+					"scope": "section",
+					"role": "tag"
+				},
+				{
+					"text": "\n\nSome ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "*emphasis*",
+					"scope": "emphasis",
+					"role": null
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "**strong**",
+					"scope": "strong",
+					"role": null
+				},
+				{
+					"text": " and ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "`code`",
+					"scope": "code",
+					"role": "string"
+				},
+				{
+					"text": ".\n\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "-",
+					"scope": "bullet",
+					"role": "keyword"
+				},
+				{
+					"text": " item one\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "-",
+					"scope": "bullet",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "[",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "a link",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "](",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "https://example.com",
+					"scope": "link",
+					"role": "constant"
+				},
+				{
+					"text": ")",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "> A quote",
+					"scope": "quote",
+					"role": "comment"
+				},
+				{
+					"text": "\n\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "```dart\nvoid main() {}\n```",
+					"scope": "code",
+					"role": "string"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "php",
+			"code": "<?php\nnamespace App;\n// A controller\n#[Route('/home')]\nfinal class Home extends Controller {\n  public function index(int $id = 0): string {\n    $name = \"user {$id}\";\n    return sprintf('%s', $name) ?? null;\n  }\n}\n",
+			"runs": [
+				{
+					"text": "<?php",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "namespace",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "App",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": ";",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "// A controller",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "#[Route",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "'/home'",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ")",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "]",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "final",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "class",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "class",
+					"role": null
+				},
+				{
+					"text": "Home",
+					"scope": "title",
+					"role": "function"
+				},
+				{
+					"text": " ",
+					"scope": "class",
+					"role": null
+				},
+				{
+					"text": "extends",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "class",
+					"role": null
+				},
+				{
+					"text": "Controller",
+					"scope": "title",
+					"role": "function"
+				},
+				{
+					"text": " ",
+					"scope": "class",
+					"role": null
+				},
+				{
+					"text": "{\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "public",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "function",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "index",
+					"scope": "title",
+					"role": "function"
+				},
+				{
+					"text": "(",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "int",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": "$id",
+					"scope": "variable",
+					"role": "attribute"
+				},
+				{
+					"text": " = ",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": "0",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": "): ",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "string",
+					"scope": "title",
+					"role": "function"
+				},
+				{
+					"text": " ",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "{\n    ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "$name",
+					"scope": "variable",
+					"role": "attribute"
+				},
+				{
+					"text": " = ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"user ",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "{$id}",
+					"scope": "subst",
+					"role": null
+				},
+				{
+					"text": "\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ";\n    ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "return",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "sprintf",
+					"scope": "title.function.invoke",
+					"role": "function"
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "'%s'",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "$name",
+					"scope": "variable",
+					"role": "attribute"
+				},
+				{
+					"text": ")",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " ?? ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "null",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": ";\n  }\n}\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "plaintext",
+			"code": "Just some plain text, with \"quotes\" and 42 numbers.\n",
+			"runs": [
+				{
+					"text": "Just some plain text, with \"quotes\" and 42 numbers.\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "python",
+			"code": "# A comment\n@dataclass\nclass Point(Base):\n    \"\"\"A point.\"\"\"\n    x: int = 0\n\n    def move(self, dx: float) -> \"Point\":\n        ready = True and None is None\n        return f\"moved {dx}\" if ready else 0x1F\n",
+			"runs": [
+				{
+					"text": "# A comment",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "@dataclass",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "class",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Point",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Base",
+					"scope": "title.class.inherited",
+					"role": "type"
+				},
+				{
+					"text": ")",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": ":\n    ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"\"\"A point.\"\"\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "\n    x: ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "int",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": " = ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "0",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": "\n\n    ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "def",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "move",
+					"scope": "title.function",
+					"role": "function"
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "self, dx: ",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": "float",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": ")",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " -> ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"Point\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ":\n        ready = ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "True",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "and",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "None",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "is",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "None",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": "\n        ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "return",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "f\"moved ",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "{dx}",
+					"scope": "subst",
+					"role": null
+				},
+				{
+					"text": "\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "if",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ready ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "else",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "0x1F",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "rust",
+			"code": "// A point\n#[derive(Debug, Clone)]\npub struct Point<'a> { x: i32, name: &'a str }\n\nimpl Point<'_> {\n    pub fn new(x: i32) -> Self { Self { x, name: \"p\" } }\n}\n\nfn main() { let v: Vec<u8> = vec![1, 2]; println!(\"{:?} {}\", v, true); }\n",
+			"runs": [
+				{
+					"text": "// A point",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "#[derive(Debug, Clone)]",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "pub",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "struct",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Point",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": "<",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "'a",
+					"scope": "symbol",
+					"role": "constant"
+				},
+				{
+					"text": "> { x: ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "i32",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": ", name: &",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "'a",
+					"scope": "symbol",
+					"role": "constant"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "str",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": " }\n\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "impl",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Point",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": "<",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "'_",
+					"scope": "symbol",
+					"role": "constant"
+				},
+				{
+					"text": "> {\n    ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "pub",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "fn",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "new",
+					"scope": "title.function",
+					"role": "function"
+				},
+				{
+					"text": "(x: ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "i32",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": ") ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "->",
+					"scope": "punctuation",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Self",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " { ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Self",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " { x, name: ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"p\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": " } }\n}\n\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "fn",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "main",
+					"scope": "title.function",
+					"role": "function"
+				},
+				{
+					"text": "() { ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "let",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "v",
+					"scope": "variable",
+					"role": "attribute"
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Vec",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": "<",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "u8",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": "> = ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "vec!",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": "[",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "1",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "2",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": "]; ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "println!",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"{:?} {}\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ", v, ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "true",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": "); }\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "scss",
+			"code": "// Variables\n$primary: #3584e4;\n@mixin card($radius: 8px) { border-radius: $radius; }\n.card {\n  &:hover { color: darken($primary, 10%); }\n  @include card(12px);\n}\n",
+			"runs": [
+				{
+					"text": "// Variables",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "$primary",
+					"scope": "variable",
+					"role": "attribute"
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "#3584e4",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ";",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "@mixin",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " card(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "$radius",
+					"scope": "variable",
+					"role": "attribute"
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "8px",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ") {",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "border-radius",
+					"scope": "attribute",
+					"role": "attribute"
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "$radius",
+					"scope": "variable",
+					"role": "attribute"
+				},
+				{
+					"text": ";",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " }\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": ".card",
+					"scope": "selector-class",
+					"role": "attribute"
+				},
+				{
+					"text": " {\n  &",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": ":hover",
+					"scope": "selector-pseudo",
+					"role": "attribute"
+				},
+				{
+					"text": " { ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "color",
+					"scope": "attribute",
+					"role": "attribute"
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "darken",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "$primary",
+					"scope": "variable",
+					"role": "attribute"
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "10%",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ");",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " }\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "@include",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " card(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "12px",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": ");",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n}\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "shell",
+			"code": "$ npm install --save-dev vitest\nadded 1 package in 2s\n$ echo \"done\"\ndone\n",
+			"runs": [
+				{
+					"text": "$ ",
+					"scope": "meta.prompt",
+					"role": null
+				},
+				{
+					"text": "npm install --save-dev vitest",
+					"scope": "language:bash",
+					"role": null
+				},
+				{
+					"text": "\nadded 1 package in 2s\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "$ ",
+					"scope": "meta.prompt",
+					"role": null
+				},
+				{
+					"text": "echo",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": "language:bash",
+					"role": null
+				},
+				{
+					"text": "\"done\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "\ndone\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "sql",
+			"code": "-- Active users\nSELECT u.id, COUNT(*) AS total\nFROM users u\nLEFT JOIN orders o ON o.user_id = u.id\nWHERE u.active = TRUE AND u.name LIKE 'A%' AND o.total > 10.5\nGROUP BY u.id\nORDER BY total DESC NULLS LAST;\n",
+			"runs": [
+				{
+					"text": "-- Active users",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "SELECT",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " u.id, ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "COUNT",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "*",
+					"scope": "operator",
+					"role": null
+				},
+				{
+					"text": ") ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "AS",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " total\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "FROM",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " users u\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "LEFT",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "JOIN",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " orders o ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "ON",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " o.user_id ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "=",
+					"scope": "operator",
+					"role": null
+				},
+				{
+					"text": " u.id\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "WHERE",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " u.active ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "=",
+					"scope": "operator",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "TRUE",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "AND",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " u.name ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "LIKE",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "'A%'",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "AND",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " o.total ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": ">",
+					"scope": "operator",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "10.5",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "GROUP",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "BY",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " u.id\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "ORDER",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "BY",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " total ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "DESC",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "NULLS ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "LAST",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": ";\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "swift",
+			"code": "import Foundation\n// A shape\n@MainActor\nstruct Circle: Shape {\n  let radius: Double = 1.5\n  func area() -> Double { return .pi * radius * radius }\n  var label: String { \"r=\\(radius)\" }\n}\nlet ok = true, none: Int? = nil\n",
+			"runs": [
+				{
+					"text": "import",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " Foundation",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "// A shape",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "@MainActor",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "struct",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Circle",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Shape",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "{\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "let",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " radius: ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Double",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "=",
+					"scope": "operator",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "1.5",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "func",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "area",
+					"scope": "title.function",
+					"role": "function"
+				},
+				{
+					"text": "()",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "->",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Double",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": " { ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "return",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " .pi ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "*",
+					"scope": "operator",
+					"role": null
+				},
+				{
+					"text": " radius ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "*",
+					"scope": "operator",
+					"role": null
+				},
+				{
+					"text": " radius }\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "var",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " label: ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "String",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": " { ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"r=",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "\\(radius)",
+					"scope": "subst",
+					"role": null
+				},
+				{
+					"text": "\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": " }\n}\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "let",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ok ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "=",
+					"scope": "operator",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "true",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": ", none: ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Int",
+					"scope": "type",
+					"role": "type"
+				},
+				{
+					"text": "?",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "=",
+					"scope": "operator",
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "nil",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "typescript",
+			"code": "// Types\ninterface User { readonly id: number; name?: string }\ntype Id = string | number;\nexport enum Mode { Light = 'light', Dark = 'dark' }\nexport function find<T extends User>(users: T[], id: Id): T | undefined {\n  return users.find((u) => u.id === id) as T;\n}\n@Component({ selector: 'app' }) class App { private count = 0; }\n",
+			"runs": [
+				{
+					"text": "// Types",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "interface",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "User",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "{ ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "readonly",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "id",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "number",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": "; ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "name",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "?",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "string",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": " }\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "type",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Id",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "= ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "string",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "| ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "number",
+					"scope": "built_in",
+					"role": "type"
+				},
+				{
+					"text": ";\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "export",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "enum",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Mode",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "{ ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Light",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "= ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "'light'",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Dark",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "= ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "'dark'",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": " }\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "export",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "function",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " find",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "<",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "T ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "extends",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "User",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": ">",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "users",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "T",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "[",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "]",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": ", ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "id",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "Id",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": ")",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "T ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "| ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "undefined",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "{\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "return",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "users.",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "find",
+					"scope": "title.function",
+					"role": "function"
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "(",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": "u",
+					"scope": "params",
+					"role": null
+				},
+				{
+					"text": ") =>",
+					"scope": "function",
+					"role": "function"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "u.",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "id",
+					"scope": "property",
+					"role": "attribute"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "=== ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "id) ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "as",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " T",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": ";\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "}\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "@Component",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "(",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "{ ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "selector",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": ": ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "'app'",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": " }) ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "class",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "App",
+					"scope": "title.class",
+					"role": "type"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "{ ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "private",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": " count ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "= ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "0",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": "; ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "}\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "xml",
+			"code": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!-- Config -->\n<config xmlns:x=\"urn:x\" enabled=\"true\">\n  <item id=\"1\">Value &lt; 10</item>\n  <![CDATA[raw <text>]]>\n</config>\n",
+			"runs": [
+				{
+					"text": "<?xml version=",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\"1.0\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": " encoding=",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\"UTF-8\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "?>",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "<!-- Config -->",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "<",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "config",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": " ",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "xmlns:x",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": "=",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\"urn:x\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": " ",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "enabled",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": "=",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\"true\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "<",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "item",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": " ",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "id",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": "=",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\"1\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "Value ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "&lt;",
+					"scope": "symbol",
+					"role": "constant"
+				},
+				{
+					"text": " 10",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "</",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "item",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "<![CDATA[raw <text>]]>",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "</",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "config",
+					"scope": "name",
+					"role": "tag"
+				},
+				{
+					"text": ">",
+					"scope": "tag",
+					"role": "tag"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "yaml",
+			"code": "# Settings\nname: oito2\nversion: 1.5\nenabled: true\ntags: [ui, \"svelte\"]\nnested:\n  key: &anchor value\n  other: *anchor\n  empty: null\n",
+			"runs": [
+				{
+					"text": "# Settings",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "name:",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "oito2",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "version:",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "1.5",
+					"scope": "number",
+					"role": "number"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "enabled:",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "true",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "tags:",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "[",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "ui",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": ",",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\"svelte\"",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "]\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "nested:",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "key:",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "&anchor",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "value",
+					"scope": "string",
+					"role": "string"
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "other:",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "*anchor",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "\n  ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "empty:",
+					"scope": "attr",
+					"role": "attribute"
+				},
+				{
+					"text": " ",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "null",
+					"scope": "literal",
+					"role": "constant"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		}
+	]
+}
