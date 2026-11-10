@@ -12,7 +12,7 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  material_ui: ^1.10.0
+  material_ui: ^1.11.0
   oito2_ui: ^0.1.0
   oito2_ui_extras: ^0.1.0
   oito2_ui_files: ^0.1.0

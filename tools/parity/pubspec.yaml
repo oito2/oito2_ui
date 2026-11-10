@@ -35,5 +35,5 @@ dev_dependencies:
     sdk: flutter
   # Imported directly by the exporters.
   catppuccin_flutter: ^1.0.0
-  material_ui: ^1.10.0
+  material_ui: ^1.11.0
   re_highlight: ^0.0.3
