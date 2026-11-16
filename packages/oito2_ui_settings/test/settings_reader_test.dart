@@ -51,6 +51,7 @@ Oito2SystemSettingsReader _reader({
   FakeGSettings? gsettings,
   FakeConfigFiles? files,
   FakeAccent? accent,
+  FakeAccent? portalAccent,
   FakeColorScheme? colorScheme,
   bool platformHighContrast = false,
   Brightness? platformBrightness,
@@ -60,6 +61,7 @@ Oito2SystemSettingsReader _reader({
   gsettings: gsettings ?? FakeGSettings(),
   configFiles: files ?? FakeConfigFiles(),
   accent: accent ?? FakeAccent(),
+  portalAccent: portalAccent ?? FakeAccent(),
   colorScheme: colorScheme ?? FakeColorScheme(),
   platformHighContrast: () => platformHighContrast,
   platformBrightness: () => platformBrightness,
@@ -123,6 +125,19 @@ void main() {
         accent: FakeAccent(const Color(0xFF123456)),
       ).read();
       expect(settings.accentColor, Oito2AccentColor.purple.color);
+    });
+
+    test('other desktops ignore the GNOME accent-color key', () async {
+      // Their systems may install the GNOME schema, whose default accent
+      // is blue, without using it.
+      for (final desktop in ['MATE', 'X-Cinnamon', 'Budgie:GNOME', 'XFCE']) {
+        final settings = await _reader(
+          desktop: desktop,
+          gsettings: FakeGSettings({'$_interface/accent-color': 'blue'}),
+          accent: FakeAccent(const Color(0xFF123456)),
+        ).read();
+        expect(settings.accentColor, const Color(0xFF123456), reason: desktop);
+      }
     });
 
     test('uses the toolkit accent without accent-color', () async {
@@ -280,6 +295,43 @@ void main() {
       ).read();
       expect(settings.desktopEnvironment, isNull);
       expect(settings.windowControlStyle, Oito2WindowControlStyle.none);
+    });
+  });
+
+  group('portal accent', () {
+    test('wins over the desktop stores and the toolkit', () async {
+      const portal = Color(0xFF3399FF);
+      for (final (desktop, gsettings, files) in [
+        (
+          'GNOME',
+          FakeGSettings({'$_interface/accent-color': 'purple'}),
+          FakeConfigFiles(),
+        ),
+        (
+          'KDE',
+          FakeGSettings(),
+          FakeConfigFiles({_kdeglobals: '[General]\nAccentColor=255,0,0\n'}),
+        ),
+        ('COSMIC', FakeGSettings(), FakeConfigFiles()),
+      ]) {
+        final settings = await _reader(
+          desktop: desktop,
+          gsettings: gsettings,
+          files: files,
+          accent: FakeAccent(const Color(0xFF123456)),
+          portalAccent: FakeAccent(portal),
+        ).read();
+        expect(settings.accentColor, portal, reason: desktop);
+      }
+    });
+
+    test('is not read outside native Linux', () async {
+      final settings = await _reader(
+        platform: _windows,
+        accent: FakeAccent(const Color(0xFF123456)),
+        portalAccent: FakeAccent(const Color(0xFF3399FF)),
+      ).read();
+      expect(settings.accentColor, const Color(0xFF123456));
     });
   });
 
@@ -441,6 +493,49 @@ void main() {
       expect(files.isWatched(_kwinrc), isFalse);
     });
 
+    test('follows the portal accent', () async {
+      final portalAccent = FakeAccent();
+      final reader = _reader(desktop: 'COSMIC', portalAccent: portalAccent);
+      final events = <Oito2SystemSettings>[];
+      final subscription = reader.watch().listen(events.add);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(events.last.accentColor, isNull);
+
+      portalAccent.change(const Color(0xFF3399FF));
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(events.last.accentColor, const Color(0xFF3399FF));
+      await subscription.cancel();
+    });
+
+    test('Cinnamon and MATE follow their interface schema', () async {
+      for (final (desktop, schema) in [
+        ('X-Cinnamon', 'org.cinnamon.desktop.interface'),
+        ('MATE', 'org.mate.interface'),
+      ]) {
+        final gsettings = FakeGSettings();
+        final accent = FakeAccent(const Color(0xFF111111));
+        final reader = _reader(
+          desktop: desktop,
+          gsettings: gsettings,
+          accent: accent,
+        );
+        final events = <Oito2SystemSettings>[];
+        final subscription = reader.watch().listen(events.add);
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+
+        // A new GTK theme changes the toolkit accent without notifying it.
+        accent.color = const Color(0xFF222222);
+        gsettings.set(schema, 'gtk-theme', 'Other');
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        expect(
+          events.last.accentColor,
+          const Color(0xFF222222),
+          reason: desktop,
+        );
+        await subscription.cancel();
+      }
+    });
+
     test('follows the portal color scheme', () async {
       final colorScheme = FakeColorScheme();
       final reader = _reader(colorScheme: colorScheme);
@@ -456,13 +551,22 @@ void main() {
     });
   });
 
-  test('close releases the GSettings and portal connections', () async {
+  test('close releases the GSettings, accent and portal connections', () async {
     final gsettings = FakeGSettings();
+    final accent = FakeAccent();
+    final portalAccent = FakeAccent();
     final colorScheme = FakeColorScheme();
-    final reader = _reader(gsettings: gsettings, colorScheme: colorScheme);
+    final reader = _reader(
+      gsettings: gsettings,
+      accent: accent,
+      portalAccent: portalAccent,
+      colorScheme: colorScheme,
+    );
     await reader.read();
     await reader.close();
     expect(gsettings.closed, isTrue);
+    expect(accent.closed, isTrue);
+    expect(portalAccent.closed, isTrue);
     expect(colorScheme.closed, isTrue);
   });
 }

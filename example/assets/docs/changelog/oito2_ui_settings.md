@@ -15,11 +15,14 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - System accent on Windows, macOS and Android through `system_theme`; platform high-contrast preference everywhere.
 - `Oito2SystemSettingsReader`, the source interfaces and `Oito2ConfigParsers` for custom sources and testing.
 - Color scheme preference: `Oito2PortalColorSchemeSource` reads `org.freedesktop.appearance color-scheme` from the XDG desktop portal on Linux, falling back to GNOME `color-scheme`, a dark KDE color scheme or look-and-feel package, or the COSMIC theme mode; other platforms report the platform brightness. `Oito2SystemSettingsScope` reads again when the platform brightness changes.
+- Portal accent: `Oito2PortalAccentSource` reads `org.freedesktop.appearance accent-color` from the XDG desktop portal (GNOME, KDE, COSMIC and XApp portals) and follows its changes; on Linux it comes before the desktop stores, so COSMIC reports its accent.
 
 ### Changed
 
 - Accepts `dbus` 0.7 and 0.8 and `gsettings` 0.2.8 and 0.2.9, so apps can also depend on plugins that still require `dbus` 0.7.
 - `Oito2SystemSettingsReader` takes a `colorScheme` source and a `platformBrightness` callback; `Oito2EmptySource` also implements the new `Oito2ColorSchemeSource`.
+- `Oito2SystemSettingsReader` takes a `portalAccent` source; `Oito2AccentSource` gains `close()`, which `Oito2SystemSettingsReader.close()` calls.
+- The GNOME `accent-color` key is read on GNOME only: other desktops (Budgie, Cinnamon, MATE, Pantheon, Unity, Xfce, ...) use the GTK theme accent.
 - `Oito2GSettingsSource` gains `close()`; `Oito2DconfGSettingsSource` shares one session and one system D-Bus connection between schemas and accepts existing connections.
 - `Oito2SystemSettingsReader.close()` releases the system store connections. `Oito2Settings.load()` releases its reader after reading, `Oito2Settings.watch()` when the subscription is cancelled, and `Oito2SystemSettingsScope` closes the reader it creates.
 
@@ -31,4 +34,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2SystemThemeAccentSource` no longer changes `system_theme`'s global fallback color, counts every real accent color, and reports no changes where `system_theme` doesn't stream them.
 - `Oito2DconfGSettingsSource.changes` stays quiet for a schema that isn't installed, such as the GNOME schemas on another desktop, instead of raising an unhandled error.
 - `Oito2DconfGSettingsSource.close` closes each bus connection the source opened itself, also when only one bus was given.
+- On MATE and Ubuntu MATE, the accent no longer stays at the GNOME schema's default blue when that schema is installed but unused.
+- Cinnamon and MATE read the accent again when their interface settings change, such as a new GTK theme.
+- Configuration file watching notices a file whose folder doesn't exist yet when the app starts, such as the COSMIC window button settings on a fresh account.
 - `Oito2Settings.watch` creates its reader, and its system connections, when the stream is listened to, so an unused stream opens nothing.

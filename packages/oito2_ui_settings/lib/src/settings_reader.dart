@@ -37,13 +37,18 @@ import 'sources.dart';
 /// - COSMIC: `com.system76.CosmicTk/v1/show_minimize` and
 ///   `show_maximize`.
 ///
-/// KDE Plasma reads the accent from `AccentColor` in the `[General]` group
-/// of `kdeglobals`, and high contrast from a `kdeglobals` color scheme whose
-/// name contains "contrast". Every other desktop reads the accent from
-/// `org.gnome.desktop.interface accent-color`, and high contrast from
+/// The accent comes from [portalAccent], the desktop portal's
+/// `org.freedesktop.appearance accent-color`. Without a portal accent, KDE
+/// Plasma reads `AccentColor` in the `[General]` group of `kdeglobals` and
+/// GNOME reads `org.gnome.desktop.interface accent-color`; other desktops,
+/// and these two when their key is missing, use the toolkit theme through
+/// [accent]. Cinnamon and MATE read again when their own interface schema
+/// changes, such as when the GTK theme changes.
+///
+/// KDE Plasma reads high contrast from a `kdeglobals` color scheme whose
+/// name contains "contrast"; every other desktop from
 /// `org.gnome.desktop.a11y.interface high-contrast` or a `HighContrast` GTK
-/// theme. Without a desktop accent, the accent comes from the toolkit
-/// theme through [accent].
+/// theme.
 ///
 /// The color scheme comes from [colorScheme], the desktop portal's
 /// `org.freedesktop.appearance color-scheme`. When the portal states no
@@ -70,6 +75,7 @@ class Oito2SystemSettingsReader {
     this.gsettings = const Oito2EmptySource(),
     this.configFiles = const Oito2EmptySource(),
     this.accent = const Oito2EmptySource(),
+    this.portalAccent = const Oito2EmptySource(),
     this.colorScheme = const Oito2EmptySource(),
     this.platformHighContrast = _never,
     this.platformBrightness = _noBrightness,
@@ -95,6 +101,9 @@ class Oito2SystemSettingsReader {
   /// The toolkit or operating system accent color.
   final Oito2AccentSource accent;
 
+  /// The desktop portal's accent color, read first on native Linux.
+  final Oito2AccentSource portalAccent;
+
   /// The desktop portal's color scheme preference.
   final Oito2ColorSchemeSource colorScheme;
 
@@ -113,6 +122,8 @@ class Oito2SystemSettingsReader {
   static const _cinnamonWm = 'org.cinnamon.desktop.wm.preferences';
   static const _mateWm = 'org.mate.Marco.general';
   static const _gnomeInterface = 'org.gnome.desktop.interface';
+  static const _cinnamonInterface = 'org.cinnamon.desktop.interface';
+  static const _mateInterface = 'org.mate.interface';
   static const _gnomeA11y = 'org.gnome.desktop.a11y.interface';
   static const _kwinrc = 'kwinrc';
   static const _kdeglobals = 'kdeglobals';
@@ -221,6 +232,8 @@ class Oito2SystemSettingsReader {
   /// be used afterwards.
   Future<void> close() async {
     await gsettings.close();
+    await accent.close();
+    await portalAccent.close();
     await colorScheme.close();
   }
 
@@ -230,6 +243,7 @@ class Oito2SystemSettingsReader {
     yield accent.changes();
     final environment = desktopEnvironment;
     if (environment == null) return;
+    yield portalAccent.changes();
     yield colorScheme.changes();
     switch (environment) {
       case Oito2DesktopEnvironment.kde:
@@ -243,8 +257,10 @@ class Oito2SystemSettingsReader {
         yield configFiles.changes(_cosmicDark);
       case Oito2DesktopEnvironment.cinnamon:
         yield gsettings.changes(_cinnamonWm);
+        yield gsettings.changes(_cinnamonInterface);
       case Oito2DesktopEnvironment.mate:
         yield gsettings.changes(_mateWm);
+        yield gsettings.changes(_mateInterface);
       default:
         yield gsettings.changes(_gnomeWm);
     }
@@ -309,8 +325,15 @@ class Oito2SystemSettingsReader {
     return value is String ? Oito2WindowButtonLayout.parseGnome(value) : null;
   }
 
-  /// Reads the desktop accent of [environment], falling back to [accent].
+  /// Reads the portal accent, then the desktop accent of [environment],
+  /// falling back to [accent].
+  ///
+  /// The GNOME `accent-color` key is read on GNOME alone: other desktops
+  /// may install its schema without using it, and its default would hide
+  /// their theme's accent.
   Future<Color?> _linuxAccent(Oito2DesktopEnvironment environment) async {
+    final portal = await _safe(portalAccent.read);
+    if (portal != null) return portal;
     if (environment == Oito2DesktopEnvironment.kde) {
       final globals = await _safe(() => configFiles.read(_kdeglobals)) ?? '';
       final value = Oito2ConfigParsers.iniValue(
@@ -320,7 +343,7 @@ class Oito2SystemSettingsReader {
       );
       final color = value == null ? null : Oito2ConfigParsers.kdeColor(value);
       if (color != null) return color;
-    } else {
+    } else if (environment == Oito2DesktopEnvironment.gnome) {
       final name = await _safe(
         () => gsettings.read(_gnomeInterface, 'accent-color'),
       );

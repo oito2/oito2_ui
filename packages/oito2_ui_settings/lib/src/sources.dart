@@ -48,6 +48,9 @@ abstract interface class Oito2AccentSource {
 
   /// Emits whenever the accent color changes.
   Stream<void> changes();
+
+  /// Releases the connections the source holds.
+  Future<void> close();
 }
 
 /// Reads the light or dark color scheme the desktop asks for.

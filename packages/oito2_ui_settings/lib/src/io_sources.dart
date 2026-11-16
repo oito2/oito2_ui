@@ -136,12 +136,21 @@ class Oito2HomeConfigFileSource implements Oito2ConfigFileSource {
     }
   }
 
+  /// Emits whenever the file at [relativePath] changes.
+  ///
+  /// When the file's folder doesn't exist yet, as on a fresh account where
+  /// the desktop writes its settings only after the first change, the
+  /// nearest existing ancestor is watched until the folder appears; the
+  /// stream emits once the folder exists, since the file may have been
+  /// written along with it.
   @override
   Stream<void> changes(String relativePath) {
     if (configHome.isEmpty) return const Stream.empty();
     final file = _file(relativePath);
-    final directory = file.parent;
-    if (!directory.existsSync()) return const Stream.empty();
+    final folder = file.parent;
+    late final StreamController<void> controller;
+    StreamSubscription<FileSystemEvent>? subscription;
+
     // Matches writes in place and atomic replacements, where a temporary
     // file is renamed onto the watched path.
     bool touches(FileSystemEvent event) =>
@@ -149,11 +158,55 @@ class Oito2HomeConfigFileSource implements Oito2ConfigFileSource {
         (event is FileSystemMoveEvent &&
             event.destination != null &&
             p.equals(event.destination!, file.path));
-    return directory
-        .watch()
-        .where(touches)
-        .map((_) {})
-        .handleError((Object _) {});
+
+    // Watches the file's folder, or its nearest existing ancestor until
+    // the folder appears. Returns whether the folder itself is watched.
+    bool watch() {
+      final previous = subscription;
+      if (previous != null) unawaited(previous.cancel());
+      subscription = null;
+      var directory = folder;
+      while (!directory.existsSync()) {
+        final parent = directory.parent;
+        if (p.equals(parent.path, directory.path)) return false;
+        directory = parent;
+      }
+      if (p.equals(directory.path, folder.path)) {
+        subscription = directory.watch().listen(
+          (event) {
+            if (touches(event)) controller.add(null);
+          },
+          onError: (Object _) {},
+          // The folder was removed: wait for it to come back.
+          onDone: () {
+            if (!controller.isClosed) watch();
+          },
+        );
+        return true;
+      }
+      subscription = directory.watch().listen((_) {
+        if (_nextLevelExists(directory, folder)) {
+          if (watch()) controller.add(null);
+        }
+      }, onError: (Object _) {});
+      return false;
+    }
+
+    controller = StreamController<void>(
+      onListen: watch,
+      onCancel: () async {
+        await subscription?.cancel();
+        subscription = null;
+      },
+    );
+    return controller.stream;
+  }
+
+  /// Whether the child of [ancestor] on the way to [folder] exists.
+  static bool _nextLevelExists(Directory ancestor, Directory folder) {
+    final relative = p.relative(folder.path, from: ancestor.path);
+    final next = p.join(ancestor.path, p.split(relative).first);
+    return Directory(next).existsSync();
   }
 }
 
@@ -197,27 +250,30 @@ class Oito2SystemThemeAccentSource implements Oito2AccentSource {
       return const Stream.empty();
     }
   }
+
+  /// Holds no connection to release.
+  @override
+  Future<void> close() async {}
 }
 
-/// Reads the color scheme preference through the XDG desktop portal
-/// (`org.freedesktop.appearance color-scheme`), which every Linux desktop
-/// with a settings portal exposes.
+/// The settings object of the XDG desktop portal
+/// (`org.freedesktop.portal.Settings`), shared by the sources that read one
+/// of its settings.
 ///
 /// The connection stays open until [close]; a process with an open
 /// connection may not exit.
-class Oito2PortalColorSchemeSource implements Oito2ColorSchemeSource {
-  /// Creates a source on [sessionBus], or on a connection of its own when
-  /// it is null.
-  ///
-  /// [close] closes the connection the source opened itself and leaves
-  /// the one it was given open.
-  Oito2PortalColorSchemeSource({DBusClient? sessionBus})
+abstract class _Oito2PortalSetting {
+  _Oito2PortalSetting({DBusClient? sessionBus})
     : _ownsBus = sessionBus == null,
       _bus = sessionBus ?? DBusClient.session();
 
-  static const _namespace = 'org.freedesktop.appearance';
-  static const _key = 'color-scheme';
   static const _interface = 'org.freedesktop.portal.Settings';
+
+  /// The namespace of the setting.
+  static const _namespace = 'org.freedesktop.appearance';
+
+  /// The key of the setting within [_namespace].
+  String get _key;
 
   final bool _ownsBus;
   final DBusClient _bus;
@@ -229,54 +285,31 @@ class Oito2PortalColorSchemeSource implements Oito2ColorSchemeSource {
     path: DBusObjectPath('/org/freedesktop/portal/desktop'),
   );
 
-  /// Reads the preference with `ReadOne`, or with `Read` on a portal that
-  /// predates it. Returns null without a portal or when it reports no
-  /// preference.
-  @override
-  Future<Brightness?> read() async {
+  /// Reads the setting with `ReadOne`, or with `Read` on a portal that
+  /// predates it.
+  ///
+  /// Throws a [DBusMethodResponseException] when the portal is missing or
+  /// doesn't know the setting.
+  Future<DBusValue> _readSetting() async {
     try {
-      DBusValue value;
-      try {
-        value = await _call('ReadOne');
-      } on DBusUnknownMethodException {
-        value = await _call('Read');
-      }
-      return brightnessOf(value);
-    } on Object {
-      return null;
+      return await _call('ReadOne');
+    } on DBusUnknownMethodException {
+      return _call('Read');
     }
   }
 
-  /// Calls [method] for the color scheme setting and returns its value.
+  /// Calls [method] for the setting and returns its value.
   Future<DBusValue> _call(String method) async {
-    final response = await _portal.callMethod(_interface, method, const [
-      DBusString(_namespace),
+    final response = await _portal.callMethod(_interface, method, [
+      const DBusString(_namespace),
       DBusString(_key),
     ], replySignature: DBusSignature('v'));
     return response.values.single;
   }
 
-  /// Maps a portal `color-scheme` value to a brightness: 1 asks for dark,
-  /// 2 for light and any other value states no preference.
-  ///
-  /// The value may be wrapped in one or more variants, as `Read` and
-  /// `ReadOne` return it.
-  static Brightness? brightnessOf(DBusValue value) {
-    var inner = value;
-    while (inner is DBusVariant) {
-      inner = inner.value;
-    }
-    return switch (inner) {
-      DBusUint32(value: 1) => Brightness.dark,
-      DBusUint32(value: 2) => Brightness.light,
-      _ => null,
-    };
-  }
-
-  /// Emits on the portal's `SettingChanged` signal for the color scheme
-  /// key; never emits without a portal.
-  @override
-  Stream<void> changes() {
+  /// Emits on the portal's `SettingChanged` signal for the setting; never
+  /// emits without a portal.
+  Stream<void> _settingChanges() {
     try {
       return DBusRemoteObjectSignalStream(
             object: _portal,
@@ -297,8 +330,124 @@ class Oito2PortalColorSchemeSource implements Oito2ColorSchemeSource {
   }
 
   /// Closes the bus connection when the source opened it.
-  @override
   Future<void> close() async {
     if (_ownsBus) await _bus.close();
   }
+
+  /// Returns [value] without the variants that wrap it, as `Read` and
+  /// `ReadOne` return it.
+  static DBusValue _unwrap(DBusValue value) {
+    var inner = value;
+    while (inner is DBusVariant) {
+      inner = inner.value;
+    }
+    return inner;
+  }
+}
+
+/// Reads the color scheme preference through the XDG desktop portal
+/// (`org.freedesktop.appearance color-scheme`), which every Linux desktop
+/// with a settings portal exposes.
+///
+/// The connection stays open until [close]; a process with an open
+/// connection may not exit.
+class Oito2PortalColorSchemeSource extends _Oito2PortalSetting
+    implements Oito2ColorSchemeSource {
+  /// Creates a source on [sessionBus], or on a connection of its own when
+  /// it is null.
+  ///
+  /// [close] closes the connection the source opened itself and leaves
+  /// the one it was given open.
+  Oito2PortalColorSchemeSource({super.sessionBus});
+
+  @override
+  String get _key => 'color-scheme';
+
+  /// Reads the preference. Returns null without a portal or when it
+  /// reports no preference.
+  @override
+  Future<Brightness?> read() async {
+    try {
+      return brightnessOf(await _readSetting());
+    } on Object {
+      return null;
+    }
+  }
+
+  /// Maps a portal `color-scheme` value to a brightness: 1 asks for dark,
+  /// 2 for light and any other value states no preference.
+  ///
+  /// The value may be wrapped in one or more variants, as `Read` and
+  /// `ReadOne` return it.
+  static Brightness? brightnessOf(DBusValue value) {
+    return switch (_Oito2PortalSetting._unwrap(value)) {
+      DBusUint32(value: 1) => Brightness.dark,
+      DBusUint32(value: 2) => Brightness.light,
+      _ => null,
+    };
+  }
+
+  /// Emits on the portal's `SettingChanged` signal for the color scheme
+  /// key; never emits without a portal.
+  @override
+  Stream<void> changes() => _settingChanges();
+}
+
+/// Reads the accent color through the XDG desktop portal
+/// (`org.freedesktop.appearance accent-color`), which the GNOME, KDE,
+/// COSMIC and XApp portals expose.
+///
+/// The connection stays open until [close]; a process with an open
+/// connection may not exit.
+class Oito2PortalAccentSource extends _Oito2PortalSetting
+    implements Oito2AccentSource {
+  /// Creates a source on [sessionBus], or on a connection of its own when
+  /// it is null.
+  ///
+  /// [close] closes the connection the source opened itself and leaves
+  /// the one it was given open.
+  Oito2PortalAccentSource({super.sessionBus});
+
+  @override
+  String get _key => 'accent-color';
+
+  /// Reads the accent. Returns null without a portal, when the portal
+  /// doesn't know the setting or when it reports no accent.
+  @override
+  Future<Color?> read() async {
+    try {
+      return colorOf(await _readSetting());
+    } on Object {
+      return null;
+    }
+  }
+
+  /// Maps a portal `accent-color` value, a `(ddd)` structure of red, green
+  /// and blue between 0 and 1, to an opaque color.
+  ///
+  /// Returns null when the value has another shape or a channel outside
+  /// 0 to 1, which the portal uses for no accent. The value may be wrapped
+  /// in one or more variants, as `Read` and `ReadOne` return it.
+  static Color? colorOf(DBusValue value) {
+    final inner = _Oito2PortalSetting._unwrap(value);
+    if (inner is! DBusStruct || inner.children.length != 3) return null;
+    final channels = <double>[];
+    for (final child in inner.children) {
+      if (child is! DBusDouble || child.value < 0 || child.value > 1) {
+        return null;
+      }
+      channels.add(child.value);
+    }
+    return Color.from(
+      alpha: 1,
+      red: channels[0],
+      green: channels[1],
+      blue: channels[2],
+    );
+  }
+
+  /// Emits on the portal's `SettingChanged` signal for the accent key;
+  /// never emits without a portal.
+  @override
+  Stream<void> changes() => _settingChanges();
 }

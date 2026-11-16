@@ -99,6 +99,12 @@ class FakeAccent implements Oito2AccentSource {
   @override
   Stream<void> changes() => _controller.stream;
 
+  /// Whether [close] was called.
+  bool closed = false;
+
+  @override
+  Future<void> close() async => closed = true;
+
   /// Changes the color and notifies listeners.
   void change(Color? value) {
     color = value;
