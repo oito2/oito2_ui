@@ -36,6 +36,7 @@ coverage/
 
 # AI assistant settings (machine-specific)
 .claude/
+.codex/
 *.local.json
 
 # Golden test diffs written on failure

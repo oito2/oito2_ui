@@ -21,7 +21,432 @@
 			"previousMonth": "Previous month",
 			"nextMonth": "Next month",
 			"today": "Today",
-			"selectDate": "Select date"
+			"selectDate": "Select date",
+			"selectTime": "Select time"
+		},
+		"dates": {
+			"firstDayOfWeekIndex": 0,
+			"narrowWeekdays": [
+				"S",
+				"M",
+				"T",
+				"W",
+				"T",
+				"F",
+				"S"
+			],
+			"monthYear": [
+				{
+					"date": "2026-01-01",
+					"result": "January 2026"
+				},
+				{
+					"date": "2026-02-01",
+					"result": "February 2026"
+				},
+				{
+					"date": "2026-03-01",
+					"result": "March 2026"
+				},
+				{
+					"date": "2026-04-01",
+					"result": "April 2026"
+				},
+				{
+					"date": "2026-05-01",
+					"result": "May 2026"
+				},
+				{
+					"date": "2026-06-01",
+					"result": "June 2026"
+				},
+				{
+					"date": "2026-07-01",
+					"result": "July 2026"
+				},
+				{
+					"date": "2026-08-01",
+					"result": "August 2026"
+				},
+				{
+					"date": "2026-09-01",
+					"result": "September 2026"
+				},
+				{
+					"date": "2026-10-01",
+					"result": "October 2026"
+				},
+				{
+					"date": "2026-11-01",
+					"result": "November 2026"
+				},
+				{
+					"date": "2026-12-01",
+					"result": "December 2026"
+				}
+			],
+			"compactDate": [
+				{
+					"date": "2026-01-05",
+					"result": "01/05/2026"
+				},
+				{
+					"date": "2026-07-04",
+					"result": "07/04/2026"
+				},
+				{
+					"date": "2026-11-17",
+					"result": "11/17/2026"
+				},
+				{
+					"date": "1999-12-31",
+					"result": "12/31/1999"
+				},
+				{
+					"date": "2000-02-29",
+					"result": "02/29/2000"
+				}
+			],
+			"parseCompactDate": [
+				{
+					"text": "11/17/2026",
+					"result": "2026-11-17"
+				},
+				{
+					"text": "17/11/2026",
+					"result": null
+				},
+				{
+					"text": "1/5/2026",
+					"result": "2026-01-05"
+				},
+				{
+					"text": "05/01/2026",
+					"result": "2026-05-01"
+				},
+				{
+					"text": "2/29/2000",
+					"result": "2000-02-29"
+				},
+				{
+					"text": "29/02/2000",
+					"result": null
+				},
+				{
+					"text": "2/29/2026",
+					"result": null
+				},
+				{
+					"text": "31/04/2026",
+					"result": null
+				},
+				{
+					"text": "13/13/2026",
+					"result": null
+				},
+				{
+					"text": "2026-11-17",
+					"result": null
+				},
+				{
+					"text": "1/5/26",
+					"result": "0026-01-05"
+				},
+				{
+					"text": " 17/11/2026 ",
+					"result": null
+				},
+				{
+					"text": "17.11.2026",
+					"result": null
+				},
+				{
+					"text": "17/11/26",
+					"result": null
+				},
+				{
+					"text": "11/17/26",
+					"result": "0026-11-17"
+				},
+				{
+					"text": "1/1/45",
+					"result": "0045-01-01"
+				},
+				{
+					"text": "1/1/46",
+					"result": "0046-01-01"
+				},
+				{
+					"text": "31/12/99",
+					"result": null
+				},
+				{
+					"text": "29/02/00",
+					"result": null
+				},
+				{
+					"text": "1/5/6",
+					"result": "0006-01-05"
+				},
+				{
+					"text": "1/5/026",
+					"result": "0026-01-05"
+				},
+				{
+					"text": "1/5/0026",
+					"result": "0026-01-05"
+				},
+				{
+					"text": "abc",
+					"result": null
+				},
+				{
+					"text": "",
+					"result": null
+				}
+			],
+			"parseDateReference": "2026-11-17",
+			"parseDate": [
+				{
+					"text": "11/17/2026",
+					"result": "2026-11-17"
+				},
+				{
+					"text": "17/11/2026",
+					"result": null
+				},
+				{
+					"text": "1/5/2026",
+					"result": "2026-01-05"
+				},
+				{
+					"text": "05/01/2026",
+					"result": "2026-05-01"
+				},
+				{
+					"text": "2/29/2000",
+					"result": "2000-02-29"
+				},
+				{
+					"text": "29/02/2000",
+					"result": null
+				},
+				{
+					"text": "2/29/2026",
+					"result": null
+				},
+				{
+					"text": "31/04/2026",
+					"result": null
+				},
+				{
+					"text": "13/13/2026",
+					"result": null
+				},
+				{
+					"text": "2026-11-17",
+					"result": null
+				},
+				{
+					"text": "1/5/26",
+					"result": "2026-01-05"
+				},
+				{
+					"text": " 17/11/2026 ",
+					"result": null
+				},
+				{
+					"text": "17.11.2026",
+					"result": null
+				},
+				{
+					"text": "17/11/26",
+					"result": null
+				},
+				{
+					"text": "11/17/26",
+					"result": "2026-11-17"
+				},
+				{
+					"text": "1/1/45",
+					"result": "2045-01-01"
+				},
+				{
+					"text": "1/1/46",
+					"result": "1946-01-01"
+				},
+				{
+					"text": "31/12/99",
+					"result": null
+				},
+				{
+					"text": "29/02/00",
+					"result": null
+				},
+				{
+					"text": "1/5/6",
+					"result": "2006-01-05"
+				},
+				{
+					"text": "1/5/026",
+					"result": "0026-01-05"
+				},
+				{
+					"text": "1/5/0026",
+					"result": "0026-01-05"
+				},
+				{
+					"text": "abc",
+					"result": null
+				},
+				{
+					"text": "",
+					"result": null
+				}
+			],
+			"timeOfDay": [
+				{
+					"hour": 0,
+					"minute": 5,
+					"h12": "12:05 AM",
+					"h24": "00:05"
+				},
+				{
+					"hour": 9,
+					"minute": 30,
+					"h12": "9:30 AM",
+					"h24": "09:30"
+				},
+				{
+					"hour": 12,
+					"minute": 0,
+					"h12": "12:00 PM",
+					"h24": "12:00"
+				},
+				{
+					"hour": 13,
+					"minute": 45,
+					"h12": "1:45 PM",
+					"h24": "13:45"
+				},
+				{
+					"hour": 23,
+					"minute": 59,
+					"h12": "11:59 PM",
+					"h24": "23:59"
+				}
+			],
+			"parseTime": [
+				{
+					"text": "9:30",
+					"result": [
+						9,
+						30
+					]
+				},
+				{
+					"text": "09:30",
+					"result": [
+						9,
+						30
+					]
+				},
+				{
+					"text": "21:45",
+					"result": [
+						21,
+						45
+					]
+				},
+				{
+					"text": "21h45",
+					"result": [
+						21,
+						45
+					]
+				},
+				{
+					"text": "9.30",
+					"result": [
+						9,
+						30
+					]
+				},
+				{
+					"text": "9:30 AM",
+					"result": [
+						9,
+						30
+					]
+				},
+				{
+					"text": "9:30 pm",
+					"result": [
+						21,
+						30
+					]
+				},
+				{
+					"text": "9:30p",
+					"result": [
+						21,
+						30
+					]
+				},
+				{
+					"text": "am 9:30",
+					"result": [
+						9,
+						30
+					]
+				},
+				{
+					"text": "12:00 AM",
+					"result": [
+						0,
+						0
+					]
+				},
+				{
+					"text": "12:00 PM",
+					"result": [
+						12,
+						0
+					]
+				},
+				{
+					"text": "0:00 PM",
+					"result": null
+				},
+				{
+					"text": "13:00 PM",
+					"result": null
+				},
+				{
+					"text": "24:00",
+					"result": null
+				},
+				{
+					"text": "9:60",
+					"result": null
+				},
+				{
+					"text": "9:5",
+					"result": null
+				},
+				{
+					"text": "am 9:30 pm",
+					"result": null
+				},
+				{
+					"text": "9:30 xm",
+					"result": null
+				},
+				{
+					"text": "",
+					"result": null
+				}
+			]
 		},
 		"getters": {
 			"minimizeWindow": "Minimize",
@@ -513,7 +938,432 @@
 			"previousMonth": "Mês anterior",
 			"nextMonth": "Próximo mês",
 			"today": "Hoje",
-			"selectDate": "Selecione a data"
+			"selectDate": "Selecione a data",
+			"selectTime": "Selecione o horário"
+		},
+		"dates": {
+			"firstDayOfWeekIndex": 0,
+			"narrowWeekdays": [
+				"D",
+				"S",
+				"T",
+				"Q",
+				"Q",
+				"S",
+				"S"
+			],
+			"monthYear": [
+				{
+					"date": "2026-01-01",
+					"result": "janeiro de 2026"
+				},
+				{
+					"date": "2026-02-01",
+					"result": "fevereiro de 2026"
+				},
+				{
+					"date": "2026-03-01",
+					"result": "março de 2026"
+				},
+				{
+					"date": "2026-04-01",
+					"result": "abril de 2026"
+				},
+				{
+					"date": "2026-05-01",
+					"result": "maio de 2026"
+				},
+				{
+					"date": "2026-06-01",
+					"result": "junho de 2026"
+				},
+				{
+					"date": "2026-07-01",
+					"result": "julho de 2026"
+				},
+				{
+					"date": "2026-08-01",
+					"result": "agosto de 2026"
+				},
+				{
+					"date": "2026-09-01",
+					"result": "setembro de 2026"
+				},
+				{
+					"date": "2026-10-01",
+					"result": "outubro de 2026"
+				},
+				{
+					"date": "2026-11-01",
+					"result": "novembro de 2026"
+				},
+				{
+					"date": "2026-12-01",
+					"result": "dezembro de 2026"
+				}
+			],
+			"compactDate": [
+				{
+					"date": "2026-01-05",
+					"result": "05/01/2026"
+				},
+				{
+					"date": "2026-07-04",
+					"result": "04/07/2026"
+				},
+				{
+					"date": "2026-11-17",
+					"result": "17/11/2026"
+				},
+				{
+					"date": "1999-12-31",
+					"result": "31/12/1999"
+				},
+				{
+					"date": "2000-02-29",
+					"result": "29/02/2000"
+				}
+			],
+			"parseCompactDate": [
+				{
+					"text": "11/17/2026",
+					"result": null
+				},
+				{
+					"text": "17/11/2026",
+					"result": "2026-11-17"
+				},
+				{
+					"text": "1/5/2026",
+					"result": "2026-05-01"
+				},
+				{
+					"text": "05/01/2026",
+					"result": "2026-01-05"
+				},
+				{
+					"text": "2/29/2000",
+					"result": null
+				},
+				{
+					"text": "29/02/2000",
+					"result": "2000-02-29"
+				},
+				{
+					"text": "2/29/2026",
+					"result": null
+				},
+				{
+					"text": "31/04/2026",
+					"result": null
+				},
+				{
+					"text": "13/13/2026",
+					"result": null
+				},
+				{
+					"text": "2026-11-17",
+					"result": null
+				},
+				{
+					"text": "1/5/26",
+					"result": "0026-05-01"
+				},
+				{
+					"text": " 17/11/2026 ",
+					"result": null
+				},
+				{
+					"text": "17.11.2026",
+					"result": null
+				},
+				{
+					"text": "17/11/26",
+					"result": "0026-11-17"
+				},
+				{
+					"text": "11/17/26",
+					"result": null
+				},
+				{
+					"text": "1/1/45",
+					"result": "0045-01-01"
+				},
+				{
+					"text": "1/1/46",
+					"result": "0046-01-01"
+				},
+				{
+					"text": "31/12/99",
+					"result": "0099-12-31"
+				},
+				{
+					"text": "29/02/00",
+					"result": "0000-02-29"
+				},
+				{
+					"text": "1/5/6",
+					"result": "0006-05-01"
+				},
+				{
+					"text": "1/5/026",
+					"result": "0026-05-01"
+				},
+				{
+					"text": "1/5/0026",
+					"result": "0026-05-01"
+				},
+				{
+					"text": "abc",
+					"result": null
+				},
+				{
+					"text": "",
+					"result": null
+				}
+			],
+			"parseDateReference": "2026-11-17",
+			"parseDate": [
+				{
+					"text": "11/17/2026",
+					"result": null
+				},
+				{
+					"text": "17/11/2026",
+					"result": "2026-11-17"
+				},
+				{
+					"text": "1/5/2026",
+					"result": "2026-05-01"
+				},
+				{
+					"text": "05/01/2026",
+					"result": "2026-01-05"
+				},
+				{
+					"text": "2/29/2000",
+					"result": null
+				},
+				{
+					"text": "29/02/2000",
+					"result": "2000-02-29"
+				},
+				{
+					"text": "2/29/2026",
+					"result": null
+				},
+				{
+					"text": "31/04/2026",
+					"result": null
+				},
+				{
+					"text": "13/13/2026",
+					"result": null
+				},
+				{
+					"text": "2026-11-17",
+					"result": null
+				},
+				{
+					"text": "1/5/26",
+					"result": "2026-05-01"
+				},
+				{
+					"text": " 17/11/2026 ",
+					"result": "2026-11-17"
+				},
+				{
+					"text": "17.11.2026",
+					"result": null
+				},
+				{
+					"text": "17/11/26",
+					"result": "2026-11-17"
+				},
+				{
+					"text": "11/17/26",
+					"result": null
+				},
+				{
+					"text": "1/1/45",
+					"result": "2045-01-01"
+				},
+				{
+					"text": "1/1/46",
+					"result": "1946-01-01"
+				},
+				{
+					"text": "31/12/99",
+					"result": "1999-12-31"
+				},
+				{
+					"text": "29/02/00",
+					"result": "2000-02-29"
+				},
+				{
+					"text": "1/5/6",
+					"result": "2006-05-01"
+				},
+				{
+					"text": "1/5/026",
+					"result": "0026-05-01"
+				},
+				{
+					"text": "1/5/0026",
+					"result": "0026-05-01"
+				},
+				{
+					"text": "abc",
+					"result": null
+				},
+				{
+					"text": "",
+					"result": null
+				}
+			],
+			"timeOfDay": [
+				{
+					"hour": 0,
+					"minute": 5,
+					"h12": "00:05",
+					"h24": "00:05"
+				},
+				{
+					"hour": 9,
+					"minute": 30,
+					"h12": "09:30",
+					"h24": "09:30"
+				},
+				{
+					"hour": 12,
+					"minute": 0,
+					"h12": "12:00",
+					"h24": "12:00"
+				},
+				{
+					"hour": 13,
+					"minute": 45,
+					"h12": "13:45",
+					"h24": "13:45"
+				},
+				{
+					"hour": 23,
+					"minute": 59,
+					"h12": "23:59",
+					"h24": "23:59"
+				}
+			],
+			"parseTime": [
+				{
+					"text": "9:30",
+					"result": [
+						9,
+						30
+					]
+				},
+				{
+					"text": "09:30",
+					"result": [
+						9,
+						30
+					]
+				},
+				{
+					"text": "21:45",
+					"result": [
+						21,
+						45
+					]
+				},
+				{
+					"text": "21h45",
+					"result": [
+						21,
+						45
+					]
+				},
+				{
+					"text": "9.30",
+					"result": [
+						9,
+						30
+					]
+				},
+				{
+					"text": "9:30 AM",
+					"result": [
+						9,
+						30
+					]
+				},
+				{
+					"text": "9:30 pm",
+					"result": [
+						21,
+						30
+					]
+				},
+				{
+					"text": "9:30p",
+					"result": [
+						21,
+						30
+					]
+				},
+				{
+					"text": "am 9:30",
+					"result": [
+						9,
+						30
+					]
+				},
+				{
+					"text": "12:00 AM",
+					"result": [
+						0,
+						0
+					]
+				},
+				{
+					"text": "12:00 PM",
+					"result": [
+						12,
+						0
+					]
+				},
+				{
+					"text": "0:00 PM",
+					"result": null
+				},
+				{
+					"text": "13:00 PM",
+					"result": null
+				},
+				{
+					"text": "24:00",
+					"result": null
+				},
+				{
+					"text": "9:60",
+					"result": null
+				},
+				{
+					"text": "9:5",
+					"result": null
+				},
+				{
+					"text": "am 9:30 pm",
+					"result": null
+				},
+				{
+					"text": "9:30 xm",
+					"result": null
+				},
+				{
+					"text": "",
+					"result": null
+				}
+			]
 		},
 		"getters": {
 			"minimizeWindow": "Minimizar",

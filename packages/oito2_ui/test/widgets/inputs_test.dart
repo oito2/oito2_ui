@@ -197,6 +197,61 @@ void main() {
       expect(values.last, DateTime(2025));
     });
 
+    testWidgets('expands a two-digit year around the current date', (
+      tester,
+    ) async {
+      final values = <DateTime?>[];
+      final errors = <String?>[];
+      await pumpOito2(
+        tester,
+        Center(
+          child: SizedBox(
+            width: 300,
+            child: Oito2DateEntry(
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030, 12, 31),
+              currentDate: _today,
+              onChanged: values.add,
+              onErrorChanged: errors.add,
+            ),
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(TextField), '03/15/26');
+      expect(values.last, DateTime(2026, 3, 15));
+      expect(errors, isEmpty);
+    });
+
+    test('parseDate expands short years and keeps long ones', () async {
+      final en = await GlobalMaterialLocalizations.delegate.load(
+        const Locale('en'),
+      );
+      final ptBr = await GlobalMaterialLocalizations.delegate.load(
+        const Locale('pt', 'BR'),
+      );
+      final reference = DateTime(2026, 11, 17);
+      DateTime? parse(String text, [MaterialLocalizations? l10n]) =>
+          Oito2DateEntry.parseDate(text, l10n ?? en, reference: reference);
+
+      expect(parse('1/5/26'), DateTime(2026, 1, 5));
+      expect(parse('1/5/26', ptBr), DateTime(2026, 5, 1));
+      expect(parse('12/31/45'), DateTime(2045, 12, 31));
+      expect(parse('1/1/46'), DateTime(1946));
+      expect(parse('12/31/99'), DateTime(1999, 12, 31));
+      expect(parse('2/29/00'), DateTime(2000, 2, 29));
+      expect(parse('1/5/6'), DateTime(2006, 1, 5));
+      expect(parse(' 11/17/2026 '), DateTime(2026, 11, 17));
+      expect(parse('1/5/0026'), DateTime(26, 1, 5));
+      expect(parse('1/5/026'), DateTime(26, 1, 5));
+      expect(parse('2/29/26'), isNull);
+      expect(parse('13/1/26'), isNull);
+      expect(parse('abc'), isNull);
+      expect(
+        Oito2DateEntry.parseDate('1/1/40', en, reference: DateTime(1950)),
+        DateTime(1940),
+      );
+    });
+
     testWidgets('reports when the text stops and starts parsing', (
       tester,
     ) async {

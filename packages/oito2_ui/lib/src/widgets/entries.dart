@@ -168,6 +168,36 @@ class Oito2DateEntry extends StatefulWidget {
   /// set; the current date by default.
   final DateTime? currentDate;
 
+  /// Parses [text] in the compact date format of [localizations] (such as
+  /// mm/dd/yyyy), ignoring surrounding spaces.
+  ///
+  /// A year written with one or two digits is taken as the year with those
+  /// last digits that falls from 80 years before to 19 years after the
+  /// year of [reference] (today when null), so `26` reads as 2026 in 2026
+  /// and `99` as 1999. A year written with three or more digits is used as
+  /// written. Returns null when the text doesn't parse.
+  static DateTime? parseDate(
+    String text,
+    MaterialLocalizations localizations, {
+    DateTime? reference,
+  }) {
+    final date = localizations.parseCompactDate(text.trim());
+    if (date == null || date.year >= 100) return date;
+    if (_longNumber.hasMatch(text)) return date;
+    final referenceYear = (reference ?? DateTime.now()).year;
+    var year = referenceYear - referenceYear % 100 + date.year;
+    if (year > referenceYear + 19) {
+      year -= 100;
+    } else if (year < referenceYear - 80) {
+      year += 100;
+    }
+    final expanded = DateTime(year, date.month, date.day);
+    return expanded.month == date.month ? expanded : null;
+  }
+
+  /// Matches a run of three or more decimal digits in any script.
+  static final _longNumber = RegExp(r'\p{Nd}{3,}', unicode: true);
+
   @override
   State<Oito2DateEntry> createState() => _Oito2DateEntryState();
 }
@@ -205,7 +235,11 @@ class _Oito2DateEntryState extends _ParsedEntryState<Oito2DateEntry, DateTime> {
           ? (null, null)
           : (null, _l10n.invalidDateFormatLabel);
     }
-    final date = _l10n.parseCompactDate(text.trim());
+    final date = Oito2DateEntry.parseDate(
+      text,
+      _l10n,
+      reference: widget.currentDate,
+    );
     if (date == null) return (null, _l10n.invalidDateFormatLabel);
     if (!_accepts(date)) return (null, _l10n.dateOutOfRangeLabel);
     return (date, null);

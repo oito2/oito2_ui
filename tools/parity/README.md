@@ -16,7 +16,7 @@ fails when they are stale.
 | `tokens.json` | Radii, spacing, sizes, accent colors, neutral and status palettes, typography scale |
 | `schemes.json` | Theme family palettes, every resolved color of the base schemes (light, dark, each accent, high contrast) and of the presets |
 | `foundation.json` | Contrast ratios and adjustments, desktop environment detection, window button layouts, platform flags, fallback system settings |
-| `l10n.json` | Every `Oito2Localizations` string in English and Brazilian Portuguese, plus the Material strings the widgets use |
+| `l10n.json` | Every `Oito2Localizations` string in English and Brazilian Portuguese, plus the Material strings, calendar data (first weekday, narrow weekdays), date and time formats and the date and time entry parser results the widgets use |
 | `format.json` | `Oito2Format` results for byte sizes, compact numbers and relative times |
 | `syntax.json` | How `oito2_ui_syntax` tokenizes a sample of every default language, with the palette role of each run |
 | `qr.json` | The QR modules `oito2_ui_extras` encodes for fixed texts at every error level |

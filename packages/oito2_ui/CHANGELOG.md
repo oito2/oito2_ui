@@ -191,6 +191,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2TreeView`: Shift+click or Shift+arrow no longer throws when the anchor node is hidden (its branch closed, filtered out or removed).
 - `Oito2TreeView` and `Oito2ListBox`: a double click is detected on a real 300 ms timeout instead of frame times, so two slow clicks no longer activate an item.
 - `oito2IsoWeekNumber` and the `Oito2Calendar` week column: week numbers are right in time zones with daylight saving time.
+- `Oito2DateEntry` reads a year written with one or two digits as the year with those digits from 80 years before to 19 years after `currentDate` (today by default), so `03/15/26` is March 15, 2026 instead of an out-of-range year 26; the parser is public as `Oito2DateEntry.parseDate`.
 - `Oito2TimeEntry.parseTime` reads a day-period marker before the time (`오후 9:30`, `下午 9:30`), so the entry accepts the times it shows in Korean and Chinese.
 - `Oito2Popover` and `Oito2Tour`: switching to a controller that is already open no longer fails while building.
 - `Oito2Splitter`: collapsing a pane after the number of panes changed no longer throws.

@@ -139,6 +139,7 @@ final Map<String, MaterialGetter> materialGetters = {
   'nextMonth': (m) => m.nextMonthTooltip,
   'today': (m) => m.currentDateLabel,
   'selectDate': (m) => m.datePickerHelpText,
+  'selectTime': (m) => m.timePickerDialHelpText,
 };
 
 typedef Call = (String, List<Object>, String Function(Oito2Localizations l));
@@ -172,11 +173,154 @@ List<Call> calls() => [
   ('folderNotAccepted', ['docs'], (l) => l.folderNotAccepted('docs')),
 ];
 
+/// Dates the date formats are sampled with.
+final sampleDates = [
+  DateTime(2026, 1, 5),
+  DateTime(2026, 7, 4),
+  DateTime(2026, 11, 17),
+  DateTime(1999, 12, 31),
+  DateTime(2000, 2, 29),
+];
+
+/// Texts the compact date parser is sampled with, in both locales'
+/// orders, valid and invalid.
+const sampleDateTexts = [
+  '11/17/2026',
+  '17/11/2026',
+  '1/5/2026',
+  '05/01/2026',
+  '2/29/2000',
+  '29/02/2000',
+  '2/29/2026',
+  '31/04/2026',
+  '13/13/2026',
+  '2026-11-17',
+  '1/5/26',
+  ' 17/11/2026 ',
+  '17.11.2026',
+  '17/11/26',
+  '11/17/26',
+  '1/1/45',
+  '1/1/46',
+  '31/12/99',
+  '29/02/00',
+  '1/5/6',
+  '1/5/026',
+  '1/5/0026',
+  'abc',
+  '',
+];
+
+/// The day [Oito2DateEntry.parseDate] expands short years around.
+final parseDateReference = DateTime(2026, 11, 17);
+
+/// Times the time format is sampled with, as (hour, minute).
+const sampleTimes = [(0, 5), (9, 30), (12, 0), (13, 45), (23, 59)];
+
+/// Texts the time entry parser is sampled with.
+const sampleTimeTexts = [
+  '9:30',
+  '09:30',
+  '21:45',
+  '21h45',
+  '9.30',
+  '9:30 AM',
+  '9:30 pm',
+  '9:30p',
+  'am 9:30',
+  '12:00 AM',
+  '12:00 PM',
+  '0:00 PM',
+  '13:00 PM',
+  '24:00',
+  '9:60',
+  '9:5',
+  'am 9:30 pm',
+  '9:30 xm',
+  '',
+];
+
+String isoDate(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-'
+    '${d.month.toString().padLeft(2, '0')}-'
+    '${d.day.toString().padLeft(2, '0')}';
+
+/// The calendar data and date and time formats of [m] that the date
+/// widgets use, with the date parser of [Oito2DateEntry] and the time
+/// parser of [Oito2TimeEntry].
+Map<String, Object> exportDates(MaterialLocalizations m) => {
+  'firstDayOfWeekIndex': m.firstDayOfWeekIndex,
+  'narrowWeekdays': m.narrowWeekdays,
+  'monthYear': [
+    for (var month = 1; month <= 12; month++)
+      {
+        'date': isoDate(DateTime(2026, month)),
+        'result': m.formatMonthYear(DateTime(2026, month)),
+      },
+  ],
+  'compactDate': [
+    for (final date in sampleDates)
+      {'date': isoDate(date), 'result': m.formatCompactDate(date)},
+  ],
+  'parseCompactDate': [
+    for (final text in sampleDateTexts)
+      {
+        'text': text,
+        'result': switch (m.parseCompactDate(text)) {
+          final date? => isoDate(date),
+          null => null,
+        },
+      },
+  ],
+  'parseDateReference': isoDate(parseDateReference),
+  'parseDate': [
+    for (final text in sampleDateTexts)
+      {
+        'text': text,
+        'result': switch (Oito2DateEntry.parseDate(
+          text,
+          m,
+          reference: parseDateReference,
+        )) {
+          final date? => isoDate(date),
+          null => null,
+        },
+      },
+  ],
+  'timeOfDay': [
+    for (final (hour, minute) in sampleTimes)
+      {
+        'hour': hour,
+        'minute': minute,
+        'h12': m.formatTimeOfDay(TimeOfDay(hour: hour, minute: minute)),
+        'h24': m.formatTimeOfDay(
+          TimeOfDay(hour: hour, minute: minute),
+          alwaysUse24HourFormat: true,
+        ),
+      },
+  ],
+  'parseTime': [
+    for (final text in sampleTimeTexts)
+      {
+        'text': text,
+        'result': switch (Oito2TimeEntry.parseTime(
+          text,
+          am: m.anteMeridiemAbbreviation,
+          pm: m.postMeridiemAbbreviation,
+        )) {
+          final time? => [time.hour, time.minute],
+          null => null,
+        },
+      },
+  ],
+};
+
 Map<String, Object> export(Oito2Localizations l, MaterialLocalizations m) => {
   'localeName': l.localeName,
   'material': {
     for (final MapEntry(:key, :value) in materialGetters.entries) key: value(m),
   },
+  'dates': exportDates(m),
   'getters': {
     for (final MapEntry(:key, :value) in getters.entries) key: value(l),
   },
