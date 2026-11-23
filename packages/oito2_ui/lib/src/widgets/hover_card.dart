@@ -145,9 +145,13 @@ class _Oito2HoverCardState extends State<Oito2HoverCard> {
           canRequestFocus: false,
           skipTraversal: true,
           onFocusChange: _schedule,
-          child: GestureDetector(
-            onLongPress: controller.open,
-            child: widget.child,
+          // Merging puts the long press that opens the card on the node
+          // of the child, which carries its label.
+          child: MergeSemantics(
+            child: GestureDetector(
+              onLongPress: controller.open,
+              child: widget.child,
+            ),
           ),
         ),
       ),

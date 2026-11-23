@@ -14,6 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -22,6 +23,11 @@ import 'package:flutter_test/flutter_test.dart';
 /// The largest share of differing pixels a golden comparison accepts,
 /// absorbing anti-aliasing differences between machines.
 const double goldenTolerance = 0.005;
+
+/// The environment variable that, set to `1`, makes [installGoldenComparator]
+/// rewrite only the goldens that are missing or differ beyond
+/// [goldenTolerance], instead of failing on them.
+const String updateFailedGoldensVariable = 'OITO2_UPDATE_FAILED_GOLDENS';
 
 /// A font family to load for golden tests from [files] of [package].
 ///
@@ -105,15 +111,20 @@ Future<void> loadGoldenFonts() async {
   }
 }
 
-/// Replaces the golden comparator with one that accepts up to
-/// [goldenTolerance] of differing pixels.
+/// Replaces the golden comparator with a [TolerantGoldenComparator] that
+/// accepts up to [goldenTolerance] of differing pixels.
 ///
-/// Does nothing when the current comparator isn't a
-/// [LocalFileComparator].
+/// When the [updateFailedGoldensVariable] environment variable is `1`, the
+/// comparator rewrites the goldens that are missing or differ beyond the
+/// tolerance and leaves the others untouched. Does nothing when the current
+/// comparator isn't a [LocalFileComparator].
 void installGoldenComparator() {
   final current = goldenFileComparator;
   if (current is! LocalFileComparator) return;
-  goldenFileComparator = _TolerantComparator(current.basedir);
+  goldenFileComparator = TolerantGoldenComparator(
+    current.basedir,
+    updateFailed: Platform.environment[updateFailedGoldensVariable] == '1',
+  );
 }
 
 /// Runs [testMain] after loading the golden fonts and installing the
@@ -127,13 +138,28 @@ Future<void> runGoldenTests(FutureOr<void> Function() testMain) async {
 }
 
 /// A [LocalFileComparator] that passes when at most [goldenTolerance] of
-/// the pixels differ, and throws a [FlutterError] with the failure output
-/// otherwise.
-class _TolerantComparator extends LocalFileComparator {
-  _TolerantComparator(Uri basedir) : super(basedir.resolve('golden_test.dart'));
+/// the pixels differ.
+///
+/// A comparison beyond the tolerance, or against a missing golden, throws
+/// a [FlutterError] with the failure output, unless [updateFailed] is true:
+/// then it writes [compare]'s image as the new golden, prints its name and
+/// passes.
+class TolerantGoldenComparator extends LocalFileComparator {
+  /// Creates a comparator that resolves goldens against [basedir], a
+  /// directory URI.
+  TolerantGoldenComparator(Uri basedir, {this.updateFailed = false})
+    : super(basedir.resolve('golden_test.dart'));
+
+  /// Whether a missing golden, or one that differs beyond [goldenTolerance],
+  /// is rewritten instead of failing the comparison.
+  final bool updateFailed;
 
   @override
   Future<bool> compare(Uint8List imageBytes, Uri golden) async {
+    if (updateFailed &&
+        !File.fromUri(basedir.resolveUri(golden)).existsSync()) {
+      return _rewrite(imageBytes, golden, 'missing');
+    }
     final result = await GoldenFileComparator.compareLists(
       imageBytes,
       await getGoldenBytes(golden),
@@ -142,8 +168,21 @@ class _TolerantComparator extends LocalFileComparator {
       result.dispose();
       return true;
     }
+    if (updateFailed) {
+      final percent = (result.diffPercent * 100).toStringAsFixed(2);
+      result.dispose();
+      return _rewrite(imageBytes, golden, '$percent% diff');
+    }
     final error = await generateFailureOutput(result, golden, basedir);
     result.dispose();
     throw FlutterError(error);
+  }
+
+  /// Writes [imageBytes] as [golden], prints its name with [reason] and
+  /// returns true.
+  Future<bool> _rewrite(Uint8List imageBytes, Uri golden, String reason) async {
+    await update(golden, imageBytes);
+    debugPrint('Updated golden $golden ($reason).');
+    return true;
   }
 }

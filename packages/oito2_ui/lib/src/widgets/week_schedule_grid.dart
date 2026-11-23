@@ -583,6 +583,8 @@ class _Oito2WeekScheduleGridState<T> extends State<Oito2WeekScheduleGrid<T>> {
           cells = MouseRegion(
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
+              // Each cell exposes its own tap action.
+              excludeFromSemantics: true,
               // The rectangle starts where the pointer went down, not
               // where the drag was recognized.
               dragStartBehavior: DragStartBehavior.down,

@@ -15,6 +15,24 @@
 
 /// Test helpers shared by the oito2_ui packages: a themed pump, the real
 /// fonts and a tolerant comparator for golden tests.
+///
+/// A package's golden directory installs them from its
+/// `flutter_test_config.dart`, which calls [runGoldenTests].
+///
+/// ## Updating goldens
+///
+/// `flutter test --update-goldens` rewrites every golden, including the
+/// ones that only differ by anti-aliasing noise. To rewrite only the
+/// goldens that are missing or differ beyond [goldenTolerance], run the
+/// tests with [updateFailedGoldensVariable] set to `1`, from the package
+/// directory:
+///
+/// ```sh
+/// OITO2_UPDATE_FAILED_GOLDENS=1 flutter test
+/// ```
+///
+/// Each rewritten golden is printed as `Updated golden <file> (<reason>)`;
+/// the goldens within the tolerance are left untouched.
 library;
 
 export 'src/golden.dart';

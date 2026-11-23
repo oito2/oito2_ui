@@ -40,8 +40,11 @@ class Oito2TitleBarGestureDetector extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = this.controller;
     if (controller == null) return child;
+    // The window actions are pointer conveniences: the title bar buttons
+    // and the window manager offer them to assistive technologies.
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
+      excludeFromSemantics: true,
       onPanStart: (_) => controller.startDrag(),
       onDoubleTap: controller.toggleMaximize,
       onSecondaryTap: () {

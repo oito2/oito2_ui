@@ -302,6 +302,8 @@ class _SaturationArea extends StatelessWidget {
               return MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
+                  // The per-axis sliders below expose these actions.
+                  excludeFromSemantics: true,
                   onTapDown: (d) => pick(d.localPosition),
                   onPanStart: (d) => pick(d.localPosition),
                   onPanUpdate: (d) => pick(d.localPosition),

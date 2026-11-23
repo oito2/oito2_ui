@@ -288,22 +288,24 @@ class Oito2SplitButton extends StatelessWidget {
         const SizedBox(width: 1),
         MenuAnchor(
           menuChildren: menuChildren,
-          builder: (context, controller, _) => Semantics(
-            label: menuLabel ?? Oito2Localizations.of(context).moreOptions,
-            child: _button(
-              _shape(
-                endRadius,
-                minimumHeight,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Oito2Spacing.sm,
+          builder: (context, controller, _) => MergeSemantics(
+            child: Semantics(
+              label: menuLabel ?? Oito2Localizations.of(context).moreOptions,
+              child: _button(
+                _shape(
+                  endRadius,
+                  minimumHeight,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Oito2Spacing.sm,
+                  ),
                 ),
+                enabled
+                    ? () => controller.isOpen
+                          ? controller.close()
+                          : controller.open()
+                    : null,
+                const Icon(LucideIcons.chevron_down),
               ),
-              enabled
-                  ? () => controller.isOpen
-                        ? controller.close()
-                        : controller.open()
-                  : null,
-              const Icon(LucideIcons.chevron_down),
             ),
           ),
         ),
@@ -385,7 +387,9 @@ class Oito2OptionButton extends StatelessWidget {
         : Tooltip(
             message: label,
             excludeFromSemantics: true,
-            child: Semantics(label: label, child: button),
+            child: MergeSemantics(
+              child: Semantics(label: label, child: button),
+            ),
           );
   }
 }

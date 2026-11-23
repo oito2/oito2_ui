@@ -15,6 +15,7 @@
 
 import 'package:material_ui/material_ui.dart';
 
+import '../../foundation/contrast.dart';
 import '../../tokens/geometry.dart';
 import 'component_context.dart';
 
@@ -117,8 +118,15 @@ NavigationDrawerThemeData buildNavigationDrawerTheme(ComponentThemeContext c) {
 }
 
 /// Returns the theme of list tiles: the medium radius, compact padding on
-/// pointer platforms and the text-safe primary tone when selected.
+/// pointer platforms and, when selected, a primary-tinted fill with the
+/// text-safe primary tone adjusted to reach the text contrast target
+/// against that fill over every surface of the theme.
 ListTileThemeData buildListTileTheme(ComponentThemeContext c) {
+  final selectedTileColor = ComponentThemeContext.fade(c.scheme.primary, 0.12);
+  final selectedColor = Oito2Contrast.ensure(c.indicator, [
+    for (final surface in c.colors.surfaces)
+      Color.alphaBlend(selectedTileColor, surface),
+  ], c.colors.highContrast ? Oito2Contrast.textAAA : Oito2Contrast.textAA);
   return ListTileThemeData(
     shape: const RoundedRectangleBorder(borderRadius: Oito2Radius.mediumAll),
     contentPadding: EdgeInsets.symmetric(
@@ -126,8 +134,8 @@ ListTileThemeData buildListTileTheme(ComponentThemeContext c) {
     ),
     iconColor: c.scheme.onSurfaceVariant,
     textColor: c.scheme.onSurface,
-    selectedColor: c.indicator,
-    selectedTileColor: ComponentThemeContext.fade(c.scheme.primary, 0.12),
+    selectedColor: selectedColor,
+    selectedTileColor: selectedTileColor,
     titleTextStyle: c.textTheme.bodyLarge,
     subtitleTextStyle: c.textTheme.bodyMedium?.copyWith(
       color: c.scheme.onSurfaceVariant,

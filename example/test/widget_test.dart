@@ -32,6 +32,65 @@ Future<void> _settle(WidgetTester tester) async {
   }
 }
 
+/// Pages whose text contrast is not checked, with the reason.
+const _contrastExceptions = {
+  'undershoot':
+      'The undershoot fades the items at the list edge into the surface '
+      'on purpose.',
+};
+
+/// Single-line fields keep the 40-pixel touch height, and so do the
+/// buttons inside them.
+const _touchFields = 'Single-line fields are 40 px high on touch.';
+
+/// Controls laid out in a dense grid or strip, where 48-pixel cells would
+/// not fit the content.
+const _touchDense = 'Dense grid or strip of small cells.';
+
+/// Controls and rows that keep their compact height on touch.
+const _touchCompact = 'Compact rows or controls below 48 px on touch.';
+
+/// Pages whose touch target sizes are not checked, with the reason.
+const _touchTargetExceptions = {
+  'autocomplete': _touchFields,
+  'date-time-entry': _touchFields,
+  'download-trigger': _touchFields,
+  'highlighted-text': _touchFields,
+  'number-entry': _touchFields,
+  'password-field': _touchFields,
+  'pin-entry': _touchFields,
+  'search-field': _touchFields,
+  'segmented-entry': _touchFields,
+  'tags-field': _touchFields,
+  'calendar': _touchDense,
+  'carousel': _touchDense,
+  'color-disk': _touchDense,
+  'color-picker': _touchDense,
+  'page-indicator': _touchDense,
+  'rating': _touchDense,
+  'week-schedule-grid': _touchDense,
+  'breadcrumb': _touchCompact,
+  'data-table': _touchCompact,
+  'editable-label': _touchCompact,
+  'floating-panel': _touchCompact,
+  'list-box': _touchCompact,
+  'pagination': _touchCompact,
+  'segment-group': _touchCompact,
+  'selectable-container': _touchCompact,
+  'tab-bar': _touchCompact,
+  'table-of-contents': _touchCompact,
+  'toggle-group': _touchCompact,
+};
+
+/// Checks the text contrast, unless [slug] is in [_contrastExceptions],
+/// and that every tap target has a label.
+Future<void> _expectPointerGuidelines(WidgetTester tester, String slug) async {
+  if (!_contrastExceptions.containsKey(slug)) {
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+  }
+  await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+}
+
 void main() {
   final settings = Oito2SystemSettings.fallback(
     const Oito2Platform(targetPlatform: TargetPlatform.linux, isWeb: false),
@@ -70,18 +129,33 @@ void main() {
     }
   });
 
+  test('the accessibility exceptions name existing pages', () {
+    final slugs = showcasePages.map((page) => page.slug).toSet();
+    expect(
+      slugs,
+      containsAll([
+        ..._contrastExceptions.keys,
+        ..._touchTargetExceptions.keys,
+      ]),
+    );
+  });
+
   for (final page in showcasePages) {
     testWidgets('${page.slug} builds side by side, light and English', (
       tester,
     ) async {
+      final semantics = tester.ensureSemantics();
       await pumpShowcase(tester, slug: page.slug);
       expect(tester.takeException(), isNull);
       expect(find.text(page.title), findsWidgets);
+      await _expectPointerGuidelines(tester, page.slug);
+      semantics.dispose();
     });
 
     testWidgets('${page.slug} builds narrow, dark, right to left, pt-BR', (
       tester,
     ) async {
+      final semantics = tester.ensureSemantics();
       await pumpShowcase(
         tester,
         slug: page.slug,
@@ -95,7 +169,26 @@ void main() {
       );
       expect(tester.takeException(), isNull);
       expect(find.text(page.title), findsWidgets);
+      await _expectPointerGuidelines(tester, page.slug);
+      semantics.dispose();
     });
+
+    // Only touch controls promise 48-pixel targets; pointer controls are
+    // 34 pixels high on purpose.
+    if (!_touchTargetExceptions.containsKey(page.slug)) {
+      testWidgets('${page.slug} has 48-pixel targets with touch controls', (
+        tester,
+      ) async {
+        final semantics = tester.ensureSemantics();
+        await pumpShowcase(
+          tester,
+          slug: page.slug,
+          options: const ShowcaseOptions(density: ShowcaseDensity.touch),
+        );
+        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+        semantics.dispose();
+      });
+    }
   }
 
   testWidgets('selecting a page in the list shows it', (tester) async {

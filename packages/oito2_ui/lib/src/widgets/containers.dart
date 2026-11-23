@@ -180,7 +180,8 @@ class Oito2Section extends StatelessWidget {
 /// A row with an optional leading widget, a title, a subtitle and a
 /// trailing widget, as used in settings and property lists.
 ///
-/// With [onTap] the whole row is a button.
+/// With [onTap] the whole row is a button. Without it, the tile is read
+/// as one element with its trailing control, such as a switch.
 class Oito2Tile extends StatelessWidget {
   /// Creates a tile.
   const Oito2Tile({
@@ -207,6 +208,10 @@ class Oito2Tile extends StatelessWidget {
   final Widget? subtitle;
 
   /// A widget after the text, such as a switch or a value.
+  ///
+  /// When the tile has [onTap] and a [Text] title, a trailing widget other
+  /// than a [Text] or an [Icon] is read as a separate element labeled with
+  /// the title, so its action stays apart from the tile's.
   final Widget? trailing;
 
   /// Called when the tile is activated; null makes the tile static.
@@ -231,7 +236,19 @@ class Oito2Tile extends StatelessWidget {
     final title = this.title;
     final subtitle = this.subtitle;
     final leading = this.leading;
-    final trailing = this.trailing;
+    var trailing = this.trailing;
+    final titleText = title is Text
+        ? title.data ?? title.textSpan?.toPlainText()
+        : null;
+    if (onTap != null &&
+        titleText != null &&
+        trailing != null &&
+        trailing is! Text &&
+        trailing is! Icon) {
+      trailing = MergeSemantics(
+        child: Semantics(label: titleText, child: trailing),
+      );
+    }
 
     Widget content = Padding(
       padding: padding,
@@ -284,11 +301,18 @@ class Oito2Tile extends StatelessWidget {
         ),
       );
     }
-    return Semantics(
-      container: true,
-      button: onTap != null,
-      enabled: enabled,
-      child: content,
+    if (onTap != null) {
+      return Semantics(
+        container: true,
+        button: true,
+        enabled: enabled,
+        child: content,
+      );
+    }
+    // Merging gives a trailing control, such as a switch, the title and
+    // subtitle as its label.
+    return MergeSemantics(
+      child: Semantics(enabled: enabled, child: content),
     );
   }
 }

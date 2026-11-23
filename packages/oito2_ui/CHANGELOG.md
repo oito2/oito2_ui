@@ -217,6 +217,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Selected list tiles (and `Oito2MasterTile`) keep their text and icon at the text contrast target over the primary-tinted fill on every surface; the light sidebar fell to 3.9:1.
+- `Oito2SplitButton` and `Oito2OptionButton`: assistive technologies read the label on the button itself instead of on an unlabeled button inside a labeled group.
+- `Oito2Tile`: a trailing control, such as a switch, is no longer read without a label. Without `onTap` the tile and the control are one element read with the title and subtitle; with `onTap` the control stays a separate element labeled with a `Text` title.
+- `Oito2HoverCard`: the long press that opens the card is part of the child's node, which carries its label, instead of an unlabeled node.
+- `Oito2ColorPicker`, `Oito2WeekScheduleGrid` and `Oito2TitleBarGestureDetector` no longer expose an unlabeled tap and scroll target for their pointer gestures; the per-axis sliders, the cells and the title bar buttons carry those actions.
 - `Oito2PageIndicator` shows its dots whenever they fit, without 16 hidden pixels of extra width, and its interactive dots no longer stretch to the full available height.
 - `Oito2TreeView`: Shift+click or Shift+arrow no longer throws when the anchor node is hidden (its branch closed, filtered out or removed).
 - `Oito2TreeView` and `Oito2ListBox`: a double click is detected on a real 300 ms timeout instead of frame times, so two slow clicks no longer activate an item.
