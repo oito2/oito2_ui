@@ -18,6 +18,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
+import 'touch_target.dart';
 import 'widget_helpers.dart';
 
 /// A search text field with a search icon and a clear button that appears
@@ -117,25 +118,27 @@ class _Oito2SearchFieldState extends State<Oito2SearchField>
       onKeyEvent: _onKey,
       canRequestFocus: false,
       skipTraversal: true,
-      child: TextField(
-        controller: _controller,
-        focusNode: widget.focusNode,
-        autofocus: widget.autofocus,
-        onChanged: widget.onChanged,
-        onSubmitted: widget.onSubmitted,
-        textInputAction: TextInputAction.search,
-        decoration: InputDecoration(
-          hintText: widget.hintText ?? localizations.searchFieldLabel,
-          prefixIcon:
-              widget.prefixIcon ??
-              const Icon(LucideIcons.search, size: Oito2Sizes.iconSize),
-          suffixIcon: hasText
-              ? FieldIconButton(
-                  tooltip: localizations.clearButtonTooltip,
-                  onPressed: _clear,
-                  icon: LucideIcons.x,
-                )
-              : null,
+      child: Oito2TouchTarget(
+        child: TextField(
+          controller: _controller,
+          focusNode: widget.focusNode,
+          autofocus: widget.autofocus,
+          onChanged: widget.onChanged,
+          onSubmitted: widget.onSubmitted,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: widget.hintText ?? localizations.searchFieldLabel,
+            prefixIcon:
+                widget.prefixIcon ??
+                const Icon(LucideIcons.search, size: Oito2Sizes.iconSize),
+            suffixIcon: hasText
+                ? FieldIconButton(
+                    tooltip: localizations.clearButtonTooltip,
+                    onPressed: _clear,
+                    icon: LucideIcons.x,
+                  )
+                : null,
+          ),
         ),
       ),
     );

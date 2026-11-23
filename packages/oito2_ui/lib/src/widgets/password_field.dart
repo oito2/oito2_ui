@@ -20,6 +20,7 @@ import 'package:material_ui/material_ui.dart';
 import '../l10n/oito2_localizations.dart';
 import 'info.dart';
 import 'password_strength.dart';
+import 'touch_target.dart';
 import 'widget_helpers.dart';
 
 /// A password text field with a button that shows or hides the text and
@@ -229,31 +230,33 @@ class _Oito2PasswordFieldState extends State<Oito2PasswordField>
             ],
           )
         : null;
-    final field = TextField(
-      controller: effectiveController,
-      focusNode: _focusNode,
-      autofocus: widget.autofocus,
-      enabled: widget.enabled,
-      obscureText: !_visible,
-      enableSuggestions: false,
-      autocorrect: false,
-      keyboardType: TextInputType.visiblePassword,
-      autofillHints: widget.autofillHints,
-      textInputAction: widget.textInputAction,
-      onChanged: widget.onChanged,
-      onSubmitted: widget.onSubmitted,
-      decoration: InputDecoration(
-        labelText: widget.labelText,
-        hintText: widget.hintText,
-        errorText: combinedError == null ? errorText : null,
-        error: combinedError,
-        helper: combinedError == null ? capsWarning : null,
-        suffixIcon: FieldIconButton(
-          icon: _visible ? LucideIcons.eye_off : LucideIcons.eye,
-          tooltip: _visible ? strings.hidePassword : strings.showPassword,
-          onPressed: widget.enabled
-              ? () => setState(() => _visible = !_visible)
-              : null,
+    final field = Oito2TouchTarget(
+      child: TextField(
+        controller: effectiveController,
+        focusNode: _focusNode,
+        autofocus: widget.autofocus,
+        enabled: widget.enabled,
+        obscureText: !_visible,
+        enableSuggestions: false,
+        autocorrect: false,
+        keyboardType: TextInputType.visiblePassword,
+        autofillHints: widget.autofillHints,
+        textInputAction: widget.textInputAction,
+        onChanged: widget.onChanged,
+        onSubmitted: widget.onSubmitted,
+        decoration: InputDecoration(
+          labelText: widget.labelText,
+          hintText: widget.hintText,
+          errorText: combinedError == null ? errorText : null,
+          error: combinedError,
+          helper: combinedError == null ? capsWarning : null,
+          suffixIcon: FieldIconButton(
+            icon: _visible ? LucideIcons.eye_off : LucideIcons.eye,
+            tooltip: _visible ? strings.hidePassword : strings.showPassword,
+            onPressed: widget.enabled
+                ? () => setState(() => _visible = !_visible)
+                : null,
+          ),
         ),
       ),
     );

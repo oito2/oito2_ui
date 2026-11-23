@@ -23,6 +23,8 @@ import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'resize_handle.dart';
 import 'table_column.dart';
+import 'touch_target.dart';
+import 'widget_helpers.dart';
 
 /// Returns the padding of the cell in the column at [index] of a widget
 /// with table columns: none at the start of the first column.
@@ -114,7 +116,9 @@ class TableHeader<R> extends StatelessWidget {
   /// The width of each of [columns].
   final List<double> widths;
 
-  /// The height of the header row.
+  /// The height of the header row, raised to fit 48-pixel sort buttons
+  /// above its bottom border when the headers sort and the theme pads tap
+  /// targets.
   final double height;
 
   /// The space around the header row.
@@ -187,6 +191,9 @@ class TableHeader<R> extends StatelessWidget {
           );
     final tooltip = column.tooltip;
     if (tooltip != null) label = Tooltip(message: tooltip, child: label);
+    if (sortable) {
+      label = Oito2TouchTarget(mergeSemantics: true, child: label);
+    }
     return label;
   }
 
@@ -206,7 +213,10 @@ class TableHeader<R> extends StatelessWidget {
     final rtl = Directionality.of(context) == TextDirection.rtl;
     const step = 8.0;
     return Container(
-      height: height,
+      // The 1-pixel bottom border sits below the 48-pixel sort buttons.
+      height: onSort != null && padsTapTargets(context)
+          ? math.max(height, Oito2Sizes.minTouchTarget + 1)
+          : height,
       margin: margin,
       padding: padding,
       decoration: BoxDecoration(

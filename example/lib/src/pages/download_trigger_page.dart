@@ -63,9 +63,13 @@ class _DownloadTriggerPageState extends State<DownloadTriggerPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: Oito2Spacing.sm,
               children: [
-                TextField(
-                  controller: _controller,
-                  decoration: const InputDecoration(labelText: 'Content'),
+                // A plain text field pads its touch target like the
+                // library's fields.
+                Oito2TouchTarget(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: const InputDecoration(labelText: 'Content'),
+                  ),
                 ),
                 Align(
                   // #region preview

@@ -21,6 +21,7 @@ import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'calendar.dart';
 import 'popover.dart';
+import 'touch_target.dart';
 import 'widget_helpers.dart';
 
 /// Shared behaviour of the date and time entries: a text field whose text
@@ -261,26 +262,28 @@ class _Oito2DateEntryState extends _ParsedEntryState<Oito2DateEntry, DateTime> {
       focusOnOpen: false,
       padding: const EdgeInsets.all(Oito2Spacing.sm),
       semanticLabel: _l10n.datePickerHelpText,
-      builder: (context, popover) => TextField(
-        controller: controller,
-        focusNode: focusNode,
-        autofocus: widget.autofocus,
-        keyboardType: TextInputType.datetime,
-        // Compact date patterns of some locales hold letters or native
-        // digits, so the parser validates the text instead of a filter.
-        onChanged: onTextChanged,
-        onSubmitted: onSubmitted,
-        decoration: InputDecoration(
-          labelText: widget.labelText ?? _l10n.dateInputLabel,
-          hintText: _l10n.dateHelpText,
-          errorText: visibleError,
-          suffixIcon: widget.showPickerButton
-              ? FieldIconButton(
-                  tooltip: _l10n.datePickerHelpText,
-                  onPressed: popover.toggle,
-                  icon: LucideIcons.calendar,
-                )
-              : null,
+      builder: (context, popover) => Oito2TouchTarget(
+        child: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          autofocus: widget.autofocus,
+          keyboardType: TextInputType.datetime,
+          // Compact date patterns of some locales hold letters or native
+          // digits, so the parser validates the text instead of a filter.
+          onChanged: onTextChanged,
+          onSubmitted: onSubmitted,
+          decoration: InputDecoration(
+            labelText: widget.labelText ?? _l10n.dateInputLabel,
+            hintText: _l10n.dateHelpText,
+            errorText: visibleError,
+            suffixIcon: widget.showPickerButton
+                ? FieldIconButton(
+                    tooltip: _l10n.datePickerHelpText,
+                    onPressed: popover.toggle,
+                    icon: LucideIcons.calendar,
+                  )
+                : null,
+          ),
         ),
       ),
       popoverBuilder: (context, popover) => Oito2Calendar(
@@ -439,23 +442,25 @@ class _Oito2TimeEntryState
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      focusNode: focusNode,
-      autofocus: widget.autofocus,
-      keyboardType: TextInputType.datetime,
-      onChanged: onTextChanged,
-      onSubmitted: onSubmitted,
-      decoration: InputDecoration(
-        labelText: widget.labelText ?? _l10n.timePickerInputHelpText,
-        errorText: visibleError,
-        suffixIcon: widget.showPickerButton
-            ? FieldIconButton(
-                tooltip: _l10n.timePickerDialHelpText,
-                onPressed: _pick,
-                icon: LucideIcons.clock,
-              )
-            : null,
+    return Oito2TouchTarget(
+      child: TextField(
+        controller: controller,
+        focusNode: focusNode,
+        autofocus: widget.autofocus,
+        keyboardType: TextInputType.datetime,
+        onChanged: onTextChanged,
+        onSubmitted: onSubmitted,
+        decoration: InputDecoration(
+          labelText: widget.labelText ?? _l10n.timePickerInputHelpText,
+          errorText: visibleError,
+          suffixIcon: widget.showPickerButton
+              ? FieldIconButton(
+                  tooltip: _l10n.timePickerDialHelpText,
+                  onPressed: _pick,
+                  icon: LucideIcons.clock,
+                )
+              : null,
+        ),
       ),
     );
   }
@@ -811,34 +816,36 @@ class _Oito2SegmentedEntryState extends State<Oito2SegmentedEntry> {
               padding: const EdgeInsets.symmetric(horizontal: Oito2Spacing.xs),
               child: ExcludeSemantics(child: Text(widget.delimiter)),
             ),
-          SizedBox(
-            width: _segmentWidth(context, widget.segments[i]),
-            child: Semantics(
-              label:
-                  widget.segments[i].label ??
-                  Oito2Localizations.of(context).partOf(i + 1, count),
-              child: TextField(
-                controller: _controllers[i],
-                focusNode: _nodes[i],
-                textAlign: TextAlign.center,
-                keyboardType: widget.segments[i].numeric
-                    ? TextInputType.number
-                    : TextInputType.text,
-                inputFormatters: [
-                  if (widget.segments[i].numeric)
-                    FilteringTextInputFormatter.digitsOnly
-                  else
-                    FilteringTextInputFormatter.deny(
-                      RegExp(RegExp.escape(_advanceCharacter)),
+          Oito2TouchTarget(
+            child: SizedBox(
+              width: _segmentWidth(context, widget.segments[i]),
+              child: Semantics(
+                label:
+                    widget.segments[i].label ??
+                    Oito2Localizations.of(context).partOf(i + 1, count),
+                child: TextField(
+                  controller: _controllers[i],
+                  focusNode: _nodes[i],
+                  textAlign: TextAlign.center,
+                  keyboardType: widget.segments[i].numeric
+                      ? TextInputType.number
+                      : TextInputType.text,
+                  inputFormatters: [
+                    if (widget.segments[i].numeric)
+                      FilteringTextInputFormatter.digitsOnly
+                    else
+                      FilteringTextInputFormatter.deny(
+                        RegExp(RegExp.escape(_advanceCharacter)),
+                      ),
+                    LengthLimitingTextInputFormatter(widget.segments[i].length),
+                  ],
+                  onChanged: (text) => _onChanged(i, text),
+                  decoration: InputDecoration(
+                    hintText: widget.segments[i].hint,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: Oito2Spacing.md,
+                      vertical: Oito2Spacing.sm,
                     ),
-                  LengthLimitingTextInputFormatter(widget.segments[i].length),
-                ],
-                onChanged: (text) => _onChanged(i, text),
-                decoration: InputDecoration(
-                  hintText: widget.segments[i].hint,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: Oito2Spacing.md,
-                    vertical: Oito2Spacing.sm,
                   ),
                 ),
               ),

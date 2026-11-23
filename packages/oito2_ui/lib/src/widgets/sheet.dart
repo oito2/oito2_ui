@@ -193,8 +193,8 @@ class Oito2Sheet extends StatelessWidget {
                 ),
                 ...actions,
                 if (showCloseButton)
-                  FieldIconButton(
-                    icon: LucideIcons.x,
+                  IconButton(
+                    icon: const Icon(LucideIcons.x, size: Oito2Sizes.iconSize),
                     tooltip: Oito2Localizations.of(context).close,
                     onPressed: () => Oito2Sheet.close<Object?>(context),
                   ),

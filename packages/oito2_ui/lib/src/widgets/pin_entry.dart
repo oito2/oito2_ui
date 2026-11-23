@@ -18,6 +18,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
+import 'touch_target.dart';
 import 'widget_helpers.dart';
 
 /// A code entry drawn as [length] one-character cells, such as a PIN or
@@ -218,11 +219,13 @@ class _Oito2PinEntryState extends State<Oito2PinEntry>
         decoration: bareInputDecoration(),
       ),
     );
-    return Stack(
-      children: [
-        cells,
-        Positioned.fill(child: field),
-      ],
+    return Oito2TouchTarget(
+      child: Stack(
+        children: [
+          cells,
+          Positioned.fill(child: field),
+        ],
+      ),
     );
   }
 }

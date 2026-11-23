@@ -78,7 +78,7 @@ void main() {
       expect(side.color, colors.semantic.primaryText);
       expect(side.width, Oito2Sizes.focusBorderWidth);
       expect(
-        tester.getSemantics(find.byType(Oito2SelectableContainer)),
+        tester.getSemantics(find.text('Dark')),
         matchesSemantics(
           isSelected: true,
           hasSelectedState: true,

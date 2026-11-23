@@ -21,6 +21,7 @@ import '../collections/list_collection.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'options_view.dart';
+import 'touch_target.dart';
 import 'utilities.dart';
 import 'widget_helpers.dart';
 
@@ -456,45 +457,51 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: _input.requestFocus,
-          child: InputDecorator(
-            isFocused: _hasFocus,
-            isEmpty: widget.tags.isEmpty && _controller.text.isEmpty,
-            decoration: InputDecoration(
-              labelText: widget.labelText,
-              enabled: _enabled,
-              suffixIcon: widget.clearable && _enabled && widget.tags.isNotEmpty
-                  ? IconButton(
-                      onPressed: _clear,
-                      tooltip: Oito2Localizations.of(context).clear,
-                      icon: const Icon(LucideIcons.x),
-                    )
-                  : null,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: Oito2Spacing.sm,
-                vertical: Oito2Spacing.xs + 1,
+          // The text input joins the node of the whole field, which is the
+          // touch target that focuses it.
+          child: Oito2TouchTarget(
+            child: InputDecorator(
+              isFocused: _hasFocus,
+              isEmpty: widget.tags.isEmpty && _controller.text.isEmpty,
+              decoration: InputDecoration(
+                labelText: widget.labelText,
+                enabled: _enabled,
+                suffixIcon:
+                    widget.clearable && _enabled && widget.tags.isNotEmpty
+                    ? IconButton(
+                        onPressed: _clear,
+                        tooltip: Oito2Localizations.of(context).clear,
+                        icon: const Icon(LucideIcons.x),
+                      )
+                    : null,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: Oito2Spacing.sm,
+                  vertical: Oito2Spacing.xs + 1,
+                ),
               ),
-            ),
-            child: Wrap(
-              spacing: Oito2Spacing.xs,
-              runSpacing: Oito2Spacing.xs,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                for (var i = 0; i < widget.tags.length; i++) _tag(i),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 24),
-                  child: Align(
-                    widthFactor: 1,
-                    heightFactor: 1,
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: Oito2Spacing.xs,
+              child: Wrap(
+                spacing: Oito2Spacing.xs,
+                runSpacing: Oito2Spacing.xs,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  for (var i = 0; i < widget.tags.length; i++)
+                    Oito2TouchTarget(mergeSemantics: true, child: _tag(i)),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 24),
+                    child: Align(
+                      widthFactor: 1,
+                      heightFactor: 1,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: Oito2Spacing.xs,
+                        ),
+                        child: input,
                       ),
-                      child: input,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

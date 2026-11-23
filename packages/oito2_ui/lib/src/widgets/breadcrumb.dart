@@ -13,12 +13,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:math' as math;
+
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
+import 'touch_target.dart';
 import 'utilities.dart';
 import 'widget_helpers.dart';
 
@@ -123,6 +126,14 @@ class _Oito2BreadcrumbState<T> extends State<Oito2Breadcrumb<T>> {
 
   /// The height of the buttons.
   static const _buttonHeight = 28.0;
+
+  /// The least width that a button takes in the layout: the touch target
+  /// when the theme pads tap targets, and none otherwise.
+  double get _minButtonWidth =>
+      padsTapTargets(context) ? Oito2Sizes.minTouchTarget : 0;
+
+  /// The width of the "…" and edit buttons in the layout.
+  double get _iconButtonWidth => math.max(_buttonWidth, _minButtonWidth);
 
   @override
   void initState() {
@@ -229,12 +240,13 @@ class _Oito2BreadcrumbState<T> extends State<Oito2Breadcrumb<T>> {
     final n = items.length;
     if (n < 2) return null;
     final widths = [
-      for (var i = 0; i < n; i++)
-        _segmentWidth(items[i], i == n - 1 ? currentStyle : style, scaler),
+      for (var i = 0; i < n - 1; i++)
+        math.max(_segmentWidth(items[i], style, scaler), _minButtonWidth),
+      _segmentWidth(items[n - 1], currentStyle, scaler),
     ];
     final edit = widget.onSubmitted == null
         ? 0.0
-        : _buttonWidth + Oito2Spacing.xs;
+        : _iconButtonWidth + Oito2Spacing.xs;
     final available = maxWidth - edit;
     double widthOf(int start, int end) {
       var total = 0.0;
@@ -245,7 +257,7 @@ class _Oito2BreadcrumbState<T> extends State<Oito2Breadcrumb<T>> {
         count++;
       }
       if (end > start) {
-        total += _buttonWidth;
+        total += _iconButtonWidth;
         count++;
       }
       return total + (count - 1) * _separatorWidth;
@@ -274,21 +286,23 @@ class _Oito2BreadcrumbState<T> extends State<Oito2Breadcrumb<T>> {
     final scheme = theme.colorScheme;
     final height = controlHeightOf(context);
     if (_editing) {
-      return SizedBox(
-        height: height,
-        child: CallbackShortcuts(
-          bindings: {
-            const SingleActivator(LogicalKeyboardKey.escape): _stopEditing,
-          },
-          child: TextField(
-            controller: _text,
-            focusNode: _field,
-            textInputAction: TextInputAction.go,
-            onSubmitted: _submit,
-            style: theme.textTheme.bodyMedium,
-            decoration: InputDecoration(
-              isDense: true,
-              hintText: strings.pathBar,
+      return Oito2TouchTarget(
+        child: SizedBox(
+          height: height,
+          child: CallbackShortcuts(
+            bindings: {
+              const SingleActivator(LogicalKeyboardKey.escape): _stopEditing,
+            },
+            child: TextField(
+              controller: _text,
+              focusNode: _field,
+              textInputAction: TextInputAction.go,
+              onSubmitted: _submit,
+              style: theme.textTheme.bodyMedium,
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: strings.pathBar,
+              ),
             ),
           ),
         ),
@@ -413,7 +427,7 @@ class _Oito2BreadcrumbState<T> extends State<Oito2Breadcrumb<T>> {
         }
         _order = order;
         Widget bar = SizedBox(
-          height: height,
+          height: math.max(height, _minButtonWidth),
           child: Row(children: row),
         );
         if (editable) {
@@ -493,6 +507,7 @@ class _SegmentButton extends StatelessWidget {
     required this.onPressed,
     required this.child,
     this.tooltip,
+    this.expanded,
   });
 
   final FocusNode focusNode;
@@ -500,6 +515,7 @@ class _SegmentButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final Widget child;
   final String? tooltip;
+  final bool? expanded;
 
   @override
   Widget build(BuildContext context) {
@@ -531,11 +547,15 @@ class _SegmentButton extends StatelessWidget {
         child: button,
       );
     }
-    return Semantics(
-      button: onPressed != null,
-      enabled: onPressed != null,
-      label: tooltip,
-      child: button,
+    return Oito2TouchTarget(
+      mergeSemantics: true,
+      child: Semantics(
+        button: onPressed != null,
+        enabled: onPressed != null,
+        expanded: expanded,
+        label: tooltip,
+        child: button,
+      ),
     );
   }
 }
@@ -562,21 +582,19 @@ class _OverflowButton extends StatelessWidget {
     return MenuAnchor(
       childFocusNode: focusNode,
       menuChildren: menuChildren,
-      builder: (context, controller, _) => Semantics(
+      builder: (context, controller, _) => _SegmentButton(
+        focusNode: focusNode,
+        height: height,
+        tooltip: tooltip,
         expanded: controller.isOpen,
-        child: _SegmentButton(
-          focusNode: focusNode,
-          height: height,
-          tooltip: tooltip,
-          onPressed: () =>
-              controller.isOpen ? controller.close() : controller.open(),
-          child: SizedBox(
-            width: size,
-            child: Icon(
-              LucideIcons.ellipsis,
-              size: 16,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+        onPressed: () =>
+            controller.isOpen ? controller.close() : controller.open(),
+        child: SizedBox(
+          width: size,
+          child: Icon(
+            LucideIcons.ellipsis,
+            size: 16,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ),

@@ -39,47 +39,24 @@ const _contrastExceptions = {
       'on purpose.',
 };
 
-/// Single-line fields keep the 40-pixel touch height, and so do the
-/// buttons inside them.
-const _touchFields = 'Single-line fields are 40 px high on touch.';
-
-/// Controls laid out in a dense grid or strip, where 48-pixel cells would
-/// not fit the content.
-const _touchDense = 'Dense grid or strip of small cells.';
-
-/// Controls and rows that keep their compact height on touch.
-const _touchCompact = 'Compact rows or controls below 48 px on touch.';
+/// Controls laid out in a dense grid or strip of small cells by design,
+/// where 48-pixel cells would not fit the content.
+const _touchDense = 'Dense grid or strip of small cells by design.';
 
 /// Pages whose touch target sizes are not checked, with the reason.
 const _touchTargetExceptions = {
-  'autocomplete': _touchFields,
-  'date-time-entry': _touchFields,
-  'download-trigger': _touchFields,
-  'highlighted-text': _touchFields,
-  'number-entry': _touchFields,
-  'password-field': _touchFields,
-  'pin-entry': _touchFields,
-  'search-field': _touchFields,
-  'segmented-entry': _touchFields,
-  'tags-field': _touchFields,
-  'calendar': _touchDense,
-  'carousel': _touchDense,
-  'color-disk': _touchDense,
-  'color-picker': _touchDense,
-  'page-indicator': _touchDense,
-  'rating': _touchDense,
-  'week-schedule-grid': _touchDense,
-  'breadcrumb': _touchCompact,
-  'data-table': _touchCompact,
-  'editable-label': _touchCompact,
-  'floating-panel': _touchCompact,
-  'list-box': _touchCompact,
-  'pagination': _touchCompact,
-  'segment-group': _touchCompact,
-  'selectable-container': _touchCompact,
-  'tab-bar': _touchCompact,
-  'table-of-contents': _touchCompact,
-  'toggle-group': _touchCompact,
+  'calendar': '$_touchDense The day cells are 42 px in a 7-column month.',
+  'carousel': '$_touchDense The page dots are 24 px.',
+  'color-disk': '$_touchDense The color swatches are 28 px.',
+  'color-picker':
+      '$_touchDense The color swatches are 28 px, beside compact channel '
+      'sliders.',
+  'page-indicator': '$_touchDense The page dots are 24 px.',
+  'week-schedule-grid':
+      '$_touchDense The hour cells are 30 by 28 px in a 24-column week.',
+  'floating-panel':
+      'The window buttons of the title bar keep the 24-px desktop window '
+      'control size inside the 46-px title bar.',
 };
 
 /// Checks the text contrast, unless [slug] is in [_contrastExceptions],

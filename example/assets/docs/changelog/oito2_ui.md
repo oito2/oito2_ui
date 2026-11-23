@@ -171,6 +171,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2FreedesktopIcons`: the MIME type icons of the freedesktop Icon Naming Specification (`text-x-generic`, `x-office-document`, `x-office-spreadsheet`, `x-office-presentation`, `image-x-generic`, `audio-x-generic`, `video-x-generic`, `package-x-generic`, `application-x-executable`, `text-html`, `text-x-script`, `font-x-generic` and the rest, templates included), `application-x-generic`, and the `emblem-synchronizing`, `emblem-ok`, `emblem-error` and `emblem-new` emblems.
 - `Oito2FreedesktopIcons.forMimeType`: the icon of a MIME type, such as `application/pdf` or `text/x-python`, for office formats, archives, programs, scripts and folders, falling back to the icon of the top-level type and then to `application-x-generic`.
 - `Oito2Localizations.dropFilesOrFoldersHere`, `folderItem`, `accounts`, `addAccount`, `switchAccount`, `pendingCount`, `pathBar`, `showPathSegments`, `editPath` and `currentLocation`.
+- `Oito2TouchTarget`: pads the touch target of a control to 48 pixels, with the control drawn at its own size, when the theme pads tap targets (touch platforms), and adds nothing on pointer platforms; for controls outside the library, such as a plain `TextField`, which the theme keeps 40 pixels tall on touch.
 
 ### Changed
 
@@ -214,6 +215,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2NumberEntry` asserts that `decimals` is at most 20.
 - `Oito2DateTimeEntry` reports a new combination only while both fields parse, and once they parse again if it changed.
 - `Oito2TagsField` drops the refused tags of a pasted list instead of joining the refused text to the rest.
+- `Oito2TabBar.tabHeight` defaults to `Oito2Sizes.minTouchTarget` (48), the height of a touch tab with its indicator space, so `preferredSize` fits the bar on every platform.
 
 ### Fixed
 
@@ -301,3 +303,4 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2NumberEntry`: Home and End no longer change the text of a read-only entry.
 - `Oito2Tile` with `onTap` reads as a button to assistive technologies.
 - `Oito2SelectableContainer` and `Oito2Banner` change their border at once when animations are disabled.
+- Touch targets reach 48 pixels where the theme pads tap targets (touch platforms) without changing the pointer layout: single-line fields (`Oito2SearchField`, `Oito2PasswordField`, `Oito2NumberEntry`, `Oito2DateEntry`, `Oito2TimeEntry`, `Oito2DateTimeEntry`, `Oito2SegmentedEntry`, `Oito2PinEntry`, `Oito2Autocomplete`, `Oito2TagsField` and its tags) keep their 40-pixel look inside a padded touch target, and their clear, visibility, step and picker buttons take 48 pixels; `Oito2Pagination` page buttons, `Oito2ToggleGroup` items, `Oito2SegmentGroup` segments, `Oito2Breadcrumb` buttons, `Oito2EditableLabel`, `Oito2Rating`, small clickable `Oito2SelectableContainer` and `Oito2Banner` surfaces, the `Oito2WeekScheduleGrid` legend and sortable `Oito2DataTable`/tree headers are padded the same way; `Oito2TabBar` tabs, `Oito2ListBox` rows and `Oito2TableOfContents` entries are 48 pixels tall on touch. The `Oito2Sheet` close button follows the theme's tap target size.

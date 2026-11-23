@@ -117,6 +117,7 @@ export 'src/widgets/timer.dart';
 export 'src/widgets/toast.dart';
 export 'src/widgets/toggle_group.dart';
 export 'src/widgets/toggles.dart';
+export 'src/widgets/touch_target.dart';
 export 'src/widgets/tour.dart';
 export 'src/widgets/tree_view.dart';
 export 'src/widgets/usage_bar.dart';

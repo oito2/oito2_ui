@@ -18,6 +18,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
+import 'touch_target.dart';
 import 'utilities.dart';
 import 'widget_helpers.dart';
 
@@ -128,56 +129,63 @@ class _Oito2EditableLabelState extends State<Oito2EditableLabel>
     final theme = Theme.of(context);
     final style = theme.textTheme.bodyLarge?.merge(widget.style);
     if (_editing) {
-      return CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.escape): () =>
-              _finish(keep: false),
-        },
-        child: TextField(
-          controller: _controller,
-          focusNode: _fieldFocus,
-          style: style,
-          onSubmitted: (_) => _finish(keep: true),
-          decoration: const InputDecoration(
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: Oito2Spacing.xs,
-              vertical: Oito2Spacing.xs,
+      return Oito2TouchTarget(
+        child: CallbackShortcuts(
+          bindings: {
+            const SingleActivator(LogicalKeyboardKey.escape): () =>
+                _finish(keep: false),
+          },
+          child: TextField(
+            controller: _controller,
+            focusNode: _fieldFocus,
+            style: style,
+            onSubmitted: (_) => _finish(keep: true),
+            decoration: const InputDecoration(
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: Oito2Spacing.xs,
+                vertical: Oito2Spacing.xs,
+              ),
+              constraints: BoxConstraints(),
             ),
-            constraints: BoxConstraints(),
           ),
         ),
       );
     }
     final empty = widget.text.isEmpty;
     final readOnly = widget.onSubmitted == null;
-    return Semantics(
-      label: empty ? widget.placeholder : widget.text,
-      hint: readOnly ? null : Oito2Localizations.of(context).editText,
-      onTap: readOnly ? null : _start,
-      excludeSemantics: true,
-      child: CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.enter): _start,
-          const SingleActivator(LogicalKeyboardKey.f2): _start,
-        },
-        child: Oito2FocusBorder(
-          borderRadius: Oito2Radius.smallAll,
-          child: Focus(
-            focusNode: _labelFocus,
-            canRequestFocus: !readOnly,
-            child: GestureDetector(
-              onDoubleTap: _start,
-              child: MouseRegion(
-                cursor: readOnly ? MouseCursor.defer : SystemMouseCursors.text,
-                child: Padding(
-                  padding: const EdgeInsets.all(Oito2Spacing.xs),
-                  child: Text(
-                    empty ? (widget.placeholder ?? '') : widget.text,
-                    style: empty
-                        ? style?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          )
-                        : style,
+    return Oito2TouchTarget(
+      mergeSemantics: true,
+      child: Semantics(
+        label: empty ? widget.placeholder : widget.text,
+        hint: readOnly ? null : Oito2Localizations.of(context).editText,
+        onTap: readOnly ? null : _start,
+        excludeSemantics: true,
+        child: CallbackShortcuts(
+          bindings: {
+            const SingleActivator(LogicalKeyboardKey.enter): _start,
+            const SingleActivator(LogicalKeyboardKey.f2): _start,
+          },
+          child: Oito2FocusBorder(
+            borderRadius: Oito2Radius.smallAll,
+            child: Focus(
+              focusNode: _labelFocus,
+              canRequestFocus: !readOnly,
+              child: GestureDetector(
+                onDoubleTap: _start,
+                child: MouseRegion(
+                  cursor: readOnly
+                      ? MouseCursor.defer
+                      : SystemMouseCursors.text,
+                  child: Padding(
+                    padding: const EdgeInsets.all(Oito2Spacing.xs),
+                    child: Text(
+                      empty ? (widget.placeholder ?? '') : widget.text,
+                      style: empty
+                          ? style?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            )
+                          : style,
+                    ),
                   ),
                 ),
               ),

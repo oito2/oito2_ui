@@ -22,6 +22,9 @@ import '../tokens/geometry.dart';
 import 'utilities.dart';
 import 'widget_helpers.dart';
 
+/// The space that a Material tab bar adds below each tab for its indicator.
+const double _indicatorWeight = 2;
+
 /// A tab of an [Oito2TabBar]: a [label] with an optional [icon] beside
 /// it. A label wider than the tab ends with an ellipsis.
 class Oito2Tab extends StatelessWidget {
@@ -39,7 +42,11 @@ class Oito2Tab extends StatelessWidget {
     final touch =
         Theme.of(context).materialTapTargetSize == MaterialTapTargetSize.padded;
     return SizedBox(
-      height: touch ? Oito2Sizes.touchButtonHeight : Oito2Sizes.buttonHeight,
+      // On touch, the tab and the 2-pixel indicator space that the tab bar
+      // adds below it make up the 48-pixel touch target.
+      height: touch
+          ? Oito2Sizes.minTouchTarget - _indicatorWeight
+          : Oito2Sizes.buttonHeight,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -90,7 +97,7 @@ class Oito2TabBar extends StatelessWidget implements PreferredSizeWidget {
     this.controller,
     this.onTap,
     this.isScrollable = false,
-    this.tabHeight = Oito2Sizes.touchButtonHeight,
+    this.tabHeight = Oito2Sizes.minTouchTarget,
     this.style = Oito2TabBarStyle.pill,
   });
 
@@ -108,10 +115,11 @@ class Oito2TabBar extends StatelessWidget implements PreferredSizeWidget {
   /// scrolls, whatever this value.
   final bool isScrollable;
 
-  /// The tab height that [preferredSize] reserves: the touch height by
-  /// default, which fits every platform. [Oito2Sizes.buttonHeight] fits
-  /// pointer platforms exactly. The tabs size themselves from the theme's
-  /// tap target size, not from this value.
+  /// The tab height that [preferredSize] reserves: the 48-pixel touch
+  /// target by default, which fits every platform. 36 pixels, the
+  /// [Oito2Sizes.buttonHeight] and the indicator space, fit pointer
+  /// platforms exactly. The tabs size themselves from the theme's tap
+  /// target size, not from this value.
   final double tabHeight;
 
   /// The look of the selected tab marker.
@@ -139,6 +147,7 @@ class Oito2TabBar extends StatelessWidget implements PreferredSizeWidget {
         tabs: tabs,
         dividerColor: Colors.transparent,
         indicatorSize: TabBarIndicatorSize.tab,
+        indicatorWeight: _indicatorWeight,
         indicator: ShapeDecoration(
           color: subtle
               ? accent.withValues(alpha: 0.12)

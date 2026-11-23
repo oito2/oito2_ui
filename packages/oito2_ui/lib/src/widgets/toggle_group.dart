@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
+import 'touch_target.dart';
 import 'utilities.dart';
 import 'widget_helpers.dart';
 
@@ -243,7 +244,7 @@ class _Oito2ToggleGroupState<T> extends State<Oito2ToggleGroup<T>> {
         child: result,
       );
     }
-    return result;
+    return Oito2TouchTarget(mergeSemantics: true, child: result);
   }
 
   @override

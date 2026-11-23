@@ -19,6 +19,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../icons/animated_icons.dart';
 import '../l10n/oito2_localizations.dart';
+import 'touch_target.dart';
 import 'utilities.dart';
 import 'widget_helpers.dart';
 
@@ -176,51 +177,53 @@ class _Oito2RatingState extends State<Oito2Rating> {
       );
     }
     final (:back, :forward) = readingArrowsOf(context);
-    return Semantics(
-      slider: true,
-      label: widget.semanticLabel,
-      value: _format(widget.value),
-      increasedValue: _format(
-        (_aligned(widget.value) + step).clamp(0, widget.max).toDouble(),
-      ),
-      decreasedValue: _format(
-        (_aligned(widget.value) - step).clamp(0, widget.max).toDouble(),
-      ),
-      onIncrease: () => _stepBy(1),
-      onDecrease: () => _stepBy(-1),
-      child: CallbackShortcuts(
-        bindings: {
-          SingleActivator(forward): () => _stepBy(1),
-          const SingleActivator(LogicalKeyboardKey.arrowUp): () => _stepBy(1),
-          SingleActivator(back): () => _stepBy(-1),
-          const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
-              _stepBy(-1),
-          const SingleActivator(LogicalKeyboardKey.home): () => _set(0),
-          const SingleActivator(LogicalKeyboardKey.end): () =>
-              _set(widget.max.toDouble()),
-          for (var n = 0; n <= widget.max && n <= 9; n++)
-            SingleActivator(
-              LogicalKeyboardKey(LogicalKeyboardKey.digit0.keyId + n),
-            ): () =>
-                _set(n.toDouble()),
-        },
-        child: Oito2FocusBorder(
-          borderRadius: BorderRadius.circular(4),
-          child: Focus(
-            focusNode: _focusNode,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              onHover: (event) =>
-                  setState(() => _hover = _valueAt(event.localPosition.dx)),
-              onExit: (_) => setState(() => _hover = null),
-              child: GestureDetector(
-                onTapUp: (details) {
-                  // A click focuses the stars, so the keys work next.
-                  _focusNode.requestFocus();
-                  setState(() => _hover = null);
-                  _set(_valueAt(details.localPosition.dx));
-                },
-                child: ExcludeSemantics(child: row),
+    return Oito2TouchTarget(
+      child: Semantics(
+        slider: true,
+        label: widget.semanticLabel,
+        value: _format(widget.value),
+        increasedValue: _format(
+          (_aligned(widget.value) + step).clamp(0, widget.max).toDouble(),
+        ),
+        decreasedValue: _format(
+          (_aligned(widget.value) - step).clamp(0, widget.max).toDouble(),
+        ),
+        onIncrease: () => _stepBy(1),
+        onDecrease: () => _stepBy(-1),
+        child: CallbackShortcuts(
+          bindings: {
+            SingleActivator(forward): () => _stepBy(1),
+            const SingleActivator(LogicalKeyboardKey.arrowUp): () => _stepBy(1),
+            SingleActivator(back): () => _stepBy(-1),
+            const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
+                _stepBy(-1),
+            const SingleActivator(LogicalKeyboardKey.home): () => _set(0),
+            const SingleActivator(LogicalKeyboardKey.end): () =>
+                _set(widget.max.toDouble()),
+            for (var n = 0; n <= widget.max && n <= 9; n++)
+              SingleActivator(
+                LogicalKeyboardKey(LogicalKeyboardKey.digit0.keyId + n),
+              ): () =>
+                  _set(n.toDouble()),
+          },
+          child: Oito2FocusBorder(
+            borderRadius: BorderRadius.circular(4),
+            child: Focus(
+              focusNode: _focusNode,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                onHover: (event) =>
+                    setState(() => _hover = _valueAt(event.localPosition.dx)),
+                onExit: (_) => setState(() => _hover = null),
+                child: GestureDetector(
+                  onTapUp: (details) {
+                    // A click focuses the stars, so the keys work next.
+                    _focusNode.requestFocus();
+                    setState(() => _hover = null);
+                    _set(_valueAt(details.localPosition.dx));
+                  },
+                  child: ExcludeSemantics(child: row),
+                ),
               ),
             ),
           ),

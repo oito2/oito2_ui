@@ -286,7 +286,9 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
         canRequestFocus: false,
         borderRadius: Oito2Radius.smallAll,
         child: Container(
-          constraints: const BoxConstraints(minHeight: 32),
+          constraints: BoxConstraints(
+            minHeight: padsTapTargets(context) ? Oito2Sizes.minTouchTarget : 32,
+          ),
           padding: const EdgeInsets.symmetric(
             horizontal: Oito2Spacing.sm,
             vertical: Oito2Spacing.xs,

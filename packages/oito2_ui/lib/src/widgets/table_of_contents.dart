@@ -209,6 +209,7 @@ class _Oito2TableOfContentsState extends State<Oito2TableOfContents> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final indicator = semanticColorsOf(context).primaryText;
+    final minHeight = padsTapTargets(context) ? Oito2Sizes.minTouchTarget : 0.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -220,6 +221,8 @@ class _Oito2TableOfContentsState extends State<Oito2TableOfContents> {
               mouseCursor: WidgetStateMouseCursor.clickable,
               onTap: () => _select(i),
               child: Container(
+                constraints: BoxConstraints(minHeight: minHeight),
+                alignment: AlignmentDirectional.centerStart,
                 padding: EdgeInsetsDirectional.only(
                   start: Oito2Spacing.md + widget.entries[i].depth * 12.0,
                   end: Oito2Spacing.sm,

@@ -20,6 +20,7 @@ import '../collections/list_collection.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'options_view.dart';
+import 'touch_target.dart';
 import 'widget_helpers.dart';
 
 /// A text field that suggests items of a [collection] as the user types,
@@ -165,15 +166,17 @@ class _Oito2AutocompleteState<T extends Object>
             optionsBuilder: (value) => _options(value.text),
             onSelected: widget.onSelected,
             fieldViewBuilder: (context, controller, focusNode, onSubmitted) =>
-                TextField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  onSubmitted: (_) => onSubmitted(),
-                  decoration: InputDecoration(
-                    hintText: widget.hintText,
-                    suffixIcon: const Icon(
-                      LucideIcons.chevrons_up_down,
-                      size: Oito2Sizes.iconSize,
+                Oito2TouchTarget(
+                  child: TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    onSubmitted: (_) => onSubmitted(),
+                    decoration: InputDecoration(
+                      hintText: widget.hintText,
+                      suffixIcon: const Icon(
+                        LucideIcons.chevrons_up_down,
+                        size: Oito2Sizes.iconSize,
+                      ),
                     ),
                   ),
                 ),

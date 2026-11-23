@@ -256,7 +256,6 @@ class _PageButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: Oito2Spacing.sm),
           backgroundColor: current ? fill.fill : null,
           foregroundColor: current ? fill.onFill : scheme.onSurface,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
         child: Text('$page'),
       ),

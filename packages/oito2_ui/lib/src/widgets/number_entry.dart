@@ -20,6 +20,7 @@ import 'package:intl/intl.dart' show NumberFormat;
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
+import 'touch_target.dart';
 import 'widget_helpers.dart';
 
 /// A number field with decrease and increase buttons, like a GNOME spin
@@ -303,23 +304,25 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry>
             const SingleActivator(LogicalKeyboardKey.end): () =>
                 _set(widget.max),
         },
-        child: TextField(
-          controller: _controller,
-          focusNode: _focusNode,
-          autofocus: widget.autofocus,
-          readOnly: !_enabled,
-          textAlign: TextAlign.end,
-          keyboardType: TextInputType.numberWithOptions(
-            signed: widget.min < 0,
-            decimal: widget.decimals > 0,
-          ),
-          inputFormatters: [?_filter],
-          onChanged: (_) => setState(() {}),
-          onSubmitted: (_) => _commit(),
-          decoration: InputDecoration(
-            labelText: widget.labelText,
-            hintText: widget.hintText,
-            suffixIcon: buttons,
+        child: Oito2TouchTarget(
+          child: TextField(
+            controller: _controller,
+            focusNode: _focusNode,
+            autofocus: widget.autofocus,
+            readOnly: !_enabled,
+            textAlign: TextAlign.end,
+            keyboardType: TextInputType.numberWithOptions(
+              signed: widget.min < 0,
+              decimal: widget.decimals > 0,
+            ),
+            inputFormatters: [?_filter],
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) => _commit(),
+            decoration: InputDecoration(
+              labelText: widget.labelText,
+              hintText: widget.hintText,
+              suffixIcon: buttons,
+            ),
           ),
         ),
       ),

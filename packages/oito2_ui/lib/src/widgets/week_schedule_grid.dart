@@ -23,6 +23,7 @@ import 'package:material_ui/material_ui.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'info.dart';
+import 'touch_target.dart';
 import 'widget_helpers.dart';
 
 /// A value an [Oito2WeekScheduleGrid] can paint, with its legend [label]
@@ -749,22 +750,25 @@ class _LegendChip extends StatelessWidget {
     );
     final onPressed = this.onPressed;
     if (onPressed == null) return content;
-    return Semantics(
-      button: true,
-      selected: selected,
-      inMutuallyExclusiveGroup: true,
-      child: Material(
-        type: MaterialType.transparency,
-        shape: StadiumBorder(
-          side: selected
-              ? BorderSide(color: ring, width: 2)
-              : BorderSide(color: scheme.outlineVariant),
-        ),
-        child: InkWell(
-          customBorder: const StadiumBorder(),
-          mouseCursor: WidgetStateMouseCursor.clickable,
-          onTap: onPressed,
-          child: content,
+    return Oito2TouchTarget(
+      mergeSemantics: true,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        inMutuallyExclusiveGroup: true,
+        child: Material(
+          type: MaterialType.transparency,
+          shape: StadiumBorder(
+            side: selected
+                ? BorderSide(color: ring, width: 2)
+                : BorderSide(color: scheme.outlineVariant),
+          ),
+          child: InkWell(
+            customBorder: const StadiumBorder(),
+            mouseCursor: WidgetStateMouseCursor.clickable,
+            onTap: onPressed,
+            child: content,
+          ),
         ),
       ),
     );

@@ -16,6 +16,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
+import 'touch_target.dart';
 import 'widget_helpers.dart';
 
 /// A clickable surface that shows hover, keyboard focus and selection.
@@ -77,9 +78,12 @@ class _InteractiveSurfaceState extends State<_InteractiveSurface> {
       widget.onHover?.call(value);
     }
 
+    // While the touch target pads the surface, it forms the semantics
+    // node, so the node takes the padded size.
+    final padded = interactive && padsTapTargets(context);
     // The pointer is tracked even without onTap, so onHover always runs.
-    return Semantics(
-      container: true,
+    final surface = Semantics(
+      container: !padded,
       button: interactive,
       selected: widget.selected,
       child: MouseRegion(
@@ -114,6 +118,7 @@ class _InteractiveSurfaceState extends State<_InteractiveSurface> {
         ),
       ),
     );
+    return interactive ? Oito2TouchTarget(child: surface) : surface;
   }
 }
 

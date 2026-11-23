@@ -158,7 +158,7 @@ class _TableOfContentsPageState extends State<TableOfContentsPage> {
           region: 'picks',
           child: SizedBox(
             width: 640,
-            height: 300,
+            height: 400,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

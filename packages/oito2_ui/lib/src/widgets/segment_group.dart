@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
+import 'touch_target.dart';
 import 'utilities.dart';
 import 'widget_helpers.dart';
 
@@ -215,25 +216,28 @@ class _Oito2SegmentGroupState<T> extends State<Oito2SegmentGroup<T>> {
       ),
     );
     if (!segment.enabled) content = Opacity(opacity: 0.5, child: content);
-    return MergeSemantics(
-      child: Oito2FocusBorder(
-        borderRadius: Oito2Radius.smallAll,
-        child: Focus(
-          focusNode: _nodes[index],
-          canRequestFocus: enabled,
-          skipTraversal: index != tabStop,
-          onKeyEvent: (_, event) => _onKey(index, event),
-          child: Semantics(
-            inMutuallyExclusiveGroup: true,
-            checked: selected,
-            enabled: enabled,
-            onTap: enabled ? () => _select(index) : null,
-            child: MouseRegion(
-              cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: enabled ? () => _select(index) : null,
-                child: content,
+    return Oito2TouchTarget(
+      mergeSemantics: true,
+      child: MergeSemantics(
+        child: Oito2FocusBorder(
+          borderRadius: Oito2Radius.smallAll,
+          child: Focus(
+            focusNode: _nodes[index],
+            canRequestFocus: enabled,
+            skipTraversal: index != tabStop,
+            onKeyEvent: (_, event) => _onKey(index, event),
+            child: Semantics(
+              inMutuallyExclusiveGroup: true,
+              checked: selected,
+              enabled: enabled,
+              onTap: enabled ? () => _select(index) : null,
+              child: MouseRegion(
+                cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: enabled ? () => _select(index) : null,
+                  child: content,
+                ),
               ),
             ),
           ),
