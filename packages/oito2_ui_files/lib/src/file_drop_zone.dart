@@ -27,6 +27,8 @@ import 'drop_target.dart';
 /// filters the file chooser. Drops come from [dropTargetBuilder], or from
 /// [oito2PlatformDropTarget] (the web, Linux, Windows and macOS) when it is
 /// null, and pass every dropped file even when [multiple] is false.
+/// Dropped folders are passed too, marked for `oito2IsDirectory`;
+/// [acceptDirectories] only changes the title to invite them.
 class Oito2FileDropZone extends StatefulWidget {
   /// Creates a file drop zone.
   const Oito2FileDropZone({
@@ -38,6 +40,7 @@ class Oito2FileDropZone extends StatefulWidget {
     this.hint,
     this.dropTargetBuilder,
     this.minHeight = 160,
+    this.acceptDirectories = false,
   });
 
   /// Receives the chosen or dropped files.
@@ -60,6 +63,9 @@ class Oito2FileDropZone extends StatefulWidget {
 
   /// The smallest height of the zone, in logical pixels.
   final double minHeight;
+
+  /// Whether the title invites dropping folders as well as files.
+  final bool acceptDirectories;
 
   @override
   State<Oito2FileDropZone> createState() => _Oito2FileDropZoneState();
@@ -109,7 +115,11 @@ class _Oito2FileDropZoneState extends State<Oito2FileDropZone> {
             ),
           ),
           Text(
-            _canDrop ? strings.dropFilesHere : choose,
+            !_canDrop
+                ? choose
+                : widget.acceptDirectories
+                ? strings.dropFilesOrFoldersHere
+                : strings.dropFilesHere,
             textAlign: TextAlign.center,
             style: theme.textTheme.titleSmall,
           ),

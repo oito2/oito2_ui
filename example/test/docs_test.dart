@@ -70,6 +70,7 @@ void main() {
         'animations',
         'forms',
         'refs',
+        'adaptive_layout',
       ])
         'assets/docs/guides/$guide.md',
     ]) {

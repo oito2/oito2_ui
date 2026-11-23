@@ -508,6 +508,15 @@
 			"infoDanger": "Error",
 			"infoImportant": "Important",
 			"loading": "Loading",
+			"pendingChange": "Pending change",
+			"notSorted": "Not sorted",
+			"sortedAscending": "Sorted ascending",
+			"sortedDescending": "Sorted descending",
+			"loadingMore": "Loading more…",
+			"loadFailed": "Couldn't load the items",
+			"retry": "Retry",
+			"noItems": "No items",
+			"showFewer": "Show fewer",
 			"statusOnline": "Online",
 			"statusAway": "Away",
 			"statusBusy": "Busy",
@@ -531,7 +540,31 @@
 			"chooseFiles": "Choose files",
 			"chooseFile": "Choose a file",
 			"download": "Download",
-			"downloadUnavailable": "Downloads are not available on this device"
+			"downloadUnavailable": "Downloads are not available on this device",
+			"passwordStrength": "Password strength",
+			"passwordVeryWeak": "Very weak",
+			"passwordWeak": "Weak",
+			"passwordFair": "Fair",
+			"passwordGood": "Good",
+			"passwordStrong": "Strong",
+			"passwordAvoidCommon": "Avoid common passwords",
+			"passwordAvoidPersonalInfo": "Avoid your name or email",
+			"passwordAvoidWords": "Avoid common words",
+			"passwordAvoidDates": "Avoid dates",
+			"passwordAvoidSequences": "Avoid sequences",
+			"passwordAvoidRepeats": "Avoid repeated characters",
+			"passwordAddLength": "Add more characters",
+			"passwordMixCharacters": "Mix letters, numbers and symbols",
+			"weekSchedule": "Weekly schedule",
+			"codeEditor": "Code editor",
+			"dropFilesOrFoldersHere": "Drop files or folders here",
+			"folderItem": "Folder",
+			"accounts": "Accounts",
+			"addAccount": "Add account",
+			"pathBar": "Path",
+			"showPathSegments": "Show hidden path segments",
+			"editPath": "Edit path",
+			"currentLocation": "Current location"
 		},
 		"calls": [
 			{
@@ -856,11 +889,25 @@
 				"result": "1/2 – 3/4"
 			},
 			{
+				"name": "resizeColumn",
+				"args": [
+					"Size"
+				],
+				"result": "Resize column Size"
+			},
+			{
 				"name": "moreCount",
 				"args": [
 					4
 				],
 				"result": "4 more"
+			},
+			{
+				"name": "showMore",
+				"args": [
+					2
+				],
+				"result": "Show 2 more"
 			},
 			{
 				"name": "acceptedFileTypes",
@@ -913,6 +960,54 @@
 					"docs"
 				],
 				"result": "docs: folders are not accepted"
+			},
+			{
+				"name": "scheduleSlot",
+				"args": [
+					"Monday",
+					"14:00",
+					"15:00",
+					"Limited"
+				],
+				"result": "Monday 14:00–15:00, Limited"
+			},
+			{
+				"name": "usageOf",
+				"args": [
+					"1.2 GB",
+					"15 GB"
+				],
+				"result": "1.2 GB of 15 GB"
+			},
+			{
+				"name": "lineMessage",
+				"args": [
+					3,
+					"Error",
+					"Unexpected token"
+				],
+				"result": "Line 3, Error: Unexpected token"
+			},
+			{
+				"name": "switchAccount",
+				"args": [
+					"Ana"
+				],
+				"result": "Switch account, current: Ana"
+			},
+			{
+				"name": "pendingCount",
+				"args": [
+					1
+				],
+				"result": "1 pending"
+			},
+			{
+				"name": "pendingCount",
+				"args": [
+					3
+				],
+				"result": "3 pending"
 			}
 		]
 	},
@@ -1425,6 +1520,15 @@
 			"infoDanger": "Erro",
 			"infoImportant": "Importante",
 			"loading": "Carregando",
+			"pendingChange": "Alteração pendente",
+			"notSorted": "Sem ordenação",
+			"sortedAscending": "Ordem crescente",
+			"sortedDescending": "Ordem decrescente",
+			"loadingMore": "Carregando mais…",
+			"loadFailed": "Não foi possível carregar os itens",
+			"retry": "Tentar de novo",
+			"noItems": "Nenhum item",
+			"showFewer": "Mostrar menos",
 			"statusOnline": "Online",
 			"statusAway": "Ausente",
 			"statusBusy": "Ocupado",
@@ -1448,7 +1552,31 @@
 			"chooseFiles": "Escolher arquivos",
 			"chooseFile": "Escolher um arquivo",
 			"download": "Baixar",
-			"downloadUnavailable": "Downloads não estão disponíveis neste dispositivo"
+			"downloadUnavailable": "Downloads não estão disponíveis neste dispositivo",
+			"passwordStrength": "Força da senha",
+			"passwordVeryWeak": "Muito fraca",
+			"passwordWeak": "Fraca",
+			"passwordFair": "Razoável",
+			"passwordGood": "Boa",
+			"passwordStrong": "Forte",
+			"passwordAvoidCommon": "Evite senhas comuns",
+			"passwordAvoidPersonalInfo": "Evite seu nome ou e-mail",
+			"passwordAvoidWords": "Evite palavras comuns",
+			"passwordAvoidDates": "Evite datas",
+			"passwordAvoidSequences": "Evite sequências",
+			"passwordAvoidRepeats": "Evite caracteres repetidos",
+			"passwordAddLength": "Use mais caracteres",
+			"passwordMixCharacters": "Misture letras, números e símbolos",
+			"weekSchedule": "Agenda semanal",
+			"codeEditor": "Editor de código",
+			"dropFilesOrFoldersHere": "Solte arquivos ou pastas aqui",
+			"folderItem": "Pasta",
+			"accounts": "Contas",
+			"addAccount": "Adicionar conta",
+			"pathBar": "Caminho",
+			"showPathSegments": "Mostrar partes ocultas do caminho",
+			"editPath": "Editar caminho",
+			"currentLocation": "Local atual"
 		},
 		"calls": [
 			{
@@ -1773,11 +1901,25 @@
 				"result": "1/2 – 3/4"
 			},
 			{
+				"name": "resizeColumn",
+				"args": [
+					"Size"
+				],
+				"result": "Redimensionar coluna Size"
+			},
+			{
 				"name": "moreCount",
 				"args": [
 					4
 				],
 				"result": "Mais 4"
+			},
+			{
+				"name": "showMore",
+				"args": [
+					2
+				],
+				"result": "Mostrar mais 2"
 			},
 			{
 				"name": "acceptedFileTypes",
@@ -1830,6 +1972,54 @@
 					"docs"
 				],
 				"result": "docs: pastas não são aceitas"
+			},
+			{
+				"name": "scheduleSlot",
+				"args": [
+					"Monday",
+					"14:00",
+					"15:00",
+					"Limited"
+				],
+				"result": "Monday 14:00–15:00, Limited"
+			},
+			{
+				"name": "usageOf",
+				"args": [
+					"1.2 GB",
+					"15 GB"
+				],
+				"result": "1.2 GB de 15 GB"
+			},
+			{
+				"name": "lineMessage",
+				"args": [
+					3,
+					"Error",
+					"Unexpected token"
+				],
+				"result": "Linha 3, Error: Unexpected token"
+			},
+			{
+				"name": "switchAccount",
+				"args": [
+					"Ana"
+				],
+				"result": "Trocar de conta, atual: Ana"
+			},
+			{
+				"name": "pendingCount",
+				"args": [
+					1
+				],
+				"result": "1 pendente"
+			},
+			{
+				"name": "pendingCount",
+				"args": [
+					3
+				],
+				"result": "3 pendentes"
 			}
 		]
 	}

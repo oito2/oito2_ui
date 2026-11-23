@@ -26,6 +26,7 @@ import '../theme/extensions/chrome_colors.dart';
 import '../theme/extensions/semantic_colors.dart';
 import '../tokens/colors.dart';
 import '../tokens/geometry.dart';
+import 'info.dart';
 
 /// Returns the semantic colors of the closest theme, or colors derived
 /// from its `ColorScheme` and the status palette when the theme wasn't
@@ -412,3 +413,20 @@ Duration motionDuration(BuildContext context, Duration duration) =>
 /// button ends up [height] tall.
 double densityOffsetHeight(BuildContext context, double height) =>
     height - Theme.of(context).visualDensity.baseSizeAdjustment.dy;
+
+/// Returns the tinted background and the readable foreground for [type]
+/// over the scheme surface: the type color at [tint] opacity for the
+/// background and the type color adjusted to reach 4.5:1 on it.
+(Color background, Color foreground) infoColorsOf(
+  BuildContext context,
+  Oito2InfoType type,
+  double tint,
+) {
+  final surface = Theme.of(context).colorScheme.surface;
+  final color = type.colorIn(semanticColorsOf(context));
+  final background = Color.alphaBlend(color.withValues(alpha: tint), surface);
+  return (
+    background,
+    Oito2Contrast.ensure(color, [background], Oito2Contrast.textAA),
+  );
+}

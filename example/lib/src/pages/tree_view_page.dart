@@ -32,8 +32,8 @@ const _paths = [
 ];
 // #endregion
 
-/// Documents [Oito2TreeView]: selection, renaming, filtering, check boxes
-/// and lazy loading.
+/// Documents [Oito2TreeView]: selection, renaming, filtering, check boxes,
+/// lazy loading, context menus and columns.
 class TreeViewPage extends StatefulWidget {
   /// Creates the tree view page.
   const TreeViewPage({super.key});
@@ -59,6 +59,46 @@ class _TreeViewPageState extends State<TreeViewPage> {
     ),
   ]);
   // #endregion
+  // #region controlled-data
+  /// Shares on a server whose folders load on open; the check states are
+  /// the server's, so a folder can be on before its children load.
+  var _shares = Oito2TreeCollection<void>([
+    const Oito2TreeNode(value: 'docs', children: []),
+    const Oito2TreeNode(value: 'photos', children: []),
+    const Oito2TreeNode(value: 'backups', children: []),
+  ]);
+
+  /// The applied state of each share: true, false or null for mixed.
+  final Map<String, bool?> _applied = {'docs': true, 'photos': null};
+
+  /// The changes the user made and hasn't applied yet.
+  final Map<String, bool> _changes = {};
+  // #endregion
+  // #region menu-data
+  final _menu = Oito2ContextMenuController();
+  Oito2TreeNode<void>? _menuNode;
+  String _menuAction = 'None';
+  // #endregion
+  // #region columns-data
+  static const _sizes = {
+    'lib/main.dart': '2 KB',
+    'lib/src/app.dart': '6 KB',
+    'lib/src/pages/home_page.dart': '12 KB',
+    'lib/src/pages/settings_page.dart': '9 KB',
+    'lib/src/widgets/avatar.dart': '3 KB',
+    'test/app_test.dart': '1 KB',
+    'test/widgets/avatar_test.dart': '2 KB',
+    'pubspec.yaml': '1 KB',
+    'README.md': '4 KB',
+  };
+  static const _modified = {'lib/src/app.dart', 'README.md'};
+
+  /// The width of the Size column, kept when the user resizes it.
+  double _sizeWidth = 88;
+  // #endregion
+  final _controlled = Oito2TreeController(expanded: const ['docs']);
+  final _menuTree = Oito2TreeController(expanded: const ['lib']);
+  final _grid = Oito2TreeController(expanded: const ['lib', 'lib/src']);
   final _filtered = Oito2TreeController();
   final _checks = Oito2TreeController(expanded: const ['lib', 'test']);
   final _lazy = Oito2TreeController();
@@ -71,6 +111,9 @@ class _TreeViewPageState extends State<TreeViewPage> {
     _filtered.dispose();
     _checks.dispose();
     _lazy.dispose();
+    _controlled.dispose();
+    _menuTree.dispose();
+    _grid.dispose();
     super.dispose();
   }
 
@@ -84,9 +127,9 @@ class _TreeViewPageState extends State<TreeViewPage> {
   );
   // #endregion
 
-  /// A bordered box of fixed size around a tree view.
-  Widget _frame(Widget child) => Container(
-    width: 300,
+  /// A bordered box of fixed size around a tree view, [width] wide.
+  Widget _frame(Widget child, {double width = 300}) => Container(
+    width: width,
     height: 280,
     decoration: BoxDecoration(
       border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
@@ -264,13 +307,192 @@ class _TreeViewPageState extends State<TreeViewPage> {
             // #endregion
           ),
         ),
+        const DocHeading('Controlled check boxes', level: 3),
+        const DocText(
+          'With `checkState`, the app owns the check states: the tree shows '
+          'what it returns (null is mixed), and a click or `Space` only '
+          'calls `onCheckChanged` with the next state, true for an '
+          'unchecked or mixed node and false for a checked one, without '
+          'checking children or parents. A branch whose children are not '
+          'loaded yet can show as checked or mixed, as below. `isPending` '
+          'marks the rows with a change not applied yet with a dot.',
+        ),
+        ExamplePanel(
+          regions: const ['controlled-data', 'controlled'],
+          child: Column(
+            spacing: Oito2Spacing.sm,
+            children: [
+              // #region controlled
+              _frame(
+                Oito2TreeView(
+                  collection: _shares,
+                  controller: _controlled,
+                  checkable: true,
+                  iconBuilder: _icon,
+                  semanticLabel: 'Shares',
+                  checkState: (node) =>
+                      _changes[node.value] ?? _applied[node.value] ?? false,
+                  onCheckChanged: (node, checked) =>
+                      setState(() => _changes[node.value] = checked),
+                  isPending: (node) => _changes.containsKey(node.value),
+                  onLoadChildren: (node) async {
+                    await Future<void>.delayed(const Duration(seconds: 1));
+                    if (!mounted) return;
+                    setState(
+                      () => _shares = _shares.insert(node.value, [
+                        for (final name in ['2025', '2026'])
+                          Oito2TreeNode(
+                            value: '${node.value}/$name',
+                            label: name,
+                          ),
+                      ]),
+                    );
+                  },
+                ),
+              ),
+              Wrap(
+                spacing: Oito2Spacing.sm,
+                children: [
+                  FilledButton(
+                    onPressed: _changes.isEmpty
+                        ? null
+                        : () => setState(() {
+                            _applied.addAll(_changes);
+                            _changes.clear();
+                          }),
+                    child: const Text('Apply'),
+                  ),
+                  OutlinedButton(
+                    onPressed: _changes.isEmpty
+                        ? null
+                        : () => setState(_changes.clear),
+                    child: const Text('Discard'),
+                  ),
+                ],
+              ),
+              // #endregion
+            ],
+          ),
+        ),
+        const DocHeading('Context menu', level: 3),
+        const DocText(
+          '`onContextMenu` runs on a secondary click or a long press on a '
+          'row, and on the `Menu` key or `Shift+F10` for the active row, '
+          'with a global position: the pointer, or the bottom-start corner '
+          'of the row, and whether the keyboard asked for it. The row '
+          'becomes active and selected first; a multiple selection that '
+          'already holds it is kept. Wrap the tree in an '
+          '`Oito2ContextMenuRegion` with an `Oito2ContextMenuController` to '
+          'open the menu there, passing `focusFirstItem: byKeyboard` so the '
+          'keyboard lands on the first item.',
+        ),
+        ExamplePanel(
+          regions: const ['menu-data', 'menu'],
+          child: Column(
+            spacing: Oito2Spacing.sm,
+            children: [
+              // #region menu
+              _frame(
+                Oito2ContextMenuRegion(
+                  controller: _menu,
+                  menuChildren: [
+                    for (final action in ['Open', 'Rename', 'Delete'])
+                      MenuItemButton(
+                        onPressed: () => setState(
+                          () =>
+                              _menuAction = '$action ${_menuNode?.label ?? ''}',
+                        ),
+                        child: Text(action),
+                      ),
+                  ],
+                  child: Oito2TreeView(
+                    collection: _files,
+                    controller: _menuTree,
+                    iconBuilder: _icon,
+                    semanticLabel: 'Files with a menu',
+                    onContextMenu: (node, position, byKeyboard) {
+                      setState(() => _menuNode = node);
+                      _menu.open(
+                        globalPosition: position,
+                        focusFirstItem: byKeyboard,
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Text('Last action: $_menuAction'),
+              // #endregion
+            ],
+          ),
+        ),
+        const DocHeading('Columns', level: 3),
+        const DocText(
+          'With `columns`, the tree is a tree grid. Each `Oito2TableColumn` '
+          'has an `id`, a header `label`, a width (`Oito2ColumnWidth.fixed` '
+          'or `.flex`, which shares the space left), an `alignment` and a '
+          '`cellBuilder` that receives the node. The first column holds the '
+          'indentation, disclosure, check box, icon and label; the other '
+          'cells line up across every depth under a header that stays in '
+          'place. A `resizable` column has a handle in the header, and '
+          '`onColumnResized` reports its width when a resize ends, so the '
+          'app can keep it and pass it back as a fixed width.',
+        ),
+        ExamplePanel(
+          regions: const ['columns-data', 'columns'],
+          child: _frame(
+            width: 420,
+            // #region columns
+            Oito2TreeView(
+              collection: _files,
+              controller: _grid,
+              iconBuilder: _icon,
+              semanticLabel: 'Files with details',
+              onColumnResized: (id, width) =>
+                  setState(() => _sizeWidth = width),
+              columns: [
+                const Oito2TableColumn(
+                  id: 'name',
+                  label: 'Name',
+                  width: Oito2ColumnWidth.flex(1, min: 160),
+                ),
+                Oito2TableColumn(
+                  id: 'size',
+                  label: 'Size',
+                  width: Oito2ColumnWidth.fixed(_sizeWidth),
+                  alignment: AlignmentDirectional.centerEnd,
+                  resizable: true,
+                  cellBuilder: (context, node) =>
+                      Text(_sizes[node.value] ?? ''),
+                ),
+                Oito2TableColumn(
+                  id: 'status',
+                  label: 'Status',
+                  width: const Oito2ColumnWidth.fixed(96),
+                  tooltip: 'Changes since the last commit',
+                  cellBuilder: (context, node) => node.isBranch
+                      ? const SizedBox.shrink()
+                      : Text(
+                          _modified.contains(node.value)
+                              ? 'Modified'
+                              : 'Unchanged',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                ),
+              ],
+            ),
+            // #endregion
+          ),
+        ),
         const DocHeading('Accessibility'),
         const DocText(
           'The tree is labeled by `semanticLabel`. Each row is labeled by '
           'its node label and reports whether it is selected, enabled and '
           'active, whether a branch is expanded, and, in a checkable tree, '
-          'whether it is checked or mixed. Set `autofocus` to give the tree '
-          'the focus when it shows.',
+          'whether it is checked or mixed; a pending row adds a "pending '
+          'change" hint. In a tree grid, the header labels are headers and '
+          'the cells after the first are read after the row. Set '
+          '`autofocus` to give the tree the focus when it shows.',
         ),
         const DocHeading('Keyboard', level: 3),
         const DocTable(
@@ -315,6 +537,10 @@ class _TreeViewPageState extends State<TreeViewPage> {
               'Renames the active node, when `onRename` is set; `Enter` '
                   'confirms and `Escape` cancels.',
             ],
+            [
+              '`Menu` / `Shift+F10`',
+              'Calls `onContextMenu` for the active row, when it is set.',
+            ],
             ['Letters', 'Jump to the next shown label that starts with them.'],
           ],
         ),
@@ -322,6 +548,9 @@ class _TreeViewPageState extends State<TreeViewPage> {
           'Oito2TreeView',
           'Oito2TreeController',
           'Oito2TreeItemBuilder',
+          'Oito2TableColumn',
+          'Oito2ColumnWidth',
+          'Oito2ContextMenuController',
           'Oito2TreeCollection',
           'Oito2TreeNode',
         ]),

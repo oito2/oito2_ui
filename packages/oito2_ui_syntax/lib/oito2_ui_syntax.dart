@@ -19,6 +19,19 @@
 /// scheme, in pure Dart through `re_highlight`.
 library;
 
+export 'package:re_editor/re_editor.dart'
+    show
+        CodeLine,
+        CodeLineEditingController,
+        CodeLineEditingValue,
+        CodeLineOptions,
+        CodeLinePosition,
+        CodeLineSelection,
+        CodeLines;
+
 export 'src/code_block.dart';
+export 'src/code_editor.dart';
+export 'src/gitignore_matcher.dart';
 export 'src/highlighter.dart';
 export 'src/highlighter_theme.dart';
+export 'src/languages/gitignore.dart';

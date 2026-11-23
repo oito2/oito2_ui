@@ -27,7 +27,8 @@ import 'package:material_ui/material_ui.dart';
 /// [child] from the keyboard, which needs the focus inside [child] and
 /// moves it to the first item that can take it. On
 /// the web, the browser's own menu is turned off while the pointer is
-/// over [child].
+/// over [child]. A [controller] opens the menu from code, such as at the
+/// row an `Oito2TreeView.onContextMenu` reports.
 class Oito2ContextMenuRegion extends StatefulWidget {
   /// Creates a context menu region.
   const Oito2ContextMenuRegion({
@@ -37,6 +38,7 @@ class Oito2ContextMenuRegion extends StatefulWidget {
     this.enabled = true,
     this.onOpen,
     this.onClose,
+    this.controller,
   });
 
   /// The widget the menu belongs to.
@@ -55,6 +57,9 @@ class Oito2ContextMenuRegion extends StatefulWidget {
   /// Called when the menu closes.
   final VoidCallback? onClose;
 
+  /// Opens and closes the menu from code.
+  final Oito2ContextMenuController? controller;
+
   @override
   State<Oito2ContextMenuRegion> createState() => _Oito2ContextMenuRegionState();
 }
@@ -70,7 +75,25 @@ class _Oito2ContextMenuRegionState extends State<Oito2ContextMenuRegion> {
   final _itemNodes = <FocusNode>[];
 
   @override
+  void initState() {
+    super.initState();
+    widget.controller?._region = this;
+  }
+
+  @override
+  void didUpdateWidget(Oito2ContextMenuRegion oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      if (oldWidget.controller?._region == this) {
+        oldWidget.controller?._region = null;
+      }
+      widget.controller?._region = this;
+    }
+  }
+
+  @override
   void dispose() {
+    if (widget.controller?._region == this) widget.controller?._region = null;
     _setBrowserMenu(enabled: true);
     for (final node in _itemNodes) {
       node.dispose();
@@ -135,11 +158,17 @@ class _Oito2ContextMenuRegionState extends State<Oito2ContextMenuRegion> {
   /// Opens the menu at [position], or at the center of the region with
   /// the first item focused when null; does nothing when the region is
   /// disabled.
-  void _open([Offset? position]) {
+  void _open([Offset? position]) =>
+      _openAt(position, focusFirstItem: position == null);
+
+  /// Opens the menu at [position], or at the center of the region when
+  /// null, focusing the first item when [focusFirstItem] is true; does
+  /// nothing when the region is disabled.
+  void _openAt(Offset? position, {required bool focusFirstItem}) {
     if (!widget.enabled) return;
     final box = context.findRenderObject() as RenderBox?;
     _controller.open(position: position ?? box?.size.center(Offset.zero));
-    if (position == null) _focusFirstItem();
+    if (focusFirstItem) _focusFirstItem();
   }
 
   @override
@@ -172,4 +201,35 @@ class _Oito2ContextMenuRegionState extends State<Oito2ContextMenuRegion> {
       ),
     );
   }
+}
+
+/// Opens and closes the menu of the [Oito2ContextMenuRegion] it is given
+/// to.
+class Oito2ContextMenuController {
+  _Oito2ContextMenuRegionState? _region;
+
+  /// Whether the menu is open.
+  bool get isOpen => _region?._controller.isOpen ?? false;
+
+  /// Opens the menu at [globalPosition], or over the center of the region
+  /// when null. Does nothing when no enabled region uses this controller.
+  ///
+  /// With [focusFirstItem] true the focus moves to the first item that can
+  /// take it, as when a key press asked for the menu; it defaults to
+  /// whether [globalPosition] is null.
+  void open({Offset? globalPosition, bool? focusFirstItem}) {
+    final region = _region;
+    if (region == null || !region.mounted) return;
+    final box = region.context.findRenderObject() as RenderBox?;
+    final local = globalPosition == null || box == null
+        ? null
+        : box.globalToLocal(globalPosition);
+    region._openAt(
+      local,
+      focusFirstItem: focusFirstItem ?? globalPosition == null,
+    );
+  }
+
+  /// Closes the menu when it is open.
+  void close() => _region?._controller.close();
 }

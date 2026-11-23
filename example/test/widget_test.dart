@@ -116,7 +116,7 @@ void main() {
     expect(find.byType(TextField), findsWidgets);
     await tester.enterText(find.byType(TextField).first, '');
     await _settle(tester);
-    expect(find.text('Oito2Banner'), findsWidgets);
+    expect(find.text('Oito2Alert'), findsWidgets);
   });
 
   testWidgets('the search also matches page addresses', (tester) async {

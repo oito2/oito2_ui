@@ -29,7 +29,8 @@ enum Oito2FileRejection {
   /// The upload already holds the largest number of files.
   count,
 
-  /// The item is a directory, not a file.
+  /// The item is a directory, not a file, and the controller doesn't
+  /// accept directories.
   directory,
 }
 
@@ -82,8 +83,12 @@ bool oito2FileMatchesTypes(XFile file, List<XTypeGroup> accept) {
 }
 
 /// The files of a file upload, checked against the [accept]ed types,
-/// [maxFileSize] and [maxFiles] as they are added; directories dropped on
-/// an `Oito2FileDropZone` are always refused.
+/// [maxFileSize] and [maxFiles] as they are added.
+///
+/// Directories dropped on an `Oito2FileDropZone` are refused unless
+/// [acceptDirectories] is true. Accepted directories skip the type and
+/// size checks but count toward [maxFiles]; [oito2IsDirectory] tells them
+/// from files.
 ///
 /// [add] keeps the files that pass the checks and lists the others in
 /// [rejected], which holds the refusals of the last [add] only.
@@ -95,6 +100,7 @@ class Oito2FileUploadController extends ChangeNotifier {
     this.accept = const [],
     this.maxFiles,
     this.maxFileSize,
+    this.acceptDirectories = false,
     Iterable<XFile> files = const [],
   }) : assert(maxFiles == null || maxFiles > 0),
        assert(maxFileSize == null || maxFileSize > 0),
@@ -108,6 +114,10 @@ class Oito2FileUploadController extends ChangeNotifier {
 
   /// The largest file size, in bytes, or null for no limit.
   final int? maxFileSize;
+
+  /// Whether dropped directories are accepted as items, without the type
+  /// and size checks, instead of refused.
+  final bool acceptDirectories;
 
   final List<XFile> _files;
   List<Oito2RejectedFile> _rejected = const [];
@@ -145,14 +155,16 @@ class Oito2FileUploadController extends ChangeNotifier {
     final rejected = <Oito2RejectedFile>[];
     for (final file in incoming) {
       final Oito2FileRejection? reason;
-      if (isDirectory(file)) {
+      final directory = oito2IsDirectory(file);
+      if (directory && !acceptDirectories) {
         reason = Oito2FileRejection.directory;
+      } else if (directory) {
+        reason = _fits(added) ? null : Oito2FileRejection.count;
       } else if (!oito2FileMatchesTypes(file, accept)) {
         reason = Oito2FileRejection.type;
       } else if (maxFileSize != null && await file.length() > maxFileSize!) {
         reason = Oito2FileRejection.size;
-      } else if (maxFiles != null &&
-          _files.length + added.length >= maxFiles!) {
+      } else if (!_fits(added)) {
         reason = Oito2FileRejection.count;
       } else {
         reason = null;
@@ -168,6 +180,10 @@ class Oito2FileUploadController extends ChangeNotifier {
     _rejected = List.unmodifiable(rejected);
     notifyListeners();
   }
+
+  /// Whether one more item fits beside the held files and [added].
+  bool _fits(List<XFile> added) =>
+      maxFiles == null || _files.length + added.length < maxFiles!;
 
   /// Removes [file], if the controller holds it.
   void remove(XFile file) {

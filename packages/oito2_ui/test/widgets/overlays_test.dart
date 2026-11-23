@@ -754,6 +754,61 @@ void main() {
         isFalse,
       );
     });
+    testWidgets('a controller opens the menu at a tree row', (tester) async {
+      final menu = Oito2ContextMenuController();
+      final controller = Oito2TreeController();
+      addTearDown(controller.dispose);
+      String? target;
+      await pumpOito2(
+        tester,
+        SizedBox(
+          width: 300,
+          height: 300,
+          child: Oito2ContextMenuRegion(
+            controller: menu,
+            menuChildren: [
+              MenuItemButton(onPressed: () {}, child: const Text('Open')),
+            ],
+            child: Oito2TreeView(
+              collection: Oito2TreeCollection<void>([
+                const Oito2TreeNode(value: 'a'),
+                const Oito2TreeNode(value: 'b'),
+              ]),
+              controller: controller,
+              onContextMenu: (node, position, byKeyboard) {
+                target = node.value;
+                menu.open(globalPosition: position, focusFirstItem: byKeyboard);
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('b'), buttons: kSecondaryButton);
+      await tester.pumpAndSettle();
+      expect(target, 'b');
+      expect(menu.isOpen, isTrue);
+      expect(
+        tester.getTopLeft(find.text('Open')).dy,
+        greaterThan(tester.getTopLeft(find.text('b')).dy),
+      );
+      expect(
+        Focus.of(tester.element(find.text('Open'))).hasPrimaryFocus,
+        isFalse,
+      );
+      menu.close();
+      await tester.pumpAndSettle();
+      expect(find.text('Open'), findsNothing);
+
+      await tester.tap(find.text('a'));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
+      await tester.pumpAndSettle();
+      expect(target, 'a');
+      expect(
+        Focus.of(tester.element(find.text('Open'))).hasPrimaryFocus,
+        isTrue,
+      );
+    });
   });
 
   group('Oito2Tour', () {

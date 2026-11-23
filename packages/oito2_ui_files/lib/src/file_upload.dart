@@ -18,6 +18,7 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
+import 'directories.dart';
 import 'drop_target.dart';
 import 'file_drop_zone.dart';
 import 'file_upload_controller.dart';
@@ -26,6 +27,9 @@ import 'file_upload_controller.dart';
 /// the files refused by the last addition with the reasons, and the list
 /// of accepted files with their size, a preview of images and a remove
 /// button.
+///
+/// Directories the controller accepts are listed with a folder icon and
+/// their path, or "Folder" on the web, where the path isn't known.
 ///
 /// The zone hint defaults to the accepted types and the size limit of the
 /// controller; the zone is disabled once the controller holds its largest
@@ -155,6 +159,7 @@ class _Oito2FileUploadState extends State<Oito2FileUpload> {
           hint: widget.hint ?? (defaultHint == null ? null : Text(defaultHint)),
           dropTargetBuilder: widget.dropTargetBuilder,
           minHeight: widget.zoneMinHeight,
+          acceptDirectories: controller.acceptDirectories,
         ),
         if (rejected.isNotEmpty)
           Oito2InfoBox(
@@ -175,8 +180,12 @@ class _Oito2FileUploadState extends State<Oito2FileUpload> {
           _FileRow(
             key: ObjectKey(file),
             file: file,
-            size: _sizes.putIfAbsent(file, file.length),
-            preview: widget.showPreviews && _isImage(file)
+            directory: oito2IsDirectory(file),
+            size: oito2IsDirectory(file)
+                ? null
+                : _sizes.putIfAbsent(file, file.length),
+            preview:
+                widget.showPreviews && !oito2IsDirectory(file) && _isImage(file)
                 ? _previews.putIfAbsent(file, file.readAsBytes)
                 : null,
             onRemove: widget.enabled ? () => controller.remove(file) : null,
@@ -199,18 +208,21 @@ bool _isImage(XFile file) {
 }
 
 /// A file of the upload list: a thumbnail or file icon, the name and size,
-/// and a remove button.
+/// and a remove button; a directory shows a folder icon and its path
+/// instead.
 class _FileRow extends StatelessWidget {
   const _FileRow({
     super.key,
     required this.file,
+    required this.directory,
     required this.size,
     required this.preview,
     required this.onRemove,
   });
 
   final XFile file;
-  final Future<int> size;
+  final bool directory;
+  final Future<int>? size;
   final Future<Uint8List>? preview;
   final VoidCallback? onRemove;
 
@@ -221,7 +233,14 @@ class _FileRow extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final strings = Oito2Localizations.of(context);
-    final icon = Icon(LucideIcons.file, color: scheme.onSurfaceVariant);
+    final icon = Icon(
+      directory ? LucideIcons.folder : LucideIcons.file,
+      color: scheme.onSurfaceVariant,
+    );
+    final secondary = theme.textTheme.bodySmall?.copyWith(
+      color: scheme.onSurfaceVariant,
+    );
+    final size = this.size;
     final preview = this.preview;
     final thumbnail = ClipRRect(
       borderRadius: Oito2Radius.smallAll,
@@ -274,17 +293,25 @@ class _FileRow extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                FutureBuilder<int>(
-                  future: size,
-                  builder: (context, snapshot) => Text(
-                    snapshot.hasData
-                        ? Oito2Format.of(context).bytes(snapshot.data!)
-                        : '',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
+                if (size == null)
+                  Text(
+                    kIsWeb || file.path.isEmpty
+                        ? strings.folderItem
+                        : file.path,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: secondary,
+                  )
+                else
+                  FutureBuilder<int>(
+                    future: size,
+                    builder: (context, snapshot) => Text(
+                      snapshot.hasData
+                          ? Oito2Format.of(context).bytes(snapshot.data!)
+                          : '',
+                      style: secondary,
                     ),
                   ),
-                ),
               ],
             ),
           ),

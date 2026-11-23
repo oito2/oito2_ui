@@ -18,6 +18,18 @@ import 'package:oito2_ui/oito2_ui.dart';
 
 import '../docs/doc_widgets.dart';
 
+/// The MIME types the MIME type lookup example resolves.
+const _mimeTypes = [
+  'application/pdf',
+  'application/vnd.oasis.opendocument.spreadsheet',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'image/png',
+  'text/x-python',
+  'application/zip',
+  'inode/directory',
+  'application/octet-stream',
+];
+
 /// The specification names the name lookup example resolves.
 const _lookups = [
   'dialog-warning',
@@ -112,6 +124,39 @@ class _FreedesktopIconsPageState extends State<FreedesktopIconsPage> {
                       ),
                       Flexible(
                         child: Text(name, overflow: TextOverflow.ellipsis),
+                      ),
+                    ],
+                  ),
+                // #endregion
+              ],
+            ),
+          ),
+        ),
+        const DocHeading('Lookup by MIME type', level: 3),
+        const DocText(
+          '`forMimeType` picks the icon of a file by its MIME type: office '
+          'formats get the `x-office-*` icons, archives `package-x-generic`, '
+          'programs `application-x-executable`, scripts `text-x-script` and '
+          '`inode/directory` the folder. Other types fall back to their '
+          'top-level type, such as `image-x-generic` for `image/*`, and then '
+          'to `text-x-generic` or `application-x-generic`.',
+        ),
+        ExamplePanel(
+          region: 'mime',
+          child: SizedBox(
+            width: 420,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: Oito2Spacing.sm,
+              children: [
+                // #region mime
+                for (final mime in _mimeTypes)
+                  Row(
+                    spacing: Oito2Spacing.sm,
+                    children: [
+                      Icon(Oito2FreedesktopIcons.forMimeType(mime).icon),
+                      Expanded(
+                        child: Text(mime, overflow: TextOverflow.ellipsis),
                       ),
                     ],
                   ),

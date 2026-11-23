@@ -816,6 +816,38 @@ void main() {
         'Date',
       ]);
     });
+
+    testWidgets('each row is one node with its label and states', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      final controller = await pumpList(tester, Oito2SelectionMode.single);
+      controller.replace('Banana');
+      await tester.pump();
+      expect(
+        tester.getSemantics(find.text('Banana')),
+        isSemantics(
+          label: 'Banana',
+          isSelected: true,
+          hasSelectedState: true,
+          isEnabled: true,
+          hasEnabledState: true,
+          isButton: true,
+          hasTapAction: true,
+        ),
+      );
+      expect(
+        tester.getSemantics(find.text('Cherry')),
+        isSemantics(
+          label: 'Cherry',
+          hasSelectedState: true,
+          hasEnabledState: true,
+          isButton: true,
+        ),
+      );
+      expect(find.semantics.byLabel('Banana'), findsOne);
+      semantics.dispose();
+    });
   });
 
   group('Oito2ColorPicker', () {

@@ -44,7 +44,8 @@ typedef Oito2ListBoxItemBuilder<T> = Widget Function(
 /// [onActivate]. Grouped items show under their group headings; disabled
 /// items can't be selected or activated.
 ///
-/// Every row is built, so it suits lists of up to a few hundred items.
+/// Every row is built, so it suits lists of up to a few hundred items;
+/// [Oito2VirtualList] builds only the rows in view, for longer lists.
 class Oito2ListBox<T> extends StatefulWidget {
   /// Creates a list box.
   const Oito2ListBox({
@@ -266,6 +267,7 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
         Text(_collection.labelOf(item));
     return Semantics(
       key: _keys.putIfAbsent(value, GlobalKey.new),
+      container: true,
       selected: selected,
       enabled: !disabled,
       focused: active,
@@ -273,6 +275,7 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
       onTap: disabled ? null : () => _click(value),
       child: InkWell(
         mouseCursor: WidgetStateMouseCursor.clickable,
+        excludeFromSemantics: true,
         onTap: disabled ? null : () {},
         onTapUp: disabled
             ? null

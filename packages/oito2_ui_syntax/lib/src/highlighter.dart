@@ -44,8 +44,13 @@ import 'package:re_highlight/languages/yaml.dart';
 import 'package:re_highlight/re_highlight.dart';
 
 import 'highlighter_theme.dart';
+import 'languages/gitignore.dart';
 
 /// The languages [Oito2Highlighter] registers by default, keyed by name.
+///
+/// All come from `re_highlight` except `gitignore` ([langGitignore]),
+/// written for this package, which also answers to the `ignore` and
+/// `dockerignore` aliases.
 ///
 /// `re_highlight` ships about 190 more grammars under
 /// `package:re_highlight/languages/`; pass them to [Oito2Highlighter] to
@@ -59,6 +64,7 @@ final Map<String, Mode> oito2DefaultLanguages = {
   'dart': langDart,
   'diff': langDiff,
   'dockerfile': langDockerfile,
+  'gitignore': langGitignore,
   'go': langGo,
   'html': langXml,
   'ini': langIni,
@@ -101,6 +107,10 @@ class Oito2Highlighter {
   /// Whether [language] is registered, by name or by one of its aliases
   /// (such as `js` or `yml`), in any letter case.
   bool supports(String language) => _highlight.getLanguage(language) != null;
+
+  /// Returns the grammar registered for [language], a name or alias in any
+  /// letter case, or null when none is.
+  Mode? modeOf(String language) => _highlight.getLanguage(language);
 
   /// The token styles of up to 16 palettes, so highlighting doesn't rebuild
   /// them on every call; the oldest entry is evicted first.

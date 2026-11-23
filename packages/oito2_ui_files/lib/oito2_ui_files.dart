@@ -20,6 +20,7 @@ library;
 
 export 'package:file_selector/file_selector.dart' show XFile, XTypeGroup;
 
+export 'src/directories.dart';
 export 'src/download.dart';
 export 'src/drop_target.dart';
 export 'src/file_drop_zone.dart';

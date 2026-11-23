@@ -19,6 +19,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
+import 'package:oito2_ui/src/widgets/resize_handle.dart';
 import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 /// Hosts a value and rebuilds [builder] when it changes, so controlled
@@ -1318,6 +1319,49 @@ void main() {
       expect(tester.getRect(find.text('n0')).top, greaterThan(view.top));
     });
 
+    testWidgets('branches opened from code load their children once', (
+      tester,
+    ) async {
+      final loads = <String>[];
+      final controller = Oito2TreeController(expanded: const ['first']);
+      addTearDown(controller.dispose);
+      await pumpOito2(
+        tester,
+        SizedBox(
+          width: 300,
+          height: 300,
+          child: _Host<Oito2TreeCollection<void>>(
+            initial: Oito2TreeCollection([
+              const Oito2TreeNode(value: 'first', children: []),
+              const Oito2TreeNode(value: 'second', children: []),
+            ]),
+            builder: (tree, set) => Oito2TreeView(
+              collection: tree,
+              controller: controller,
+              onLoadChildren: (node) async {
+                loads.add(node.value);
+                await Future<void>.delayed(const Duration(seconds: 1));
+                set(
+                  _hostValue<Oito2TreeCollection<void>>(tester).insert(
+                    node.value,
+                    [Oito2TreeNode(value: '${node.value}/file.txt')],
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      controller.setExpanded('second', true);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(find.text('first/file.txt'), findsOneWidget);
+      expect(find.text('second/file.txt'), findsOneWidget);
+      expect(loads, ['first', 'second']);
+    });
+
     testWidgets('a failed load is reported and retried on reopening', (
       tester,
     ) async {
@@ -1356,6 +1400,296 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('remote/file.txt'), findsOneWidget);
       expect(loads, 2);
+    });
+
+    testWidgets('controlled checks show the given states and only report', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      final changes = <(String, bool)>[];
+      final controller = Oito2TreeController();
+      addTearDown(controller.dispose);
+      final collection = Oito2TreeCollection<void>([
+        const Oito2TreeNode(value: 'remote', children: []),
+        const Oito2TreeNode(value: 'partial', children: []),
+        const Oito2TreeNode(value: 'README.md'),
+      ]);
+      final states = <String, bool?>{
+        'remote': true,
+        'partial': null,
+        'README.md': false,
+      };
+      await pumpOito2(
+        tester,
+        SizedBox(
+          width: 300,
+          height: 300,
+          child: Oito2TreeView(
+            collection: collection,
+            controller: controller,
+            checkable: true,
+            checkState: (node) => states[node.value],
+            onCheckChanged: (node, checked) =>
+                changes.add((node.value, checked)),
+          ),
+        ),
+      );
+      // A branch without loaded children shows the state it is given.
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('remote')),
+        isSemantics(isChecked: true),
+      );
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('partial')),
+        isSemantics(isCheckStateMixed: true),
+      );
+      await tester.tap(find.byType(Oito2Checkbox).at(1));
+      await tester.pump();
+      await tester.tap(find.text('README.md'));
+      await _key(tester, LogicalKeyboardKey.space);
+      await tester.tap(find.text('remote'));
+      await _key(tester, LogicalKeyboardKey.space);
+      expect(changes, [
+        ('partial', true),
+        ('README.md', true),
+        ('remote', false),
+      ]);
+      expect(controller.checked, isEmpty);
+      // Nothing propagates: the shown states stay what the app returns.
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('partial')),
+        isSemantics(isCheckStateMixed: true),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('pending rows show a mark and a hint', (tester) async {
+      final handle = tester.ensureSemantics();
+      final controller = Oito2TreeController();
+      addTearDown(controller.dispose);
+      await pumpOito2(
+        tester,
+        SizedBox(
+          width: 300,
+          height: 300,
+          child: Oito2TreeView(
+            collection: _files,
+            controller: controller,
+            isPending: (node) => node.value == 'README.md',
+          ),
+        ),
+      );
+      expect(find.byKey(const ValueKey('oito2-tree-pending')), findsOneWidget);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('README.md')),
+        isSemantics(hint: 'Pending change'),
+      );
+      handle.dispose();
+    });
+
+    Future<(Oito2TreeController, List<(String, Offset, bool)>)> pumpMenuTree(
+      WidgetTester tester, {
+      Oito2SelectionMode mode = Oito2SelectionMode.single,
+    }) async {
+      final calls = <(String, Offset, bool)>[];
+      final controller = Oito2TreeController(selectionMode: mode);
+      addTearDown(controller.dispose);
+      await pumpOito2(
+        tester,
+        Center(
+          child: SizedBox(
+            width: 300,
+            height: 300,
+            child: Oito2TreeView(
+              collection: _files,
+              controller: controller,
+              onContextMenu: (node, position, byKeyboard) =>
+                  calls.add((node.value, position, byKeyboard)),
+            ),
+          ),
+        ),
+      );
+      return (controller, calls);
+    }
+
+    testWidgets('a secondary click selects the row and calls onContextMenu', (
+      tester,
+    ) async {
+      final (controller, calls) = await pumpMenuTree(tester);
+      final at = tester.getCenter(find.text('README.md'));
+      await tester.tapAt(at, buttons: kSecondaryButton);
+      await tester.pump();
+      expect(calls, [('README.md', at, false)]);
+      expect(controller.selected, {'README.md'});
+      await tester.tap(find.text('LICENSE'), buttons: kSecondaryButton);
+      await tester.pump();
+      expect(calls, hasLength(1));
+    });
+
+    testWidgets('a secondary click keeps a multiple selection holding it', (
+      tester,
+    ) async {
+      final (controller, calls) = await pumpMenuTree(
+        tester,
+        mode: Oito2SelectionMode.multiple,
+      );
+      controller.setSelected(['src', 'README.md']);
+      await tester.pump();
+      await tester.tap(find.text('README.md'), buttons: kSecondaryButton);
+      await tester.pump();
+      expect(controller.selected, {'src', 'README.md'});
+      controller.setSelected(['src']);
+      await tester.tap(find.text('README.md'), buttons: kSecondaryButton);
+      await tester.pump();
+      expect(controller.selected, {'README.md'});
+      expect(calls.map((c) => c.$1), ['README.md', 'README.md']);
+    });
+
+    testWidgets('the Menu key and Shift+F10 open the active row menu', (
+      tester,
+    ) async {
+      final (controller, calls) = await pumpMenuTree(tester);
+      await tester.tap(find.text('README.md'));
+      await tester.pump(const Duration(seconds: 1));
+      await _key(tester, LogicalKeyboardKey.contextMenu);
+      await _key(tester, LogicalKeyboardKey.home);
+      await _key(tester, LogicalKeyboardKey.f10, shift: true);
+      expect(calls.map((c) => c.$1), ['README.md', 'src']);
+      expect(controller.selected, {'src'});
+      // The position is the bottom-start corner of the row.
+      final view = tester.getRect(find.byType(Oito2TreeView<void>));
+      final row = tester.getRect(find.text('README.md'));
+      final (_, position, byKeyboard) = calls.first;
+      expect(byKeyboard, isTrue);
+      expect(calls.last.$3, isTrue);
+      expect(position.dx, view.left + Oito2Spacing.xs);
+      expect(position.dy, greaterThan(row.bottom));
+      expect(position.dy, lessThan(row.bottom + row.height * 2));
+    });
+
+    Future<List<(String, double)>> pumpColumnTree(WidgetTester tester) async {
+      final resized = <(String, double)>[];
+      final controller = Oito2TreeController(expanded: _files.branchValues);
+      addTearDown(controller.dispose);
+      await pumpOito2(
+        tester,
+        SizedBox(
+          width: 400,
+          height: 400,
+          child: Oito2TreeView(
+            collection: _files,
+            controller: controller,
+            onColumnResized: (id, width) => resized.add((id, width)),
+            columns: [
+              const Oito2TableColumn(id: 'name', label: 'Name'),
+              Oito2TableColumn(
+                id: 'size',
+                label: 'Size',
+                width: const Oito2ColumnWidth.fixed(80),
+                alignment: AlignmentDirectional.centerEnd,
+                resizable: true,
+                cellBuilder: (context, node) => Text('${node.value}#'),
+              ),
+            ],
+          ),
+        ),
+      );
+      return resized;
+    }
+
+    testWidgets('columns show a header and align across depths', (
+      tester,
+    ) async {
+      await pumpColumnTree(tester);
+      expect(find.text('Name'), findsOneWidget);
+      expect(find.text('Size'), findsOneWidget);
+      final ends = {
+        for (final v in ['src#', 'src/widgets#', 'src/widgets/a.dart#'])
+          tester.getRect(find.text(v)).right,
+      };
+      expect(ends, hasLength(1));
+      // The header label ends where the cells end.
+      expect(
+        tester.getRect(find.text('Size')).right,
+        moreOrLessEquals(ends.single, epsilon: 0.01),
+      );
+    });
+
+    testWidgets('dragging a header handle resizes the column', (tester) async {
+      final resized = await pumpColumnTree(tester);
+      double sizeWidth() => tester
+          .getSize(
+            find
+                .ancestor(
+                  of: find.text('Size'),
+                  matching: find.byType(SizedBox),
+                )
+                .first,
+          )
+          .width;
+      expect(sizeWidth(), 80);
+      final handle = find.byType(ResizeHandle);
+      expect(handle, findsOneWidget);
+      await tester.drag(handle, const Offset(30, 0));
+      await tester.pump();
+      expect(resized, hasLength(1));
+      expect(resized.single.$1, 'size');
+      expect(resized.single.$2, moreOrLessEquals(110, epsilon: 1));
+      expect(sizeWidth(), moreOrLessEquals(110, epsilon: 1));
+    });
+
+    testWidgets('a controlled tree of 50,000 nodes builds only shown rows', (
+      tester,
+    ) async {
+      final collection = Oito2TreeCollection<void>([
+        for (var b = 0; b < 500; b++)
+          Oito2TreeNode(
+            value: 'b$b',
+            children: [
+              for (var l = 0; l < 99; l++) Oito2TreeNode(value: 'b$b/l$l'),
+            ],
+          ),
+      ]);
+      final controller = Oito2TreeController(expanded: collection.branchValues);
+      addTearDown(controller.dispose);
+      var checks = 0;
+      var pendings = 0;
+      await pumpOito2(
+        tester,
+        SizedBox(
+          width: 300,
+          height: 400,
+          child: Oito2TreeView(
+            collection: collection,
+            controller: controller,
+            checkable: true,
+            checkState: (node) {
+              checks++;
+              return node.value.hashCode.isEven;
+            },
+            onCheckChanged: (_, _) {},
+            isPending: (node) {
+              pendings++;
+              return false;
+            },
+          ),
+        ),
+      );
+      expect(checks, lessThan(100));
+      expect(pendings, lessThan(100));
+      checks = 0;
+      final list = find.byType(ListView);
+      for (var i = 0; i < 10; i++) {
+        await tester.drag(list, const Offset(0, -3000));
+        await tester.pump();
+      }
+      tester
+          .state<ScrollableState>(find.byType(Scrollable).first)
+          .position
+          .jumpTo(40000 * 34.0);
+      await tester.pump();
+      expect(checks, lessThan(1000));
+      expect(find.textContaining('/l'), findsWidgets);
     });
   });
 

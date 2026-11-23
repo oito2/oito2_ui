@@ -105,6 +105,18 @@ ENV NODE_ENV=production
 EXPOSE 8080
 CMD ["node", "dist/index.js"]
 ''',
+  'gitignore':
+      r'''
+# Build output
+/build/
+*.log
+!important.log
+**/temp?/[a-z]*.tmp
+\#not-a-comment
+file\ with\ spaces
+trailing'''
+      // Unescaped trailing spaces, kept out of the raw string.
+      '  \n',
   'go': r'''
 package main
 

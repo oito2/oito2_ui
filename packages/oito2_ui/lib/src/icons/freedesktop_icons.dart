@@ -21,12 +21,18 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 ///
 /// Linux integrations refer to icons by these names, for example in
 /// `.desktop` files, notifications and tray items; [byName] turns such a
-/// name into an icon. Each value keeps its specification name in
-/// [iconName], such as `document-open`.
+/// name into an icon, and [forMimeType] picks the icon of a file by its
+/// MIME type. Each value keeps its specification name in [iconName], such
+/// as `document-open`.
+///
+/// Besides the names of the specification, a few names that icon themes
+/// widely share are included, such as `application-x-generic`,
+/// `emblem-synchronizing` and `sync-error`.
 ///
 /// ```dart
 /// Icon(Oito2FreedesktopIcons.documentOpen.icon);
 /// Icon(Oito2FreedesktopIcons.byName('dialog-warning')?.icon);
+/// Icon(Oito2FreedesktopIcons.forMimeType('application/pdf').icon);
 /// ```
 enum Oito2FreedesktopIcons {
   // Actions.
@@ -463,6 +469,9 @@ enum Oito2FreedesktopIcons {
   /// `emblem-documents`.
   emblemDocuments('emblem-documents', LucideIcons.file_text),
 
+  /// `emblem-error`.
+  emblemError('emblem-error', LucideIcons.circle_x),
+
   /// `emblem-favorite`.
   emblemFavorite('emblem-favorite', LucideIcons.heart),
 
@@ -471,6 +480,12 @@ enum Oito2FreedesktopIcons {
 
   /// `emblem-mail`.
   emblemMail('emblem-mail', LucideIcons.mail),
+
+  /// `emblem-new`.
+  emblemNew('emblem-new', LucideIcons.sparkle),
+
+  /// `emblem-ok`.
+  emblemOk('emblem-ok', LucideIcons.check),
 
   /// `emblem-photos`.
   emblemPhotos('emblem-photos', LucideIcons.image),
@@ -484,11 +499,93 @@ enum Oito2FreedesktopIcons {
   /// `emblem-symbolic-link`.
   emblemSymbolicLink('emblem-symbolic-link', LucideIcons.link),
 
+  /// `emblem-synchronizing`.
+  emblemSynchronizing('emblem-synchronizing', LucideIcons.refresh_cw),
+
   /// `emblem-system`.
   emblemSystem('emblem-system', LucideIcons.settings),
 
   /// `emblem-unreadable`.
   emblemUnreadable('emblem-unreadable', LucideIcons.file_x),
+
+  // MIME types.
+  /// `application-x-executable`.
+  applicationXExecutable('application-x-executable', LucideIcons.app_window),
+
+  /// `application-x-generic`.
+  applicationXGeneric('application-x-generic', LucideIcons.file),
+
+  /// `audio-x-generic`.
+  audioXGeneric('audio-x-generic', LucideIcons.file_music),
+
+  /// `font-x-generic`.
+  fontXGeneric('font-x-generic', LucideIcons.file_type),
+
+  /// `image-x-generic`.
+  imageXGeneric('image-x-generic', LucideIcons.file_image),
+
+  /// `package-x-generic`.
+  packageXGeneric('package-x-generic', LucideIcons.file_archive),
+
+  /// `text-html`.
+  textHtml('text-html', LucideIcons.file_code),
+
+  /// `text-x-generic`.
+  textXGeneric('text-x-generic', LucideIcons.file_text),
+
+  /// `text-x-generic-template`.
+  textXGenericTemplate(
+    'text-x-generic-template',
+    LucideIcons.notepad_text_dashed,
+  ),
+
+  /// `text-x-script`.
+  textXScript('text-x-script', LucideIcons.file_terminal),
+
+  /// `video-x-generic`.
+  videoXGeneric('video-x-generic', LucideIcons.file_play),
+
+  /// `x-office-address-book`.
+  xOfficeAddressBook('x-office-address-book', LucideIcons.contact),
+
+  /// `x-office-calendar`.
+  xOfficeCalendar('x-office-calendar', LucideIcons.calendar),
+
+  /// `x-office-document`.
+  xOfficeDocument('x-office-document', LucideIcons.file_pen_line),
+
+  /// `x-office-document-template`.
+  xOfficeDocumentTemplate(
+    'x-office-document-template',
+    LucideIcons.square_dashed_text,
+  ),
+
+  /// `x-office-drawing`.
+  xOfficeDrawing('x-office-drawing', LucideIcons.shapes),
+
+  /// `x-office-drawing-template`.
+  xOfficeDrawingTemplate(
+    'x-office-drawing-template',
+    LucideIcons.triangle_dashed,
+  ),
+
+  /// `x-office-presentation`.
+  xOfficePresentation('x-office-presentation', LucideIcons.presentation),
+
+  /// `x-office-presentation-template`.
+  xOfficePresentationTemplate(
+    'x-office-presentation-template',
+    LucideIcons.layout_template,
+  ),
+
+  /// `x-office-spreadsheet`.
+  xOfficeSpreadsheet('x-office-spreadsheet', LucideIcons.file_spreadsheet),
+
+  /// `x-office-spreadsheet-template`.
+  xOfficeSpreadsheetTemplate(
+    'x-office-spreadsheet-template',
+    LucideIcons.square_dashed_kanban,
+  ),
 
   // Places.
   /// `folder`.
@@ -694,5 +791,174 @@ enum Oito2FreedesktopIcons {
       current = current.substring(0, dash);
     }
     return null;
+  }
+
+  /// The icons of MIME types that their top-level type doesn't tell.
+  static const Map<String, Oito2FreedesktopIcons> _mimeTypes = {
+    'inode/directory': folder,
+    'inode/mount-point': folder,
+    'text/html': textHtml,
+    'application/xhtml+xml': textHtml,
+    'application/pdf': xOfficeDocument,
+    'application/rtf': xOfficeDocument,
+    'text/rtf': xOfficeDocument,
+    'application/msword': xOfficeDocument,
+    'application/epub+zip': xOfficeDocument,
+    'text/csv': xOfficeSpreadsheet,
+    'text/tab-separated-values': xOfficeSpreadsheet,
+    'text/calendar': xOfficeCalendar,
+    'application/ics': xOfficeCalendar,
+    'text/vcard': xOfficeAddressBook,
+    'text/x-vcard': xOfficeAddressBook,
+    'text/directory': xOfficeAddressBook,
+    'image/vnd.dxf': xOfficeDrawing,
+    'application/json': textXGeneric,
+    'application/xml': textXGeneric,
+    'application/yaml': textXGeneric,
+    'application/toml': textXGeneric,
+    'application/sql': textXGeneric,
+    'application/zip': packageXGeneric,
+    'application/gzip': packageXGeneric,
+    'application/vnd.rar': packageXGeneric,
+    'application/java-archive': packageXGeneric,
+    'application/vnd.debian.binary-package': packageXGeneric,
+    'application/vnd.android.package-archive': packageXGeneric,
+    'application/vnd.flatpak': packageXGeneric,
+    'application/vnd.snap': packageXGeneric,
+    'application/zstd': packageXGeneric,
+    'application/vnd.ms-fontobject': fontXGeneric,
+    'application/vnd.microsoft.portable-executable': applicationXExecutable,
+    'application/vnd.appimage': applicationXExecutable,
+  };
+
+  /// The subtypes, without an `x-` prefix, of archives and packages.
+  static const Set<String> _archives = {
+    '7z-compressed',
+    'ace-compressed',
+    'archive',
+    'arj',
+    'bzip',
+    'bzip2',
+    'bzip-compressed-tar',
+    'bzip2-compressed-tar',
+    'compress',
+    'compressed-tar',
+    'cpio',
+    'gtar',
+    'gzip',
+    'lha',
+    'lz4',
+    'lzip',
+    'lzma',
+    'lzma-compressed-tar',
+    'rar',
+    'rar-compressed',
+    'redhat-package-manager',
+    'rpm',
+    'stuffit',
+    'tar',
+    'tarz',
+    'xz',
+    'xz-compressed-tar',
+    'zip',
+    'zip-compressed',
+    'zstd-compressed-tar',
+  };
+
+  /// The subtypes, without an `x-` prefix, of executable programs.
+  static const Set<String> _executables = {
+    'dosexec',
+    'elf',
+    'executable',
+    'mach-binary',
+    'ms-dos-executable',
+    'msdownload',
+    'msi',
+    'pie-executable',
+    'sharedlib',
+  };
+
+  /// The subtypes, without an `x-` prefix, of scripts.
+  static const Set<String> _scripts = {
+    'awk',
+    'bat',
+    'csh',
+    'ecmascript',
+    'fish',
+    'javascript',
+    'ksh',
+    'lua',
+    'perl',
+    'php',
+    'powershell',
+    'python',
+    'python3',
+    'r',
+    'ruby',
+    'sh',
+    'shellscript',
+    'tcl',
+    'zsh',
+  };
+
+  /// Returns the icon for a [mimeType], such as `application/pdf` or
+  /// `image/png`; any parameters after a `;` and the case are ignored.
+  ///
+  /// Office formats, such as the OpenDocument and Microsoft Office types,
+  /// map to the `x-office-*` icons and their templates, PDF and RTF to
+  /// [xOfficeDocument], archives and packages to [packageXGeneric],
+  /// programs to [applicationXExecutable], scripts to [textXScript] and
+  /// `inode/directory` to [folder]. Other types fall back to the icon of
+  /// their top-level type, as `image/*` to [imageXGeneric], and then to
+  /// [textXGeneric] for text and [applicationXGeneric] for the rest.
+  static Oito2FreedesktopIcons forMimeType(String mimeType) {
+    final mime = mimeType.split(';').first.trim().toLowerCase();
+    final exact = _mimeTypes[mime];
+    if (exact != null) return exact;
+    final slash = mime.indexOf('/');
+    final type = slash < 0 ? mime : mime.substring(0, slash);
+    final subtype = slash < 0 ? '' : mime.substring(slash + 1);
+    final bare = subtype.startsWith('x-') ? subtype.substring(2) : subtype;
+    final template = subtype.contains('template');
+    if (subtype.contains('spreadsheet') ||
+        subtype.contains('ms-excel') ||
+        subtype.startsWith('vnd.sun.xml.calc')) {
+      return template ? xOfficeSpreadsheetTemplate : xOfficeSpreadsheet;
+    }
+    if (subtype.contains('presentation') ||
+        subtype.contains('ms-powerpoint') ||
+        subtype.startsWith('vnd.sun.xml.impress')) {
+      return template ? xOfficePresentationTemplate : xOfficePresentation;
+    }
+    if (subtype.contains('wordprocessing') ||
+        subtype.contains('opendocument.text') ||
+        subtype.contains('ms-word') ||
+        subtype.startsWith('vnd.sun.xml.writer')) {
+      return template ? xOfficeDocumentTemplate : xOfficeDocument;
+    }
+    if (subtype.contains('opendocument.graphics') ||
+        subtype.contains('visio') ||
+        subtype.startsWith('vnd.sun.xml.draw')) {
+      return template ? xOfficeDrawingTemplate : xOfficeDrawing;
+    }
+    if (type == 'application' || type == 'text') {
+      if (_scripts.contains(bare)) return textXScript;
+      if (subtype.endsWith('+json') || subtype.endsWith('+xml')) {
+        return textXGeneric;
+      }
+    }
+    if (type == 'application') {
+      if (_archives.contains(bare)) return packageXGeneric;
+      if (_executables.contains(bare)) return applicationXExecutable;
+      if (bare.startsWith('font-')) return fontXGeneric;
+    }
+    return switch (type) {
+      'audio' => audioXGeneric,
+      'font' => fontXGeneric,
+      'image' => imageXGeneric,
+      'text' => template ? textXGenericTemplate : textXGeneric,
+      'video' => videoXGeneric,
+      _ => applicationXGeneric,
+    };
   }
 }

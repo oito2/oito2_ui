@@ -179,6 +179,26 @@ class _CodeBlockPageState extends State<CodeBlockPage> {
             ),
           ),
         ),
+        const DocHeading('Highlighted lines', level: 3),
+        const DocText(
+          '`highlightedLines` tints the given lines, counted from 1, with '
+          'a bar along their leading edge, to point at the lines a text is '
+          'about. It works with and without line numbers.',
+        ),
+        const ExamplePanel(
+          region: 'highlighted',
+          child: SizedBox(
+            width: 420,
+            // #region highlighted
+            child: Oito2CodeBlock(
+              code: '# Build output\n/build/\n*.log\n!release.log',
+              language: 'gitignore',
+              showLineNumbers: true,
+              highlightedLines: {3, 4},
+            ),
+            // #endregion
+          ),
+        ),
         const DocHeading('Plain text, without the copy button', level: 3),
         const DocText(
           'Without a `language` the code keeps the foreground color. '

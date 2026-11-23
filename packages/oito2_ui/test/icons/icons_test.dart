@@ -63,6 +63,113 @@ void main() {
         expect(Oito2FreedesktopIcons.byName(icon.iconName), icon);
       }
     });
+
+    test('every value draws a Lucide glyph', () {
+      const lucide = LucideIcons.file;
+      for (final icon in Oito2FreedesktopIcons.values) {
+        expect(icon.icon.fontFamily, lucide.fontFamily, reason: icon.name);
+        expect(icon.icon.fontPackage, lucide.fontPackage, reason: icon.name);
+        // Lucide glyphs live in the Unicode private use area.
+        expect(icon.icon.codePoint, inInclusiveRange(0xE000, 0xF8FF));
+      }
+    });
+
+    test('includes the MIME type icons of the specification', () {
+      for (final name in [
+        'application-x-executable',
+        'audio-x-generic',
+        'font-x-generic',
+        'image-x-generic',
+        'package-x-generic',
+        'text-html',
+        'text-x-generic',
+        'text-x-generic-template',
+        'text-x-script',
+        'video-x-generic',
+        'x-office-address-book',
+        'x-office-calendar',
+        'x-office-document',
+        'x-office-document-template',
+        'x-office-drawing',
+        'x-office-drawing-template',
+        'x-office-presentation',
+        'x-office-presentation-template',
+        'x-office-spreadsheet',
+        'x-office-spreadsheet-template',
+      ]) {
+        expect(
+          Oito2FreedesktopIcons.values.map((i) => i.iconName),
+          contains(name),
+        );
+      }
+    });
+
+    test('forMimeType maps MIME types to icons', () {
+      const cases = {
+        'application/pdf': Oito2FreedesktopIcons.xOfficeDocument,
+        'application/msword': Oito2FreedesktopIcons.xOfficeDocument,
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+            Oito2FreedesktopIcons.xOfficeDocument,
+        'application/vnd.oasis.opendocument.text':
+            Oito2FreedesktopIcons.xOfficeDocument,
+        'application/vnd.oasis.opendocument.text-template':
+            Oito2FreedesktopIcons.xOfficeDocumentTemplate,
+        'application/vnd.oasis.opendocument.spreadsheet':
+            Oito2FreedesktopIcons.xOfficeSpreadsheet,
+        'application/vnd.ms-excel': Oito2FreedesktopIcons.xOfficeSpreadsheet,
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+            Oito2FreedesktopIcons.xOfficeSpreadsheet,
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.template':
+            Oito2FreedesktopIcons.xOfficeSpreadsheetTemplate,
+        'text/csv': Oito2FreedesktopIcons.xOfficeSpreadsheet,
+        'application/vnd.ms-powerpoint':
+            Oito2FreedesktopIcons.xOfficePresentation,
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+            Oito2FreedesktopIcons.xOfficePresentation,
+        'application/vnd.oasis.opendocument.presentation-template':
+            Oito2FreedesktopIcons.xOfficePresentationTemplate,
+        'application/vnd.oasis.opendocument.graphics':
+            Oito2FreedesktopIcons.xOfficeDrawing,
+        'text/calendar': Oito2FreedesktopIcons.xOfficeCalendar,
+        'text/vcard': Oito2FreedesktopIcons.xOfficeAddressBook,
+        'image/png': Oito2FreedesktopIcons.imageXGeneric,
+        'image/svg+xml': Oito2FreedesktopIcons.imageXGeneric,
+        'audio/ogg': Oito2FreedesktopIcons.audioXGeneric,
+        'video/mp4': Oito2FreedesktopIcons.videoXGeneric,
+        'font/woff2': Oito2FreedesktopIcons.fontXGeneric,
+        'application/x-font-ttf': Oito2FreedesktopIcons.fontXGeneric,
+        'text/html': Oito2FreedesktopIcons.textHtml,
+        'text/plain': Oito2FreedesktopIcons.textXGeneric,
+        'text/x-csrc': Oito2FreedesktopIcons.textXGeneric,
+        'application/json': Oito2FreedesktopIcons.textXGeneric,
+        'application/ld+json': Oito2FreedesktopIcons.textXGeneric,
+        'text/x-python': Oito2FreedesktopIcons.textXScript,
+        'application/x-shellscript': Oito2FreedesktopIcons.textXScript,
+        'text/javascript': Oito2FreedesktopIcons.textXScript,
+        'application/zip': Oito2FreedesktopIcons.packageXGeneric,
+        'application/x-tar': Oito2FreedesktopIcons.packageXGeneric,
+        'application/gzip': Oito2FreedesktopIcons.packageXGeneric,
+        'application/x-7z-compressed': Oito2FreedesktopIcons.packageXGeneric,
+        'application/vnd.rar': Oito2FreedesktopIcons.packageXGeneric,
+        'application/x-executable':
+            Oito2FreedesktopIcons.applicationXExecutable,
+        'inode/directory': Oito2FreedesktopIcons.folder,
+        'application/octet-stream': Oito2FreedesktopIcons.applicationXGeneric,
+        'model/gltf+json': Oito2FreedesktopIcons.applicationXGeneric,
+        'nonsense': Oito2FreedesktopIcons.applicationXGeneric,
+        '': Oito2FreedesktopIcons.applicationXGeneric,
+      };
+      for (final MapEntry(key: mime, value: icon) in cases.entries) {
+        expect(Oito2FreedesktopIcons.forMimeType(mime), icon, reason: mime);
+      }
+    });
+
+    test('forMimeType ignores the case and parameters', () {
+      expect(
+        Oito2FreedesktopIcons.forMimeType('Text/HTML; charset=utf-8'),
+        Oito2FreedesktopIcons.textHtml,
+      );
+    });
   });
 
   group('Oito2AnimatedIcon', () {

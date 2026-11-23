@@ -19,9 +19,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
 import 'highlighter.dart';
+import 'line_highlight.dart';
 
 /// A read-only, selectable block of highlighted code on the theme's
-/// container surface, with optional line numbers and a copy button.
+/// container surface, with optional line numbers, highlighted lines and a
+/// copy button.
 ///
 /// The colors come from the theme's [Oito2SyntaxTheme], or from the oito2
 /// base scheme of the current brightness when the theme has none. Long
@@ -34,6 +36,7 @@ class Oito2CodeBlock extends StatefulWidget {
     this.language,
     this.highlighter,
     this.showLineNumbers = false,
+    this.highlightedLines = const {},
     this.showCopyButton = true,
     this.textStyle,
     this.padding = const EdgeInsets.all(Oito2Spacing.lg),
@@ -51,6 +54,14 @@ class Oito2CodeBlock extends StatefulWidget {
 
   /// Whether line numbers are shown.
   final bool showLineNumbers;
+
+  /// The lines drawn on a tint of the primary color with a bar along
+  /// their leading edge, counted from 1; numbers outside the code are
+  /// ignored.
+  ///
+  /// The tint is drawn behind the text only, so the semantics of the
+  /// block don't change.
+  final Set<int> highlightedLines;
 
   /// Whether the copy button is shown.
   final bool showCopyButton;
@@ -118,6 +129,18 @@ class _Oito2CodeBlockState extends State<Oito2CodeBlock> {
     return _span!;
   }
 
+  /// Returns the height of one line of code in [style] at [scaler].
+  static double _lineHeight(TextStyle style, TextScaler scaler) {
+    final painter = TextPainter(
+      text: TextSpan(text: ' ', style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: scaler,
+    )..layout();
+    final height = painter.preferredLineHeight;
+    painter.dispose();
+    return height;
+  }
+
   @override
   Widget build(BuildContext context) {
     final code = widget.code;
@@ -130,12 +153,32 @@ class _Oito2CodeBlockState extends State<Oito2CodeBlock> {
     final style = Oito2CodeBlock.defaultTextStyle.merge(textStyle);
     final span = _highlighted(palette, style);
     final lineCount = '\n'.allMatches(code).length + 1;
+    final highlightedLines = {
+      for (final line in widget.highlightedLines)
+        if (line >= 1 && line <= lineCount) line,
+    };
+    final direction = Directionality.of(context);
 
     return Oito2BorderContainer(
       color: theme.colorScheme.surfaceContainer,
       borderRadius: Oito2Radius.mediumAll,
       child: Stack(
         children: [
+          if (highlightedLines.isNotEmpty)
+            Positioned.fill(
+              child: CustomPaint(
+                painter: FixedLineHighlightPainter(
+                  lines: highlightedLines,
+                  top: padding.resolve(direction).top,
+                  lineHeight: _lineHeight(
+                    style,
+                    MediaQuery.textScalerOf(context),
+                  ),
+                  colors: LineHighlightColors.of(context),
+                  direction: direction,
+                ),
+              ),
+            ),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: padding,

@@ -154,7 +154,9 @@ class _WebDropTargetState extends State<_WebDropTarget> {
     final read = <XFile>[];
     for (final (:name, :file) in items) {
       if (file == null) {
-        read.add(markAsDirectory(XFile.fromData(Uint8List(0), name: name)));
+        read.add(
+          oito2MarkAsDirectory(XFile.fromData(Uint8List(0), name: name)),
+        );
         continue;
       }
       final JSArrayBuffer buffer;

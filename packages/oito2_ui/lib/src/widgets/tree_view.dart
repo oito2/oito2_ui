@@ -27,8 +27,11 @@ import '../collections/text_folding.dart';
 import '../collections/tree_collection.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
+import 'context_menu.dart';
 import 'highlighted_text.dart';
 import 'progress.dart';
+import 'table_column.dart';
+import 'table_header.dart';
 import 'toggles.dart';
 import 'widget_helpers.dart';
 
@@ -174,6 +177,8 @@ typedef Oito2TreeItemBuilder<T> = Widget Function(
 /// - Space toggles the check box of a [checkable] tree, or else the
 ///   selection of a multiple-selection one; Control+A (Command+A) selects
 ///   every shown, enabled node of a multiple-selection tree.
+/// - The Menu key or Shift+F10 calls [onContextMenu] for the active row,
+///   as a secondary click does for the row under the pointer.
 /// - Enter, or a double click, calls [onActivate], or opens or closes a
 ///   branch when it is null.
 /// - F2 starts an inline rename of the active node when [onRename] is
@@ -184,6 +189,17 @@ typedef Oito2TreeItemBuilder<T> = Widget Function(
 /// while its children load the first time it opens. A non-empty [query]
 /// shows only the matching nodes and their ancestors, all open, with the
 /// match highlighted; branches can't be opened or closed while filtering.
+///
+/// A [checkable] tree derives a branch's check box from its leaves in
+/// [Oito2TreeController.checked] by default. With [checkState], the app
+/// owns the check states instead: the tree shows what it returns, and a
+/// click or Space only calls [onCheckChanged], so a branch whose children
+/// aren't loaded yet can show as checked or mixed.
+///
+/// With [columns], the tree is a tree grid: the first column holds the
+/// indentation, disclosure, check box, icon and label of each row, the
+/// other columns show cells aligned across every depth, and a header row
+/// with the column labels stays above the rows.
 class Oito2TreeView<T> extends StatefulWidget {
   /// Creates a tree view.
   const Oito2TreeView({
@@ -201,6 +217,13 @@ class Oito2TreeView<T> extends StatefulWidget {
     this.indent = 16,
     this.semanticLabel,
     this.autofocus = false,
+    this.checkState,
+    this.onCheckChanged,
+    this.isPending,
+    this.onContextMenu,
+    this.columns,
+    this.onColumnResized,
+    this.showHeader = true,
   });
 
   /// The nodes of the tree.
@@ -252,6 +275,58 @@ class Oito2TreeView<T> extends StatefulWidget {
   /// Whether the tree takes the focus when shown.
   final bool autofocus;
 
+  /// Returns the check state of a node in a [checkable] tree: true, false,
+  /// or null for mixed; when set, it replaces the states derived from
+  /// [Oito2TreeController.checked], which the tree then leaves untouched.
+  ///
+  /// It is called only for the rows being built, so it must be cheap.
+  final bool? Function(Oito2TreeNode<T> node)? checkState;
+
+  /// Called with a node and its next check state when its check box is
+  /// clicked or Space is pressed on it, while [checkState] is set: true
+  /// when it is unchecked or mixed, false when it is checked. Nothing else
+  /// changes; the app updates what [checkState] returns.
+  final void Function(Oito2TreeNode<T> node, bool checked)? onCheckChanged;
+
+  /// Whether a node has a change not applied yet; such rows show a small
+  /// dot after the label and a "pending change" hint to assistive
+  /// technologies.
+  final bool Function(Oito2TreeNode<T> node)? isPending;
+
+  /// Called with a node, a global position and whether the keyboard
+  /// asked for the menu: on a secondary click or a long press on its row,
+  /// with the pointer position and `byKeyboard` false, and on the Menu key
+  /// or Shift+F10 for the active row, with the bottom-start corner of that
+  /// row and `byKeyboard` true.
+  ///
+  /// The row becomes active first and is selected: alone in a single
+  /// selection, and in a multiple selection unless it is already part of
+  /// it. Disabled rows don't call it. An [Oito2ContextMenuRegion] with an
+  /// [Oito2ContextMenuController] around the tree can open its menu at
+  /// the position, focusing its first item when `byKeyboard` is true.
+  final void Function(
+    Oito2TreeNode<T> node,
+    Offset globalPosition,
+    bool byKeyboard,
+  )?
+  onContextMenu;
+
+  /// The columns of a tree grid; null or empty shows the plain tree.
+  ///
+  /// The first column shows the tree's own row content, or what its
+  /// [Oito2TableColumn.cellBuilder] builds in place of the label when
+  /// [itemBuilder] is null. Columns wider in total than the tree scroll
+  /// sideways.
+  final List<Oito2TableColumn<Oito2TreeNode<T>>>? columns;
+
+  /// Called with a column id and its new width when a resize of that
+  /// column ends; the app can keep the width and pass it back as an
+  /// [Oito2ColumnWidth.fixed] width.
+  final void Function(String id, double width)? onColumnResized;
+
+  /// Whether a tree with [columns] shows the header row.
+  final bool showHeader;
+
   @override
   State<Oito2TreeView<T>> createState() => _Oito2TreeViewState<T>();
 }
@@ -268,9 +343,24 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
   Timer? _typeTimer;
   List<Oito2TreeEntry<T>> _entries = const [];
   final _clicks = DoubleClickDetector();
+  final _listKey = GlobalKey();
+  final _horizontalScroll = ScrollController();
+
+  /// The column widths of a tree grid.
+  final _columnWidths = TableColumnWidths();
 
   Oito2TreeController get _controller => widget.controller;
   bool get _filtering => widget.query.trim().isNotEmpty;
+
+  /// Whether the app owns the check states through
+  /// [Oito2TreeView.checkState].
+  bool get _controlled => widget.checkable && widget.checkState != null;
+
+  /// The columns of a tree grid, or null for a plain tree.
+  List<Oito2TableColumn<Oito2TreeNode<T>>>? get _columns {
+    final columns = widget.columns;
+    return columns == null || columns.isEmpty ? null : columns;
+  }
 
   @override
   void initState() {
@@ -286,6 +376,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
       oldWidget.controller.removeListener(_refresh);
       widget.controller.addListener(_refresh);
     }
+    _columnWidths.update(oldWidget.columns, widget.columns);
   }
 
   @override
@@ -293,6 +384,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     _controller.removeListener(_refresh);
     _focusNode.dispose();
     _scroll.dispose();
+    _horizontalScroll.dispose();
     _typeTimer?.cancel();
     _clicks.cancel();
     super.dispose();
@@ -345,7 +437,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
   /// otherwise.
   void _computeCheckStates() {
     _checkStates.clear();
-    if (!widget.checkable) return;
+    if (!widget.checkable || _controlled) return;
     (int, int) visit(Oito2TreeNode<T> node) {
       final children = node.children;
       if (children == null) {
@@ -432,40 +524,84 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
 
   /// Opens or closes the branch [node], loading its children through
   /// [Oito2TreeView.onLoadChildren] the first time an empty branch opens.
-  Future<void> _setExpanded(Oito2TreeNode<T> node, bool expanded) async {
+  void _setExpanded(Oito2TreeNode<T> node, bool expanded) {
     if (!node.isBranch || _filtering) return;
     _controller.setExpanded(node.value, expanded);
+    if (expanded) _load(node);
+  }
+
+  /// Whether [node] is an empty branch whose children
+  /// [Oito2TreeView.onLoadChildren] hasn't loaded and isn't loading.
+  bool _needsLoad(Oito2TreeNode<T> node) =>
+      widget.onLoadChildren != null &&
+      (node.children?.isEmpty ?? false) &&
+      !_loaded.contains(node.value) &&
+      !_loading.contains(node.value);
+
+  /// Loads the children of [node] through [Oito2TreeView.onLoadChildren]
+  /// when it needs them; a failed load is reported and closes the branch.
+  Future<void> _load(Oito2TreeNode<T> node) async {
     final load = widget.onLoadChildren;
-    if (expanded &&
-        load != null &&
-        (node.children?.isEmpty ?? false) &&
-        !_loaded.contains(node.value) &&
-        !_loading.contains(node.value)) {
-      setState(() => _loading.add(node.value));
-      var loaded = false;
-      try {
-        await load(node);
-        loaded = true;
-      } catch (error, stack) {
-        FlutterError.reportError(
-          FlutterErrorDetails(
-            exception: error,
-            stack: stack,
-            library: 'oito2_ui',
-            context: ErrorDescription('while loading tree children'),
-          ),
-        );
-      } finally {
-        if (mounted) {
-          setState(() {
-            _loading.remove(node.value);
-            if (loaded) {
-              _loaded.add(node.value);
-            } else {
-              _controller.setExpanded(node.value, false);
-            }
-          });
-        }
+    if (load == null || !_needsLoad(node)) return;
+    setState(() => _loading.add(node.value));
+    var loaded = false;
+    try {
+      await load(node);
+      loaded = true;
+    } catch (error, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'oito2_ui',
+          context: ErrorDescription('while loading tree children'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading.remove(node.value);
+          if (loaded) {
+            _loaded.add(node.value);
+          } else {
+            _controller.setExpanded(node.value, false);
+          }
+        });
+      }
+    }
+  }
+
+  /// Whether a load of the open, empty branches is scheduled.
+  bool _loadsScheduled = false;
+
+  /// Schedules, after the frame, the load of every shown open branch that
+  /// is still empty, however it was opened, such as from the controller;
+  /// does nothing while filtering or without
+  /// [Oito2TreeView.onLoadChildren].
+  void _scheduleLoads() {
+    if (_loadsScheduled ||
+        widget.onLoadChildren == null ||
+        _filtering ||
+        !_openEmptyBranches().any((_) => true)) {
+      return;
+    }
+    _loadsScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadsScheduled = false;
+      if (!mounted || _filtering) return;
+      _openEmptyBranches().toList().forEach(_load);
+    });
+  }
+
+  /// The open branches that need a load and whose ancestors are all open,
+  /// so that they are shown.
+  Iterable<Oito2TreeNode<T>> _openEmptyBranches() sync* {
+    final collection = widget.collection;
+    for (final value in _controller.expanded) {
+      final node = collection.find(value);
+      if (node == null || !_needsLoad(node)) continue;
+      if (collection.ancestorsOf(value).every(_controller.isExpanded)) {
+        yield node;
       }
     }
   }
@@ -481,11 +617,28 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     }
   }
 
+  /// The check state shown for [node]: the one from
+  /// [Oito2TreeView.checkState] in a controlled tree, or else the one
+  /// derived from the controller.
+  bool? _checkStateOf(Oito2TreeNode<T> node) =>
+      _controlled ? widget.checkState!(node) : _checkStates[node.value];
+
+  /// Reports the next check state of [node] through
+  /// [Oito2TreeView.onCheckChanged] in a controlled tree, or else toggles
+  /// it in the controller.
+  void _toggleCheck(Oito2TreeNode<T> node) {
+    if (_controlled) {
+      widget.onCheckChanged?.call(node, _checkStateOf(node) != true);
+    } else {
+      _controller.toggleChecked(widget.collection, node.value);
+    }
+  }
+
   /// Toggles the check box of [node], or else its selection in a
   /// multiple-selection tree.
   void _toggleSpace(Oito2TreeNode<T> node) {
     if (widget.checkable) {
-      _controller.toggleChecked(widget.collection, node.value);
+      _toggleCheck(node);
     } else if (_controller.selectionMode == Oito2SelectionMode.multiple) {
       _controller.toggleSelected(node.value);
     }
@@ -542,6 +695,17 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
       } else {
         final parent = widget.collection.parentOf(node.value);
         if (parent != null && _indexOf(parent) >= 0) _activate(parent);
+      }
+    } else if (widget.onContextMenu != null &&
+        current != null &&
+        (key == LogicalKeyboardKey.contextMenu ||
+            (key == LogicalKeyboardKey.f10 && shift))) {
+      if (event is KeyDownEvent) {
+        _reveal(index);
+        final corner = _rowCorner(index);
+        if (corner != null) {
+          _showContextMenu(current.node, corner, byKeyboard: true);
+        }
       }
     } else if (key == LogicalKeyboardKey.enter && current != null) {
       _primary(current.node);
@@ -619,8 +783,72 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     }
   }
 
+  /// The horizontal space around each row.
+  static const _rowMargin = Oito2Spacing.xs;
+
+  /// The global position of the bottom-start corner of the row at
+  /// [index], or null before the list is laid out.
+  Offset? _rowCorner(int index) {
+    final box = _listKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize || !_scroll.hasClients) return null;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    final y = _listPadding + (index + 1) * _rowHeight - _scroll.offset;
+    final x = rtl ? box.size.width - _rowMargin : _rowMargin;
+    return box.localToGlobal(Offset(x, y));
+  }
+
+  /// Makes [node] active and selected, keeping a multiple selection that
+  /// already holds it, and calls [Oito2TreeView.onContextMenu] with
+  /// [position] and [byKeyboard]; does nothing for a disabled node.
+  void _showContextMenu(
+    Oito2TreeNode<T> node,
+    Offset position, {
+    bool byKeyboard = false,
+  }) {
+    final callback = widget.onContextMenu;
+    if (callback == null || node.disabled) return;
+    _focusNode.requestFocus();
+    setState(() => _active = node.value);
+    _anchor = node.value;
+    switch (_controller.selectionMode) {
+      case Oito2SelectionMode.none:
+        break;
+      case Oito2SelectionMode.single:
+        _controller.setSelected([node.value]);
+      case Oito2SelectionMode.multiple:
+        if (!_controller.isSelected(node.value)) {
+          _controller.setSelected([node.value]);
+        }
+    }
+    callback(node, position, byKeyboard);
+  }
+
+  /// Grows the column at [index] by [delta] in screen coordinates.
+  void _resizeColumn(int index, double delta) {
+    final columns = _columns;
+    if (columns == null) return;
+    setState(() {
+      _columnWidths.resize(
+        columns[index],
+        index,
+        delta,
+        Directionality.of(context),
+      );
+    });
+  }
+
+  /// Reports the width of the column at [index] through
+  /// [Oito2TreeView.onColumnResized].
+  void _endResize(int index) {
+    final columns = _columns;
+    if (columns == null) return;
+    final width = _columnWidths.widthOf(columns[index], index);
+    if (width != null) widget.onColumnResized?.call(columns[index].id, width);
+  }
+
   /// Builds the row of [entry]: disclosure, check box, icon and label, or
-  /// the rename field.
+  /// the rename field, followed by the cells of the other columns in a
+  /// tree grid.
   Widget _row(BuildContext context, Oito2TreeEntry<T> entry) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -637,7 +865,9 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
         : selected
         ? scheme.onSecondaryContainer
         : scheme.onSurface;
-    final bool? checkState = widget.checkable ? _checkStates[value] : false;
+    final bool? checkState = widget.checkable ? _checkStateOf(node) : false;
+    final pending = widget.isPending?.call(node) ?? false;
+    final columns = _columns;
     final rtl = Directionality.of(context) == TextDirection.rtl;
 
     final disclosure = SizedBox(
@@ -689,8 +919,10 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
         },
       );
     } else {
+      final cell = columns?.first.cellBuilder;
       label =
           widget.itemBuilder?.call(context, node) ??
+          cell?.call(context, node) ??
           (_filtering
               ? Oito2HighlightedText(
                   node.label,
@@ -701,7 +933,34 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
               : Text(node.label, maxLines: 1, overflow: TextOverflow.ellipsis));
     }
     final icon = widget.iconBuilder?.call(node, open);
-    return Semantics(
+    final content = Row(
+      spacing: Oito2Spacing.xs,
+      children: [
+        disclosure,
+        if (widget.checkable)
+          ExcludeFocus(
+            child: Oito2Checkbox(
+              value: checkState,
+              tristate: true,
+              onChanged: node.disabled ? null : (_) => _toggleCheck(node),
+            ),
+          ),
+        ?icon,
+        Expanded(child: label),
+        if (pending)
+          Container(
+            key: const ValueKey('oito2-tree-pending'),
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: semanticColorsOf(context).warning,
+              shape: BoxShape.circle,
+            ),
+          ),
+      ],
+    );
+
+    Widget semantics(Widget child) => Semantics(
       selected: selected,
       enabled: !node.disabled,
       focused: active,
@@ -709,61 +968,109 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
       checked: widget.checkable ? checkState ?? false : null,
       mixed: widget.checkable && checkState == null ? true : null,
       label: node.label,
+      hint: pending ? Oito2Localizations.of(context).pendingChange : null,
       excludeSemantics: _renaming != value,
       onTap: node.disabled ? null : () => _tap(node),
-      child: MouseRegion(
-        cursor: node.disabled ? MouseCursor.defer : SystemMouseCursors.click,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapUp: (details) {
-            _tap(node);
-            if (!node.disabled && _clicks.click(value)) _primary(node);
-          },
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: Oito2Spacing.xs),
-            padding: EdgeInsetsDirectional.only(
-              start: Oito2Spacing.xs + entry.depth * widget.indent,
-              end: Oito2Spacing.sm,
+      child: child,
+    );
+
+    Widget frame(Widget child, EdgeInsetsDirectional padding) => MouseRegion(
+      cursor: node.disabled ? MouseCursor.defer : SystemMouseCursors.click,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapUp: (details) {
+          _tap(node);
+          if (!node.disabled && _clicks.click(value)) _primary(node);
+        },
+        onSecondaryTapUp: widget.onContextMenu == null
+            ? null
+            : (details) => _showContextMenu(node, details.globalPosition),
+        onLongPressStart: widget.onContextMenu == null
+            ? null
+            : (details) => _showContextMenu(node, details.globalPosition),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: _rowMargin),
+          padding: padding,
+          decoration: BoxDecoration(
+            color: selected ? scheme.secondaryContainer : null,
+            borderRadius: Oito2Radius.smallAll,
+            border: active && keyboard
+                ? Border.all(
+                    color: semanticColorsOf(context).primaryText,
+                    width: Oito2Sizes.focusBorderWidth,
+                  )
+                : null,
+          ),
+          child: IconTheme.merge(
+            data: IconThemeData(color: foreground, size: 16),
+            child: DefaultTextStyle.merge(
+              style: theme.textTheme.bodyMedium?.copyWith(color: foreground),
+              child: child,
             ),
-            decoration: BoxDecoration(
-              color: selected ? scheme.secondaryContainer : null,
-              borderRadius: Oito2Radius.smallAll,
-              border: active && keyboard
-                  ? Border.all(
-                      color: semanticColorsOf(context).primaryText,
-                      width: Oito2Sizes.focusBorderWidth,
-                    )
-                  : null,
-            ),
-            child: IconTheme.merge(
-              data: IconThemeData(color: foreground, size: 16),
-              child: DefaultTextStyle.merge(
-                style: theme.textTheme.bodyMedium?.copyWith(color: foreground),
-                child: Row(
-                  spacing: Oito2Spacing.xs,
-                  children: [
-                    disclosure,
-                    if (widget.checkable)
-                      ExcludeFocus(
-                        child: Oito2Checkbox(
-                          value: checkState,
-                          tristate: true,
-                          onChanged: node.disabled
-                              ? null
-                              : (_) => _controller.toggleChecked(
-                                  widget.collection,
-                                  value,
-                                ),
-                        ),
-                      ),
-                    ?icon,
-                    Expanded(child: label),
-                  ],
+          ),
+        ),
+      ),
+    );
+
+    if (columns == null) {
+      return semantics(
+        frame(
+          content,
+          EdgeInsetsDirectional.only(
+            start: Oito2Spacing.xs + entry.depth * widget.indent,
+            end: Oito2Spacing.sm,
+          ),
+        ),
+      );
+    }
+    // The first cell keeps the room its fixed parts need, clipped when the
+    // column is narrower.
+    final indent = entry.depth * widget.indent;
+    final needed =
+        indent +
+        20 +
+        (widget.checkable ? kMinInteractiveDimension + Oito2Spacing.xs : 0) +
+        (icon == null ? 0 : 16 + Oito2Spacing.xs) +
+        Oito2Spacing.xs +
+        24;
+    return frame(
+      Row(
+        children: [
+          SizedBox(
+            width: _columnWidths.widths[0],
+            child: semantics(
+              ClipRect(
+                child: OverflowBox(
+                  alignment: AlignmentDirectional.centerStart,
+                  minWidth: 0,
+                  maxWidth: math.max(_columnWidths.widths[0], needed),
+                  child: Padding(
+                    padding: EdgeInsetsDirectional.only(start: indent),
+                    child: content,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+          for (var i = 1; i < columns.length; i++)
+            SizedBox(
+              width: _columnWidths.widths[i],
+              child: Padding(
+                padding: const EdgeInsetsDirectional.only(
+                  start: Oito2Spacing.xs,
+                  end: Oito2Spacing.sm,
+                ),
+                child: Align(
+                  alignment: columns[i].alignment,
+                  child: columns[i].cellBuilder?.call(context, node),
+                ),
+              ),
+            ),
+        ],
+      ),
+      const EdgeInsetsDirectional.only(
+        start: Oito2Spacing.xs,
+        end: Oito2Spacing.sm,
       ),
     );
   }
@@ -772,24 +1079,52 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
   Widget build(BuildContext context) {
     _entries = _computeEntries();
     _computeCheckStates();
+    _scheduleLoads();
     if (_active != null && _indexOf(_active) < 0) _active = null;
     if (_anchor != null && _indexOf(_anchor) < 0) _anchor = null;
+    final list = Focus(
+      focusNode: _focusNode,
+      autofocus: widget.autofocus,
+      onKeyEvent: _onKey,
+      child: ListView.builder(
+        key: _listKey,
+        controller: _scroll,
+        itemExtent: _rowHeight,
+        padding: const EdgeInsets.symmetric(vertical: _listPadding),
+        itemCount: _entries.length,
+        itemBuilder: (context, index) => _row(context, _entries[index]),
+      ),
+    );
+    final columns = _columns;
     return Semantics(
       label: widget.semanticLabel,
       container: true,
       explicitChildNodes: true,
-      child: Focus(
-        focusNode: _focusNode,
-        autofocus: widget.autofocus,
-        onKeyEvent: _onKey,
-        child: ListView.builder(
-          controller: _scroll,
-          itemExtent: _rowHeight,
-          padding: const EdgeInsets.symmetric(vertical: _listPadding),
-          itemCount: _entries.length,
-          itemBuilder: (context, index) => _row(context, _entries[index]),
-        ),
-      ),
+      child: columns == null
+          ? list
+          : TableColumnsView(
+              controller: _horizontalScroll,
+              // Margins on both sides, and the row's start and end padding.
+              chrome: 2 * _rowMargin + Oito2Spacing.xs + Oito2Spacing.sm,
+              resolve: (available) => _columnWidths.resolve(columns, available),
+              header: !widget.showHeader
+                  ? null
+                  : (context) => TableHeader(
+                      columns: columns,
+                      widths: _columnWidths.widths,
+                      height: _rowHeight,
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: _rowMargin,
+                      ),
+                      padding: const EdgeInsetsDirectional.only(
+                        start: Oito2Spacing.xs,
+                        end: Oito2Spacing.sm,
+                      ),
+                      onResize: _resizeColumn,
+                      onResizeEnd: _endResize,
+                    ),
+              body: list,
+            ),
     );
   }
 }

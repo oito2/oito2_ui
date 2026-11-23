@@ -155,6 +155,63 @@ void main() {
       expect(width('iiii', FontWeight.w700), width('iiii', FontWeight.w400));
     },
   );
+
+  testWidgets('highlightedLines tints those lines behind the code', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      const SizedBox(
+        width: 300,
+        child: Oito2CodeBlock(
+          code: 'a\nb\nc',
+          showLineNumbers: true,
+          highlightedLines: {2, 9},
+        ),
+      ),
+    );
+    final painter = find.byWidgetPredicate(
+      (widget) =>
+          widget is CustomPaint &&
+          widget.painter.runtimeType.toString() == 'FixedLineHighlightPainter',
+    );
+    expect(painter, findsOneWidget);
+    final numbers = find.text('1\n2\n3');
+    final lineHeight = tester.getSize(numbers).height / 3;
+    final top = tester.getTopLeft(numbers).dy - tester.getTopLeft(painter).dy;
+    final width = tester.getSize(painter).width;
+    final scheme = Theme.of(tester.element(painter)).colorScheme;
+    expect(
+      tester.renderObject(painter),
+      paints..rect(
+        rect: Rect.fromLTWH(0, top + lineHeight, width, lineHeight),
+        color: scheme.primary.withValues(alpha: 0.14),
+      ),
+    );
+    // Line 9 doesn't exist: only line 2's tint and bar are painted.
+    expect(
+      tester.renderObject(painter),
+      isNot(
+        paints
+          ..rect()
+          ..rect()
+          ..rect(),
+      ),
+    );
+  });
+
+  testWidgets('no highlight painter without highlightedLines', (tester) async {
+    await _pump(tester, const Oito2CodeBlock(code: 'a'));
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is CustomPaint &&
+            widget.painter.runtimeType.toString() ==
+                'FixedLineHighlightPainter',
+      ),
+      findsNothing,
+    );
+  });
 }
 
 /// Counts its highlight calls.

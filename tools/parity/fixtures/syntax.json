@@ -55,6 +55,7 @@
 		"dart",
 		"diff",
 		"dockerfile",
+		"gitignore",
 		"go",
 		"html",
 		"ini",
@@ -1511,6 +1512,137 @@
 					"text": "]",
 					"scope": "language:bash",
 					"role": null
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				}
+			]
+		},
+		{
+			"language": "gitignore",
+			"code": "# Build output\n/build/\n*.log\n!important.log\n**/temp?/[a-z]*.tmp\n\\#not-a-comment\nfile\\ with\\ spaces\ntrailing  \n",
+			"runs": [
+				{
+					"text": "# Build output",
+					"scope": "comment",
+					"role": "comment"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "/",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": "build",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "/",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": "\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "*",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": ".log\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "!",
+					"scope": "keyword",
+					"role": "keyword"
+				},
+				{
+					"text": "important.log\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "**",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "/temp",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "?",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": "/",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "[a-z]",
+					"scope": "regexp",
+					"role": "string"
+				},
+				{
+					"text": "*",
+					"scope": "meta",
+					"role": "attribute"
+				},
+				{
+					"text": ".tmp\n",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\\#",
+					"scope": "symbol",
+					"role": "constant"
+				},
+				{
+					"text": "not-a-comment\nfile",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\\ ",
+					"scope": "symbol",
+					"role": "constant"
+				},
+				{
+					"text": "with",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "\\ ",
+					"scope": "symbol",
+					"role": "constant"
+				},
+				{
+					"text": "spaces\ntrailing",
+					"scope": null,
+					"role": null
+				},
+				{
+					"text": "  ",
+					"scope": "deletion",
+					"role": "invalid"
 				},
 				{
 					"text": "\n",

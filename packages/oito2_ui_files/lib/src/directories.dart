@@ -15,14 +15,24 @@
 
 import 'package:file_selector/file_selector.dart';
 
+import 'drop_target.dart';
+
 /// The files that stand for dropped directories.
 final Expando<bool> _directories = Expando('directories');
 
-/// Records that [file] stands for a directory; returns [file].
-XFile markAsDirectory(XFile file) {
+/// Records that [file] stands for a directory and returns [file].
+///
+/// [oito2PlatformDropTarget] marks the directories it receives; a custom
+/// `Oito2FileDropTargetBuilder` can mark its own the same way.
+XFile oito2MarkAsDirectory(XFile file) {
   _directories[file] = true;
   return file;
 }
 
-/// Whether [file] was marked by [markAsDirectory].
-bool isDirectory(XFile file) => _directories[file] ?? false;
+/// Whether [file] stands for a directory rather than a file, as marked by
+/// [oito2MarkAsDirectory].
+///
+/// On Linux, Windows and macOS, the `path` of a dropped directory is its
+/// path in the file system. On the web the browser gives only its `name`,
+/// and its `path` is not a file system path.
+bool oito2IsDirectory(XFile file) => _directories[file] ?? false;

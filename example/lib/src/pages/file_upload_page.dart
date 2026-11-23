@@ -47,6 +47,9 @@ class _FileUploadPageState extends State<FileUploadPage> {
   final _document = Oito2FileUploadController(maxFiles: 1);
   // #endregion
   final _locked = Oito2FileUploadController();
+  // #region folders-data
+  final _folders = Oito2FileUploadController(acceptDirectories: true);
+  // #endregion
 
   /// The files of the bare zone's last drop or choice, with their sizes,
   /// read once per file.
@@ -57,6 +60,7 @@ class _FileUploadPageState extends State<FileUploadPage> {
     _images.dispose();
     _document.dispose();
     _locked.dispose();
+    _folders.dispose();
     super.dispose();
   }
 
@@ -101,7 +105,8 @@ class _FileUploadPageState extends State<FileUploadPage> {
           'macOS. On other platforms the zone opens the file chooser, unless '
           'a `dropTargetBuilder` brings drops from another source. '
           '`oito2CanDropFiles` says whether the platform receives drops. '
-          'Dropped folders are refused with the `directory` reason.',
+          'Dropped folders are refused with the `directory` reason, unless '
+          'the controller accepts them.',
         ),
         const DocHeading('Examples'),
         const DocHeading('One file of any type', level: 3),
@@ -120,6 +125,24 @@ class _FileUploadPageState extends State<FileUploadPage> {
               showPreviews: false,
               zoneMinHeight: 120,
             ),
+            // #endregion
+          ),
+        ),
+        const DocHeading('Drop a folder to link it', level: 3),
+        const DocText(
+          'With `acceptDirectories: true` the controller keeps dropped '
+          'folders as items, without the type and size checks, though they '
+          'count toward `maxFiles`. `oito2IsDirectory` tells them from files. '
+          'On Linux, Windows and macOS a folder carries its path in `path`; '
+          'on the web the browser gives only its `name`, so the list shows '
+          '"Folder" instead of the path.',
+        ),
+        ExamplePanel(
+          regions: const ['folders-data', 'folders'],
+          child: SizedBox(
+            width: 420,
+            // #region folders
+            child: Oito2FileUpload(controller: _folders, zoneMinHeight: 120),
             // #endregion
           ),
         ),
@@ -213,6 +236,8 @@ class _FileUploadPageState extends State<FileUploadPage> {
           'oito2CanDropFiles',
           'oito2PlatformDropTarget',
           'oito2FileMatchesTypes',
+          'oito2IsDirectory',
+          'oito2MarkAsDirectory',
         ]),
       ],
     );

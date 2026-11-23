@@ -18,8 +18,8 @@ import 'package:oito2_ui/oito2_ui.dart';
 
 import '../docs/doc_widgets.dart';
 
-/// Documents [Oito2PasswordField]: signing in, a new password, an error
-/// and the Caps Lock warning.
+/// Documents [Oito2PasswordField]: signing in, a new password with the
+/// strength meter, an error and the Caps Lock warning.
 class PasswordFieldPage extends StatelessWidget {
   /// Creates the password field page.
   const PasswordFieldPage({super.key});
@@ -70,6 +70,54 @@ class PasswordFieldPage extends StatelessWidget {
             // #endregion
           ),
         ),
+        const DocHeading('Strength meter', level: 3),
+        const DocText(
+          'With `showStrength`, a meter below the field rates the password '
+          'while it isn\'t empty: four segments from the danger to the '
+          'success tone, the level ("Very weak" to "Strong") and the first '
+          'suggestion, such as "Avoid sequences". '
+          '`Oito2PasswordStrength.estimate` rates it on the device, never '
+          'sending it anywhere: it weighs length and kinds of characters '
+          'against common passwords, dates, runs such as "abcd" or '
+          '"qwerty", repeats and the words of `strengthUserInputs`, such as '
+          'the user\'s name and email.',
+        ),
+        const ExamplePanel(
+          region: 'strength',
+          child: SizedBox(
+            width: 300,
+            // #region strength
+            child: Oito2PasswordField(
+              labelText: 'New password',
+              autofillHints: [AutofillHints.newPassword],
+              showStrength: true,
+              strengthUserInputs: ['Ana Souza', 'ana@example.com'],
+            ),
+            // #endregion
+          ),
+        ),
+        const DocText(
+          '`strengthEstimator` plugs in another estimator, such as a port of '
+          'zxcvbn or the server\'s policy, that returns an '
+          '`Oito2PasswordStrength`: a level from 0 to 4 and a list of '
+          '`Oito2PasswordHint`s.',
+        ),
+        ExamplePanel(
+          region: 'estimator',
+          child: SizedBox(
+            width: 300,
+            // #region estimator
+            child: Oito2PasswordField(
+              labelText: 'PIN-like password',
+              showStrength: true,
+              strengthEstimator: (password) => Oito2PasswordStrength(
+                (password.length ~/ 4).clamp(0, 4),
+                hints: [if (password.length < 16) Oito2PasswordHint.addLength],
+              ),
+            ),
+            // #endregion
+          ),
+        ),
         const DocHeading('Caps Lock warning', level: 3),
         const DocText(
           'While the field has the focus and Caps Lock is on, a warning '
@@ -108,9 +156,15 @@ class PasswordFieldPage extends StatelessWidget {
           'The eye button has the tooltip "Show password" or "Hide '
           'password", which also names it for assistive technologies. The '
           'Caps Lock warning is a live region, so screen readers announce '
-          'it when it appears.',
+          'it when it appears. The strength level is a live region too: it '
+          'is announced, as "Password strength: Fair", when the level '
+          'changes, not on every key.',
         ),
-        ...apiReferenceWidgets(['Oito2PasswordField']),
+        ...apiReferenceWidgets([
+          'Oito2PasswordField',
+          'Oito2PasswordStrength',
+          'Oito2PasswordHint',
+        ]),
       ],
     );
   }

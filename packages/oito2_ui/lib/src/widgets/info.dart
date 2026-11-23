@@ -16,7 +16,6 @@
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../foundation/contrast.dart';
 import '../l10n/oito2_localizations.dart';
 import '../theme/extensions/semantic_colors.dart';
 import '../tokens/geometry.dart';
@@ -44,6 +43,17 @@ enum Oito2InfoType {
   /// The icon that represents this kind.
   final IconData icon;
 
+  /// Returns how urgent this kind is, from 0 for [success] to 4 for
+  /// [danger]: [danger], [warning], [important], [information], then
+  /// [success].
+  int get severity => switch (this) {
+    danger => 4,
+    warning => 3,
+    important => 2,
+    information => 1,
+    success => 0,
+  };
+
   /// Returns the localized name of this kind from [strings], such as
   /// "Warning", for assistive technologies.
   String labelIn(Oito2Localizations strings) => switch (this) {
@@ -62,23 +72,6 @@ enum Oito2InfoType {
     danger => colors.errorText,
     important => colors.primaryText,
   };
-}
-
-/// Returns the tinted background and the readable foreground for [type]
-/// over the scheme surface: the type color at [tint] opacity for the
-/// background and the type color adjusted to reach 4.5:1 on it.
-(Color background, Color foreground) _infoColors(
-  BuildContext context,
-  Oito2InfoType type,
-  double tint,
-) {
-  final surface = Theme.of(context).colorScheme.surface;
-  final color = type.colorIn(semanticColorsOf(context));
-  final background = Color.alphaBlend(color.withValues(alpha: tint), surface);
-  return (
-    background,
-    Oito2Contrast.ensure(color, [background], Oito2Contrast.textAA),
-  );
 }
 
 /// A message box tinted by its [type], with an icon, a title, an optional
@@ -117,7 +110,7 @@ class Oito2InfoBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final (background, foreground) = _infoColors(context, type, 0.08);
+    final (background, foreground) = infoColorsOf(context, type, 0.08);
     final title = this.title;
     final subtitle = this.subtitle;
     final child = this.child;
@@ -195,7 +188,7 @@ class Oito2InfoBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (background, foreground) = _infoColors(context, type, 0.14);
+    final (background, foreground) = infoColorsOf(context, type, 0.14);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: Oito2Spacing.sm,

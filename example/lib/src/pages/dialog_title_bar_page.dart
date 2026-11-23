@@ -19,7 +19,8 @@ import 'package:oito2_ui/oito2_ui.dart';
 import '../docs/doc_widgets.dart';
 
 /// Documents [Oito2DialogTitleBar] on a dialog, with a plain title, an
-/// icon, an animated icon and a custom close label.
+/// icon, an animated icon, a custom close label and a confirmation over
+/// a dialog.
 class DialogTitleBarPage extends StatelessWidget {
   /// Creates the dialog title bar page.
   const DialogTitleBarPage({super.key});
@@ -60,6 +61,75 @@ class DialogTitleBarPage extends StatelessWidget {
         ),
       ),
     );
+  }
+  // #endregion
+
+  // #region stacked
+  /// Opens an account dialog whose delete button asks for confirmation in
+  /// a second dialog on top of it.
+  void _openAccount(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        clipBehavior: Clip.antiAlias,
+        child: SizedBox(
+          width: 420,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Oito2DialogTitleBar(title: Text('Account')),
+              Padding(
+                padding: const EdgeInsets.all(Oito2Spacing.xl),
+                child: Row(
+                  spacing: Oito2Spacing.md,
+                  children: [
+                    const Expanded(
+                      child: Text('Delete the account and all its files.'),
+                    ),
+                    OutlinedButton(
+                      onPressed: () => _confirmDelete(context),
+                      child: const Text('Delete…'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Asks whether to delete the account, with Cancel focused; Escape or
+  /// Cancel closes only this dialog.
+  Future<void> _confirmDelete(BuildContext context) async {
+    final scheme = Theme.of(context).colorScheme;
+    final delete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete the account?'),
+        content: const Text(
+          'Its files are deleted too. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            autofocus: true,
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: scheme.error,
+              foregroundColor: scheme.onError,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if ((delete ?? false) && context.mounted) Navigator.pop(context);
   }
   // #endregion
 
@@ -148,6 +218,24 @@ class DialogTitleBarPage extends StatelessWidget {
               labels: const Oito2WindowControlLabels(close: 'Cancel export'),
             ),
             child: const Text('Custom close label'),
+          ),
+          // #endregion
+        ),
+        const DocHeading('A confirmation over a dialog', level: 3),
+        const DocText(
+          'Dialogs stack on the navigator: a confirmation opened from a '
+          'dialog shows on top of it. Escape, or Cancel, closes only the '
+          'top dialog, and the focus goes back to the button of the first '
+          'dialog that opened it. Focus the safe choice of a destructive '
+          'confirmation with `autofocus`.',
+        ),
+        ExamplePanel(
+          region: 'confirm',
+          regions: const ['stacked'],
+          // #region confirm
+          child: OutlinedButton(
+            onPressed: () => _openAccount(context),
+            child: const Text('Account settings'),
           ),
           // #endregion
         ),

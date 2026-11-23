@@ -277,6 +277,40 @@ abstract class Oito2Localizations {
   /// Announced while content loads.
   String get loading;
 
+  /// Hint of a tree row with a change not applied yet.
+  String get pendingChange;
+
+  /// Label of the handle that resizes the table column [column].
+  String resizeColumn(String column);
+
+  /// The state of a table column header the table isn't sorted by.
+  String get notSorted;
+
+  /// The state of a table column header sorted in ascending order.
+  String get sortedAscending;
+
+  /// The state of a table column header sorted in descending order.
+  String get sortedDescending;
+
+  /// Shown at the end of a list while its next page loads.
+  String get loadingMore;
+
+  /// Shown at the end of a list when a page failed to load.
+  String get loadFailed;
+
+  /// The button that tries a failed action again.
+  String get retry;
+
+  /// The placeholder of a list without items.
+  String get noItems;
+
+  /// The button that shows the [count] items a list keeps hidden, such as
+  /// alerts beyond the visible ones.
+  String showMore(int count);
+
+  /// The button that hides the items shown by [showMore] again.
+  String get showFewer;
+
   /// An online presence status.
   String get statusOnline;
 
@@ -369,6 +403,98 @@ abstract class Oito2Localizations {
 
   /// Why a download button is disabled on platforms that can't save files.
   String get downloadUnavailable;
+
+  /// The accessibility label of a password strength meter.
+  String get passwordStrength;
+
+  /// The lowest password strength.
+  String get passwordVeryWeak;
+
+  /// The second password strength.
+  String get passwordWeak;
+
+  /// The middle password strength.
+  String get passwordFair;
+
+  /// The fourth password strength.
+  String get passwordGood;
+
+  /// The highest password strength.
+  String get passwordStrong;
+
+  /// The password suggestion for a common password.
+  String get passwordAvoidCommon;
+
+  /// The password suggestion for a password with the user's name or email.
+  String get passwordAvoidPersonalInfo;
+
+  /// The password suggestion for a password made of a common word.
+  String get passwordAvoidWords;
+
+  /// The password suggestion for a password with a year or a date.
+  String get passwordAvoidDates;
+
+  /// The password suggestion for a password with a run such as "abcd".
+  String get passwordAvoidSequences;
+
+  /// The password suggestion for a password with repeated characters.
+  String get passwordAvoidRepeats;
+
+  /// The password suggestion for a short password.
+  String get passwordAddLength;
+
+  /// The password suggestion for a password with few kinds of characters.
+  String get passwordMixCharacters;
+
+  /// The accessibility label of a weekly schedule grid.
+  String get weekSchedule;
+
+  /// The accessibility label of a weekly schedule cell: the [day] name,
+  /// the time from [start] to [end] and the [value] label.
+  String scheduleSlot(String day, String start, String end, String value);
+
+  /// The amount used of a total, both already formatted, such as
+  /// "1.2 GB of 15 GB".
+  String usageOf(String used, String total);
+
+  /// The accessibility label of a code editor.
+  String get codeEditor;
+
+  /// The accessibility label of a mark on line [line] of a code editor,
+  /// counted from 1: its [kind], such as "Error", and its [message].
+  String lineMessage(int line, String kind, String message);
+
+  /// The title of a drop zone that takes files and folders.
+  String get dropFilesOrFoldersHere;
+
+  /// The kind of a folder in a file list.
+  String get folderItem;
+
+  /// The accessibility label of a list of accounts.
+  String get accounts;
+
+  /// The menu entry that adds an account.
+  String get addAccount;
+
+  /// The accessibility label of an account switcher whose [current]
+  /// account is the one in use.
+  String switchAccount(String current);
+
+  /// A number of pending items, such as unread messages, shown on an
+  /// account.
+  String pendingCount(int count);
+
+  /// The accessibility label of a path bar.
+  String get pathBar;
+
+  /// The button that shows the hidden segments of a path bar.
+  String get showPathSegments;
+
+  /// The button that turns a path bar into a text field.
+  String get editPath;
+
+  /// The state of the last segment of a path bar, where the user is.
+  String get currentLocation;
 }
 
 /// The units of a relative time, from [second] to [year].
@@ -621,6 +747,39 @@ class Oito2LocalizationsEn extends Oito2Localizations {
   String get loading => 'Loading';
 
   @override
+  String get pendingChange => 'Pending change';
+
+  @override
+  String resizeColumn(String column) => 'Resize column $column';
+
+  @override
+  String get notSorted => 'Not sorted';
+
+  @override
+  String get sortedAscending => 'Sorted ascending';
+
+  @override
+  String get sortedDescending => 'Sorted descending';
+
+  @override
+  String get loadingMore => 'Loading more…';
+
+  @override
+  String get loadFailed => "Couldn't load the items";
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get noItems => 'No items';
+
+  @override
+  String showMore(int count) => 'Show $count more';
+
+  @override
+  String get showFewer => 'Show fewer';
+
+  @override
   String get statusOnline => 'Online';
 
   @override
@@ -715,6 +874,95 @@ class Oito2LocalizationsEn extends Oito2Localizations {
   @override
   String get downloadUnavailable =>
       'Downloads are not available on this device';
+
+  @override
+  String get passwordStrength => 'Password strength';
+
+  @override
+  String get passwordVeryWeak => 'Very weak';
+
+  @override
+  String get passwordWeak => 'Weak';
+
+  @override
+  String get passwordFair => 'Fair';
+
+  @override
+  String get passwordGood => 'Good';
+
+  @override
+  String get passwordStrong => 'Strong';
+
+  @override
+  String get passwordAvoidCommon => 'Avoid common passwords';
+
+  @override
+  String get passwordAvoidPersonalInfo => 'Avoid your name or email';
+
+  @override
+  String get passwordAvoidWords => 'Avoid common words';
+
+  @override
+  String get passwordAvoidDates => 'Avoid dates';
+
+  @override
+  String get passwordAvoidSequences => 'Avoid sequences';
+
+  @override
+  String get passwordAvoidRepeats => 'Avoid repeated characters';
+
+  @override
+  String get passwordAddLength => 'Add more characters';
+
+  @override
+  String get passwordMixCharacters => 'Mix letters, numbers and symbols';
+
+  @override
+  String get weekSchedule => 'Weekly schedule';
+
+  @override
+  String scheduleSlot(String day, String start, String end, String value) =>
+      '$day $start–$end, $value';
+
+  @override
+  String usageOf(String used, String total) => '$used of $total';
+
+  @override
+  String get codeEditor => 'Code editor';
+
+  @override
+  String lineMessage(int line, String kind, String message) =>
+      'Line $line, $kind: $message';
+
+  @override
+  String get dropFilesOrFoldersHere => 'Drop files or folders here';
+
+  @override
+  String get folderItem => 'Folder';
+
+  @override
+  String get accounts => 'Accounts';
+
+  @override
+  String get addAccount => 'Add account';
+
+  @override
+  String switchAccount(String current) => 'Switch account, current: $current';
+
+  @override
+  String pendingCount(int count) => '$count pending';
+
+  @override
+  String get pathBar => 'Path';
+
+  @override
+  String get showPathSegments => 'Show hidden path segments';
+
+  @override
+  String get editPath => 'Edit path';
+
+  @override
+  String get currentLocation => 'Current location';
 }
 
 /// The Brazilian Portuguese [Oito2Localizations].
@@ -955,6 +1203,39 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
   String get loading => 'Carregando';
 
   @override
+  String get pendingChange => 'Alteração pendente';
+
+  @override
+  String resizeColumn(String column) => 'Redimensionar coluna $column';
+
+  @override
+  String get notSorted => 'Sem ordenação';
+
+  @override
+  String get sortedAscending => 'Ordem crescente';
+
+  @override
+  String get sortedDescending => 'Ordem decrescente';
+
+  @override
+  String get loadingMore => 'Carregando mais…';
+
+  @override
+  String get loadFailed => 'Não foi possível carregar os itens';
+
+  @override
+  String get retry => 'Tentar de novo';
+
+  @override
+  String get noItems => 'Nenhum item';
+
+  @override
+  String showMore(int count) => 'Mostrar mais $count';
+
+  @override
+  String get showFewer => 'Mostrar menos';
+
+  @override
   String get statusOnline => 'Online';
 
   @override
@@ -1050,6 +1331,96 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
   @override
   String get downloadUnavailable =>
       'Downloads não estão disponíveis neste dispositivo';
+
+  @override
+  String get passwordStrength => 'Força da senha';
+
+  @override
+  String get passwordVeryWeak => 'Muito fraca';
+
+  @override
+  String get passwordWeak => 'Fraca';
+
+  @override
+  String get passwordFair => 'Razoável';
+
+  @override
+  String get passwordGood => 'Boa';
+
+  @override
+  String get passwordStrong => 'Forte';
+
+  @override
+  String get passwordAvoidCommon => 'Evite senhas comuns';
+
+  @override
+  String get passwordAvoidPersonalInfo => 'Evite seu nome ou e-mail';
+
+  @override
+  String get passwordAvoidWords => 'Evite palavras comuns';
+
+  @override
+  String get passwordAvoidDates => 'Evite datas';
+
+  @override
+  String get passwordAvoidSequences => 'Evite sequências';
+
+  @override
+  String get passwordAvoidRepeats => 'Evite caracteres repetidos';
+
+  @override
+  String get passwordAddLength => 'Use mais caracteres';
+
+  @override
+  String get passwordMixCharacters => 'Misture letras, números e símbolos';
+
+  @override
+  String get weekSchedule => 'Agenda semanal';
+
+  @override
+  String scheduleSlot(String day, String start, String end, String value) =>
+      '$day $start–$end, $value';
+
+  @override
+  String usageOf(String used, String total) => '$used de $total';
+
+  @override
+  String get codeEditor => 'Editor de código';
+
+  @override
+  String lineMessage(int line, String kind, String message) =>
+      'Linha $line, $kind: $message';
+
+  @override
+  String get dropFilesOrFoldersHere => 'Solte arquivos ou pastas aqui';
+
+  @override
+  String get folderItem => 'Pasta';
+
+  @override
+  String get accounts => 'Contas';
+
+  @override
+  String get addAccount => 'Adicionar conta';
+
+  @override
+  String switchAccount(String current) => 'Trocar de conta, atual: $current';
+
+  @override
+  String pendingCount(int count) =>
+      count == 1 ? '1 pendente' : '$count pendentes';
+
+  @override
+  String get pathBar => 'Caminho';
+
+  @override
+  String get showPathSegments => 'Mostrar partes ocultas do caminho';
+
+  @override
+  String get editPath => 'Editar caminho';
+
+  @override
+  String get currentLocation => 'Local atual';
 }
 
 /// Loads [Oito2Localizations.forLocale] synchronously for English and

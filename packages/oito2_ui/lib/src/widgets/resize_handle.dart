@@ -43,6 +43,7 @@ class ResizeHandle extends StatefulWidget {
     required this.onDecrease,
     this.onToggle,
     this.onKey,
+    this.onMoveEnd,
     this.dragStartBehavior = DragStartBehavior.start,
   });
 
@@ -80,6 +81,10 @@ class ResizeHandle extends StatefulWidget {
   /// Handles other keys, such as Home and End, before the arrow keys.
   final KeyEventResult Function(KeyEvent event)? onKey;
 
+  /// Called when a drag ends and after each arrow key movement, such as
+  /// to save the new size.
+  final VoidCallback? onMoveEnd;
+
   /// When a drag starts reporting movement.
   final DragStartBehavior dragStartBehavior;
 
@@ -111,8 +116,10 @@ class _ResizeHandleState extends State<ResizeHandle> {
     final toggle = widget.onToggle;
     if (key == forward) {
       widget.onMove(widget.keyboardStep);
+      widget.onMoveEnd?.call();
     } else if (key == backward) {
       widget.onMove(-widget.keyboardStep);
+      widget.onMoveEnd?.call();
     } else if (toggle != null &&
         (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.space)) {
       toggle();
@@ -153,6 +160,12 @@ class _ResizeHandleState extends State<ResizeHandle> {
             onVerticalDragUpdate: _horizontal
                 ? null
                 : (d) => widget.onMove(d.delta.dy),
+            onHorizontalDragEnd: _horizontal && widget.onMoveEnd != null
+                ? (_) => widget.onMoveEnd!()
+                : null,
+            onVerticalDragEnd: !_horizontal && widget.onMoveEnd != null
+                ? (_) => widget.onMoveEnd!()
+                : null,
             child: SizedBox(
               width: _horizontal ? Oito2Spacing.sm : double.infinity,
               height: _horizontal ? double.infinity : Oito2Spacing.sm,

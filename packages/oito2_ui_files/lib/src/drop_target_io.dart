@@ -56,7 +56,7 @@ Future<void> _drop(List<XFile> items, ValueChanged<List<XFile>> onDrop) async {
       case FileSystemEntityType.notFound:
         break;
       case FileSystemEntityType.directory:
-        existing.add(markAsDirectory(item));
+        existing.add(oito2MarkAsDirectory(item));
       default:
         existing.add(item);
     }

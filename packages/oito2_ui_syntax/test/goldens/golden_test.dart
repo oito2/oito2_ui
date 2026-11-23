@@ -29,6 +29,45 @@ String greet(String name, {int times = 2}) {
   return List.filled(times, text).join(' ');
 }''';
 
+const _rules = r'''
+# Build output
+/build/
+*.log
+!important.log
+**/temp?/[a-z]*.tmp
+\#not-a-comment''';
+
+/// Pumps [child] on a [size] view in [colors], inside a repaint boundary.
+Future<void> _pumpGolden(
+  WidgetTester tester,
+  Oito2ColorTheme colors,
+  Size size,
+  Widget child,
+) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+  await tester.pumpWidget(
+    MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: Oito2Theme.fromColors(colors, platform: _linux),
+      home: RepaintBoundary(
+        child: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(Oito2Spacing.lg),
+            child: child,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+const _linux = Oito2Platform(
+  targetPlatform: TargetPlatform.linux,
+  isWeb: false,
+);
+
 void main() {
   const linux = Oito2Platform(
     targetPlatform: TargetPlatform.linux,
@@ -64,5 +103,56 @@ void main() {
         matchesGoldenFile('goldens/code_block_$name.png'),
       );
     });
+
+    testWidgets('code block with highlighted lines in $name', (tester) async {
+      await _pumpGolden(
+        tester,
+        colors,
+        const Size(480, 220),
+        const Oito2CodeBlock(
+          code: _rules,
+          language: 'gitignore',
+          showLineNumbers: true,
+          highlightedLines: {2, 4},
+        ),
+      );
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(RepaintBoundary).first,
+        matchesGoldenFile('goldens/code_block_highlighted_$name.png'),
+      );
+    });
+
+    testWidgets('code editor in $name', (tester) async {
+      final controller = CodeLineEditingController.fromText(_rules);
+      addTearDown(controller.dispose);
+      await _pumpGolden(
+        tester,
+        colors,
+        const Size(480, 200),
+        Oito2CodeEditor(
+          controller: controller,
+          language: 'gitignore',
+          highlightedLines: const {4},
+          lineMarkers: const {
+            3: Oito2LineMarker.warning('Matches every log file'),
+            5: Oito2LineMarker.error('Unclosed bracket'),
+          },
+        ),
+      );
+      // Highlighting runs in a background isolate: alternate real time,
+      // for its messages, with frames, for the callbacks they schedule.
+      for (var i = 0; i < 20; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 50)),
+        );
+        await tester.pump();
+      }
+      await expectLater(
+        find.byType(RepaintBoundary).first,
+        matchesGoldenFile('goldens/code_editor_$name.png'),
+      );
+      await tester.pumpWidget(const SizedBox());
+    }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
   }
 }

@@ -43,8 +43,10 @@ bool get oito2CanDropFiles => platform.canDropFiles;
 /// desktop_drop plugin on Linux, Windows and macOS; elsewhere, [child]
 /// alone, without drops.
 ///
-/// Dropped directories are handed over with the files, marked so that an
-/// `Oito2FileUploadController` refuses them.
+/// Dropped directories are handed over with the files, marked as such for
+/// `oito2IsDirectory`: with their file system path on the desktop and
+/// with their name only on the web. An `Oito2FileUploadController`
+/// refuses them unless it accepts directories.
 Widget oito2PlatformDropTarget({
   required Widget child,
   required bool enabled,

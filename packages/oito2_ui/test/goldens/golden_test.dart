@@ -18,6 +18,7 @@ library;
 
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
@@ -1125,6 +1126,489 @@ class _RailsScene extends StatelessWidget {
   }
 }
 
+typedef _Transfer = (String, String, double, String);
+
+/// A data table of transfers, sorted by size, with a selected row and a
+/// progress column.
+class _DataTableScene extends StatelessWidget {
+  const _DataTableScene();
+
+  static final _transfers = Oito2ListCollection(const [
+    ('report.pdf', '2.4 MB', 1.0, 'Done'),
+    ('photos.zip', '148 MB', 0.42, 'Uploading'),
+    ('notes.txt', '12 kB', 0.0, 'Queued'),
+    ('backup.tar', '1.2 GB', 0.08, 'Paused'),
+  ], valueOf: (t) => t.$1);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(Oito2Spacing.md),
+        child: Oito2DataTable<_Transfer>(
+          collection: _transfers,
+          controller: Oito2SelectionController(
+            collection: _transfers,
+            initialValues: const ['photos.zip'],
+          ),
+          sort: const Oito2SortDescriptor(
+            'size',
+            Oito2SortDirection.descending,
+          ),
+          onSortChanged: (_) {},
+          columns: [
+            const Oito2TableColumn<_Transfer>(
+              id: 'name',
+              label: 'Name',
+              sortable: true,
+              resizable: true,
+            ),
+            Oito2TableColumn(
+              id: 'size',
+              label: 'Size',
+              width: const Oito2ColumnWidth.fixed(90),
+              alignment: AlignmentDirectional.centerEnd,
+              sortable: true,
+              cellBuilder: (context, t) => Text(t.$2),
+            ),
+            Oito2TableColumn(
+              id: 'progress',
+              label: 'Progress',
+              width: const Oito2ColumnWidth.fixed(120),
+              cellBuilder: (context, t) =>
+                  Oito2LinearProgressIndicator(value: t.$3),
+            ),
+            Oito2TableColumn(
+              id: 'status',
+              label: 'Status',
+              width: const Oito2ColumnWidth.fixed(100),
+              cellBuilder: (context, t) => Text(t.$4),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// An alert stack with a hidden alert, a compact alert, status pills, a
+/// still skeleton and a compact status page.
+class _FeedbackScene extends StatelessWidget {
+  const _FeedbackScene();
+
+  @override
+  Widget build(BuildContext context) {
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(disableAnimations: true),
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.all(Oito2Spacing.md),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: Oito2Spacing.lg,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: Oito2Spacing.md,
+                  children: [
+                    Oito2AlertStack(
+                      maxVisible: 2,
+                      alerts: [
+                        const Oito2Alert(
+                          key: ValueKey('info'),
+                          type: Oito2InfoType.information,
+                          title: Text('Update available'),
+                        ),
+                        Oito2Alert(
+                          key: const ValueKey('danger'),
+                          type: Oito2InfoType.danger,
+                          title: const Text('Sync failed'),
+                          message: const Text('The server did not answer.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {},
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                          onDismiss: () {},
+                        ),
+                        const Oito2Alert(
+                          key: ValueKey('warning'),
+                          type: Oito2InfoType.warning,
+                          title: Text('Low disk space'),
+                          message: Text('2 GB left on the system disk.'),
+                        ),
+                      ],
+                    ),
+                    Oito2Alert(
+                      type: Oito2InfoType.success,
+                      compact: true,
+                      title: const Text('Saved'),
+                      message: const Text('All changes are stored.'),
+                      onDismiss: () {},
+                    ),
+                    const Wrap(
+                      spacing: Oito2Spacing.sm,
+                      runSpacing: Oito2Spacing.sm,
+                      children: [
+                        Oito2StatusPill(label: 'Draft'),
+                        Oito2StatusPill(
+                          label: 'Synced',
+                          type: Oito2InfoType.success,
+                        ),
+                        Oito2StatusPill(
+                          label: 'Expiring',
+                          type: Oito2InfoType.warning,
+                        ),
+                        Oito2StatusPill(
+                          label: 'Offline',
+                          type: Oito2InfoType.danger,
+                          icon: Icon(LucideIcons.wifi_off),
+                        ),
+                        Oito2StatusPill(
+                          label: 'Beta',
+                          type: Oito2InfoType.important,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(
+                width: 220,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: Oito2Spacing.md,
+                  children: [
+                    Row(
+                      spacing: Oito2Spacing.md,
+                      children: [
+                        Oito2Skeleton.circle(),
+                        Expanded(child: Oito2Skeleton.text(lines: 2)),
+                      ],
+                    ),
+                    Oito2Skeleton.rect(height: 64),
+                    SizedBox(
+                      height: 200,
+                      child: Oito2StatusPage(
+                        compact: true,
+                        icon: Icon(LucideIcons.search_x),
+                        title: Text('No results'),
+                        description: Text('Try other words.'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A full status page with an icon, a description and actions.
+class _StatusPageScene extends StatelessWidget {
+  const _StatusPageScene();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Oito2StatusPage(
+        icon: const Icon(LucideIcons.cloud_off),
+        title: const Text('Couldn\'t load the files'),
+        description: const Text(
+          'Check the connection and try again. Files saved on this device '
+          'are still available.',
+        ),
+        actions: [
+          FilledButton(onPressed: () {}, child: const Text('Retry')),
+          OutlinedButton(onPressed: () {}, child: const Text('Open offline')),
+        ],
+      ),
+    );
+  }
+}
+
+enum _Bandwidth { unlimited, limited, paused }
+
+/// A bandwidth schedule: limited on weekday working hours, paused on
+/// weekend nights, with a focused cell and a keyboard selection.
+class _ScheduleScene extends StatelessWidget {
+  const _ScheduleScene();
+
+  static final _schedule = [
+    for (var day = 0; day < 7; day++)
+      for (var hour = 0; hour < 24; hour++)
+        if (day < 5 && hour >= 9 && hour < 18)
+          _Bandwidth.limited
+        else if (day >= 5 && hour < 6)
+          _Bandwidth.paused
+        else
+          _Bandwidth.unlimited,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(Oito2Spacing.md),
+        child: Oito2WeekScheduleGrid<_Bandwidth>(
+          values: const [
+            Oito2ScheduleValue(
+              value: _Bandwidth.unlimited,
+              label: 'Unlimited',
+              type: Oito2InfoType.success,
+            ),
+            Oito2ScheduleValue(
+              value: _Bandwidth.limited,
+              label: 'Limited',
+              type: Oito2InfoType.warning,
+            ),
+            Oito2ScheduleValue(
+              value: _Bandwidth.paused,
+              label: 'Paused',
+              type: Oito2InfoType.danger,
+            ),
+          ],
+          schedule: _schedule,
+          paintValue: _Bandwidth.limited,
+          onChanged: (_) {},
+        ),
+      ),
+    );
+  }
+}
+
+/// Usage bars below, at and above the thresholds, over quota, and a
+/// compact bar in a narrow column.
+class _UsageScene extends StatelessWidget {
+  const _UsageScene();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(Oito2Spacing.md),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: Oito2Spacing.lg,
+          children: [
+            const Expanded(
+              child: Column(
+                spacing: Oito2Spacing.md,
+                children: [
+                  Oito2UsageBar.bytes(
+                    title: Text('Personal'),
+                    used: 4200000000,
+                    total: 15000000000,
+                  ),
+                  Oito2UsageBar.bytes(
+                    title: Text('Work'),
+                    used: 11500000000,
+                    total: 15000000000,
+                  ),
+                  Oito2UsageBar.bytes(
+                    title: Text('Shared'),
+                    used: 14200000000,
+                    total: 15000000000,
+                  ),
+                  Oito2UsageBar.bytes(
+                    title: Text('Archive'),
+                    used: 16800000000,
+                    total: 15000000000,
+                  ),
+                  Oito2UsageBar(title: Text('Upload'), value: 0.42),
+                ],
+              ),
+            ),
+            SizedBox(
+              width: 170,
+              child: Column(
+                spacing: Oito2Spacing.md,
+                children: const [
+                  Oito2UsageBar.bytes(
+                    title: Text('Drive'),
+                    used: 3100000000,
+                    total: 15000000000,
+                    compact: true,
+                  ),
+                  Oito2UsageBar(value: 0.93, compact: true),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The accounts of the account switcher scene.
+const _goldenAccounts = [
+  Oito2Account(
+    id: 'ana',
+    name: 'Ana Souza',
+    subtitle: 'ana@example.com',
+    status: Oito2AvatarStatus.online,
+    count: 3,
+  ),
+  Oito2Account(
+    id: 'work',
+    name: 'Bruno Lima',
+    subtitle: 'bruno@work.example',
+    status: Oito2AvatarStatus.busy,
+    count: 128,
+  ),
+  Oito2Account(
+    id: 'carla',
+    name: 'Carla Dias',
+    subtitle: 'carla@example.org',
+    status: Oito2AvatarStatus.offline,
+  ),
+];
+
+/// An extended rail and a compact rail led by account switchers, with the
+/// extended one's menu open.
+class _AccountSwitcherScene extends StatelessWidget {
+  const _AccountSwitcherScene();
+
+  static const _items = [
+    Oito2NavigationItem(icon: Icon(LucideIcons.inbox), label: 'Inbox'),
+    Oito2NavigationItem(icon: Icon(LucideIcons.send), label: 'Sent'),
+  ];
+
+  Widget _rail(Oito2NavigationRailStyle style) => Oito2NavigationRail(
+    items: _items,
+    selectedIndex: 0,
+    onDestinationSelected: (_) {},
+    style: style,
+    leading: Padding(
+      padding: const EdgeInsets.only(bottom: Oito2Spacing.sm),
+      child: Oito2AccountSwitcher(
+        accounts: _goldenAccounts,
+        current: _goldenAccounts.first,
+        onSelected: (_) {},
+        onAdd: () {},
+      ),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _rail(Oito2NavigationRailStyle.labelledExtended),
+          const VerticalDivider(width: 1),
+          const Spacer(),
+          const VerticalDivider(width: 1),
+          _rail(Oito2NavigationRailStyle.compact),
+        ],
+      ),
+    );
+  }
+}
+
+/// A path bar with every segment, the same path collapsed in a narrow
+/// width, and an editable one.
+class _BreadcrumbScene extends StatelessWidget {
+  const _BreadcrumbScene();
+
+  static const _items = [
+    Oito2BreadcrumbItem<String>(label: 'Home', icon: LucideIcons.house),
+    Oito2BreadcrumbItem<String>(label: 'Documents'),
+    Oito2BreadcrumbItem<String>(label: 'Projects'),
+    Oito2BreadcrumbItem<String>(label: 'oito2'),
+    Oito2BreadcrumbItem<String>(label: 'Reports'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(Oito2Spacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: Oito2Spacing.lg,
+          children: [
+            Oito2Breadcrumb(items: _items, onSelected: (_) {}),
+            SizedBox(
+              width: 260,
+              child: Oito2Breadcrumb(items: _items, onSelected: (_) {}),
+            ),
+            Oito2Breadcrumb(
+              items: _items,
+              onSelected: (_) {},
+              onSubmitted: (_) {},
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A grouped property list beside the same list stacked in a narrow
+/// column.
+class _PropertyListScene extends StatelessWidget {
+  const _PropertyListScene();
+
+  static const _groups = [
+    Oito2PropertyGroup(
+      heading: 'General',
+      properties: [
+        Oito2Property(label: 'Name', value: 'report.pdf'),
+        Oito2Property(label: 'Size', value: '2.4 MB (2,412,544 bytes)'),
+        Oito2Property(
+          label: 'Location',
+          value: '/home/ana/Documents',
+          copyable: true,
+        ),
+      ],
+    ),
+    Oito2PropertyGroup(
+      heading: 'Sync',
+      properties: [
+        Oito2Property.widget(
+          label: 'Status',
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Oito2StatusPill(
+              label: 'Synced',
+              type: Oito2InfoType.success,
+            ),
+          ),
+        ),
+        Oito2Property(label: 'Modified', value: 'Nov 17, 2026 10:42'),
+      ],
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(Oito2Spacing.md),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: Oito2Spacing.lg,
+          children: [
+            const Expanded(child: Oito2PropertyList.grouped(groups: _groups)),
+            SizedBox(
+              width: 200,
+              child: Oito2PropertyList(properties: _groups.first.properties),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 void main() {
   for (final MapEntry(key: name, value: colors) in goldenSchemes.entries) {
     testWidgets('components in $name', (tester) async {
@@ -1430,6 +1914,18 @@ void main() {
   }
 
   for (final name in ['light', 'dark']) {
+    testWidgets('data table in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _DataTableScene(),
+        name: 'data_table_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(560, 220),
+      );
+    });
+  }
+
+  for (final name in ['light', 'dark']) {
     testWidgets('title bars in $name', (tester) async {
       await expectGoldenScene(
         tester,
@@ -1437,6 +1933,97 @@ void main() {
         name: 'title_bars_$name',
         colors: goldenSchemes[name]!,
         size: const Size(480, 320),
+      );
+    });
+  }
+
+  for (final name in ['light', 'dark']) {
+    testWidgets('feedback in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _FeedbackScene(),
+        name: 'feedback_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(720, 420),
+      );
+    });
+
+    testWidgets('status page in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _StatusPageScene(),
+        name: 'status_page_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(520, 360),
+      );
+    });
+  }
+
+  for (final name in ['light', 'dark']) {
+    testWidgets('week schedule grid in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _ScheduleScene(),
+        name: 'week_schedule_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(760, 340),
+        setup: () async {
+          FocusManager.instance.highlightStrategy =
+              FocusHighlightStrategy.alwaysTraditional;
+          addTearDown(
+            () => FocusManager.instance.highlightStrategy =
+                FocusHighlightStrategy.automatic,
+          );
+          await tester.tap(find.byType(Oito2WeekScheduleGrid<_Bandwidth>));
+          await tester.sendKeyEvent(LogicalKeyboardKey.home);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+          await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+          await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+          await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+        },
+      );
+    });
+
+    testWidgets('usage bars in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _UsageScene(),
+        name: 'usage_bars_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(560, 300),
+      );
+    });
+
+    testWidgets('property list in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _PropertyListScene(),
+        name: 'property_list_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(720, 320),
+      );
+    });
+
+    testWidgets('account switcher in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _AccountSwitcherScene(),
+        name: 'account_switcher_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(640, 360),
+        wholeApp: true,
+        setup: () => tester.tap(find.text('Ana Souza')),
+      );
+    });
+
+    testWidgets('breadcrumb in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _BreadcrumbScene(),
+        name: 'breadcrumb_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(560, 200),
       );
     });
   }

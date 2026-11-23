@@ -20,6 +20,7 @@ import 'package:file_selector_platform_interface/file_selector_platform_interfac
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:oito2_ui/oito2_ui.dart' show LucideIcons;
 import 'package:oito2_ui_files/oito2_ui_files.dart';
 import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
@@ -194,6 +195,34 @@ void main() {
       expect(controller.rejected, isEmpty);
       expect(controller.files.single.name, 'c.png');
     });
+
+    test('refuses directories by default', () async {
+      final controller = Oito2FileUploadController();
+      addTearDown(controller.dispose);
+      final folder = oito2MarkAsDirectory(XFile('/home/ana/photos'));
+      expect(oito2IsDirectory(folder), isTrue);
+      expect(oito2IsDirectory(_file('a.png', 1)), isFalse);
+      await controller.add([folder]);
+      expect(controller.files, isEmpty);
+      expect(controller.rejected.single.reason, Oito2FileRejection.directory);
+    });
+
+    test('accepts directories without type and size checks', () async {
+      final controller = Oito2FileUploadController(
+        accept: const [_images],
+        maxFileSize: 10,
+        maxFiles: 2,
+        acceptDirectories: true,
+      );
+      addTearDown(controller.dispose);
+      // Reading the length of this directory would fail.
+      final folder = oito2MarkAsDirectory(XFile('/no/such/photos'));
+      final other = oito2MarkAsDirectory(XFile('/no/such/music'));
+      await controller.add([folder, _file('a.png', 1), other]);
+      expect(controller.files, [folder, isA<XFile>()]);
+      expect(controller.rejected.single.file, other);
+      expect(controller.rejected.single.reason, Oito2FileRejection.count);
+    });
   });
 
   group('Oito2FileDropZone', () {
@@ -338,6 +367,37 @@ void main() {
       expect(controller.rejected.single.reason, Oito2FileRejection.directory);
       expect(find.text('photos: folders are not accepted'), findsOneWidget);
       expect(fill(), scheme.surfaceContainerLow);
+    }, skip: !Platform.isLinux);
+
+    testWidgets('an upload that accepts folders lists them with their path', (
+      tester,
+    ) async {
+      final controller = Oito2FileUploadController(
+        acceptDirectories: true,
+        accept: const [_images],
+      );
+      addTearDown(controller.dispose);
+      await pumpOito2(
+        tester,
+        SizedBox(width: 400, child: Oito2FileUpload(controller: controller)),
+      );
+      expect(find.text('Drop files or folders here'), findsOneWidget);
+      final center = tester.getCenter(find.byType(Oito2FileDropZone));
+      final uris = [Uri.file(folder.path), Uri.file(file.path)].join('\r\n');
+      await tester.runAsync(() async {
+        await send(tester, 'performOperation_linux', [
+          uris,
+          [center.dx, center.dy],
+        ]);
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      });
+      await tester.pumpAndSettle();
+      expect(controller.rejected, isEmpty);
+      expect(controller.files.map((f) => f.path), [folder.path, file.path]);
+      expect(controller.files.map(oito2IsDirectory), [true, false]);
+      expect(find.text('photos'), findsOneWidget);
+      expect(find.text(folder.path), findsOneWidget);
+      expect(find.byIcon(LucideIcons.folder), findsOneWidget);
     }, skip: !Platform.isLinux);
   });
 
