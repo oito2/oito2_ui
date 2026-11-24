@@ -23,6 +23,7 @@ const _packages = [
   'oito2_ui_window',
   'oito2_ui_settings',
   'oito2_ui_syntax',
+  'oito2_ui_code_editor',
   'oito2_ui_themes',
   'oito2_ui_extras',
   'oito2_ui_files',

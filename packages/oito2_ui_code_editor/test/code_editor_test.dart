@@ -17,7 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-import 'package:oito2_ui_syntax/oito2_ui_syntax.dart';
+import 'package:oito2_ui_code_editor/oito2_ui_code_editor.dart';
 import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 // The editor reads the platform once to choose between its desktop and

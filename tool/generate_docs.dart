@@ -38,6 +38,7 @@ const _packages = [
   'oito2_ui_window',
   'oito2_ui_settings',
   'oito2_ui_syntax',
+  'oito2_ui_code_editor',
   'oito2_ui_themes',
   'oito2_ui_extras',
   'oito2_ui_files',
@@ -95,10 +96,11 @@ Future<void> main(List<String> args) async {
       ..sort();
     for (final name in sorted) {
       final element = names[name]!;
-      // Re-exports of other packages, such as the Lucide icons, aren't
-      // documented here.
+      // Re-exports of other packages, such as the Lucide icons or the
+      // highlighter that oito2_ui_code_editor re-exports from
+      // oito2_ui_syntax, are documented only by their own package.
       final uri = element.library?.uri;
-      if (uri == null || !_packages.contains(uri.pathSegments.first)) {
+      if (uri == null || uri.pathSegments.first != _packages[i]) {
         continue;
       }
       final entry = _entry(element, _packages[i]);

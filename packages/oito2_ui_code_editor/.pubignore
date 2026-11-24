@@ -1,0 +1,4 @@
+# Golden images are only needed to run the tests in the repository.
+test/goldens/goldens/
+test/goldens/failures/
+build/

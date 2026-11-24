@@ -15,6 +15,7 @@
 
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
+import 'package:oito2_ui_code_editor/oito2_ui_code_editor.dart';
 import 'package:oito2_ui_syntax/oito2_ui_syntax.dart';
 
 import '../docs/doc_widgets.dart';
@@ -168,7 +169,9 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
           'its `text` reads and replaces it. `onChanged` receives the whole '
           'text after every edit.',
         ),
-        const DocCode("import 'package:oito2_ui_syntax/oito2_ui_syntax.dart';"),
+        const DocCode(
+          "import 'package:oito2_ui_code_editor/oito2_ui_code_editor.dart';",
+        ),
         const DocText(
           'With `minLines` or `maxLines`, the editor is as tall as its '
           'lines within those bounds and scrolls beyond them; without '
@@ -176,7 +179,9 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
           'scroll sideways.',
         ),
         const DocNote(
-          'The editor is built on `re_editor`, which highlights, folds and '
+          'The editor lives in the `oito2_ui_code_editor` package, so apps '
+          'that only show code with `oito2_ui_syntax` don\'t pull in its '
+          'dependencies. It is built on `re_editor`, which highlights, folds and '
           'searches in three background isolates per editor on native '
           'platforms and in the main thread on the web. Web builds with '
           '`--wasm` aren\'t supported, and the editor colors a token by the '

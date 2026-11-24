@@ -68,6 +68,7 @@ jobs:
           - packages/oito2_ui_window
           - packages/oito2_ui_settings
           - packages/oito2_ui_syntax
+          - packages/oito2_ui_code_editor
           - packages/oito2_ui_themes
           - packages/oito2_ui_extras
           - packages/oito2_ui_files
@@ -261,6 +262,7 @@ jobs:
           - packages/oito2_ui_window
           - packages/oito2_ui_settings
           - packages/oito2_ui_syntax
+          - packages/oito2_ui_code_editor
           - packages/oito2_ui_themes
           - packages/oito2_ui_extras
           - packages/oito2_ui_files

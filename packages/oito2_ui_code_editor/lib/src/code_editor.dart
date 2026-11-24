@@ -17,12 +17,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
+import 'package:oito2_ui_syntax/oito2_ui_syntax.dart';
 import 'package:re_editor/re_editor.dart';
-
-import 'code_block.dart';
-import 'highlighter.dart';
-import 'highlighter_theme.dart';
-import 'line_highlight.dart';
 
 /// Returns the semantic colors of the closest theme, or colors derived
 /// from its `ColorScheme` and the status palette when the theme has none.
@@ -297,7 +293,7 @@ class _Oito2CodeEditorState extends State<Oito2CodeEditor> {
       height = lines * _lineHeight(style) + padding.vertical;
     }
 
-    final lineColors = LineHighlightColors.of(context);
+    final lineColors = Oito2LineHighlight.of(context);
     Widget editor = CodeEditor(
       controller: _controller,
       focusNode: _focusNode,
@@ -460,16 +456,15 @@ class _ParagraphHighlightPainter extends CustomPainter {
 
   final _ParagraphGeometry geometry;
   final Set<int> lines;
-  final LineHighlightColors colors;
+  final Oito2LineHighlight colors;
 
   @override
   void paint(Canvas canvas, Size size) {
     for (final paragraph in geometry.paragraphs) {
       if (!lines.contains(paragraph.index + 1)) continue;
-      paintLineHighlight(
+      colors.paint(
         canvas,
         Rect.fromLTWH(0, paragraph.top, size.width, paragraph.height),
-        colors,
         TextDirection.ltr,
       );
     }

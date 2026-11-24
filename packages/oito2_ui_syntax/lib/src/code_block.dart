@@ -174,7 +174,7 @@ class _Oito2CodeBlockState extends State<Oito2CodeBlock> {
                     style,
                     MediaQuery.textScalerOf(context),
                   ),
-                  colors: LineHighlightColors.of(context),
+                  colors: Oito2LineHighlight.of(context),
                   direction: direction,
                 ),
               ),

@@ -122,37 +122,5 @@ void main() {
         matchesGoldenFile('goldens/code_block_highlighted_$name.png'),
       );
     });
-
-    testWidgets('code editor in $name', (tester) async {
-      final controller = CodeLineEditingController.fromText(_rules);
-      addTearDown(controller.dispose);
-      await _pumpGolden(
-        tester,
-        colors,
-        const Size(480, 200),
-        Oito2CodeEditor(
-          controller: controller,
-          language: 'gitignore',
-          highlightedLines: const {4},
-          lineMarkers: const {
-            3: Oito2LineMarker.warning('Matches every log file'),
-            5: Oito2LineMarker.error('Unclosed bracket'),
-          },
-        ),
-      );
-      // Highlighting runs in a background isolate: alternate real time,
-      // for its messages, with frames, for the callbacks they schedule.
-      for (var i = 0; i < 20; i++) {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 50)),
-        );
-        await tester.pump();
-      }
-      await expectLater(
-        find.byType(RepaintBoundary).first,
-        matchesGoldenFile('goldens/code_editor_$name.png'),
-      );
-      await tester.pumpWidget(const SizedBox());
-    }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
   }
 }

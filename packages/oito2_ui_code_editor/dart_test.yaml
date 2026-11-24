@@ -1,0 +1,4 @@
+tags:
+  # Pixel comparisons against the PNGs in test/goldens/goldens.
+  # Regenerate them with: flutter test --update-goldens --tags golden
+  golden:

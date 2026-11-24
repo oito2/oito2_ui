@@ -40,6 +40,7 @@ Then run `flutter pub get`.
 | `oito2_ui_window` | The native desktop window: title bar, controls and window scope |
 | `oito2_ui_settings` | Reads the system accent, color scheme, contrast and button layout |
 | `oito2_ui_syntax` | `Oito2CodeBlock` and the syntax highlighter |
+| `oito2_ui_code_editor` | `Oito2CodeEditor`, the editable code field |
 | `oito2_ui_themes` | The named color presets, such as Dracula and Catppuccin |
 | `oito2_ui_extras` | QR codes, signature pad, image cropper and navigation menu |
 | `oito2_ui_files` | File upload with a drop zone, and the download trigger |

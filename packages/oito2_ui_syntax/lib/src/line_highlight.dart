@@ -17,18 +17,24 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 
-/// The colors of a highlighted code line: a light tint of the scheme's
+/// The look of a highlighted code line: a light tint of the scheme's
 /// primary color across the line and a bar in the text-safe primary tone
 /// along its leading edge.
+///
+/// `Oito2CodeBlock.highlightedLines` draws its lines with it; widgets that
+/// lay out code themselves, such as a code editor, call [paint] for each
+/// highlighted line to draw them the same way.
 @immutable
-class LineHighlightColors {
-  /// Creates line highlight colors.
-  const LineHighlightColors({required this.tint, required this.bar});
+class Oito2LineHighlight {
+  /// Creates a line highlight with the [tint] and [bar] colors.
+  const Oito2LineHighlight({required this.tint, required this.bar});
 
-  /// Returns the colors for the closest theme.
-  factory LineHighlightColors.of(BuildContext context) {
+  /// Returns the line highlight for the closest theme: the primary color
+  /// at 14% opacity for [tint], and [Oito2SemanticColors.primaryText] (or
+  /// the primary color when the theme has no semantic colors) for [bar].
+  factory Oito2LineHighlight.of(BuildContext context) {
     final theme = Theme.of(context);
-    return LineHighlightColors(
+    return Oito2LineHighlight(
       tint: theme.colorScheme.primary.withValues(alpha: 0.14),
       bar:
           Oito2SemanticColors.maybeOf(context)?.primaryText ??
@@ -39,43 +45,29 @@ class LineHighlightColors {
   /// The fill across the line.
   final Color tint;
 
-  /// The bar along the leading edge.
+  /// The color of the bar along the leading edge.
   final Color bar;
 
-  /// The width of [bar].
+  /// The width of the bar along the leading edge.
   static const double barWidth = 3;
+
+  /// Paints [rect] as a highlighted line on [canvas]: [tint] over the whole
+  /// rectangle and a [barWidth] bar in [bar] on its leading side for
+  /// [direction].
+  void paint(Canvas canvas, Rect rect, TextDirection direction) {
+    canvas.drawRect(rect, Paint()..color = tint);
+    final edge = direction == TextDirection.ltr
+        ? Rect.fromLTWH(rect.left, rect.top, barWidth, rect.height)
+        : Rect.fromLTWH(rect.right - barWidth, rect.top, barWidth, rect.height);
+    canvas.drawRect(edge, Paint()..color = bar);
+  }
 
   @override
   bool operator ==(Object other) =>
-      other is LineHighlightColors && other.tint == tint && other.bar == bar;
+      other is Oito2LineHighlight && other.tint == tint && other.bar == bar;
 
   @override
   int get hashCode => Object.hash(tint, bar);
-}
-
-/// Paints [rect] as a highlighted line in [colors]: the tint over the
-/// whole rectangle and the bar on its leading side for [direction].
-void paintLineHighlight(
-  Canvas canvas,
-  Rect rect,
-  LineHighlightColors colors,
-  TextDirection direction,
-) {
-  canvas.drawRect(rect, Paint()..color = colors.tint);
-  final bar = direction == TextDirection.ltr
-      ? Rect.fromLTWH(
-          rect.left,
-          rect.top,
-          LineHighlightColors.barWidth,
-          rect.height,
-        )
-      : Rect.fromLTWH(
-          rect.right - LineHighlightColors.barWidth,
-          rect.top,
-          LineHighlightColors.barWidth,
-          rect.height,
-        );
-  canvas.drawRect(bar, Paint()..color = colors.bar);
 }
 
 /// Paints the lines of a code block with fixed-height lines: line [n]
@@ -101,7 +93,7 @@ class FixedLineHighlightPainter extends CustomPainter {
   final double lineHeight;
 
   /// The highlight colors.
-  final LineHighlightColors colors;
+  final Oito2LineHighlight colors;
 
   /// The text direction, which sets the side of the bar.
   final TextDirection direction;
@@ -112,10 +104,9 @@ class FixedLineHighlightPainter extends CustomPainter {
       if (line < 1) continue;
       final y = top + (line - 1) * lineHeight;
       if (y >= size.height) continue;
-      paintLineHighlight(
+      colors.paint(
         canvas,
         Rect.fromLTWH(0, y, size.width, lineHeight),
-        colors,
         direction,
       );
     }
