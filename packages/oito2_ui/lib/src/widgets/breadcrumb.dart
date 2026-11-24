@@ -86,6 +86,74 @@ class Oito2Breadcrumb<T> extends StatefulWidget {
   /// The separator that joins the labels into the default [path].
   final String pathSeparator;
 
+  /// The width of the chevron between two segments.
+  static const double separatorWidth = 20;
+
+  /// The width of the "…" and edit buttons, before any padding to the
+  /// touch target.
+  static const double buttonWidth = 28;
+
+  /// Returns which segments a breadcrumb collapses into its "…" button
+  /// when its segments, [widths] wide from the root to the current
+  /// location, are laid out in [maxWidth].
+  ///
+  /// Every segment but the last is at least [minSegmentWidth] wide, the
+  /// segments are [separatorWidth] apart, the "…" button is [buttonWidth]
+  /// wide and [editWidth] is kept free at the end for the edit button and
+  /// its gap. When every segment fits, none collapses. Otherwise the
+  /// segments after the first collapse, from the second on and as few as
+  /// needed, so the last ones stay; when even the first and the last
+  /// don't fit with the button, every segment but the last collapses.
+  ///
+  /// Returns the collapsed range of indexes, from `collapsedStart`
+  /// inclusive to `collapsedEnd` exclusive and empty when none collapses,
+  /// and `lastTruncated`, whether the row is still wider than the space,
+  /// so the last segment is cut with an ellipsis.
+  static ({int collapsedStart, int collapsedEnd, bool lastTruncated}) collapse(
+    List<double> widths, {
+    required double maxWidth,
+    double separatorWidth = Oito2Breadcrumb.separatorWidth,
+    double buttonWidth = Oito2Breadcrumb.buttonWidth,
+    double minSegmentWidth = 0,
+    double editWidth = 0,
+  }) {
+    final n = widths.length;
+    final laid = [
+      for (var i = 0; i < n; i++)
+        i < n - 1 ? math.max(widths[i], minSegmentWidth) : widths[i],
+    ];
+    final available = maxWidth - editWidth;
+    double widthOf(int start, int end) {
+      var total = 0.0;
+      var count = 0;
+      for (var i = 0; i < n; i++) {
+        if (i >= start && i < end) continue;
+        total += laid[i];
+        count++;
+      }
+      if (end > start) {
+        total += buttonWidth;
+        count++;
+      }
+      return total + (count - 1) * separatorWidth;
+    }
+
+    ({int collapsedStart, int collapsedEnd, bool lastTruncated}) result(
+      int start,
+      int end,
+    ) => (
+      collapsedStart: start,
+      collapsedEnd: end,
+      lastTruncated: n > 0 && widthOf(start, end) > available,
+    );
+
+    if (n < 2 || widthOf(0, 0) <= available) return result(0, 0);
+    for (var end = 2; end < n; end++) {
+      if (widthOf(1, end) <= available) return result(1, end);
+    }
+    return result(0, n - 1);
+  }
+
   @override
   State<Oito2Breadcrumb<T>> createState() => _Oito2BreadcrumbState<T>();
 }
@@ -119,10 +187,10 @@ class _Oito2BreadcrumbState<T> extends State<Oito2Breadcrumb<T>> {
   static const _iconGap = Oito2Spacing.xs;
 
   /// The width of a separator.
-  static const _separatorWidth = 20.0;
+  static const _separatorWidth = Oito2Breadcrumb.separatorWidth;
 
   /// The width of the "…" and edit buttons.
-  static const _buttonWidth = 28.0;
+  static const _buttonWidth = Oito2Breadcrumb.buttonWidth;
 
   /// The height of the buttons.
   static const _buttonHeight = 28.0;
@@ -239,35 +307,25 @@ class _Oito2BreadcrumbState<T> extends State<Oito2Breadcrumb<T>> {
     final items = widget.items;
     final n = items.length;
     if (n < 2) return null;
-    final widths = [
-      for (var i = 0; i < n - 1; i++)
-        math.max(_segmentWidth(items[i], style, scaler), _minButtonWidth),
-      _segmentWidth(items[n - 1], currentStyle, scaler),
-    ];
-    final edit = widget.onSubmitted == null
-        ? 0.0
-        : _iconButtonWidth + Oito2Spacing.xs;
-    final available = maxWidth - edit;
-    double widthOf(int start, int end) {
-      var total = 0.0;
-      var count = 0;
-      for (var i = 0; i < n; i++) {
-        if (i >= start && i < end) continue;
-        total += widths[i];
-        count++;
-      }
-      if (end > start) {
-        total += _iconButtonWidth;
-        count++;
-      }
-      return total + (count - 1) * _separatorWidth;
-    }
-
-    if (widthOf(0, 0) <= available) return null;
-    for (var end = 2; end < n; end++) {
-      if (widthOf(1, end) <= available) return (1, end);
-    }
-    return (0, n - 1);
+    final (
+      :collapsedStart,
+      :collapsedEnd,
+      lastTruncated: _,
+    ) = Oito2Breadcrumb.collapse(
+      [
+        for (var i = 0; i < n - 1; i++) _segmentWidth(items[i], style, scaler),
+        _segmentWidth(items[n - 1], currentStyle, scaler),
+      ],
+      maxWidth: maxWidth,
+      buttonWidth: _iconButtonWidth,
+      minSegmentWidth: _minButtonWidth,
+      editWidth: widget.onSubmitted == null
+          ? 0
+          : _iconButtonWidth + Oito2Spacing.xs,
+    );
+    return collapsedEnd > collapsedStart
+        ? (collapsedStart, collapsedEnd)
+        : null;
   }
 
   /// The arrow key bindings that move the focus between the buttons.

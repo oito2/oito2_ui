@@ -52,6 +52,17 @@ List<String> _shownTitles(WidgetTester tester) {
   );
 }
 
+/// Checks that [result] of [Oito2AlertStack.arrange] shows [visible] and
+/// hides [hidden] alerts.
+void _expectArranged(
+  ({List<int> visible, int hidden}) result,
+  List<int> visible,
+  int hidden,
+) {
+  expect(result.visible, visible);
+  expect(result.hidden, hidden);
+}
+
 void main() {
   group('Oito2Alert', () {
     testWidgets('the dismiss button and actions call back', (tester) async {
@@ -305,6 +316,52 @@ void main() {
       await tester.tap(find.byTooltip('Dismiss').first);
       await tester.pumpAndSettle();
       expect(_shownTitles(tester), ['b']);
+    });
+
+    test('arrange sorts by severity, then by insertion', () {
+      const types = [
+        Oito2InfoType.success,
+        Oito2InfoType.warning,
+        Oito2InfoType.danger,
+        Oito2InfoType.information,
+        Oito2InfoType.warning,
+      ];
+      _expectArranged(Oito2AlertStack.arrange(types, maxVisible: 3), [
+        2,
+        1,
+        4,
+      ], 2);
+      _expectArranged(
+        Oito2AlertStack.arrange(types, maxVisible: 3, expanded: true),
+        [2, 1, 4, 3, 0],
+        2,
+      );
+      _expectArranged(Oito2AlertStack.arrange(types, maxVisible: 9), [
+        2,
+        1,
+        4,
+        3,
+        0,
+      ], 0);
+    });
+
+    test('arrange shows a leaving alert without giving it a place', () {
+      const types = [
+        Oito2InfoType.danger,
+        Oito2InfoType.warning,
+        Oito2InfoType.information,
+        Oito2InfoType.success,
+      ];
+      _expectArranged(
+        Oito2AlertStack.arrange(types, maxVisible: 2, leaving: {0}),
+        [0, 1, 2],
+        1,
+      );
+      _expectArranged(
+        Oito2AlertStack.arrange(types, maxVisible: 2, leaving: {3}),
+        [0, 1],
+        1,
+      );
     });
   });
 

@@ -1,0 +1,468 @@
+{
+	"forMimeType": [
+		{
+			"mimeType": "",
+			"iconName": "application-x-generic"
+		},
+		{
+			"mimeType": "nonsense",
+			"iconName": "application-x-generic"
+		},
+		{
+			"mimeType": "application/octet-stream",
+			"iconName": "application-x-generic"
+		},
+		{
+			"mimeType": "chemical/x-pdb",
+			"iconName": "application-x-generic"
+		},
+		{
+			"mimeType": "model/gltf+json",
+			"iconName": "application-x-generic"
+		},
+		{
+			"mimeType": "x-unknown/thing",
+			"iconName": "application-x-generic"
+		},
+		{
+			"mimeType": "Text/HTML; charset=utf-8",
+			"iconName": "text-html"
+		},
+		{
+			"mimeType": "APPLICATION/PDF",
+			"iconName": "x-office-document"
+		},
+		{
+			"mimeType": "text/plain;charset=UTF-8",
+			"iconName": "text-x-generic"
+		},
+		{
+			"mimeType": " image/png ",
+			"iconName": "image-x-generic"
+		},
+		{
+			"mimeType": "inode/directory",
+			"iconName": "folder"
+		},
+		{
+			"mimeType": "inode/mount-point",
+			"iconName": "folder"
+		},
+		{
+			"mimeType": "inode/symlink",
+			"iconName": "application-x-generic"
+		},
+		{
+			"mimeType": "text/html",
+			"iconName": "text-html"
+		},
+		{
+			"mimeType": "application/xhtml+xml",
+			"iconName": "text-html"
+		},
+		{
+			"mimeType": "application/pdf",
+			"iconName": "x-office-document"
+		},
+		{
+			"mimeType": "application/rtf",
+			"iconName": "x-office-document"
+		},
+		{
+			"mimeType": "text/rtf",
+			"iconName": "x-office-document"
+		},
+		{
+			"mimeType": "application/epub+zip",
+			"iconName": "x-office-document"
+		},
+		{
+			"mimeType": "application/msword",
+			"iconName": "x-office-document"
+		},
+		{
+			"mimeType": "application/vnd.ms-word.document.macroenabled.12",
+			"iconName": "x-office-document"
+		},
+		{
+			"mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+			"iconName": "x-office-document"
+		},
+		{
+			"mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.template",
+			"iconName": "x-office-document-template"
+		},
+		{
+			"mimeType": "application/vnd.oasis.opendocument.text",
+			"iconName": "x-office-document"
+		},
+		{
+			"mimeType": "application/vnd.oasis.opendocument.text-template",
+			"iconName": "x-office-document-template"
+		},
+		{
+			"mimeType": "application/vnd.sun.xml.writer",
+			"iconName": "x-office-document"
+		},
+		{
+			"mimeType": "text/csv",
+			"iconName": "x-office-spreadsheet"
+		},
+		{
+			"mimeType": "text/tab-separated-values",
+			"iconName": "x-office-spreadsheet"
+		},
+		{
+			"mimeType": "application/vnd.ms-excel",
+			"iconName": "x-office-spreadsheet"
+		},
+		{
+			"mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			"iconName": "x-office-spreadsheet"
+		},
+		{
+			"mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.template",
+			"iconName": "x-office-spreadsheet-template"
+		},
+		{
+			"mimeType": "application/vnd.oasis.opendocument.spreadsheet",
+			"iconName": "x-office-spreadsheet"
+		},
+		{
+			"mimeType": "application/vnd.oasis.opendocument.spreadsheet-template",
+			"iconName": "x-office-spreadsheet-template"
+		},
+		{
+			"mimeType": "application/vnd.sun.xml.calc",
+			"iconName": "x-office-spreadsheet"
+		},
+		{
+			"mimeType": "application/vnd.ms-powerpoint",
+			"iconName": "x-office-presentation"
+		},
+		{
+			"mimeType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+			"iconName": "x-office-presentation"
+		},
+		{
+			"mimeType": "application/vnd.openxmlformats-officedocument.presentationml.template",
+			"iconName": "x-office-presentation-template"
+		},
+		{
+			"mimeType": "application/vnd.oasis.opendocument.presentation",
+			"iconName": "x-office-presentation"
+		},
+		{
+			"mimeType": "application/vnd.oasis.opendocument.presentation-template",
+			"iconName": "x-office-presentation-template"
+		},
+		{
+			"mimeType": "application/vnd.sun.xml.impress",
+			"iconName": "x-office-presentation"
+		},
+		{
+			"mimeType": "application/vnd.oasis.opendocument.graphics",
+			"iconName": "x-office-drawing"
+		},
+		{
+			"mimeType": "application/vnd.oasis.opendocument.graphics-template",
+			"iconName": "x-office-drawing-template"
+		},
+		{
+			"mimeType": "application/vnd.visio",
+			"iconName": "x-office-drawing"
+		},
+		{
+			"mimeType": "application/vnd.sun.xml.draw",
+			"iconName": "x-office-drawing"
+		},
+		{
+			"mimeType": "image/vnd.dxf",
+			"iconName": "x-office-drawing"
+		},
+		{
+			"mimeType": "text/calendar",
+			"iconName": "x-office-calendar"
+		},
+		{
+			"mimeType": "application/ics",
+			"iconName": "x-office-calendar"
+		},
+		{
+			"mimeType": "text/vcard",
+			"iconName": "x-office-address-book"
+		},
+		{
+			"mimeType": "text/x-vcard",
+			"iconName": "x-office-address-book"
+		},
+		{
+			"mimeType": "text/directory",
+			"iconName": "x-office-address-book"
+		},
+		{
+			"mimeType": "application/json",
+			"iconName": "text-x-generic"
+		},
+		{
+			"mimeType": "application/ld+json",
+			"iconName": "text-x-generic"
+		},
+		{
+			"mimeType": "application/geo+json",
+			"iconName": "text-x-generic"
+		},
+		{
+			"mimeType": "application/xml",
+			"iconName": "text-x-generic"
+		},
+		{
+			"mimeType": "application/atom+xml",
+			"iconName": "text-x-generic"
+		},
+		{
+			"mimeType": "text/xml",
+			"iconName": "text-x-generic"
+		},
+		{
+			"mimeType": "application/yaml",
+			"iconName": "text-x-generic"
+		},
+		{
+			"mimeType": "application/toml",
+			"iconName": "text-x-generic"
+		},
+		{
+			"mimeType": "application/sql",
+			"iconName": "text-x-generic"
+		},
+		{
+			"mimeType": "text/markdown",
+			"iconName": "text-x-generic"
+		},
+		{
+			"mimeType": "text/x-csrc",
+			"iconName": "text-x-generic"
+		},
+		{
+			"mimeType": "text/plain",
+			"iconName": "text-x-generic"
+		},
+		{
+			"mimeType": "text/x-template",
+			"iconName": "text-x-generic-template"
+		},
+		{
+			"mimeType": "text/x-python",
+			"iconName": "text-x-script"
+		},
+		{
+			"mimeType": "text/x-python3",
+			"iconName": "text-x-script"
+		},
+		{
+			"mimeType": "application/x-shellscript",
+			"iconName": "text-x-script"
+		},
+		{
+			"mimeType": "application/x-sh",
+			"iconName": "text-x-script"
+		},
+		{
+			"mimeType": "text/javascript",
+			"iconName": "text-x-script"
+		},
+		{
+			"mimeType": "application/javascript",
+			"iconName": "text-x-script"
+		},
+		{
+			"mimeType": "application/ecmascript",
+			"iconName": "text-x-script"
+		},
+		{
+			"mimeType": "text/x-perl",
+			"iconName": "text-x-script"
+		},
+		{
+			"mimeType": "application/x-php",
+			"iconName": "text-x-script"
+		},
+		{
+			"mimeType": "text/x-lua",
+			"iconName": "text-x-script"
+		},
+		{
+			"mimeType": "application/x-ruby",
+			"iconName": "text-x-script"
+		},
+		{
+			"mimeType": "application/x-powershell",
+			"iconName": "text-x-script"
+		},
+		{
+			"mimeType": "text/x-r",
+			"iconName": "text-x-script"
+		},
+		{
+			"mimeType": "application/zip",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/x-zip-compressed",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/gzip",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/x-gzip",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/x-tar",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/x-compressed-tar",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/x-xz-compressed-tar",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/x-7z-compressed",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/vnd.rar",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/x-rar",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/zstd",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/java-archive",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/vnd.debian.binary-package",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/x-rpm",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/vnd.android.package-archive",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/vnd.flatpak",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/vnd.snap",
+			"iconName": "package-x-generic"
+		},
+		{
+			"mimeType": "application/x-executable",
+			"iconName": "application-x-executable"
+		},
+		{
+			"mimeType": "application/x-elf",
+			"iconName": "application-x-executable"
+		},
+		{
+			"mimeType": "application/x-pie-executable",
+			"iconName": "application-x-executable"
+		},
+		{
+			"mimeType": "application/x-sharedlib",
+			"iconName": "application-x-executable"
+		},
+		{
+			"mimeType": "application/x-msdownload",
+			"iconName": "application-x-executable"
+		},
+		{
+			"mimeType": "application/x-msi",
+			"iconName": "application-x-executable"
+		},
+		{
+			"mimeType": "application/x-mach-binary",
+			"iconName": "application-x-executable"
+		},
+		{
+			"mimeType": "application/vnd.microsoft.portable-executable",
+			"iconName": "application-x-executable"
+		},
+		{
+			"mimeType": "application/vnd.appimage",
+			"iconName": "application-x-executable"
+		},
+		{
+			"mimeType": "font/ttf",
+			"iconName": "font-x-generic"
+		},
+		{
+			"mimeType": "font/woff2",
+			"iconName": "font-x-generic"
+		},
+		{
+			"mimeType": "application/x-font-ttf",
+			"iconName": "font-x-generic"
+		},
+		{
+			"mimeType": "application/font-woff",
+			"iconName": "font-x-generic"
+		},
+		{
+			"mimeType": "application/vnd.ms-fontobject",
+			"iconName": "font-x-generic"
+		},
+		{
+			"mimeType": "image/png",
+			"iconName": "image-x-generic"
+		},
+		{
+			"mimeType": "image/svg+xml",
+			"iconName": "image-x-generic"
+		},
+		{
+			"mimeType": "image/x-icon",
+			"iconName": "image-x-generic"
+		},
+		{
+			"mimeType": "audio/ogg",
+			"iconName": "audio-x-generic"
+		},
+		{
+			"mimeType": "audio/mpeg",
+			"iconName": "audio-x-generic"
+		},
+		{
+			"mimeType": "video/mp4",
+			"iconName": "video-x-generic"
+		},
+		{
+			"mimeType": "video/x-matroska",
+			"iconName": "video-x-generic"
+		},
+		{
+			"mimeType": "text/x-shellscript",
+			"iconName": "text-x-script"
+		},
+		{
+			"mimeType": "audio/x-template",
+			"iconName": "audio-x-generic"
+		}
+	]
+}

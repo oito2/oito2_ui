@@ -375,5 +375,57 @@ void main() {
       await tester.pump();
       expect(selected, [1]);
     });
+
+    test('collapse keeps every segment when they fit', () {
+      // 100 + 20 + 100 + 20 + 100 = 340.
+      expect(Oito2Breadcrumb.collapse([100, 100, 100], maxWidth: 340), (
+        collapsedStart: 0,
+        collapsedEnd: 0,
+        lastTruncated: false,
+      ));
+    });
+
+    test('collapse hides as few middle segments as needed', () {
+      // Without the second: 100 + 28 + 100 + 100 and three separators.
+      expect(Oito2Breadcrumb.collapse([100, 100, 100, 100], maxWidth: 388), (
+        collapsedStart: 1,
+        collapsedEnd: 2,
+        lastTruncated: false,
+      ));
+      expect(Oito2Breadcrumb.collapse([100, 100, 100, 100], maxWidth: 387), (
+        collapsedStart: 1,
+        collapsedEnd: 3,
+        lastTruncated: false,
+      ));
+    });
+
+    test('collapse folds the first and cuts the last when narrow', () {
+      expect(Oito2Breadcrumb.collapse([100, 100, 100], maxWidth: 120), (
+        collapsedStart: 0,
+        collapsedEnd: 2,
+        lastTruncated: true,
+      ));
+      expect(Oito2Breadcrumb.collapse([300], maxWidth: 200), (
+        collapsedStart: 0,
+        collapsedEnd: 0,
+        lastTruncated: true,
+      ));
+    });
+
+    test('collapse reserves the edit button and minimum widths', () {
+      expect(
+        Oito2Breadcrumb.collapse([10, 10, 100], maxWidth: 196, editWidth: 32),
+        (collapsedStart: 0, collapsedEnd: 0, lastTruncated: false),
+      );
+      expect(
+        Oito2Breadcrumb.collapse(
+          [10, 10, 100],
+          maxWidth: 196,
+          editWidth: 32,
+          minSegmentWidth: 48,
+        ),
+        (collapsedStart: 0, collapsedEnd: 2, lastTruncated: false),
+      );
+    });
   });
 }

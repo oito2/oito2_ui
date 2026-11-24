@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:math' as math;
+
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -245,6 +247,39 @@ class Oito2AlertStack extends StatefulWidget {
   /// The gap between alerts.
   final double spacing;
 
+  /// Returns which alerts a stack shows, for alerts of [types] given in
+  /// the order they were added.
+  ///
+  /// The alerts are sorted by the [Oito2InfoType.severity] of their type,
+  /// the most urgent first, and then by the order they were added. The
+  /// first [maxVisible] show, or all of them when [expanded]. The alerts
+  /// at the indexes in [leaving] are shrinking out: one before the cut
+  /// still shows but takes no place, and none counts as hidden.
+  ///
+  /// Returns the indexes of [types] that show, in display order, and how
+  /// many alerts the button below the stack reveals, 0 when it doesn't
+  /// show.
+  static ({List<int> visible, int hidden}) arrange(
+    List<Oito2InfoType> types, {
+    required int maxVisible,
+    bool expanded = false,
+    Set<int> leaving = const {},
+  }) {
+    final sorted = List.generate(types.length, (index) => index)
+      ..sort((a, b) {
+        final bySeverity = types[b].severity.compareTo(types[a].severity);
+        return bySeverity != 0 ? bySeverity : a.compareTo(b);
+      });
+    final visible = <int>[];
+    var count = 0;
+    for (final index in sorted) {
+      final fits = expanded || count < maxVisible;
+      if (!leaving.contains(index)) count++;
+      if (fits) visible.add(index);
+    }
+    return (visible: visible, hidden: math.max(0, count - maxVisible));
+  }
+
   @override
   State<Oito2AlertStack> createState() => _Oito2AlertStackState();
 }
@@ -309,28 +344,25 @@ class _Oito2AlertStackState extends State<Oito2AlertStack> {
   @override
   Widget build(BuildContext context) {
     final strings = Oito2Localizations.of(context);
-    final sorted = _entries.entries.toList()
-      ..sort((a, b) {
-        final bySeverity = b.value.alert.type.severity.compareTo(
-          a.value.alert.type.severity,
-        );
-        return bySeverity != 0
-            ? bySeverity
-            : a.value.order.compareTo(b.value.order);
-      });
-    final shown = <MapEntry<Key, _StackEntry>>[];
-    var count = 0;
-    for (final item in sorted) {
-      final fits = _expanded || count < widget.maxVisible;
-      if (!item.value.leaving) count++;
-      if (fits) {
-        shown.add(item);
-      } else if (item.value.leaving) {
-        // A hidden alert that leaves has nothing to animate.
+    final entries = _entries.entries.toList()
+      ..sort((a, b) => a.value.order.compareTo(b.value.order));
+    final (:visible, :hidden) = Oito2AlertStack.arrange(
+      [for (final item in entries) item.value.alert.type],
+      maxVisible: widget.maxVisible,
+      expanded: _expanded,
+      leaving: {
+        for (final (index, item) in entries.indexed)
+          if (item.value.leaving) index,
+      },
+    );
+    final shown = [for (final index in visible) entries[index]];
+    final shownKeys = {for (final item in shown) item.key};
+    for (final item in entries) {
+      // A hidden alert that leaves has nothing to animate.
+      if (item.value.leaving && !shownKeys.contains(item.key)) {
         _entries.remove(item.key);
       }
     }
-    final hidden = count - widget.maxVisible;
     final animateIn = _built;
     _built = true;
     return Column(

@@ -109,7 +109,11 @@ class Oito2PasswordStrength {
   /// A password that is a common password with at most six digits or
   /// symbols before or after it, such as "Senha@2024", is level 0, and a
   /// common word with such affixes, such as "Montanha@77", is at most
-  /// level 1. Below 8 characters the level is at most 1.
+  /// level 1. A password with a year or a date anywhere, not next to
+  /// another digit, such as "nascido em 1990", is at most level 2. Below
+  /// 8 characters the level is at most 1. The hints of every part found
+  /// add up, also for a common password, except the advice to mix kinds
+  /// of characters, which doesn't help a common password.
   ///
   /// This is a quick estimate, not a guarantee: a field can take a
   /// stronger estimator, such as a port of zxcvbn, that returns this
@@ -127,16 +131,6 @@ class Oito2PasswordStrength {
     final hints = <Oito2PasswordHint>{};
 
     final core = _coreKind(readings);
-    if (core == Oito2PasswordHint.avoidCommon) {
-      return Oito2PasswordStrength(
-        0,
-        hints: [
-          Oito2PasswordHint.avoidCommon,
-          if (chars.length < 12) Oito2PasswordHint.addLength,
-        ],
-      );
-    }
-
     final plain = lower.join();
     final alphabet = _alphabetSize(chars);
     final perChar = math.log(alphabet) / math.ln2;
@@ -167,6 +161,13 @@ class Oito2PasswordStrength {
     }
     bits += covered.where((c) => !c).length * perChar;
 
+    if (core == Oito2PasswordHint.avoidCommon) {
+      hints.add(Oito2PasswordHint.avoidCommon);
+      if (chars.length < 12) hints.add(Oito2PasswordHint.addLength);
+      final ordered = Oito2PasswordHint.values.where(hints.contains).toList();
+      return Oito2PasswordStrength(0, hints: List.unmodifiable(ordered));
+    }
+
     var level = switch (bits) {
       < 28 => 0,
       < 36 => 1,
@@ -175,6 +176,9 @@ class Oito2PasswordStrength {
       _ => 4,
     };
     if (chars.length < 8) level = math.min(level, 1);
+    if (hints.contains(Oito2PasswordHint.avoidDates)) {
+      level = math.min(level, 2);
+    }
     if (core == Oito2PasswordHint.avoidWords) {
       level = math.min(level, 1);
       hints.add(Oito2PasswordHint.avoidWords);
@@ -605,14 +609,15 @@ List<_Match> _words(
   return matches;
 }
 
-/// Finds dates of six or eight digits, with or without separators, and
-/// years from 1900 to 2099 inside [plain].
+/// Finds dates, such as "14/03/1990", "1990-03-14", "14031990" or
+/// "19900314", and years from 1900 to 2099 inside [plain], anywhere but
+/// next to another digit.
 List<_Match> _dates(String plain) => [
   for (final m in RegExp(
-    r'\d{1,2}[-/.]\d{1,2}[-/.](\d{4}|\d{2})|(19|20)\d{2}[01]\d[0-3]\d|[0-3]\d[01]\d(19|20)\d{2}',
+    r'(?<!\d)(?:\d{1,2}[-/.]\d{1,2}[-/.](?:\d{4}|\d{2})|(?:19|20)\d{2}[-/.]\d{1,2}[-/.]\d{1,2}|(?:19|20)\d{2}[01]\d[0-3]\d|[0-3]\d[01]\d(?:19|20)\d{2})(?!\d)',
   ).allMatches(plain))
     (start: m.start, end: m.end, bits: 15, hint: Oito2PasswordHint.avoidDates),
-  for (final m in RegExp(r'(19|20)\d{2}').allMatches(plain))
+  for (final m in RegExp(r'(?<!\d)(?:19|20)\d{2}(?!\d)').allMatches(plain))
     (start: m.start, end: m.end, bits: 7, hint: Oito2PasswordHint.avoidDates),
 ];
 

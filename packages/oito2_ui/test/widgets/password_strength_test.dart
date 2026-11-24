@@ -136,6 +136,39 @@ void main() {
       expect(_rate('zkq1987wpx').hints, contains(Oito2PasswordHint.avoidDates));
     });
 
+    test('finds years and dates anywhere in a passphrase', () {
+      for (final password in [
+        'nascido em 1990',
+        'the summer of 2019 was long',
+        'casamento 14/03/1990 na praia',
+        'deploy on 2024-11-24 at noon',
+        'aniversario 25121990 da maria',
+      ]) {
+        final strength = _rate(password);
+        expect(strength.level, lessThanOrEqualTo(2), reason: password);
+        expect(
+          strength.hints,
+          contains(Oito2PasswordHint.avoidDates),
+          reason: password,
+        );
+      }
+    });
+
+    test('a year next to other digits is not a date', () {
+      expect(
+        _rate('zq120195kx').hints,
+        isNot(contains(Oito2PasswordHint.avoidDates)),
+      );
+    });
+
+    test('a common password also reports the other parts found', () {
+      expect(_rate('Senha@2024').hints, [
+        Oito2PasswordHint.avoidCommon,
+        Oito2PasswordHint.avoidDates,
+        Oito2PasswordHint.addLength,
+      ]);
+    });
+
     test('suggests avoiding the user inputs', () {
       final strength = _rate(
         'velasco_rocks',

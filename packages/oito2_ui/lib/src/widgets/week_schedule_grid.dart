@@ -145,6 +145,12 @@ class Oito2WeekScheduleGrid<T> extends StatefulWidget {
   static int indexOf(int day, int slot, {int slotsPerDay = 24}) =>
       day * slotsPerDay + slot;
 
+  /// Returns the day, Monday 0, shown on [row] of a grid whose first row
+  /// is [firstDayOfWeekIndex], counted from Sunday 0 as
+  /// [MaterialLocalizations.firstDayOfWeekIndex] is.
+  static int dayOfRow(int row, {required int firstDayOfWeekIndex}) =>
+      (firstDayOfWeekIndex + row + 6) % 7;
+
   @override
   State<Oito2WeekScheduleGrid<T>> createState() =>
       _Oito2WeekScheduleGridState<T>();
@@ -201,8 +207,10 @@ class _Oito2WeekScheduleGridState<T> extends State<Oito2WeekScheduleGrid<T>> {
   void _onFocus() => setState(() {});
 
   /// Returns the day, Monday 0, shown on [row].
-  int _dayOfRow(int row) =>
-      (MaterialLocalizations.of(context).firstDayOfWeekIndex + row + 6) % 7;
+  int _dayOfRow(int row) => Oito2WeekScheduleGrid.dayOfRow(
+    row,
+    firstDayOfWeekIndex: MaterialLocalizations.of(context).firstDayOfWeekIndex,
+  );
 
   /// Returns the rectangle between [a] and [b].
   static _Rect _rect(({int row, int slot}) a, ({int row, int slot}) b) => (

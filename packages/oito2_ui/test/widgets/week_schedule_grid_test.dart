@@ -372,5 +372,15 @@ void main() {
       expect(find.text('12 AM'), findsOneWidget);
       expect(find.text('1 AM'), findsNothing);
     });
+
+    test('dayOfRow starts the rows at the first day of the week', () {
+      List<int> days(int first) => [
+        for (var row = 0; row < 7; row++)
+          Oito2WeekScheduleGrid.dayOfRow(row, firstDayOfWeekIndex: first),
+      ];
+      expect(days(0), [6, 0, 1, 2, 3, 4, 5]);
+      expect(days(1), [0, 1, 2, 3, 4, 5, 6]);
+      expect(days(6), [5, 6, 0, 1, 2, 3, 4]);
+    });
   });
 }

@@ -1,0 +1,1755 @@
+{
+	"trimTrailingSpaces": [
+		{
+			"line": "",
+			"result": ""
+		},
+		{
+			"line": "plain",
+			"result": "plain"
+		},
+		{
+			"line": "spaces   ",
+			"result": "spaces"
+		},
+		{
+			"line": "escaped\\ ",
+			"result": "escaped\\ "
+		},
+		{
+			"line": "escaped\\  ",
+			"result": "escaped\\ "
+		},
+		{
+			"line": "double\\\\ ",
+			"result": "double\\\\"
+		},
+		{
+			"line": "triple\\\\\\ ",
+			"result": "triple\\\\\\ "
+		},
+		{
+			"line": "tab\t",
+			"result": "tab\t"
+		},
+		{
+			"line": "crlf \r",
+			"result": "crlf"
+		},
+		{
+			"line": "   ",
+			"result": ""
+		}
+	],
+	"ruleSets": [
+		{
+			"name": "git documentation: hello.* and doc/frotz/",
+			"text": "hello.*\ndoc/frotz/\nfrotz/\n",
+			"ignoreCase": false,
+			"rules": [
+				{
+					"line": 1,
+					"pattern": "hello.*",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 2,
+					"pattern": "doc/frotz/",
+					"negated": false,
+					"directoryOnly": true,
+					"anchored": true,
+					"isValid": true
+				},
+				{
+					"line": 3,
+					"pattern": "frotz/",
+					"negated": false,
+					"directoryOnly": true,
+					"anchored": false,
+					"isValid": true
+				}
+			],
+			"paths": [
+				{
+					"path": "hello.txt",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "hello.*",
+						"negated": false,
+						"path": "hello.txt"
+					}
+				},
+				{
+					"path": "src/hello.c",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "hello.*",
+						"negated": false,
+						"path": "src/hello.c"
+					}
+				},
+				{
+					"path": "hello",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "doc/frotz",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "frotz/",
+						"negated": false,
+						"path": "doc/frotz"
+					}
+				},
+				{
+					"path": "doc/frotz",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "a/doc/frotz",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "frotz/",
+						"negated": false,
+						"path": "a/doc/frotz"
+					}
+				},
+				{
+					"path": "frotz",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "frotz/",
+						"negated": false,
+						"path": "frotz"
+					}
+				},
+				{
+					"path": "a/frotz",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "frotz/",
+						"negated": false,
+						"path": "a/frotz"
+					}
+				},
+				{
+					"path": "a/frotz/file",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "frotz/",
+						"negated": false,
+						"path": "a/frotz"
+					}
+				}
+			]
+		},
+		{
+			"name": "git documentation: foo/* matches only direct children",
+			"text": "foo/*\n",
+			"ignoreCase": false,
+			"rules": [
+				{
+					"line": 1,
+					"pattern": "foo/*",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				}
+			],
+			"paths": [
+				{
+					"path": "foo/test.json",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "foo/*",
+						"negated": false,
+						"path": "foo/test.json"
+					}
+				},
+				{
+					"path": "foo/bar",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "foo/*",
+						"negated": false,
+						"path": "foo/bar"
+					}
+				},
+				{
+					"path": "foo/bar/hello.c",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "foo/*",
+						"negated": false,
+						"path": "foo/bar"
+					}
+				},
+				{
+					"path": "a/foo/test.json",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "foo",
+					"isDirectory": true,
+					"isIgnored": false,
+					"match": null
+				}
+			]
+		},
+		{
+			"name": "git documentation: exclude everything except foo/bar",
+			"text": "# exclude everything except directory foo/bar\n/*\n!/foo\n/foo/*\n!/foo/bar\n",
+			"ignoreCase": false,
+			"rules": [
+				{
+					"line": 2,
+					"pattern": "/*",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				},
+				{
+					"line": 3,
+					"pattern": "!/foo",
+					"negated": true,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				},
+				{
+					"line": 4,
+					"pattern": "/foo/*",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				},
+				{
+					"line": 5,
+					"pattern": "!/foo/bar",
+					"negated": true,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				}
+			],
+			"paths": [
+				{
+					"path": "README.md",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 2,
+						"pattern": "/*",
+						"negated": false,
+						"path": "README.md"
+					}
+				},
+				{
+					"path": "src",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 2,
+						"pattern": "/*",
+						"negated": false,
+						"path": "src"
+					}
+				},
+				{
+					"path": "src/main.c",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 2,
+						"pattern": "/*",
+						"negated": false,
+						"path": "src"
+					}
+				},
+				{
+					"path": "foo",
+					"isDirectory": true,
+					"isIgnored": false,
+					"match": {
+						"line": 3,
+						"pattern": "!/foo",
+						"negated": true,
+						"path": "foo"
+					}
+				},
+				{
+					"path": "foo/baz",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 4,
+						"pattern": "/foo/*",
+						"negated": false,
+						"path": "foo/baz"
+					}
+				},
+				{
+					"path": "foo/qux",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 4,
+						"pattern": "/foo/*",
+						"negated": false,
+						"path": "foo/qux"
+					}
+				},
+				{
+					"path": "foo/qux/file",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 4,
+						"pattern": "/foo/*",
+						"negated": false,
+						"path": "foo/qux"
+					}
+				},
+				{
+					"path": "foo/bar",
+					"isDirectory": true,
+					"isIgnored": false,
+					"match": {
+						"line": 5,
+						"pattern": "!/foo/bar",
+						"negated": true,
+						"path": "foo/bar"
+					}
+				},
+				{
+					"path": "foo/bar/file",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				}
+			]
+		},
+		{
+			"name": "git documentation: objects, archives and Documentation/*.html",
+			"text": "# ignore objects and archives, anywhere in the tree.\n*.[oa]\n\nDocumentation/*.html\n!Documentation/foo.html\n",
+			"ignoreCase": false,
+			"rules": [
+				{
+					"line": 2,
+					"pattern": "*.[oa]",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 4,
+					"pattern": "Documentation/*.html",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				},
+				{
+					"line": 5,
+					"pattern": "!Documentation/foo.html",
+					"negated": true,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				}
+			],
+			"paths": [
+				{
+					"path": "main.o",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 2,
+						"pattern": "*.[oa]",
+						"negated": false,
+						"path": "main.o"
+					}
+				},
+				{
+					"path": "lib/libz.a",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 2,
+						"pattern": "*.[oa]",
+						"negated": false,
+						"path": "lib/libz.a"
+					}
+				},
+				{
+					"path": "main.c",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "Documentation/git.html",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 4,
+						"pattern": "Documentation/*.html",
+						"negated": false,
+						"path": "Documentation/git.html"
+					}
+				},
+				{
+					"path": "Documentation/foo.html",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": {
+						"line": 5,
+						"pattern": "!Documentation/foo.html",
+						"negated": true,
+						"path": "Documentation/foo.html"
+					}
+				},
+				{
+					"path": "Documentation/ppc/ppc.html",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "tools/Documentation/git.html",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				}
+			]
+		},
+		{
+			"name": "double asterisks",
+			"text": "**/logs\n**/cache/tmp\nabc/**\na/**/b\nx**y\n/**/deep.txt\n",
+			"ignoreCase": false,
+			"rules": [
+				{
+					"line": 1,
+					"pattern": "**/logs",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				},
+				{
+					"line": 2,
+					"pattern": "**/cache/tmp",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				},
+				{
+					"line": 3,
+					"pattern": "abc/**",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				},
+				{
+					"line": 4,
+					"pattern": "a/**/b",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				},
+				{
+					"line": 5,
+					"pattern": "x**y",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 6,
+					"pattern": "/**/deep.txt",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				}
+			],
+			"paths": [
+				{
+					"path": "logs",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "**/logs",
+						"negated": false,
+						"path": "logs"
+					}
+				},
+				{
+					"path": "src/logs",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "**/logs",
+						"negated": false,
+						"path": "src/logs"
+					}
+				},
+				{
+					"path": "src/logs/today.log",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "**/logs",
+						"negated": false,
+						"path": "src/logs"
+					}
+				},
+				{
+					"path": "cache/tmp",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 2,
+						"pattern": "**/cache/tmp",
+						"negated": false,
+						"path": "cache/tmp"
+					}
+				},
+				{
+					"path": "src/cache/tmp",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 2,
+						"pattern": "**/cache/tmp",
+						"negated": false,
+						"path": "src/cache/tmp"
+					}
+				},
+				{
+					"path": "abc",
+					"isDirectory": true,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "abc/file",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "abc/**",
+						"negated": false,
+						"path": "abc/file"
+					}
+				},
+				{
+					"path": "abc/sub/file",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "abc/**",
+						"negated": false,
+						"path": "abc/sub"
+					}
+				},
+				{
+					"path": "a/b",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 4,
+						"pattern": "a/**/b",
+						"negated": false,
+						"path": "a/b"
+					}
+				},
+				{
+					"path": "a/x/b",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 4,
+						"pattern": "a/**/b",
+						"negated": false,
+						"path": "a/x/b"
+					}
+				},
+				{
+					"path": "a/x/y/b",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 4,
+						"pattern": "a/**/b",
+						"negated": false,
+						"path": "a/x/y/b"
+					}
+				},
+				{
+					"path": "z/a/b",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "xay",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 5,
+						"pattern": "x**y",
+						"negated": false,
+						"path": "xay"
+					}
+				},
+				{
+					"path": "xa/by",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "deep.txt",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 6,
+						"pattern": "/**/deep.txt",
+						"negated": false,
+						"path": "deep.txt"
+					}
+				},
+				{
+					"path": "one/two/deep.txt",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 6,
+						"pattern": "/**/deep.txt",
+						"negated": false,
+						"path": "one/two/deep.txt"
+					}
+				}
+			]
+		},
+		{
+			"name": "anchoring and directory-only rules",
+			"text": "/build\nout/\nsrc/gen\n/dist/\nnode_modules\n",
+			"ignoreCase": false,
+			"rules": [
+				{
+					"line": 1,
+					"pattern": "/build",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				},
+				{
+					"line": 2,
+					"pattern": "out/",
+					"negated": false,
+					"directoryOnly": true,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 3,
+					"pattern": "src/gen",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				},
+				{
+					"line": 4,
+					"pattern": "/dist/",
+					"negated": false,
+					"directoryOnly": true,
+					"anchored": true,
+					"isValid": true
+				},
+				{
+					"line": 5,
+					"pattern": "node_modules",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				}
+			],
+			"paths": [
+				{
+					"path": "build",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "/build",
+						"negated": false,
+						"path": "build"
+					}
+				},
+				{
+					"path": "build",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "/build",
+						"negated": false,
+						"path": "build"
+					}
+				},
+				{
+					"path": "app/build",
+					"isDirectory": true,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "out",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 2,
+						"pattern": "out/",
+						"negated": false,
+						"path": "out"
+					}
+				},
+				{
+					"path": "out",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "app/out",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 2,
+						"pattern": "out/",
+						"negated": false,
+						"path": "app/out"
+					}
+				},
+				{
+					"path": "app/out/a.js",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 2,
+						"pattern": "out/",
+						"negated": false,
+						"path": "app/out"
+					}
+				},
+				{
+					"path": "src/gen",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "src/gen",
+						"negated": false,
+						"path": "src/gen"
+					}
+				},
+				{
+					"path": "app/src/gen",
+					"isDirectory": true,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "dist",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 4,
+						"pattern": "/dist/",
+						"negated": false,
+						"path": "dist"
+					}
+				},
+				{
+					"path": "dist",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "dist/",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 4,
+						"pattern": "/dist/",
+						"negated": false,
+						"path": "dist"
+					}
+				},
+				{
+					"path": "./dist/app.js",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 4,
+						"pattern": "/dist/",
+						"negated": false,
+						"path": "dist"
+					}
+				},
+				{
+					"path": "node_modules",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 5,
+						"pattern": "node_modules",
+						"negated": false,
+						"path": "node_modules"
+					}
+				},
+				{
+					"path": "a/b/node_modules/x/index.js",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 5,
+						"pattern": "node_modules",
+						"negated": false,
+						"path": "a/b/node_modules"
+					}
+				}
+			]
+		},
+		{
+			"name": "negation",
+			"text": "*.log\n!important.log\nlogs/\n!logs/keep.log\ntmp/*\n!tmp/.gitkeep\n",
+			"ignoreCase": false,
+			"rules": [
+				{
+					"line": 1,
+					"pattern": "*.log",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 2,
+					"pattern": "!important.log",
+					"negated": true,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 3,
+					"pattern": "logs/",
+					"negated": false,
+					"directoryOnly": true,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 4,
+					"pattern": "!logs/keep.log",
+					"negated": true,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				},
+				{
+					"line": 5,
+					"pattern": "tmp/*",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				},
+				{
+					"line": 6,
+					"pattern": "!tmp/.gitkeep",
+					"negated": true,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				}
+			],
+			"paths": [
+				{
+					"path": "debug.log",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "*.log",
+						"negated": false,
+						"path": "debug.log"
+					}
+				},
+				{
+					"path": "important.log",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": {
+						"line": 2,
+						"pattern": "!important.log",
+						"negated": true,
+						"path": "important.log"
+					}
+				},
+				{
+					"path": "sub/important.log",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": {
+						"line": 2,
+						"pattern": "!important.log",
+						"negated": true,
+						"path": "sub/important.log"
+					}
+				},
+				{
+					"path": "logs",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "logs/",
+						"negated": false,
+						"path": "logs"
+					}
+				},
+				{
+					"path": "logs/keep.log",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "logs/",
+						"negated": false,
+						"path": "logs"
+					}
+				},
+				{
+					"path": "logs/other.txt",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "logs/",
+						"negated": false,
+						"path": "logs"
+					}
+				},
+				{
+					"path": "tmp/file",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 5,
+						"pattern": "tmp/*",
+						"negated": false,
+						"path": "tmp/file"
+					}
+				},
+				{
+					"path": "tmp/.gitkeep",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": {
+						"line": 6,
+						"pattern": "!tmp/.gitkeep",
+						"negated": true,
+						"path": "tmp/.gitkeep"
+					}
+				},
+				{
+					"path": "readme.md",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				}
+			]
+		},
+		{
+			"name": "character classes",
+			"text": "file[0-9].txt\n[!a]*.bak\n[^b]*.old\n[[:digit:]][[:upper:]].dat\n[a-]x\n[]]y\nr[z-a]\nq[[:alpha:][:digit:]]\ns[/]t\n",
+			"ignoreCase": false,
+			"rules": [
+				{
+					"line": 1,
+					"pattern": "file[0-9].txt",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 2,
+					"pattern": "[!a]*.bak",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 3,
+					"pattern": "[^b]*.old",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 4,
+					"pattern": "[[:digit:]][[:upper:]].dat",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 5,
+					"pattern": "[a-]x",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 6,
+					"pattern": "[]]y",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 7,
+					"pattern": "r[z-a]",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 8,
+					"pattern": "q[[:alpha:][:digit:]]",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 9,
+					"pattern": "s[/]t",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": true,
+					"isValid": true
+				}
+			],
+			"paths": [
+				{
+					"path": "file1.txt",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "file[0-9].txt",
+						"negated": false,
+						"path": "file1.txt"
+					}
+				},
+				{
+					"path": "fileA.txt",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "b.bak",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 2,
+						"pattern": "[!a]*.bak",
+						"negated": false,
+						"path": "b.bak"
+					}
+				},
+				{
+					"path": "a.bak",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "a.old",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "[^b]*.old",
+						"negated": false,
+						"path": "a.old"
+					}
+				},
+				{
+					"path": "b.old",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "1A.dat",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 4,
+						"pattern": "[[:digit:]][[:upper:]].dat",
+						"negated": false,
+						"path": "1A.dat"
+					}
+				},
+				{
+					"path": "1a.dat",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "ax",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 5,
+						"pattern": "[a-]x",
+						"negated": false,
+						"path": "ax"
+					}
+				},
+				{
+					"path": "-x",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 5,
+						"pattern": "[a-]x",
+						"negated": false,
+						"path": "-x"
+					}
+				},
+				{
+					"path": "bx",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "]y",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 6,
+						"pattern": "[]]y",
+						"negated": false,
+						"path": "]y"
+					}
+				},
+				{
+					"path": "rz",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "qx",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 8,
+						"pattern": "q[[:alpha:][:digit:]]",
+						"negated": false,
+						"path": "qx"
+					}
+				},
+				{
+					"path": "q5",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 8,
+						"pattern": "q[[:alpha:][:digit:]]",
+						"negated": false,
+						"path": "q5"
+					}
+				},
+				{
+					"path": "q-",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "s/t",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				}
+			]
+		},
+		{
+			"name": "escapes, comments and trailing spaces",
+			"text": "# a comment\n\\#hash\n\\!bang\nstar\\*\nquestion\\?\ntrailing   \nkept\\ \ntwo\\\\  \n  leading\n",
+			"ignoreCase": false,
+			"rules": [
+				{
+					"line": 2,
+					"pattern": "\\#hash",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 3,
+					"pattern": "\\!bang",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 4,
+					"pattern": "star\\*",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 5,
+					"pattern": "question\\?",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 6,
+					"pattern": "trailing",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 7,
+					"pattern": "kept\\ ",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 8,
+					"pattern": "two\\\\",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 9,
+					"pattern": "  leading",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				}
+			],
+			"paths": [
+				{
+					"path": "# a comment",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "#hash",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 2,
+						"pattern": "\\#hash",
+						"negated": false,
+						"path": "#hash"
+					}
+				},
+				{
+					"path": "!bang",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "\\!bang",
+						"negated": false,
+						"path": "!bang"
+					}
+				},
+				{
+					"path": "star*",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 4,
+						"pattern": "star\\*",
+						"negated": false,
+						"path": "star*"
+					}
+				},
+				{
+					"path": "starx",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "question?",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 5,
+						"pattern": "question\\?",
+						"negated": false,
+						"path": "question?"
+					}
+				},
+				{
+					"path": "questionx",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "trailing",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 6,
+						"pattern": "trailing",
+						"negated": false,
+						"path": "trailing"
+					}
+				},
+				{
+					"path": "trailing   ",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "kept ",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 7,
+						"pattern": "kept\\ ",
+						"negated": false,
+						"path": "kept "
+					}
+				},
+				{
+					"path": "kept",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "two\\",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 8,
+						"pattern": "two\\\\",
+						"negated": false,
+						"path": "two\\"
+					}
+				},
+				{
+					"path": "  leading",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 9,
+						"pattern": "  leading",
+						"negated": false,
+						"path": "  leading"
+					}
+				},
+				{
+					"path": "leading",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				}
+			]
+		},
+		{
+			"name": "invalid rules match nothing",
+			"text": "[unclosed\nend\\\n[[:nope:]]\n[[:digit:\n/\n!\nvalid\n",
+			"ignoreCase": false,
+			"rules": [
+				{
+					"line": 1,
+					"pattern": "[unclosed",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": false
+				},
+				{
+					"line": 2,
+					"pattern": "end\\",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": false
+				},
+				{
+					"line": 3,
+					"pattern": "[[:nope:]]",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": false
+				},
+				{
+					"line": 4,
+					"pattern": "[[:digit:",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": false
+				},
+				{
+					"line": 5,
+					"pattern": "/",
+					"negated": false,
+					"directoryOnly": true,
+					"anchored": false,
+					"isValid": false
+				},
+				{
+					"line": 6,
+					"pattern": "!",
+					"negated": true,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": false
+				},
+				{
+					"line": 7,
+					"pattern": "valid",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				}
+			],
+			"paths": [
+				{
+					"path": "[unclosed",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "unclosed",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "end",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "end\\",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "n",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				},
+				{
+					"path": "valid",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 7,
+						"pattern": "valid",
+						"negated": false,
+						"path": "valid"
+					}
+				}
+			]
+		},
+		{
+			"name": "carriage returns and a byte order mark",
+			"text": "﻿*.tmp\r\n!keep.tmp\r\nbin/\r\n",
+			"ignoreCase": false,
+			"rules": [
+				{
+					"line": 1,
+					"pattern": "*.tmp",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 2,
+					"pattern": "!keep.tmp",
+					"negated": true,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 3,
+					"pattern": "bin/",
+					"negated": false,
+					"directoryOnly": true,
+					"anchored": false,
+					"isValid": true
+				}
+			],
+			"paths": [
+				{
+					"path": "a.tmp",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "*.tmp",
+						"negated": false,
+						"path": "a.tmp"
+					}
+				},
+				{
+					"path": "keep.tmp",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": {
+						"line": 2,
+						"pattern": "!keep.tmp",
+						"negated": true,
+						"path": "keep.tmp"
+					}
+				},
+				{
+					"path": "bin",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "bin/",
+						"negated": false,
+						"path": "bin"
+					}
+				},
+				{
+					"path": "bin/tool",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 3,
+						"pattern": "bin/",
+						"negated": false,
+						"path": "bin"
+					}
+				}
+			]
+		},
+		{
+			"name": "ignoring the case",
+			"text": "*.LOG\nBuild/\n!Keep.log\n[A-C]x\n",
+			"ignoreCase": true,
+			"rules": [
+				{
+					"line": 1,
+					"pattern": "*.LOG",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 2,
+					"pattern": "Build/",
+					"negated": false,
+					"directoryOnly": true,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 3,
+					"pattern": "!Keep.log",
+					"negated": true,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				},
+				{
+					"line": 4,
+					"pattern": "[A-C]x",
+					"negated": false,
+					"directoryOnly": false,
+					"anchored": false,
+					"isValid": true
+				}
+			],
+			"paths": [
+				{
+					"path": "debug.log",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "*.LOG",
+						"negated": false,
+						"path": "debug.log"
+					}
+				},
+				{
+					"path": "DEBUG.Log",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 1,
+						"pattern": "*.LOG",
+						"negated": false,
+						"path": "DEBUG.Log"
+					}
+				},
+				{
+					"path": "keep.LOG",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": {
+						"line": 3,
+						"pattern": "!Keep.log",
+						"negated": true,
+						"path": "keep.LOG"
+					}
+				},
+				{
+					"path": "build",
+					"isDirectory": true,
+					"isIgnored": true,
+					"match": {
+						"line": 2,
+						"pattern": "Build/",
+						"negated": false,
+						"path": "build"
+					}
+				},
+				{
+					"path": "BUILD/out",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 2,
+						"pattern": "Build/",
+						"negated": false,
+						"path": "BUILD"
+					}
+				},
+				{
+					"path": "bx",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 4,
+						"pattern": "[A-C]x",
+						"negated": false,
+						"path": "bx"
+					}
+				},
+				{
+					"path": "Bx",
+					"isDirectory": false,
+					"isIgnored": true,
+					"match": {
+						"line": 4,
+						"pattern": "[A-C]x",
+						"negated": false,
+						"path": "Bx"
+					}
+				},
+				{
+					"path": "dx",
+					"isDirectory": false,
+					"isIgnored": false,
+					"match": null
+				}
+			]
+		}
+	]
+}
