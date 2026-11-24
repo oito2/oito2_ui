@@ -36,6 +36,9 @@ void main() {
       expect(settings.accentColor, isNull);
       expect(settings.colorScheme, isNull);
       expect(settings.highContrast, isFalse);
+      expect(settings.reduceMotion, isNull);
+      expect(settings.textScaleFactor, isNull);
+      expect(settings.cursorSize, isNull);
     });
 
     test('native Linux keeps a given desktop environment', () {
@@ -94,6 +97,28 @@ void main() {
     expect(dark, isNot(light));
     expect(dark, base.copyWith(colorScheme: Brightness.dark));
     expect(dark.toString(), contains('colorScheme: dark'));
+  });
+
+  test('motion, text scale and cursor size take part in equality', () {
+    final base = Oito2SystemSettings.fallback(_linux);
+    final changed = base.copyWith(
+      reduceMotion: true,
+      textScaleFactor: 1.25,
+      cursorSize: 48,
+    );
+    expect(changed.reduceMotion, isTrue);
+    expect(changed.textScaleFactor, 1.25);
+    expect(changed.cursorSize, 48);
+    expect(changed, isNot(base));
+    expect(changed.copyWith(), changed);
+    expect(changed.copyWith().hashCode, changed.hashCode);
+    expect(changed.copyWith(reduceMotion: false), isNot(changed));
+    expect(changed.copyWith(textScaleFactor: 1.5), isNot(changed));
+    expect(changed.copyWith(cursorSize: 24), isNot(changed));
+    expect(
+      changed.toString(),
+      contains('reduceMotion: true, textScaleFactor: 1.25, cursorSize: 48'),
+    );
   });
 
   group('Oito2SystemScope', () {

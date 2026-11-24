@@ -140,3 +140,32 @@ class FakeColorScheme implements Oito2ColorSchemeSource {
     _controller.add(null);
   }
 }
+
+/// A reduced motion preference held in memory.
+class FakeReducedMotion implements Oito2ReducedMotionSource {
+  /// Creates a fake source starting with [reduce].
+  FakeReducedMotion([this.reduce]);
+
+  /// The current preference.
+  bool? reduce;
+
+  /// Whether [close] was called.
+  bool closed = false;
+
+  final StreamController<void> _controller = StreamController.broadcast();
+
+  @override
+  Future<bool?> read() async => reduce;
+
+  @override
+  Stream<void> changes() => _controller.stream;
+
+  @override
+  Future<void> close() async => closed = true;
+
+  /// Changes the preference and notifies listeners.
+  void change(bool? value) {
+    reduce = value;
+    _controller.add(null);
+  }
+}

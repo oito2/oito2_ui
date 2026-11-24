@@ -15,12 +15,16 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - System accent on Windows, macOS and Android through `system_theme`; platform high-contrast preference everywhere.
 - `Oito2SystemSettingsReader`, the source interfaces and `Oito2ConfigParsers` for custom sources and testing.
 - Color scheme preference: `Oito2PortalColorSchemeSource` reads `org.freedesktop.appearance color-scheme` from the XDG desktop portal on Linux, falling back to GNOME `color-scheme`, a dark KDE color scheme or look-and-feel package, or the COSMIC theme mode; other platforms report the platform brightness. `Oito2SystemSettingsScope` reads again when the platform brightness changes.
+- Reduced motion, text scale and cursor size, followed live: `Oito2PortalReducedMotionSource` reads `org.freedesktop.appearance reduced-motion` from the XDG desktop portal (GNOME 50+, KDE Plasma 6.6+); the desktop stores add GNOME `enable-animations` and a11y `reduced-motion`, Cinnamon `enable-animations` and `desktop-effects-workspace`, MATE `enable-animations` and `gtk-enable-animations`, and KDE `AnimationDurationFactor=0`. The text scale comes from `text-scaling-factor` (GNOME family, Cinnamon) or the font DPI (MATE `font-rendering dpi`, KDE `forceFontDPI` on X11, Xfce `Xft/DPI`); the cursor size from `cursor-size` (GNOME family, Cinnamon, MATE), KDE `kcminputrc`, Xfce `Gtk/CursorThemeSize`, COSMIC `cursor_size` and LXQt `session.conf`. Other platforms report Flutter's `disableAnimations`/`reduceMotion` and `textScaleFactor`.
+- `Oito2SystemSettingsScope` turns `MediaQuery.disableAnimations` on when the system asks for reduced motion, and on KDE Plasma, Xfce, Cinnamon, MATE, COSMIC and LXQt replaces the text scaler Flutter derives from GNOME's `text-scaling-factor` with the desktop's own factor (replaced, never multiplied); on the GNOME family and other platforms Flutter's text scale is kept. It reads again when the platform text scale changes.
+- `Oito2ConfigParsers.cosmicOptionalInt` for COSMIC `Some(n)` values.
 - Portal accent: `Oito2PortalAccentSource` reads `org.freedesktop.appearance accent-color` from the XDG desktop portal (GNOME, KDE, COSMIC and XApp portals) and follows its changes; on Linux it comes before the desktop stores, so COSMIC reports its accent.
 
 ### Changed
 
 - Accepts `dbus` 0.7 and 0.8 and `gsettings` 0.2.8 and 0.2.9, so apps can also depend on plugins that still require `dbus` 0.7.
 - `Oito2SystemSettingsReader` takes a `colorScheme` source and a `platformBrightness` callback; `Oito2EmptySource` also implements the new `Oito2ColorSchemeSource`.
+- `Oito2SystemSettingsReader` takes a `reducedMotion` source and `platformReduceMotion` and `platformTextScaleFactor` callbacks; `Oito2EmptySource` also implements the new `Oito2ReducedMotionSource`.
 - `Oito2SystemSettingsReader` takes a `portalAccent` source; `Oito2AccentSource` gains `close()`, which `Oito2SystemSettingsReader.close()` calls.
 - The GNOME `accent-color` key is read on GNOME only: other desktops (Budgie, Cinnamon, MATE, Pantheon, Unity, Xfce, ...) use the GTK theme accent.
 - `Oito2GSettingsSource` gains `close()`; `Oito2DconfGSettingsSource` shares one session and one system D-Bus connection between schemas and accepts existing connections.

@@ -163,4 +163,212 @@ void main() {
     await tester.pump();
     expect(seen!.accentColor, const Color(0xFF222222));
   });
+
+  group('media query', () {
+    /// Pumps a scope over [reader] and returns a getter for the media query
+    /// its child sees, after the first read.
+    Future<MediaQueryData Function()> pumpScope(
+      WidgetTester tester,
+      Oito2SystemSettingsReader reader, {
+      MediaQueryData Function(MediaQueryData)? override,
+    }) async {
+      late MediaQueryData seen;
+      final Widget inner = Oito2SystemSettingsScope(
+        reader: reader,
+        child: Builder(
+          builder: (context) {
+            seen = MediaQuery.of(context);
+            return const SizedBox();
+          },
+        ),
+      );
+      await tester.pumpWidget(
+        override == null
+            ? inner
+            : Builder(
+                builder: (context) => MediaQuery(
+                  data: override(MediaQuery.of(context)),
+                  child: inner,
+                ),
+              ),
+      );
+      await tester.pump();
+      await tester.pump();
+      return () => seen;
+    }
+
+    Oito2SystemSettingsReader reader(
+      String desktop, {
+      FakeGSettings? gsettings,
+      FakeConfigFiles? files,
+      FakeReducedMotion? reducedMotion,
+    }) => Oito2SystemSettingsReader(
+      platform: _linux,
+      environment: {'XDG_CURRENT_DESKTOP': desktop},
+      gsettings: gsettings ?? FakeGSettings(),
+      configFiles: files ?? FakeConfigFiles(),
+      reducedMotion: reducedMotion ?? FakeReducedMotion(),
+      debounce: Duration.zero,
+    );
+
+    testWidgets('reduced motion disables animations and follows changes', (
+      tester,
+    ) async {
+      final reducedMotion = FakeReducedMotion(true);
+      final media = await pumpScope(
+        tester,
+        reader('XFCE', reducedMotion: reducedMotion),
+      );
+      expect(media().disableAnimations, isTrue);
+
+      reducedMotion.change(false);
+      await tester.pump(const Duration(milliseconds: 10));
+      await tester.pump();
+      expect(media().disableAnimations, isFalse);
+    });
+
+    testWidgets('never turns off animations the platform disabled', (
+      tester,
+    ) async {
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
+      final media = await pumpScope(
+        tester,
+        reader('XFCE', reducedMotion: FakeReducedMotion(false)),
+      );
+      expect(media().disableAnimations, isTrue);
+    });
+
+    testWidgets('replaces the text scale on desktops Flutter does not read', (
+      tester,
+    ) async {
+      final files = FakeConfigFiles({
+        'kcmfonts': '[General]\nforceFontDPI=144\n',
+      });
+      final media = await pumpScope(tester, reader('KDE', files: files));
+      expect(media().textScaler, const TextScaler.linear(1.5));
+
+      files.write('kcmfonts', '[General]\nforceFontDPI=120\n');
+      await tester.pump(const Duration(milliseconds: 10));
+      await tester.pump();
+      expect(media().textScaler, const TextScaler.linear(1.25));
+    });
+
+    testWidgets('scales text once when Flutter reports a GNOME factor', (
+      tester,
+    ) async {
+      // Flutter reads GNOME's text-scaling-factor on any desktop; the
+      // desktop's own factor replaces it instead of multiplying it.
+      tester.platformDispatcher.textScaleFactorTestValue = 1.25;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      final gsettings = FakeGSettings({
+        'org.cinnamon.desktop.interface/text-scaling-factor': 1.5,
+      });
+      final media = await pumpScope(
+        tester,
+        reader('X-Cinnamon', gsettings: gsettings),
+      );
+      expect(media().textScaler, const TextScaler.linear(1.5));
+    });
+
+    testWidgets('leaves the text scale Flutter applies on GNOME', (
+      tester,
+    ) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 1.5;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      final gsettings = FakeGSettings({
+        'org.gnome.desktop.interface/text-scaling-factor': 1.5,
+      });
+      final media = await pumpScope(
+        tester,
+        reader('GNOME', gsettings: gsettings),
+      );
+      expect(media().textScaler, isA<SystemTextScaler>());
+      expect(media().textScaler.scale(10), 15);
+    });
+
+    testWidgets('leaves a text scaler an ancestor changed', (tester) async {
+      final files = FakeConfigFiles({
+        'kcmfonts': '[General]\nforceFontDPI=144\n',
+      });
+      final media = await pumpScope(
+        tester,
+        reader('KDE', files: files),
+        override: (data) =>
+            data.copyWith(textScaler: const TextScaler.linear(2)),
+      );
+      expect(media().textScaler, const TextScaler.linear(2));
+    });
+
+    testWidgets('keeps the state of its child when a preference changes', (
+      tester,
+    ) async {
+      final reducedMotion = FakeReducedMotion(false);
+      await tester.pumpWidget(
+        Oito2SystemSettingsScope(
+          reader: reader('XFCE', reducedMotion: reducedMotion),
+          child: const _Counter(),
+        ),
+      );
+      await tester.pump();
+      final state = tester.state<_CounterState>(find.byType(_Counter));
+
+      reducedMotion.change(true);
+      await tester.pump(const Duration(milliseconds: 10));
+      await tester.pump();
+      expect(tester.state<_CounterState>(find.byType(_Counter)), same(state));
+    });
+
+    testWidgets('reads again when the platform text scale changes', (
+      tester,
+    ) async {
+      const windows = Oito2Platform(
+        targetPlatform: TargetPlatform.windows,
+        isWeb: false,
+      );
+      Oito2SystemSettings? seen;
+      await tester.pumpWidget(
+        Oito2SystemSettingsScope(
+          reader: Oito2SystemSettingsReader(
+            platform: windows,
+            platformTextScaleFactor: () =>
+                tester.platformDispatcher.textScaleFactor,
+            debounce: Duration.zero,
+          ),
+          child: Builder(
+            builder: (context) {
+              seen = Oito2SystemScope.of(context);
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(seen!.textScaleFactor, 1.0);
+
+      tester.platformDispatcher.textScaleFactorTestValue = 1.5;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pump();
+      await tester.pump();
+      expect(seen!.textScaleFactor, 1.5);
+    });
+  });
+}
+
+/// A stateful widget whose state identity tells whether it was rebuilt
+/// from scratch.
+class _Counter extends StatefulWidget {
+  const _Counter();
+
+  @override
+  State<_Counter> createState() => _CounterState();
+}
+
+class _CounterState extends State<_Counter> {
+  @override
+  Widget build(BuildContext context) => const SizedBox();
 }

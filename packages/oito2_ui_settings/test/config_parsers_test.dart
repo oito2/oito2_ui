@@ -106,6 +106,14 @@ ButtonsOnLeft=ignored
     expect(Oito2ConfigParsers.cosmicBool('maybe'), isNull);
   });
 
+  test('cosmicOptionalInt parses Some(n) and bare numbers', () {
+    expect(Oito2ConfigParsers.cosmicOptionalInt('Some(48)\n'), 48);
+    expect(Oito2ConfigParsers.cosmicOptionalInt('Some( 32 )'), 32);
+    expect(Oito2ConfigParsers.cosmicOptionalInt(' 24 '), 24);
+    expect(Oito2ConfigParsers.cosmicOptionalInt('None'), isNull);
+    expect(Oito2ConfigParsers.cosmicOptionalInt('Some(big)'), isNull);
+  });
+
   test('kdeColor parses r,g,b triples', () {
     expect(Oito2ConfigParsers.kdeColor('61,174,233'), const Color(0xFF3DAEE9));
     expect(Oito2ConfigParsers.kdeColor(' 1, 2, 3 '), const Color(0xFF010203));

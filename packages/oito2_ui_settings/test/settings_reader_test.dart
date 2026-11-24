@@ -53,8 +53,11 @@ Oito2SystemSettingsReader _reader({
   FakeAccent? accent,
   FakeAccent? portalAccent,
   FakeColorScheme? colorScheme,
+  FakeReducedMotion? reducedMotion,
   bool platformHighContrast = false,
   Brightness? platformBrightness,
+  bool? platformReduceMotion,
+  double? platformTextScaleFactor,
 }) => Oito2SystemSettingsReader(
   platform: platform,
   environment: {'XDG_CURRENT_DESKTOP': desktop},
@@ -63,8 +66,11 @@ Oito2SystemSettingsReader _reader({
   accent: accent ?? FakeAccent(),
   portalAccent: portalAccent ?? FakeAccent(),
   colorScheme: colorScheme ?? FakeColorScheme(),
+  reducedMotion: reducedMotion ?? FakeReducedMotion(),
   platformHighContrast: () => platformHighContrast,
   platformBrightness: () => platformBrightness,
+  platformReduceMotion: () => platformReduceMotion,
+  platformTextScaleFactor: () => platformTextScaleFactor,
   debounce: const Duration(milliseconds: 10),
 );
 
@@ -411,6 +417,308 @@ void main() {
     });
   });
 
+  group('motion, text scale and cursor size', () {
+    const cinnamonInterface = 'org.cinnamon.desktop.interface';
+    const mateInterface = 'org.mate.interface';
+    const xsettings = 'xfce4/xfconf/xfce-perchannel-xml/xsettings.xml';
+    String xfconf({String? dpi, String? cursor}) =>
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<channel name="xsettings" version="1.0">\n'
+        '  <property name="Xft" type="empty">\n'
+        '${dpi == null ? '' : '    <property name="DPI" type="int" value="$dpi"/>\n'}'
+        '  </property>\n'
+        '  <property name="Gtk" type="empty">\n'
+        '${cursor == null ? '' : '    <property name="CursorThemeSize" type="int" value="$cursor"/>\n'}'
+        '  </property>\n'
+        '</channel>\n';
+
+    test('are unknown on GNOME without values', () async {
+      final settings = await _reader().read();
+      expect(settings.reduceMotion, isNull);
+      expect(settings.textScaleFactor, isNull);
+      expect(settings.cursorSize, isNull);
+    });
+
+    test('the GNOME family reads the interface and a11y keys', () async {
+      for (final desktop in ['GNOME', 'Budgie:GNOME', 'Pantheon', 'Unity']) {
+        final gsettings = FakeGSettings({
+          '$_interface/enable-animations': true,
+          '$_interface/text-scaling-factor': 1.25,
+          '$_interface/cursor-size': 48,
+        });
+        final reader = _reader(desktop: desktop, gsettings: gsettings);
+        var settings = await reader.read();
+        expect(settings.reduceMotion, isFalse, reason: desktop);
+        expect(settings.textScaleFactor, 1.25, reason: desktop);
+        expect(settings.cursorSize, 48, reason: desktop);
+
+        gsettings.set(_interface, 'enable-animations', false);
+        settings = await reader.read();
+        expect(settings.reduceMotion, isTrue, reason: desktop);
+
+        // GNOME 50 adds a separate reduced motion preference.
+        gsettings
+          ..set(_interface, 'enable-animations', true)
+          ..set(_a11y, 'reduced-motion', 'reduce');
+        settings = await reader.read();
+        expect(settings.reduceMotion, isTrue, reason: desktop);
+      }
+    });
+
+    test('a cursor size of 0 is the theme default', () async {
+      final settings = await _reader(
+        gsettings: FakeGSettings({'$_interface/cursor-size': 0}),
+      ).read();
+      expect(settings.cursorSize, isNull);
+    });
+
+    test('Cinnamon reads its own schemas', () async {
+      final gsettings = FakeGSettings({
+        '$_interface/text-scaling-factor': 2.0,
+        '$_interface/cursor-size': 96,
+        '$cinnamonInterface/enable-animations': true,
+        'org.cinnamon/desktop-effects-workspace': true,
+        '$cinnamonInterface/text-scaling-factor': 1.5,
+        '$cinnamonInterface/cursor-size': 32,
+      });
+      final reader = _reader(desktop: 'X-Cinnamon', gsettings: gsettings);
+      var settings = await reader.read();
+      expect(settings.reduceMotion, isFalse);
+      expect(settings.textScaleFactor, 1.5);
+      expect(settings.cursorSize, 32);
+
+      gsettings.set('org.cinnamon', 'desktop-effects-workspace', false);
+      settings = await reader.read();
+      expect(settings.reduceMotion, isTrue);
+
+      gsettings
+        ..set('org.cinnamon', 'desktop-effects-workspace', true)
+        ..set(cinnamonInterface, 'enable-animations', false);
+      settings = await reader.read();
+      expect(settings.reduceMotion, isTrue);
+    });
+
+    test('MATE reads its animation, font DPI and mouse keys', () async {
+      final gsettings = FakeGSettings({
+        '$mateInterface/enable-animations': true,
+        '$mateInterface/gtk-enable-animations': true,
+        'org.mate.font-rendering/dpi': 0.0,
+        'org.mate.peripherals-mouse/cursor-size': 36,
+      });
+      final reader = _reader(desktop: 'MATE', gsettings: gsettings);
+      var settings = await reader.read();
+      expect(settings.reduceMotion, isFalse);
+      // A DPI of 0 is the automatic DPI.
+      expect(settings.textScaleFactor, isNull);
+      expect(settings.cursorSize, 36);
+
+      gsettings
+        ..set('org.mate.font-rendering', 'dpi', 120.0)
+        ..set(mateInterface, 'gtk-enable-animations', false);
+      settings = await reader.read();
+      expect(settings.textScaleFactor, 1.25);
+      expect(settings.reduceMotion, isTrue);
+    });
+
+    test('KDE reads kdeglobals, kcmfonts and kcminputrc', () async {
+      final files = FakeConfigFiles();
+      final reader = _reader(desktop: 'KDE', files: files);
+      var settings = await reader.read();
+      expect(settings.reduceMotion, isFalse);
+      expect(settings.textScaleFactor, 1.0);
+      expect(settings.cursorSize, 24);
+
+      files
+        ..write(_kdeglobals, '[KDE]\nAnimationDurationFactor=0\n')
+        ..write('kcmfonts', '[General]\nforceFontDPI=144\n')
+        ..write('kcminputrc', '[Mouse]\ncursorSize=48\ncursorTheme=breeze\n');
+      settings = await reader.read();
+      expect(settings.reduceMotion, isTrue);
+      expect(settings.textScaleFactor, 1.5);
+      expect(settings.cursorSize, 48);
+
+      files
+        ..write(_kdeglobals, '[KDE]\nAnimationDurationFactor=0.5\n')
+        ..write('kcmfonts', '[General]\nforceFontDPI=0\n');
+      settings = await reader.read();
+      expect(settings.reduceMotion, isFalse);
+      expect(settings.textScaleFactor, 1.0);
+    });
+
+    test('KDE ignores the forced font DPI in a Wayland session', () async {
+      final settings = await Oito2SystemSettingsReader(
+        platform: _linux,
+        environment: const {
+          'XDG_CURRENT_DESKTOP': 'KDE',
+          'XDG_SESSION_TYPE': 'wayland',
+        },
+        configFiles: FakeConfigFiles({
+          'kcmfonts': '[General]\nforceFontDPI=144\n',
+        }),
+      ).read();
+      expect(settings.textScaleFactor, 1.0);
+    });
+
+    test('Xfce reads xsettings.xml', () async {
+      final files = FakeConfigFiles();
+      final reader = _reader(desktop: 'XFCE', files: files);
+      var settings = await reader.read();
+      // No animation setting, default DPI, theme cursor size.
+      expect(settings.reduceMotion, isNull);
+      expect(settings.textScaleFactor, 1.0);
+      expect(settings.cursorSize, isNull);
+
+      files.write(xsettings, xfconf(dpi: '120', cursor: '48'));
+      settings = await reader.read();
+      expect(settings.textScaleFactor, 1.25);
+      expect(settings.cursorSize, 48);
+
+      // -1 asks xfsettingsd for the automatic DPI.
+      files.write(xsettings, xfconf(dpi: '-1', cursor: '0'));
+      settings = await reader.read();
+      expect(settings.textScaleFactor, isNull);
+      expect(settings.cursorSize, isNull);
+    });
+
+    test('COSMIC and LXQt read only the cursor size', () async {
+      final files = FakeConfigFiles({
+        'cosmic/com.system76.CosmicComp/v1/cursor_size': 'Some(48)',
+        'lxqt/session.conf': '[Mouse]\ncursor_size=32\n',
+      });
+      final gsettings = FakeGSettings({
+        '$_interface/enable-animations': false,
+        '$_interface/text-scaling-factor': 2.0,
+      });
+      for (final (desktop, size) in [('COSMIC', 48), ('LXQt', 32)]) {
+        final settings = await _reader(
+          desktop: desktop,
+          files: files,
+          gsettings: gsettings,
+        ).read();
+        expect(settings.reduceMotion, isNull, reason: desktop);
+        expect(settings.textScaleFactor, isNull, reason: desktop);
+        expect(settings.cursorSize, size, reason: desktop);
+      }
+      files.write('cosmic/com.system76.CosmicComp/v1/cursor_size', 'None');
+      final settings = await _reader(desktop: 'COSMIC', files: files).read();
+      expect(settings.cursorSize, isNull);
+    });
+
+    test('the portal and the platform add reduced motion', () async {
+      for (final desktop in ['XFCE', 'COSMIC', 'GNOME']) {
+        final reducedMotion = FakeReducedMotion(false);
+        final reader = _reader(desktop: desktop, reducedMotion: reducedMotion);
+        expect((await reader.read()).reduceMotion, isFalse, reason: desktop);
+        reducedMotion.reduce = true;
+        expect((await reader.read()).reduceMotion, isTrue, reason: desktop);
+      }
+      final settings = await _reader(
+        desktop: 'XFCE',
+        platformReduceMotion: true,
+      ).read();
+      expect(settings.reduceMotion, isTrue);
+    });
+
+    test('a portal without a preference leaves the desktop key', () async {
+      final settings = await _reader(
+        desktop: 'KDE',
+        files: FakeConfigFiles({
+          _kdeglobals: '[KDE]\nAnimationDurationFactor=0\n',
+        }),
+        reducedMotion: FakeReducedMotion(false),
+      ).read();
+      expect(settings.reduceMotion, isTrue);
+    });
+
+    test('other platforms report the platform values', () async {
+      final settings = await _reader(
+        platform: _windows,
+        gsettings: FakeGSettings({
+          '$_interface/text-scaling-factor': 2.0,
+          '$_interface/cursor-size': 48,
+        }),
+        reducedMotion: FakeReducedMotion(true),
+        platformReduceMotion: false,
+        platformTextScaleFactor: 1.5,
+      ).read();
+      expect(settings.reduceMotion, isFalse);
+      expect(settings.textScaleFactor, 1.5);
+      expect(settings.cursorSize, isNull);
+    });
+
+    test('watch follows the desktop stores and the portal', () async {
+      Future<Oito2SystemSettings> next(List<Oito2SystemSettings> events) async {
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        return events.last;
+      }
+
+      // KDE: config files.
+      final files = FakeConfigFiles();
+      final kde = _reader(desktop: 'KDE', files: files);
+      final kdeEvents = <Oito2SystemSettings>[];
+      var subscription = kde.watch().listen(kdeEvents.add);
+      await next(kdeEvents);
+      files.write('kcmfonts', '[General]\nforceFontDPI=120\n');
+      expect((await next(kdeEvents)).textScaleFactor, 1.25);
+      files.write('kcminputrc', '[Mouse]\ncursorSize=36\n');
+      expect((await next(kdeEvents)).cursorSize, 36);
+      files.write(_kdeglobals, '[KDE]\nAnimationDurationFactor=0\n');
+      expect((await next(kdeEvents)).reduceMotion, isTrue);
+      await subscription.cancel();
+
+      // Xfce, COSMIC and LXQt: their files.
+      for (final (desktop, path, content) in [
+        ('XFCE', xsettings, xfconf(cursor: '40')),
+        ('COSMIC', 'cosmic/com.system76.CosmicComp/v1/cursor_size', '40'),
+        ('LXQt', 'lxqt/session.conf', '[Mouse]\ncursor_size=40\n'),
+      ]) {
+        final files = FakeConfigFiles();
+        final events = <Oito2SystemSettings>[];
+        subscription = _reader(
+          desktop: desktop,
+          files: files,
+        ).watch().listen(events.add);
+        await next(events);
+        files.write(path, content);
+        expect((await next(events)).cursorSize, 40, reason: desktop);
+        await subscription.cancel();
+      }
+
+      // GSettings desktops: their schemas.
+      for (final (desktop, schema, key, value) in [
+        ('GNOME', _interface, 'text-scaling-factor', 1.5 as Object),
+        ('GNOME', _a11y, 'reduced-motion', 'reduce'),
+        ('X-Cinnamon', 'org.cinnamon', 'desktop-effects-workspace', false),
+        ('X-Cinnamon', cinnamonInterface, 'text-scaling-factor', 1.5),
+        ('MATE', 'org.mate.font-rendering', 'dpi', 144.0),
+        ('MATE', 'org.mate.peripherals-mouse', 'cursor-size', 40),
+      ]) {
+        final gsettings = FakeGSettings();
+        final events = <Oito2SystemSettings>[];
+        subscription = _reader(
+          desktop: desktop,
+          gsettings: gsettings,
+        ).watch().listen(events.add);
+        final before = await next(events);
+        gsettings.set(schema, key, value);
+        expect(await next(events), isNot(before), reason: '$schema $key');
+        await subscription.cancel();
+      }
+
+      // The portal.
+      final reducedMotion = FakeReducedMotion();
+      final events = <Oito2SystemSettings>[];
+      subscription = _reader(
+        desktop: 'XFCE',
+        reducedMotion: reducedMotion,
+      ).watch().listen(events.add);
+      expect((await next(events)).reduceMotion, isNull);
+      reducedMotion.change(true);
+      expect((await next(events)).reduceMotion, isTrue);
+      await subscription.cancel();
+    });
+  });
+
   test('a failing store never breaks the others', () async {
     final gsettings = FakeGSettings()..broken = true;
     final settings = await _reader(
@@ -556,14 +864,17 @@ void main() {
     final accent = FakeAccent();
     final portalAccent = FakeAccent();
     final colorScheme = FakeColorScheme();
+    final reducedMotion = FakeReducedMotion();
     final reader = _reader(
       gsettings: gsettings,
       accent: accent,
       portalAccent: portalAccent,
       colorScheme: colorScheme,
+      reducedMotion: reducedMotion,
     );
     await reader.read();
     await reader.close();
+    expect(reducedMotion.closed, isTrue);
     expect(gsettings.closed, isTrue);
     expect(accent.closed, isTrue);
     expect(portalAccent.closed, isTrue);

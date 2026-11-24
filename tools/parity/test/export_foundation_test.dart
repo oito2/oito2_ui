@@ -234,6 +234,9 @@ List<Object> systemSettings() => [
               'accentColor': settings.accentColor,
               'colorScheme': settings.colorScheme?.name,
               'highContrast': settings.highContrast,
+              'reduceMotion': settings.reduceMotion,
+              'textScaleFactor': settings.textScaleFactor,
+              'cursorSize': settings.cursorSize,
             },
           };
         }(),

@@ -69,8 +69,26 @@ abstract final class Oito2Settings {
 ///
 /// Shows [initialSettings] (or the platform fallback) until the first read
 /// completes, then rebuilds [child] whenever the desktop environment
-/// settings, the accent color, the platform brightness or the accessibility
-/// preferences change.
+/// settings, the accent color, the platform brightness, the text scale or
+/// the accessibility preferences change.
+///
+/// It also applies two preferences to the [MediaQuery] of [child]:
+///
+/// - When [Oito2SystemSettings.reduceMotion] is true,
+///   [MediaQueryData.disableAnimations] becomes true. It is never turned
+///   off, so a platform that already disables animations keeps them off.
+/// - On native Linux desktops whose text scale Flutter doesn't read (KDE
+///   Plasma, Xfce, Cinnamon, MATE, COSMIC and LXQt), a known
+///   [Oito2SystemSettings.textScaleFactor] replaces the text scaler
+///   Flutter derives from GNOME's `text-scaling-factor`. The factor
+///   replaces that scaler instead of multiplying it, so text is scaled
+///   once. On the GNOME family (GNOME, Budgie, Pantheon, Unity and unknown
+///   desktops) and on other platforms, Flutter already applies the
+///   system text scale and the scaler is left as is. A scaler that an
+///   ancestor [MediaQuery] changed is also left as is.
+///
+/// The cursor size is only exposed: the cursor theme and its size are
+/// applied by the toolkit and the compositor.
 class Oito2SystemSettingsScope extends StatefulWidget {
   /// Creates a scope that watches the system settings for [child].
   const Oito2SystemSettingsScope({
@@ -144,6 +162,9 @@ class _Oito2SystemSettingsScopeState extends State<Oito2SystemSettingsScope>
   @override
   void didChangePlatformBrightness() => _reread();
 
+  @override
+  void didChangeTextScaleFactor() => _reread();
+
   /// Reads the settings again after a platform-level change.
   void _reread() {
     _reader.read().then(_apply, onError: (Object _) {});
@@ -158,6 +179,58 @@ class _Oito2SystemSettingsScopeState extends State<Oito2SystemSettingsScope>
   }
 
   @override
-  Widget build(BuildContext context) =>
-      Oito2SystemScope(settings: _settings, child: widget.child);
+  Widget build(BuildContext context) {
+    final settings = _settings;
+    var child = widget.child;
+    final media = MediaQuery.maybeOf(context);
+    // The MediaQuery is always inserted, so a changed preference keeps the
+    // state of the subtree.
+    if (media != null) {
+      child = MediaQuery(
+        data: media.copyWith(
+          disableAnimations:
+              media.disableAnimations || settings.reduceMotion == true,
+          textScaler: _textScaler(media, settings),
+        ),
+        child: child,
+      );
+    }
+    return Oito2SystemScope(settings: settings, child: child);
+  }
+
+  /// Returns the text scaler for the subtree: [media]'s scaler, replaced by
+  /// the factor of [settings] where Flutter doesn't read the desktop's text
+  /// scale and no ancestor changed the scaler Flutter derives.
+  static TextScaler _textScaler(
+    MediaQueryData media,
+    Oito2SystemSettings settings,
+  ) {
+    final factor = settings.textScaleFactor;
+    final environment = settings.desktopEnvironment;
+    if (factor == null ||
+        environment == null ||
+        _embedderReadsTextScale(environment)) {
+      return media.textScaler;
+    }
+    // Flutter derives a SystemTextScaler from the platform; any other
+    // scaler was set by an ancestor.
+    return media.textScaler is SystemTextScaler
+        ? TextScaler.linear(factor)
+        : media.textScaler;
+  }
+
+  /// Whether the Linux embedder reads the text scale of [environment]:
+  /// it reads GNOME's `org.gnome.desktop.interface text-scaling-factor`,
+  /// the key the GNOME family uses.
+  static bool _embedderReadsTextScale(Oito2DesktopEnvironment environment) {
+    return switch (environment) {
+      Oito2DesktopEnvironment.kde ||
+      Oito2DesktopEnvironment.xfce ||
+      Oito2DesktopEnvironment.cinnamon ||
+      Oito2DesktopEnvironment.mate ||
+      Oito2DesktopEnvironment.cosmic ||
+      Oito2DesktopEnvironment.lxqt => false,
+      _ => true,
+    };
+  }
 }

@@ -164,6 +164,29 @@ void main() {
     }
   }
 
+  testWidgets('the foundation page shows the motion, text and cursor values', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      Oito2SystemScope(
+        settings: settings.copyWith(
+          reduceMotion: true,
+          textScaleFactor: 1.25,
+          cursorSize: 48,
+        ),
+        child: const ShowcaseApp(initialSlug: 'foundation'),
+      ),
+    );
+    await _settle(tester);
+    for (final text in ['Reduced motion', 'true', '1.25×', '48 px']) {
+      expect(find.text(text), findsWidgets, reason: text);
+    }
+    expect(find.text('Text scale (applied)'), findsOneWidget);
+  });
+
   testWidgets('selecting a page in the list shows it', (tester) async {
     await pumpShowcase(tester);
     await _scrollToPage(tester, 'Oito2CheckButton');

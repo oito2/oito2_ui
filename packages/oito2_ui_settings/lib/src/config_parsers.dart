@@ -65,6 +65,16 @@ abstract final class Oito2ConfigParsers {
     _ => null,
   };
 
+  /// Parses [content] as a COSMIC optional integer, such as `Some(48)` or a
+  /// bare `48`.
+  ///
+  /// Returns null for `None` and for any other content.
+  static int? cosmicOptionalInt(String content) {
+    final value = content.trim();
+    final match = RegExp(r'^Some\(\s*(-?\d+)\s*\)$').firstMatch(value);
+    return int.tryParse(match?.group(1) ?? value);
+  }
+
   /// Parses [value] as a KDE `r,g,b` color, such as the value of
   /// `AccentColor=61,174,233`, or returns null when it isn't one with
   /// three components from 0 to 255.

@@ -66,6 +66,19 @@ abstract interface class Oito2ColorSchemeSource {
   Future<void> close();
 }
 
+/// Reads whether the desktop asks for reduced motion.
+abstract interface class Oito2ReducedMotionSource {
+  /// Returns true when the desktop asks for reduced motion, false when it
+  /// states no such preference, or null when none is available.
+  Future<bool?> read();
+
+  /// Emits whenever the preference changes.
+  Stream<void> changes();
+
+  /// Releases the connections the source holds.
+  Future<void> close();
+}
+
 /// A source with no values and no changes, used where a platform has no
 /// such store.
 class Oito2EmptySource
@@ -73,7 +86,8 @@ class Oito2EmptySource
         Oito2GSettingsSource,
         Oito2ConfigFileSource,
         Oito2AccentSource,
-        Oito2ColorSchemeSource {
+        Oito2ColorSchemeSource,
+        Oito2ReducedMotionSource {
   /// Creates an empty source.
   const Oito2EmptySource();
 

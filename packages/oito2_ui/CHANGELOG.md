@@ -15,6 +15,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2WindowControlStyle`, `Oito2WindowButton` and `Oito2WindowButtonLayout`, with parsers for the GNOME, KDE and Xfce button layout formats.
 - `Oito2SystemSettings` and the `Oito2SystemScope` inherited widget.
 - `Oito2SystemSettings.colorScheme`: the light or dark scheme the system asks for, or null without a preference.
+- `Oito2SystemSettings.reduceMotion`, `textScaleFactor` and `cursorSize`: the system's reduced motion, text scaling and cursor size preferences, null when unknown.
 - Parity fixtures: `tools/parity` in the repository exports the design tokens, color schemes, foundation results, strings, formats, syntax tokens, QR modules and behavior rules (password strength, gitignore matching, MIME type icons, alert order, sort cycle, usage bar tones, column widths, breadcrumb collapse and week schedule layout) as versioned JSON (`tools/parity/fixtures/`) for the sibling implementations of the design system.
 - `Oito2Contrast` WCAG contrast helpers.
 - Design tokens: `Oito2Radius`, `Oito2Spacing`, `Oito2Sizes`, `Oito2NeutralPalette`, `Oito2AccentColor`, `Oito2StatusPalette` and `Oito2Typography`.

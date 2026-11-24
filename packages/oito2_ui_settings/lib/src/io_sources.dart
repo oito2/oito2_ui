@@ -451,3 +451,52 @@ class Oito2PortalAccentSource extends _Oito2PortalSetting
   @override
   Stream<void> changes() => _settingChanges();
 }
+
+/// Reads the reduced motion preference from the XDG desktop portal's
+/// `org.freedesktop.appearance reduced-motion` setting, which portal
+/// backends of GNOME 50 and later and KDE Plasma 6.6 and later report.
+///
+/// The connection stays open until [close]; a process with an open
+/// connection may not exit.
+class Oito2PortalReducedMotionSource extends _Oito2PortalSetting
+    implements Oito2ReducedMotionSource {
+  /// Creates a source on [sessionBus], or on a connection of its own when
+  /// it is null.
+  ///
+  /// [close] closes the connection the source opened itself and leaves
+  /// the one it was given open.
+  Oito2PortalReducedMotionSource({super.sessionBus});
+
+  @override
+  String get _key => 'reduced-motion';
+
+  /// Reads the preference. Returns null without a portal or when the
+  /// portal doesn't know the setting.
+  @override
+  Future<bool?> read() async {
+    try {
+      return reducedMotionOf(await _readSetting());
+    } on Object {
+      return null;
+    }
+  }
+
+  /// Maps a portal `reduced-motion` value to a preference: 1 asks for
+  /// reduced motion and any other number states no preference. Returns
+  /// null when the value isn't a number.
+  ///
+  /// The value may be wrapped in one or more variants, as `Read` and
+  /// `ReadOne` return it.
+  static bool? reducedMotionOf(DBusValue value) {
+    return switch (_Oito2PortalSetting._unwrap(value)) {
+      DBusUint32(value: 1) => true,
+      DBusUint32() => false,
+      _ => null,
+    };
+  }
+
+  /// Emits on the portal's `SettingChanged` signal for the reduced motion
+  /// key; never emits without a portal.
+  @override
+  Stream<void> changes() => _settingChanges();
+}

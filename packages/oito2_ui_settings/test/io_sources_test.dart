@@ -423,6 +423,106 @@ void main() {
       );
     });
   });
+
+  group('Oito2PortalReducedMotionSource', () {
+    late DBusServer server;
+    late DBusClient session;
+    late DBusClient portalBus;
+    late Directory socketDir;
+
+    setUp(() async {
+      socketDir = await Directory.systemTemp.createTemp('oito2_portal');
+      server = DBusServer();
+      final address = await server.listenAddress(
+        DBusAddress.unix(dir: socketDir),
+      );
+      session = DBusClient(address);
+      portalBus = DBusClient(address);
+    });
+
+    tearDown(() async {
+      await session.close();
+      await portalBus.close();
+      await server.close();
+      await socketDir.delete(recursive: true);
+    });
+
+    Future<_FakePortal> servePortal(
+      DBusValue? reducedMotion, {
+      bool readOne = true,
+    }) async {
+      final portal = _FakePortal(
+        0,
+        readOne: readOne,
+        reducedMotion: reducedMotion,
+      );
+      await portalBus.registerObject(portal);
+      await portalBus.requestName('org.freedesktop.portal.Desktop');
+      return portal;
+    }
+
+    test('maps the portal values to a preference', () async {
+      for (final (value, expected) in [(0, false), (1, true), (7, false)]) {
+        final portal = await servePortal(DBusUint32(value));
+        final source = Oito2PortalReducedMotionSource(sessionBus: session);
+        expect(await source.read(), expected, reason: '$value');
+        await source.close();
+        await portalBus.unregisterObject(portal);
+      }
+    });
+
+    test('falls back to Read on a portal without ReadOne', () async {
+      final portal = await servePortal(DBusUint32(1), readOne: false);
+      final source = Oito2PortalReducedMotionSource(sessionBus: session);
+      expect(await source.read(), isTrue);
+      expect(portal.calls, ['ReadOne', 'Read']);
+      await source.close();
+    });
+
+    test('reads null for an unknown setting or no portal', () async {
+      var source = Oito2PortalReducedMotionSource(sessionBus: session);
+      expect(await source.read(), isNull);
+      await source.close();
+
+      // A portal older than the reduced-motion key.
+      await servePortal(null);
+      source = Oito2PortalReducedMotionSource(sessionBus: session);
+      expect(await source.read(), isNull);
+      await source.close();
+    });
+
+    test('emits only for the reduced motion setting', () async {
+      final portal = await servePortal(DBusUint32(1));
+      final source = Oito2PortalReducedMotionSource(sessionBus: session);
+      final events = <void>[];
+      final subscription = source.changes().listen(events.add);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      await portal.change('org.freedesktop.appearance', 'color-scheme');
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(events, isEmpty);
+
+      await portal.change('org.freedesktop.appearance', 'reduced-motion');
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(events, hasLength(1));
+
+      await subscription.cancel();
+      await source.close();
+    });
+
+    test('reducedMotionOf unwraps variants and rejects other types', () {
+      expect(
+        Oito2PortalReducedMotionSource.reducedMotionOf(
+          DBusVariant(DBusVariant(DBusUint32(1))),
+        ),
+        isTrue,
+      );
+      expect(
+        Oito2PortalReducedMotionSource.reducedMotionOf(DBusBoolean(true)),
+        isNull,
+      );
+    });
+  });
 }
 
 /// Completes once [condition] holds, polling for up to five seconds.
@@ -437,17 +537,23 @@ Future<void> _until(bool Function() condition) async {
 }
 
 /// A settings portal that answers `ReadOne` (unless [readOne] is false)
-/// and `Read` with [value] for the color scheme and with [accent] for the
-/// accent color; a missing [accent] answers as an unknown setting.
+/// and `Read` with [value] for the color scheme, with [accent] for the
+/// accent color and with [reducedMotion] for reduced motion; a missing
+/// [accent] or [reducedMotion] answers as an unknown setting.
 class _FakePortal extends DBusObject {
-  _FakePortal(this.value, {this.readOne = true, this.accent})
-    : super(DBusObjectPath('/org/freedesktop/portal/desktop'));
+  _FakePortal(
+    this.value, {
+    this.readOne = true,
+    this.accent,
+    this.reducedMotion,
+  }) : super(DBusObjectPath('/org/freedesktop/portal/desktop'));
 
   static const _interface = 'org.freedesktop.portal.Settings';
 
   final int value;
   final bool readOne;
   final DBusValue? accent;
+  final DBusValue? reducedMotion;
   final List<String> calls = [];
 
   @override
@@ -459,6 +565,7 @@ class _FakePortal extends DBusObject {
     final DBusValue? setting = switch (methodCall.values[1].asString()) {
       'color-scheme' => DBusUint32(value),
       'accent-color' => accent,
+      'reduced-motion' => reducedMotion,
       _ => null,
     };
     if (setting == null && (methodCall.name == 'Read' || readOne)) {

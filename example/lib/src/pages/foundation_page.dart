@@ -47,6 +47,22 @@ class FoundationPage extends StatelessWidget {
         final color =>
           '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
       },
+      'Reduced motion': switch (settings.reduceMotion) {
+        null => '— (unknown)',
+        final reduce => '$reduce',
+      },
+      'Text scale factor': switch (settings.textScaleFactor) {
+        null => '— (unknown)',
+        final factor => '${_twoDecimals(factor)}×',
+      },
+      'Cursor size': switch (settings.cursorSize) {
+        null => '— (theme default)',
+        final size => '$size px',
+      },
+      'Animations disabled (applied)':
+          '${MediaQuery.disableAnimationsOf(context)}',
+      'Text scale (applied)':
+          '${_twoDecimals(MediaQuery.textScalerOf(context).scale(100) / 100)}×',
     };
 
     return ListView(
@@ -88,3 +104,6 @@ class FoundationPage extends StatelessWidget {
     );
   }
 }
+
+/// Formats [value] with two decimal places.
+String _twoDecimals(double value) => value.toStringAsFixed(2);

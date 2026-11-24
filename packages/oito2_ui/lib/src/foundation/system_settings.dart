@@ -20,8 +20,8 @@ import 'platform_info.dart';
 import 'window_button_layout.dart';
 
 /// The operating system preferences that shape an `oito2_ui` app: platform,
-/// desktop environment, window controls, accent color, color scheme and
-/// contrast.
+/// desktop environment, window controls, accent color, color scheme,
+/// contrast, motion, text scaling and cursor size.
 ///
 /// [Oito2SystemSettings.fallback] derives every value from the platform
 /// alone. The `oito2_ui_settings` package reads the real values from the
@@ -37,6 +37,9 @@ class Oito2SystemSettings {
     this.accentColor,
     this.colorScheme,
     this.highContrast = false,
+    this.reduceMotion,
+    this.textScaleFactor,
+    this.cursorSize,
   });
 
   /// Creates settings derived from [platform] only.
@@ -46,7 +49,8 @@ class Oito2SystemSettings {
   /// The window control style and button layout follow
   /// [Oito2WindowControlStyle.resolve] and
   /// [Oito2WindowButtonLayout.defaultFor]. There is no accent color, no
-  /// color scheme preference and high contrast is off.
+  /// color scheme preference and high contrast is off; the motion, text
+  /// scaling and cursor size preferences are unknown.
   factory Oito2SystemSettings.fallback(
     Oito2Platform platform, {
     Oito2DesktopEnvironment? desktopEnvironment,
@@ -89,10 +93,28 @@ class Oito2SystemSettings {
   /// Whether the system asks for high contrast.
   final bool highContrast;
 
+  /// Whether the system asks for reduced motion, or null when it is unknown.
+  ///
+  /// True when the user turned animations off or asked for reduced motion
+  /// in the system settings.
+  final bool? reduceMotion;
+
+  /// The factor the system scales text by, or null when it is unknown.
+  ///
+  /// 1.0 means text at its normal size. This is the system preference as
+  /// read, which may already be part of `MediaQuery.textScalerOf`; use
+  /// that one to size text.
+  final double? textScaleFactor;
+
+  /// The mouse cursor size in logical pixels, or null when it is unknown
+  /// or left to the cursor theme's default.
+  final int? cursorSize;
+
   /// Returns a copy with the given fields replaced.
   ///
-  /// [accentColor], [colorScheme] and [desktopEnvironment] can't be reset to
-  /// null through this method; create a new instance for that.
+  /// [accentColor], [colorScheme], [desktopEnvironment], [reduceMotion],
+  /// [textScaleFactor] and [cursorSize] can't be reset to null through this
+  /// method; create a new instance for that.
   Oito2SystemSettings copyWith({
     Oito2Platform? platform,
     Oito2DesktopEnvironment? desktopEnvironment,
@@ -101,6 +123,9 @@ class Oito2SystemSettings {
     Color? accentColor,
     Brightness? colorScheme,
     bool? highContrast,
+    bool? reduceMotion,
+    double? textScaleFactor,
+    int? cursorSize,
   }) {
     return Oito2SystemSettings(
       platform: platform ?? this.platform,
@@ -110,6 +135,9 @@ class Oito2SystemSettings {
       accentColor: accentColor ?? this.accentColor,
       colorScheme: colorScheme ?? this.colorScheme,
       highContrast: highContrast ?? this.highContrast,
+      reduceMotion: reduceMotion ?? this.reduceMotion,
+      textScaleFactor: textScaleFactor ?? this.textScaleFactor,
+      cursorSize: cursorSize ?? this.cursorSize,
     );
   }
 
@@ -122,7 +150,10 @@ class Oito2SystemSettings {
       other.windowButtonLayout == windowButtonLayout &&
       other.accentColor == accentColor &&
       other.colorScheme == colorScheme &&
-      other.highContrast == highContrast;
+      other.highContrast == highContrast &&
+      other.reduceMotion == reduceMotion &&
+      other.textScaleFactor == textScaleFactor &&
+      other.cursorSize == cursorSize;
 
   @override
   int get hashCode => Object.hash(
@@ -133,6 +164,9 @@ class Oito2SystemSettings {
     accentColor,
     colorScheme,
     highContrast,
+    reduceMotion,
+    textScaleFactor,
+    cursorSize,
   );
 
   @override
@@ -142,7 +176,8 @@ class Oito2SystemSettings {
       'windowControlStyle: ${windowControlStyle.name}, '
       'windowButtonLayout: $windowButtonLayout, '
       'accentColor: $accentColor, colorScheme: ${colorScheme?.name}, '
-      'highContrast: $highContrast)';
+      'highContrast: $highContrast, reduceMotion: $reduceMotion, '
+      'textScaleFactor: $textScaleFactor, cursorSize: $cursorSize)';
 }
 
 /// Exposes [Oito2SystemSettings] to the widgets below it.

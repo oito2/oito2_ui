@@ -19,6 +19,7 @@ import 'dart:ui' show PlatformDispatcher;
 import 'package:oito2_ui/oito2_ui.dart';
 
 import 'io_sources.dart';
+import 'platform_preferences.dart';
 import 'settings_reader.dart';
 import 'sources.dart';
 
@@ -40,8 +41,13 @@ Oito2SystemSettingsReader createReader(Oito2Platform platform) {
     colorScheme: isLinux
         ? Oito2PortalColorSchemeSource()
         : const Oito2EmptySource(),
+    reducedMotion: isLinux
+        ? Oito2PortalReducedMotionSource()
+        : const Oito2EmptySource(),
     platformHighContrast: () =>
         PlatformDispatcher.instance.accessibilityFeatures.highContrast,
     platformBrightness: () => PlatformDispatcher.instance.platformBrightness,
+    platformReduceMotion: () => platformReduceMotion(platform),
+    platformTextScaleFactor: platformTextScaleFactor,
   );
 }
