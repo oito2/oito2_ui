@@ -1,5 +1,5 @@
 {
-	"flutter": "3.47.8",
+	"flutter": "3.50.1",
 	"packages": {
 		"oito2_ui": "0.1.0",
 		"oito2_ui_themes": "0.1.0",
@@ -8,9 +8,9 @@
 	},
 	"dependencies": {
 		"catppuccin_flutter": "1.0.0",
-		"flutter_lucide": "1.70.0",
+		"flutter_lucide": "1.78.0",
 		"intl": "0.20.3",
-		"material_ui": "1.11.0",
+		"material_ui": "1.11.1",
 		"qr": "4.0.1",
 		"re_highlight": "0.0.3"
 	}

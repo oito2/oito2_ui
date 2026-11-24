@@ -13,5 +13,5 @@ dependencies:
     sdk: flutter
   flutter_test:
     sdk: flutter
-  material_ui: ^1.11.0
+  material_ui: ^1.11.1
   oito2_ui: ^0.1.0
