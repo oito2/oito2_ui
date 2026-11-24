@@ -137,10 +137,18 @@ jobs:
         run: flutter build web --release --no-web-resources-cdn --base-href /oito2_ui/
       - name: Check the web build
         run: dart run tool/check_web_build.dart example/build/web /oito2_ui/
+      - name: Cache the HTML validator
+        id: vnu-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/vnu
+          key: vnu-jar-26.10.2
+      - name: Install the HTML validator
+        if: steps.vnu-cache.outputs.cache-hit != 'true'
+        run: npm install --no-save --prefix ~/.cache/vnu vnu-jar@26.10.2
       - name: Validate the web HTML
         run: |
-          npm install --no-save --prefix "$RUNNER_TEMP/vnu" vnu-jar@26.10.2
-          java -jar "$RUNNER_TEMP/vnu/node_modules/vnu-jar/build/dist/vnu.jar" \
+          java -jar ~/.cache/vnu/node_modules/vnu-jar/build/dist/vnu.jar \
             --skip-non-html --errors-only example/build/web
       - name: Build Linux
         working-directory: example
@@ -174,8 +182,29 @@ jobs:
             sleep 15
           done
           exit 1
+      # Gradle's downloaded dependencies and wrapper distribution, so the
+      # Android build doesn't fetch them from Maven Central on every run.
+      # Only downloads are kept, not the transforms Gradle builds locally,
+      # to stay small. The key follows the Flutter version (its Gradle
+      # plugin pins the Android Gradle and Kotlin versions) and the
+      # example's Gradle files; an older cache is restored as a starting
+      # point when they change.
+      - name: Cache Gradle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.gradle/caches/modules-2
+            ~/.gradle/wrapper/dists
+          key: gradle-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-${{ hashFiles('example/android/**/*.gradle*', 'example/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-
+            gradle-${{ runner.os }}-
       - name: Build Android
         working-directory: example
+        # No daemon is left running, so the Gradle cache is saved from
+        # files that no longer change.
+        env:
+          GRADLE_OPTS: -Dorg.gradle.daemon=false
         run: flutter build apk --debug
 
   build-macos:
