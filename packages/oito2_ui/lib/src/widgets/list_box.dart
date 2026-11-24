@@ -22,6 +22,8 @@ import 'package:material_ui/material_ui.dart';
 import '../collections/list_collection.dart';
 import '../collections/selection_controller.dart';
 import '../tokens/geometry.dart';
+import 'list_reorder.dart';
+import 'row_drag.dart';
 import 'widget_helpers.dart';
 
 /// Builds the content of an [Oito2ListBox] row.
@@ -44,6 +46,17 @@ typedef Oito2ListBoxItemBuilder<T> = Widget Function(
 /// [onActivate]. Grouped items show under their group headings; disabled
 /// items can't be selected or activated.
 ///
+/// With [onReorder], the user reorders the items: Alt with Up or Down
+/// moves the active row up or down by one, the rows offer "Move up" and
+/// "Move down" accessibility actions, and the rows can be dragged, with
+/// a line between the rows marking the drop and the list scrolling when
+/// the pointer nears its top or bottom edge; Escape cancels a drag. A
+/// mouse drags a row once it moves a few pixels and a touch after a long
+/// press, or, with [dragHandle], only the grip at the start of each row
+/// drags it, with any pointer. Disabled items can't be dragged. The list
+/// doesn't change [collection]: the app moves the item. A list whose
+/// items fall in more than one group can't be reordered.
+///
 /// Every row is built, so it suits lists of up to a few hundred items;
 /// [Oito2VirtualList] builds only the rows in view, for longer lists.
 class Oito2ListBox<T> extends StatefulWidget {
@@ -57,6 +70,8 @@ class Oito2ListBox<T> extends StatefulWidget {
     this.maxHeight = double.infinity,
     this.semanticLabel,
     this.autofocus = false,
+    this.onReorder,
+    this.dragHandle = false,
   });
 
   /// The items.
@@ -80,14 +95,27 @@ class Oito2ListBox<T> extends StatefulWidget {
   /// Whether the list takes the focus when shown.
   final bool autofocus;
 
+  /// Called when the user moves an item, with its index in
+  /// [Oito2ListCollection.items] and the index it ends at, counted once it
+  /// is taken out of its place: moving the first of three items to the end
+  /// reports `(0, 2)`. The items can't be reordered when null.
+  final void Function(int from, int to)? onReorder;
+
+  /// Whether only a grip at the start of each row drags it, instead of
+  /// the whole row, when [onReorder] is set.
+  final bool dragHandle;
+
   @override
   State<Oito2ListBox<T>> createState() => _Oito2ListBoxState<T>();
 }
 
 /// Tracks the active row, the type-ahead text and the row keys of
 /// [Oito2ListBox], and turns keys and clicks into selection changes.
-class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
+class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>>
+    with ListReorderMixin<T, Oito2ListBox<T>> {
   final _focusNode = FocusNode(debugLabel: 'Oito2ListBox');
+  final _scroll = ScrollController();
+  final _viewportKey = GlobalKey();
 
   /// The key of each built row, by item value, to scroll rows into view.
   final Map<String, GlobalKey> _keys = {};
@@ -103,6 +131,55 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
   Oito2ListCollection<T> get _collection => widget.collection;
   Oito2SelectionController get _selection => widget.controller;
   bool get _multiple => _selection.mode == Oito2SelectionMode.multiple;
+
+  @override
+  Oito2ListCollection<T> get reorderCollection => _collection;
+
+  @override
+  void Function(int from, int to)? get onReorder => widget.onReorder;
+
+  @override
+  bool get canReorder =>
+      widget.onReorder != null && _collection.groups.length <= 1;
+
+  @override
+  Iterable<MapEntry<String, BuildContext>> get builtRows sync* {
+    for (final MapEntry(:key, :value) in _keys.entries) {
+      final context = value.currentContext;
+      if (context != null) yield MapEntry(key, context);
+    }
+  }
+
+  @override
+  RenderBox? get reorderViewport =>
+      _viewportKey.currentContext?.findRenderObject() as RenderBox?;
+
+  @override
+  ScrollPosition? get reorderScroll =>
+      _scroll.hasClients ? _scroll.position : null;
+
+  @override
+  void activateForReorder(String value) {
+    _focusNode.requestFocus();
+    setState(() => _active = value);
+  }
+
+  @override
+  void revealForReorder(String value) {
+    final context = _keys[value]?.currentContext;
+    if (context == null || !context.mounted) return;
+    Scrollable.ensureVisible(
+      context,
+      alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+    );
+    Scrollable.ensureVisible(
+      context,
+      alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtStart,
+    );
+  }
+
+  /// Whether the items can be reordered, computed once per build.
+  bool _reorderable = false;
 
   @override
   void initState() {
@@ -122,14 +199,17 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
     if (!identical(oldWidget.collection, widget.collection)) {
       _keys.removeWhere((value, _) => !_collection.has(value));
     }
+    if (reorderDragging && !canReorder) stopRowDrag(rebuild: false);
   }
 
   @override
   void dispose() {
     _selection.removeListener(_refresh);
     _focusNode.dispose();
+    _scroll.dispose();
     _typeTimer?.cancel();
     _clicks.cancel();
+    disposeReorder();
     super.dispose();
   }
 
@@ -179,6 +259,8 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
+    final reordered = reorderKey(event, _active);
+    if (reordered != null) return reordered;
     final keyboard = HardwareKeyboard.instance;
     final shift = keyboard.isShiftPressed;
     final command = keyboard.isControlPressed || keyboard.isMetaPressed;
@@ -265,7 +347,11 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
     final content =
         widget.itemBuilder?.call(context, item, selected) ??
         Text(_collection.labelOf(item));
-    return Semantics(
+    final drag = _reorderable && !disabled
+        ? (Offset global) => startRowDrag(value, global)
+        : null;
+    final handle = widget.onReorder != null && widget.dragHandle;
+    final row = Semantics(
       key: _keys.putIfAbsent(value, GlobalKey.new),
       container: true,
       selected: selected,
@@ -273,8 +359,11 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
       focused: active,
       button: true,
       onTap: disabled ? null : () => _click(value),
+      customSemanticsActions: _reorderable ? reorderActions(value) : null,
       child: InkWell(
-        mouseCursor: WidgetStateMouseCursor.clickable,
+        mouseCursor: reorderDragging
+            ? MouseCursor.defer
+            : WidgetStateMouseCursor.clickable,
         excludeFromSemantics: true,
         onTap: disabled ? null : () {},
         onTapUp: disabled
@@ -310,6 +399,8 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
               child: Row(
                 spacing: Oito2Spacing.sm,
                 children: [
+                  if (handle)
+                    RowDragHandle(onStart: drag, dragging: reorderDragging),
                   Expanded(child: content),
                   if (_multiple)
                     Opacity(
@@ -323,12 +414,18 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
         ),
       ),
     );
+    if (widget.onReorder == null) return row;
+    return decorateReorderRow(
+      value,
+      RowDragDetector(onStart: handle ? null : drag, child: row),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final groups = _collection.groups;
+    _reorderable = widget.onReorder != null && groups.length <= 1;
     return Semantics(
       label: widget.semanticLabel,
       container: true,
@@ -338,35 +435,40 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>> {
         autofocus: widget.autofocus,
         onKeyEvent: _onKey,
         child: ConstrainedBox(
+          key: _viewportKey,
           constraints: BoxConstraints(maxHeight: widget.maxHeight),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(Oito2Spacing.xs),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 2,
-              children: [
-                for (final group in groups) ...[
-                  if (group.group != null)
-                    Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(
-                        Oito2Spacing.sm,
-                        Oito2Spacing.sm,
-                        Oito2Spacing.sm,
-                        Oito2Spacing.xxs,
-                      ),
-                      child: Semantics(
-                        header: true,
-                        child: Text(
-                          group.group!,
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+          child: MouseRegion(
+            cursor: reorderCursor,
+            child: SingleChildScrollView(
+              controller: _scroll,
+              padding: const EdgeInsets.all(Oito2Spacing.xs),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 2,
+                children: [
+                  for (final group in groups) ...[
+                    if (group.group != null)
+                      Padding(
+                        padding: const EdgeInsetsDirectional.fromSTEB(
+                          Oito2Spacing.sm,
+                          Oito2Spacing.sm,
+                          Oito2Spacing.sm,
+                          Oito2Spacing.xxs,
+                        ),
+                        child: Semantics(
+                          header: true,
+                          child: Text(
+                            group.group!,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  for (final item in group.items) _row(context, item),
+                    for (final item in group.items) _row(context, item),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

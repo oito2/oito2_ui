@@ -143,6 +143,10 @@ final Map<String, Getter> getters = {
   'showPathSegments': (l) => l.showPathSegments,
   'editPath': (l) => l.editPath,
   'currentLocation': (l) => l.currentLocation,
+  'dragToReorder': (l) => l.dragToReorder,
+  'cantDropHere': (l) => l.cantDropHere,
+  'indentItem': (l) => l.indentItem,
+  'outdentItem': (l) => l.outdentItem,
 };
 
 /// One call of a method of [Oito2Localizations]: its name, its arguments
@@ -220,6 +224,15 @@ List<Call> calls() => [
   ('switchAccount', ['Ana'], (l) => l.switchAccount('Ana')),
   ('pendingCount', [1], (l) => l.pendingCount(1)),
   ('pendingCount', [3], (l) => l.pendingCount(3)),
+  ('dragItemCount', [1], (l) => l.dragItemCount(1)),
+  ('dragItemCount', [3], (l) => l.dragItemCount(3)),
+  ('movedToPosition', ['Docs', 2, 5], (l) => l.movedToPosition('Docs', 2, 5)),
+  (
+    'movedInto',
+    ['Docs', 'Projects', 3],
+    (l) => l.movedInto('Docs', 'Projects', 3),
+  ),
+  ('movedToTopLevel', ['Docs', 1], (l) => l.movedToTopLevel('Docs', 1)),
 ];
 
 /// Dates the date formats are sampled with.

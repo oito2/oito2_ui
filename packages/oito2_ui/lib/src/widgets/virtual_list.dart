@@ -28,7 +28,9 @@ import '../collections/selection_controller.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'list_box.dart';
+import 'list_reorder.dart';
 import 'progress.dart';
+import 'row_drag.dart';
 import 'widget_helpers.dart';
 
 /// A scrolling list of the items of [collection] that builds only the
@@ -45,6 +47,14 @@ import 'widget_helpers.dart';
 /// [Oito2SelectionController.click]. Typing letters jumps to the next
 /// matching label. Enter or a double click calls [onActivate]. Disabled
 /// items can't be selected or activated. Groups aren't shown as headings.
+///
+/// With [onReorder], the user reorders the items as in an
+/// [Oito2ListBox]: Alt with Up or Down moves the active row, the rows
+/// offer "Move up" and "Move down" accessibility actions, and the rows
+/// can be dragged, by the whole row or, with [dragHandle], by a grip at
+/// the start, with a line marking the drop and the list scrolling near
+/// its top or bottom edge. The list doesn't change [collection]: the app
+/// moves the item.
 ///
 /// Every row is [itemExtent] tall, or as tall as its content with
 /// [variableHeight]. Rows are keyed by their item value, so a row keeps
@@ -82,6 +92,8 @@ class Oito2VirtualList<T> extends StatefulWidget {
     this.showCheckmarks = true,
     this.semanticLabel,
     this.autofocus = false,
+    this.onReorder,
+    this.dragHandle = false,
   });
 
   /// The items.
@@ -151,6 +163,16 @@ class Oito2VirtualList<T> extends StatefulWidget {
   /// Whether the list takes the focus when shown.
   final bool autofocus;
 
+  /// Called when the user moves an item, with its index in
+  /// [Oito2ListCollection.items] and the index it ends at, counted once it
+  /// is taken out of its place: moving the first of three items to the end
+  /// reports `(0, 2)`. The items can't be reordered when null.
+  final void Function(int from, int to)? onReorder;
+
+  /// Whether only a grip at the start of each row drags it, instead of
+  /// the whole row, when [onReorder] is set.
+  final bool dragHandle;
+
   @override
   State<Oito2VirtualList<T>> createState() => _Oito2VirtualListState<T>();
 }
@@ -158,10 +180,41 @@ class Oito2VirtualList<T> extends StatefulWidget {
 /// Tracks the active row, the type-ahead text, the reach-end state and
 /// the contexts of the built rows of [Oito2VirtualList], and turns keys
 /// and clicks into selection changes.
-class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>> {
+class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>>
+    with ListReorderMixin<T, Oito2VirtualList<T>> {
   final _focusNode = FocusNode(debugLabel: 'Oito2VirtualList');
   final _scroll = ScrollController();
   final _headerKey = GlobalKey();
+  final _viewportKey = GlobalKey();
+
+  @override
+  Oito2ListCollection<T> get reorderCollection => _collection;
+
+  @override
+  void Function(int from, int to)? get onReorder => widget.onReorder;
+
+  @override
+  bool get canReorder => widget.onReorder != null;
+
+  @override
+  Iterable<MapEntry<String, BuildContext>> get builtRows => _rows.entries;
+
+  @override
+  RenderBox? get reorderViewport =>
+      _viewportKey.currentContext?.findRenderObject() as RenderBox?;
+
+  @override
+  ScrollPosition? get reorderScroll =>
+      _scroll.hasClients ? _scroll.position : null;
+
+  @override
+  void activateForReorder(String value) {
+    _focusNode.requestFocus();
+    setState(() => _active = value);
+  }
+
+  @override
+  void revealForReorder(String value) => _reveal(value);
 
   /// The context of each built row, by item value, to scroll rows of
   /// variable height into view.
@@ -215,6 +268,7 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>> {
       _reachEndArmed = true;
       _scheduleReachEndCheck();
     }
+    if (reorderDragging && !canReorder) stopRowDrag(rebuild: false);
   }
 
   @override
@@ -225,6 +279,7 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>> {
     _scroll.dispose();
     _typeTimer?.cancel();
     _clicks.cancel();
+    disposeReorder();
     super.dispose();
   }
 
@@ -417,6 +472,8 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>> {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
+    final reordered = reorderKey(event, _active);
+    if (reordered != null) return reordered;
     final keyboard = HardwareKeyboard.instance;
     final shift = keyboard.isShiftPressed;
     final command = keyboard.isControlPressed || keyboard.isMetaPressed;
@@ -503,7 +560,9 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>> {
       key: ValueKey(value),
       child: Builder(
         builder: (context) {
-          if (widget.variableHeight) _track(value, context);
+          if (widget.variableHeight || widget.onReorder != null) {
+            _track(value, context);
+          }
           return _rowContent(context, item, value);
         },
       ),
@@ -538,7 +597,12 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>> {
           maxLines: widget.variableHeight ? null : 1,
           overflow: widget.variableHeight ? null : TextOverflow.ellipsis,
         );
-    return Padding(
+    final reorderable = widget.onReorder != null;
+    final drag = reorderable && !disabled
+        ? (Offset global) => startRowDrag(value, global)
+        : null;
+    final handle = reorderable && widget.dragHandle;
+    final row = Padding(
       padding: const EdgeInsets.symmetric(vertical: _rowGap),
       child: Semantics(
         container: true,
@@ -547,8 +611,11 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>> {
         focused: active,
         button: true,
         onTap: disabled ? null : () => _click(value),
+        customSemanticsActions: reorderable ? reorderActions(value) : null,
         child: InkWell(
-          mouseCursor: WidgetStateMouseCursor.clickable,
+          mouseCursor: reorderDragging
+              ? MouseCursor.defer
+              : WidgetStateMouseCursor.clickable,
           excludeFromSemantics: true,
           onTap: disabled ? null : () {},
           onTapUp: disabled
@@ -589,6 +656,8 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>> {
                 child: Row(
                   spacing: Oito2Spacing.sm,
                   children: [
+                    if (handle)
+                      RowDragHandle(onStart: drag, dragging: reorderDragging),
                     Expanded(child: content),
                     if (_multiple && widget.showCheckmarks)
                       Opacity(
@@ -602,6 +671,11 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>> {
           ),
         ),
       ),
+    );
+    if (!reorderable) return row;
+    return decorateReorderRow(
+      value,
+      RowDragDetector(onStart: handle ? null : drag, child: row),
     );
   }
 
@@ -701,45 +775,49 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>> {
             if (notification.depth == 0) _checkReachEnd(notification.metrics);
             return false;
           },
-          child: CustomScrollView(
-            controller: _scroll,
-            scrollCacheExtent: switch (widget.cacheExtent) {
-              final extent? => ScrollCacheExtent.pixels(extent),
-              null => null,
-            },
-            semanticChildCount: _collection.length,
-            slivers: [
-              if (widget.header case final header?)
-                SliverToBoxAdapter(
-                  child: KeyedSubtree(key: _headerKey, child: header),
-                ),
-              SliverPadding(
-                padding: const EdgeInsets.all(_padding),
-                sliver: widget.variableHeight
-                    ? SliverList(delegate: delegate)
-                    : SliverFixedExtentList(
-                        itemExtent: _extent,
-                        delegate: delegate,
-                      ),
-              ),
-              if (status != null) SliverToBoxAdapter(child: status),
-              if (empty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
-                    child:
-                        widget.placeholder ??
-                        Text(
-                          Oito2Localizations.of(context).noItems,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
+          child: MouseRegion(
+            key: _viewportKey,
+            cursor: reorderCursor,
+            child: CustomScrollView(
+              controller: _scroll,
+              scrollCacheExtent: switch (widget.cacheExtent) {
+                final extent? => ScrollCacheExtent.pixels(extent),
+                null => null,
+              },
+              semanticChildCount: _collection.length,
+              slivers: [
+                if (widget.header case final header?)
+                  SliverToBoxAdapter(
+                    child: KeyedSubtree(key: _headerKey, child: header),
                   ),
+                SliverPadding(
+                  padding: const EdgeInsets.all(_padding),
+                  sliver: widget.variableHeight
+                      ? SliverList(delegate: delegate)
+                      : SliverFixedExtentList(
+                          itemExtent: _extent,
+                          delegate: delegate,
+                        ),
                 ),
-              if (widget.footer case final footer?)
-                SliverToBoxAdapter(child: footer),
-            ],
+                if (status != null) SliverToBoxAdapter(child: status),
+                if (empty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child:
+                          widget.placeholder ??
+                          Text(
+                            Oito2Localizations.of(context).noItems,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                    ),
+                  ),
+                if (widget.footer case final footer?)
+                  SliverToBoxAdapter(child: footer),
+              ],
+            ),
           ),
         ),
       ),

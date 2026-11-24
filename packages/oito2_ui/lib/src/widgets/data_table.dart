@@ -45,6 +45,9 @@ import 'widget_helpers.dart';
 /// labeled by [rowLabel], or by its cell texts in column order, with its
 /// position among the rows.
 ///
+/// With [onReorder], the user reorders the rows as in an
+/// [Oito2VirtualList], by dragging a whole row.
+///
 /// The table needs a bounded height, such as from a [SizedBox] or an
 /// [Expanded].
 class Oito2DataTable<T> extends StatefulWidget {
@@ -67,6 +70,7 @@ class Oito2DataTable<T> extends StatefulWidget {
     this.placeholder,
     this.semanticLabel,
     this.autofocus = false,
+    this.onReorder,
   });
 
   /// The rows.
@@ -130,6 +134,17 @@ class Oito2DataTable<T> extends StatefulWidget {
 
   /// Whether the table takes the focus when shown.
   final bool autofocus;
+
+  /// Called when the user moves a row, with its index in
+  /// [Oito2ListCollection.items] and the index it ends at, counted once it
+  /// is taken out of its place, as [Oito2VirtualList.onReorder] reports
+  /// it: by dragging the row, by Alt with Up or Down on the active row, or
+  /// by the "Move up" and "Move down" accessibility actions. The rows can't
+  /// be reordered when null.
+  ///
+  /// The table doesn't move the row: the app does, and usually clears
+  /// [sort], as the new order no longer follows it.
+  final void Function(int from, int to)? onReorder;
 
   /// Returns the sort after activating the header of the column [id] in a
   /// table sorted by [current]: ascending, then descending, then none.
@@ -267,6 +282,7 @@ class _Oito2DataTableState<T> extends State<Oito2DataTable<T>> {
           placeholder: widget.placeholder,
           showCheckmarks: false,
           autofocus: widget.autofocus,
+          onReorder: widget.onReorder,
         ),
       ),
     );

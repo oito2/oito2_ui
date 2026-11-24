@@ -564,7 +564,11 @@
 			"pathBar": "Path",
 			"showPathSegments": "Show hidden path segments",
 			"editPath": "Edit path",
-			"currentLocation": "Current location"
+			"currentLocation": "Current location",
+			"dragToReorder": "Drag to reorder",
+			"cantDropHere": "Can't drop here",
+			"indentItem": "Indent",
+			"outdentItem": "Outdent"
 		},
 		"calls": [
 			{
@@ -1008,6 +1012,46 @@
 					3
 				],
 				"result": "3 pending"
+			},
+			{
+				"name": "dragItemCount",
+				"args": [
+					1
+				],
+				"result": "1 item"
+			},
+			{
+				"name": "dragItemCount",
+				"args": [
+					3
+				],
+				"result": "3 items"
+			},
+			{
+				"name": "movedToPosition",
+				"args": [
+					"Docs",
+					2,
+					5
+				],
+				"result": "Moved Docs to position 2 of 5"
+			},
+			{
+				"name": "movedInto",
+				"args": [
+					"Docs",
+					"Projects",
+					3
+				],
+				"result": "Moved Docs into Projects, position 3"
+			},
+			{
+				"name": "movedToTopLevel",
+				"args": [
+					"Docs",
+					1
+				],
+				"result": "Moved Docs to the top level, position 1"
 			}
 		]
 	},
@@ -1576,7 +1620,11 @@
 			"pathBar": "Caminho",
 			"showPathSegments": "Mostrar partes ocultas do caminho",
 			"editPath": "Editar caminho",
-			"currentLocation": "Local atual"
+			"currentLocation": "Local atual",
+			"dragToReorder": "Arraste para reordenar",
+			"cantDropHere": "Não é possível soltar aqui",
+			"indentItem": "Aumentar recuo",
+			"outdentItem": "Diminuir recuo"
 		},
 		"calls": [
 			{
@@ -2020,6 +2068,46 @@
 					3
 				],
 				"result": "3 pendentes"
+			},
+			{
+				"name": "dragItemCount",
+				"args": [
+					1
+				],
+				"result": "1 item"
+			},
+			{
+				"name": "dragItemCount",
+				"args": [
+					3
+				],
+				"result": "3 itens"
+			},
+			{
+				"name": "movedToPosition",
+				"args": [
+					"Docs",
+					2,
+					5
+				],
+				"result": "Item \"Docs\" movido para a posição 2 de 5"
+			},
+			{
+				"name": "movedInto",
+				"args": [
+					"Docs",
+					"Projects",
+					3
+				],
+				"result": "Item \"Docs\" movido para Projects, posição 3"
+			},
+			{
+				"name": "movedToTopLevel",
+				"args": [
+					"Docs",
+					1
+				],
+				"result": "Item \"Docs\" movido para o nível superior, posição 1"
 			}
 		]
 	}

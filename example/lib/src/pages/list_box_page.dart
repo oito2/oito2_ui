@@ -66,6 +66,27 @@ class _ListBoxPageState extends State<ListBoxPage> {
     collection: _fonts,
     initialValues: const ['Outfit'],
   );
+  // #region reorder-data
+  var _steps = Oito2ListCollection(const [
+    'Plan',
+    'Design',
+    'Build',
+    'Test',
+    'Release',
+  ]);
+  late final _ordered = Oito2SelectionController(collection: _steps);
+  bool _handles = false;
+
+  /// Moves the step at [from] to [to], the index it ends at once taken
+  /// out of its place.
+  void _reorder(int from, int to) {
+    final items = [..._steps.items];
+    items.insert(to, items.removeAt(from));
+    setState(() => _steps = _steps.copyWith(items));
+    _ordered.collection = _steps;
+  }
+
+  // #endregion
   String _activated = 'None';
 
   @override
@@ -73,6 +94,7 @@ class _ListBoxPageState extends State<ListBoxPage> {
     _single.dispose();
     _multiple.dispose();
     _custom.dispose();
+    _ordered.dispose();
     super.dispose();
   }
 
@@ -201,6 +223,45 @@ class _ListBoxPageState extends State<ListBoxPage> {
             // #endregion
           ),
         ),
+        const DocHeading('Reordering', level: 3),
+        const DocText(
+          'With `onReorder`, the user drags a row to a new place, with a '
+          'line marking the drop and the list scrolling near its edges, or '
+          'moves the active row with `Alt+Up` and `Alt+Down`. A mouse drags '
+          'a row once it moves a few pixels and a touch after a long press; '
+          'with `dragHandle`, only the grip at the start of each row drags, '
+          'with any pointer, which leaves the rest of the row to scrolling '
+          'on touch screens. The callback receives the item index and the '
+          'index it ends at once taken out of its place, so moving the '
+          'first of five items to the end reports `(0, 4)`; the app moves '
+          'the item. A list whose items fall in more than one group cannot '
+          'be reordered.',
+        ),
+        ExamplePanel(
+          regions: const ['reorder-data', 'reorder'],
+          child: Column(
+            spacing: Oito2Spacing.sm,
+            children: [
+              Oito2SwitchButton(
+                value: _handles,
+                onChanged: (value) => setState(() => _handles = value),
+                title: const Text('Drag handles'),
+              ),
+              _border(
+                // #region reorder
+                Oito2ListBox(
+                  collection: _steps,
+                  controller: _ordered,
+                  semanticLabel: 'Steps',
+                  dragHandle: _handles,
+                  onReorder: _reorder,
+                ),
+                // #endregion
+              ),
+              Text('Order: ${_steps.items.join(', ')}'),
+            ],
+          ),
+        ),
         const DocHeading('Activation', level: 3),
         const DocText(
           '`onActivate` runs on Enter or a double click on an enabled item, '
@@ -218,7 +279,9 @@ class _ListBoxPageState extends State<ListBoxPage> {
           'The list is a semantics container labeled by `semanticLabel`. '
           'Each row reports whether it is selected, enabled and active, and '
           'group names are marked as headers. Set `autofocus` to give the '
-          'list the focus when it shows.',
+          'list the focus when it shows. With `onReorder`, rows offer the '
+          '"Move up" and "Move down" actions, and every move is announced '
+          'with the new position.',
         ),
         const DocHeading('Keyboard', level: 3),
         const DocTable(
@@ -242,6 +305,11 @@ class _ListBoxPageState extends State<ListBoxPage> {
               'Selects all, in a multiple-selection list.',
             ],
             ['`Enter`', 'Activates the active row.'],
+            [
+              '`Alt+Up` / `Alt+Down`',
+              'Moves the active row up or down by one, with `onReorder`.',
+            ],
+            ['`Escape`', 'Cancels a drag in progress, with `onReorder`.'],
             ['Letters', 'Jump to the next row whose label matches.'],
           ],
         ),

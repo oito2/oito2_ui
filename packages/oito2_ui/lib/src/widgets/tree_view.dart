@@ -18,6 +18,8 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart' show Drag;
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
@@ -30,9 +32,11 @@ import '../tokens/geometry.dart';
 import 'context_menu.dart';
 import 'highlighted_text.dart';
 import 'progress.dart';
+import 'row_drag.dart';
 import 'table_column.dart';
 import 'table_header.dart';
 import 'toggles.dart';
+import 'touch_target.dart';
 import 'widget_helpers.dart';
 
 /// The expanded, selected and checked nodes of an [Oito2TreeView], by
@@ -184,6 +188,30 @@ typedef Oito2TreeItemBuilder<T> = Widget Function(
 /// - F2 starts an inline rename of the active node when [onRename] is
 ///   set; Enter or leaving the field confirms it and Escape cancels it.
 /// - Typing letters jumps to the next shown label that starts with them.
+/// - With [onMove], Alt with Up or Down moves the active node before its
+///   previous sibling or after its next one, Alt with Right (Left in
+///   right-to-left layouts) moves it into the branch above it as its last
+///   child, and Alt with Left moves it out of its branch, after it.
+///
+/// With [onMove], rows can also be dragged: with a mouse once it moves a
+/// few pixels, and with a touch after a long press when [onContextMenu]
+/// is null; with [dragHandle], only a grip at the end of the label
+/// drags, with any pointer, which leaves the long press to the context
+/// menu. A drag carries the multiple selection when it starts on a
+/// selected row, and that row alone otherwise. The pointer's place in the
+/// row under it picks the drop: the top quarter of a branch drops before
+/// it, the bottom quarter after it and the middle into it, as its last
+/// child; a leaf takes the top or the bottom half. A drop after an open
+/// branch with shown children goes in as its first child. A line between
+/// the rows, at the depth the nodes will have, or a frame around the
+/// target branch shows the drop; a closed branch held under the pointer
+/// for 700 milliseconds opens, loading its children as a click does, and
+/// the tree scrolls when the pointer nears its top or bottom edge. A drop
+/// into a dragged node or one of its descendants, or one [canDrop]
+/// refuses, shows a "no drop" sign and calls nothing; Escape cancels the
+/// drag. The tree doesn't change [collection]: the app moves the nodes,
+/// such as with [Oito2TreeCollection.move]. Rows can't be dragged or moved
+/// while filtering or renaming.
 ///
 /// A branch with no children yet and an [onLoadChildren] shows a spinner
 /// while its children load the first time it opens. A non-empty [query]
@@ -224,6 +252,11 @@ class Oito2TreeView<T> extends StatefulWidget {
     this.columns,
     this.onColumnResized,
     this.showHeader = true,
+    this.onMove,
+    this.canDrop,
+    this.rowDropTargetBuilder,
+    this.dropHighlight,
+    this.dragHandle = false,
   });
 
   /// The nodes of the tree.
@@ -327,6 +360,54 @@ class Oito2TreeView<T> extends StatefulWidget {
   /// Whether a tree with [columns] shows the header row.
   final bool showHeader;
 
+  /// Called when nodes are dragged to a new place, or the active node is
+  /// moved with the keyboard or an accessibility action, with the moved
+  /// nodes in tree order, the value of their new parent (null for the top
+  /// level) and their index among its children counted after the moved
+  /// nodes are taken out of their places, as
+  /// [Oito2TreeCollection.move] takes it; rows can't be moved when null.
+  ///
+  /// Only the topmost of the dragged nodes are given: a node brings its
+  /// descendants along. Drops that leave the tree unchanged call nothing.
+  final void Function(List<Oito2TreeNode<T>> nodes, String? parent, int index)?
+  onMove;
+
+  /// Returns whether [onMove] may move the nodes to the parent and index
+  /// it would receive; every place but a dragged node and its descendants
+  /// is allowed when null.
+  ///
+  /// It is called as the pointer moves during a drag, so it must be cheap.
+  final bool Function(List<Oito2TreeNode<T>> nodes, String? parent, int index)?
+  canDrop;
+
+  /// Wraps the row of each node, as built, such as in a [DragTarget] for
+  /// the app's own drags or a file drop target, to receive drops from
+  /// outside the tree on a row; the row is returned unchanged when null.
+  ///
+  /// Only the rows in view are built and wrapped. The tree's own row drags
+  /// don't use [DragTarget]s, so they never reach these targets.
+  final Widget Function(
+    BuildContext context,
+    Oito2TreeNode<T> node,
+    Widget row,
+  )?
+  rowDropTargetBuilder;
+
+  /// The value of a node to mark as the target of a drop from outside the
+  /// tree, with the frame of a drop into a branch, such as while a
+  /// [rowDropTargetBuilder] target is hovered; none when null.
+  final String? dropHighlight;
+
+  /// Whether only a grip drags a row, instead of the whole row, when
+  /// [onMove] is set.
+  ///
+  /// The grip sits at the end of the row's label, inside the first column
+  /// of a tree grid, so the other columns stay aligned with the header.
+  /// Any pointer drags it at once, and on touch platforms it is padded to
+  /// a 48-pixel touch target as far as the row height allows; a long
+  /// press on the row stays free for [onContextMenu].
+  final bool dragHandle;
+
   @override
   State<Oito2TreeView<T>> createState() => _Oito2TreeViewState<T>();
 }
@@ -348,6 +429,27 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
 
   /// The column widths of a tree grid.
   final _columnWidths = TableColumnWidths();
+
+  /// The row drag in progress, or null.
+  _TreeDrag<T>? _drag;
+
+  /// The label that follows the pointer during a drag.
+  final _feedback = DragFeedback();
+
+  /// Scrolls the rows while a drag nears the top or bottom edge.
+  late final _autoScroll = DragAutoScroller(_updateDrop);
+
+  /// Opens the closed branch [_openBranch] after a drag rests on it.
+  Timer? _openTimer;
+  String? _openBranch;
+
+  /// Whether rows can be moved: [Oito2TreeView.onMove] is set and the tree
+  /// is neither filtering nor renaming.
+  bool get _canMove =>
+      widget.onMove != null && !_filtering && _renaming == null;
+
+  /// Whether the rows show the drag grip of [Oito2TreeView.dragHandle].
+  bool get _handle => widget.onMove != null && widget.dragHandle;
 
   Oito2TreeController get _controller => widget.controller;
   bool get _filtering => widget.query.trim().isNotEmpty;
@@ -377,6 +479,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
       widget.controller.addListener(_refresh);
     }
     _columnWidths.update(oldWidget.columns, widget.columns);
+    if (_drag != null && !_canMove) _stopDrag(rebuild: false);
   }
 
   @override
@@ -387,6 +490,9 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     _horizontalScroll.dispose();
     _typeTimer?.cancel();
     _clicks.cancel();
+    _openTimer?.cancel();
+    _autoScroll.stop();
+    _feedback.dispose();
     super.dispose();
   }
 
@@ -650,6 +756,10 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
+    if (_drag != null) {
+      if (event.logicalKey == LogicalKeyboardKey.escape) _stopDrag();
+      return KeyEventResult.handled;
+    }
     if (_entries.isEmpty) return KeyEventResult.ignored;
     final keyboard = HardwareKeyboard.instance;
     final shift = keyboard.isShiftPressed;
@@ -666,6 +776,19 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     }
 
     final (back: closeKey, forward: openKey) = readingArrowsOf(context);
+    if (keyboard.isAltPressed && _canMove && current != null) {
+      final move = switch (key) {
+        LogicalKeyboardKey.arrowUp => _KeyMove.up,
+        LogicalKeyboardKey.arrowDown => _KeyMove.down,
+        _ when key == openKey => _KeyMove.indent,
+        _ when key == closeKey => _KeyMove.outdent,
+        _ => null,
+      };
+      if (move != null) {
+        _moveBy(current.node, move);
+        return KeyEventResult.handled;
+      }
+    }
     if (key == LogicalKeyboardKey.arrowDown) {
       final next = current == null ? step(-1, 1) : step(index, 1);
       if (next != null) _activate(next, extend: shift);
@@ -846,6 +969,303 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     if (width != null) widget.onColumnResized?.call(columns[index].id, width);
   }
 
+  /// The place [move] takes [node] to among the nodes of the tree, as the
+  /// parent value, the index after [node] is taken out and the branch it
+  /// goes into, or null when it can't go that way.
+  ({String? parent, int index, Oito2TreeNode<T>? into})? _keyMoveTarget(
+    Oito2TreeNode<T> node,
+    _KeyMove move,
+  ) {
+    final collection = widget.collection;
+    final value = node.value;
+    final path = collection.indexPathOf(value);
+    if (path == null) return null;
+    final parent = collection.parentOf(value);
+    final siblings = collection.siblingsOf(value);
+    final i = path.last;
+    switch (move) {
+      case _KeyMove.up:
+        return i == 0 ? null : (parent: parent, index: i - 1, into: null);
+      case _KeyMove.down:
+        return i >= siblings.length - 1
+            ? null
+            : (parent: parent, index: i + 1, into: null);
+      case _KeyMove.indent:
+        if (i == 0 || !siblings[i - 1].isBranch) return null;
+        final into = siblings[i - 1];
+        return (
+          parent: into.value,
+          index: into.children?.length ?? 0,
+          into: into,
+        );
+      case _KeyMove.outdent:
+        if (parent == null) return null;
+        return (
+          parent: collection.parentOf(parent),
+          index: collection.indexPathOf(parent)!.last + 1,
+          into: null,
+        );
+    }
+  }
+
+  /// Moves [node] the way of [move] through [Oito2TreeView.onMove] when
+  /// [Oito2TreeView.canDrop] allows it, opens the branch it goes into and
+  /// announces the result; announces that it can't move when [canDrop]
+  /// refuses, and does nothing when it can't go that way.
+  void _moveBy(Oito2TreeNode<T> node, _KeyMove move) {
+    final onMove = widget.onMove;
+    if (onMove == null || node.disabled || !_canMove) return;
+    final target = _keyMoveTarget(node, move);
+    if (target == null) return;
+    final (:parent, :index, :into) = target;
+    final strings = Oito2Localizations.of(context);
+    if (!(widget.canDrop?.call([node], parent, index) ?? true)) {
+      announceTo(context, strings.cantDropHere);
+      return;
+    }
+    onMove([node], parent, index);
+    if (into != null) _setExpanded(into, true);
+    final parentNode = parent == null ? null : widget.collection.find(parent);
+    announceTo(
+      context,
+      parentNode == null
+          ? strings.movedToTopLevel(node.label, index + 1)
+          : strings.movedInto(node.label, parentNode.label, index + 1),
+    );
+    final value = node.value;
+    setState(() => _active = value);
+    _anchor = value;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _reveal(_indexOf(value));
+    });
+  }
+
+  /// The accessibility actions that move [node], for the ways it can go,
+  /// or null when rows can't be moved.
+  Map<CustomSemanticsAction, VoidCallback>? _moveActions(
+    Oito2TreeNode<T> node,
+  ) {
+    if (!_canMove || node.disabled) return null;
+    final strings = Oito2Localizations.of(context);
+    return {
+      for (final (move, label) in [
+        (_KeyMove.up, strings.moveUp),
+        (_KeyMove.down, strings.moveDown),
+        (_KeyMove.indent, strings.indentItem),
+        (_KeyMove.outdent, strings.outdentItem),
+      ])
+        if (_keyMoveTarget(node, move) != null)
+          CustomSemanticsAction(label: label): () => _moveBy(node, move),
+    };
+  }
+
+  /// The nodes a drag that starts on [node] carries: the topmost enabled
+  /// nodes of a multiple selection that holds it, in tree order, or else
+  /// [node] alone.
+  List<Oito2TreeNode<T>> _dragNodes(Oito2TreeNode<T> node) {
+    final selected = _controller.selected;
+    if (_controller.selectionMode != Oito2SelectionMode.multiple ||
+        !selected.contains(node.value) ||
+        selected.length < 2) {
+      return [node];
+    }
+    final collection = widget.collection;
+    return [
+      for (final e in collection.flatten())
+        if (selected.contains(e.node.value) &&
+            !e.node.disabled &&
+            !collection.ancestorsOf(e.node.value).any(selected.contains))
+          e.node,
+    ];
+  }
+
+  /// Starts dragging the nodes [_dragNodes] gives for [node] from the
+  /// global position [global], unless rows can't be moved, [node] is
+  /// disabled or a drag is already in progress.
+  Drag? _startDrag(Oito2TreeNode<T> node, Offset global) {
+    if (!_canMove || node.disabled || _drag != null) return null;
+    final nodes = _dragNodes(node);
+    _focusNode.requestFocus();
+    setState(() {
+      _active = node.value;
+      _drag = _TreeDrag(nodes, global);
+    });
+    _feedback.show(
+      context,
+      nodes.length == 1
+          ? nodes.first.label
+          : Oito2Localizations.of(context).dragItemCount(nodes.length),
+      global,
+    );
+    _updateDrop();
+    return RowDrag(onUpdate: _dragTo, onEnd: _endDrag);
+  }
+
+  /// Follows the pointer of the drag to [global]: updates the drop and
+  /// scrolls near the edges.
+  void _dragTo(Offset global) {
+    final drag = _drag;
+    if (drag == null) return;
+    drag.pointer = global;
+    _feedback.move(global);
+    _updateDrop();
+    _autoScroll.update(
+      global,
+      _listKey.currentContext?.findRenderObject() as RenderBox?,
+      _scroll.hasClients ? _scroll.position : null,
+      edge: _rowHeight,
+    );
+  }
+
+  /// Ends the drag: when the pointer was released over an allowed drop
+  /// that changes the tree, calls [Oito2TreeView.onMove].
+  void _endDrag(bool dropped) {
+    final drag = _drag;
+    if (drag == null) return;
+    final drop = drag.drop;
+    _stopDrag();
+    if (dropped && drop != null && drop.valid && !drop.noop) {
+      widget.onMove?.call(drag.nodes, drop.parent, drop.index);
+    }
+  }
+
+  /// Ends the drag without moving anything, rebuilding unless [rebuild] is
+  /// false, as when the tree is about to build anyway.
+  void _stopDrag({bool rebuild = true}) {
+    _autoScroll.stop();
+    _openTimer?.cancel();
+    _openTimer = null;
+    _openBranch = null;
+    _feedback.hide();
+    if (_drag == null) return;
+    _drag = null;
+    if (rebuild && mounted) setState(() {});
+  }
+
+  /// Recomputes the drop of the drag for its pointer, shows whether it is
+  /// allowed and starts or stops the timer that opens the closed branch
+  /// under the pointer.
+  void _updateDrop() {
+    final drag = _drag;
+    if (drag == null || !mounted) return;
+    final drop = _dropAt(drag);
+    _feedback.allowed = drop != null && drop.valid;
+    if (drop != drag.drop) setState(() => drag.drop = drop);
+    final branch = drop != null && drop.placement == DropPlacement.inside
+        ? drop.row
+        : null;
+    final closed =
+        branch != null &&
+        !_controller.isExpanded(branch) &&
+        !drag.values.contains(branch) &&
+        !widget.collection.ancestorsOf(branch).any(drag.values.contains);
+    final next = closed ? branch : null;
+    if (next == _openBranch) return;
+    _openTimer?.cancel();
+    _openBranch = next;
+    _openTimer = next == null
+        ? null
+        : Timer(const Duration(milliseconds: 700), () {
+            _openTimer = null;
+            final node = widget.collection.find(next);
+            if (!mounted || _drag == null || node == null) return;
+            _setExpanded(node, true);
+            WidgetsBinding.instance.addPostFrameCallback((_) => _updateDrop());
+          });
+  }
+
+  /// The drop for the pointer of [drag], or null when the pointer is
+  /// outside the rows' area.
+  _TreeDrop? _dropAt(_TreeDrag<T> drag) {
+    final box = _listKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize || !_scroll.hasClients) return null;
+    if (_entries.isEmpty) return null;
+    final local = box.globalToLocal(drag.pointer);
+    if (local.dx < 0 ||
+        local.dy < 0 ||
+        local.dx > box.size.width ||
+        local.dy > box.size.height) {
+      return null;
+    }
+    final height = _rowHeight;
+    final y = local.dy + _scroll.offset - _listPadding;
+    final int row;
+    final double fraction;
+    if (y < 0) {
+      (row, fraction) = (0, 0);
+    } else if (y >= _entries.length * height) {
+      (row, fraction) = (_entries.length - 1, 1);
+    } else {
+      row = (y / height).floor();
+      fraction = (y - row * height) / height;
+    }
+    final entry = _entries[row];
+    final node = entry.node;
+    final collection = widget.collection;
+    final placement = node.isBranch
+        ? (fraction < 0.25
+              ? DropPlacement.before
+              : fraction > 0.75
+              ? DropPlacement.after
+              : DropPlacement.inside)
+        : (fraction < 0.5 ? DropPlacement.before : DropPlacement.after);
+    String? parent;
+    int gap;
+    var depth = entry.depth;
+    switch (placement) {
+      case DropPlacement.before:
+        parent = collection.parentOf(node.value);
+        gap = entry.indexPath.last;
+      case DropPlacement.inside:
+        parent = node.value;
+        gap = node.children?.length ?? 0;
+      case DropPlacement.after:
+        if (node.isBranch &&
+            row + 1 < _entries.length &&
+            _entries[row + 1].depth > entry.depth) {
+          parent = node.value;
+          gap = 0;
+          depth = entry.depth + 1;
+        } else {
+          parent = collection.parentOf(node.value);
+          gap = entry.indexPath.last + 1;
+        }
+    }
+    final values = drag.values;
+    final siblings = parent == null
+        ? collection.roots
+        : collection.childrenOf(parent);
+    var index = gap;
+    for (var k = 0; k < gap && k < siblings.length; k++) {
+      if (values.contains(siblings[k].value)) index--;
+    }
+    final intoMoved =
+        parent != null &&
+        (values.contains(parent) ||
+            collection.ancestorsOf(parent).any(values.contains));
+    var noop = false;
+    if (!intoMoved) {
+      final before = [for (final s in siblings) s.value];
+      final after = [
+        for (final s in siblings)
+          if (!values.contains(s.value)) s.value,
+      ]..insertAll(index, [for (final n in drag.nodes) n.value]);
+      noop = listEquals(before, after);
+    }
+    final valid =
+        !intoMoved &&
+        (noop || (widget.canDrop?.call(drag.nodes, parent, index) ?? true));
+    return (
+      row: node.value,
+      placement: placement,
+      depth: depth,
+      parent: parent,
+      index: index,
+      valid: valid,
+      noop: noop,
+    );
+  }
+
   /// Builds the row of [entry]: disclosure, check box, icon and label, or
   /// the rename field, followed by the cells of the other columns in a
   /// tree grid.
@@ -883,7 +1303,9 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
               ),
             )
           : MouseRegion(
-              cursor: _filtering ? MouseCursor.defer : SystemMouseCursors.click,
+              cursor: _filtering || _drag != null
+                  ? MouseCursor.defer
+                  : SystemMouseCursors.click,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: _filtering ? null : () => _setExpanded(node, !open),
@@ -957,6 +1379,15 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
               shape: BoxShape.circle,
             ),
           ),
+        if (_handle)
+          Oito2TouchTarget(
+            child: RowDragHandle(
+              onStart: _canMove && !node.disabled
+                  ? (global) => _startDrag(node, global)
+                  : null,
+              dragging: _drag != null,
+            ),
+          ),
       ],
     );
 
@@ -971,11 +1402,14 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
       hint: pending ? Oito2Localizations.of(context).pendingChange : null,
       excludeSemantics: _renaming != value,
       onTap: node.disabled ? null : () => _tap(node),
+      customSemanticsActions: _moveActions(node),
       child: child,
     );
 
     Widget frame(Widget child, EdgeInsetsDirectional padding) => MouseRegion(
-      cursor: node.disabled ? MouseCursor.defer : SystemMouseCursors.click,
+      cursor: node.disabled || _drag != null
+          ? MouseCursor.defer
+          : SystemMouseCursors.click,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapUp: (details) {
@@ -993,6 +1427,10 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
           padding: padding,
           decoration: BoxDecoration(
             color: selected ? scheme.secondaryContainer : null,
+            borderRadius: Oito2Radius.smallAll,
+          ),
+          // Drawn over the row so that it takes no room from the cells.
+          foregroundDecoration: BoxDecoration(
             borderRadius: Oito2Radius.smallAll,
             border: active && keyboard
                 ? Border.all(
@@ -1013,12 +1451,16 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     );
 
     if (columns == null) {
-      return semantics(
-        frame(
-          content,
-          EdgeInsetsDirectional.only(
-            start: Oito2Spacing.xs + entry.depth * widget.indent,
-            end: Oito2Spacing.sm,
+      return _decorate(
+        context,
+        node,
+        semantics(
+          frame(
+            content,
+            EdgeInsetsDirectional.only(
+              start: Oito2Spacing.xs + entry.depth * widget.indent,
+              end: Oito2Spacing.sm,
+            ),
           ),
         ),
       );
@@ -1032,47 +1474,98 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
         (widget.checkable ? kMinInteractiveDimension + Oito2Spacing.xs : 0) +
         (icon == null ? 0 : 16 + Oito2Spacing.xs) +
         Oito2Spacing.xs +
-        24;
-    return frame(
-      Row(
-        children: [
-          SizedBox(
-            width: _columnWidths.widths[0],
-            child: semantics(
-              ClipRect(
-                child: OverflowBox(
-                  alignment: AlignmentDirectional.centerStart,
-                  minWidth: 0,
-                  maxWidth: math.max(_columnWidths.widths[0], needed),
-                  child: Padding(
-                    padding: EdgeInsetsDirectional.only(start: indent),
-                    child: content,
+        24 +
+        (_handle
+            ? (padsTapTargets(context) ? Oito2Sizes.minTouchTarget : 24) +
+                  Oito2Spacing.xs
+            : 0);
+    return _decorate(
+      context,
+      node,
+      frame(
+        Row(
+          children: [
+            SizedBox(
+              width: _columnWidths.widths[0],
+              child: semantics(
+                ClipRect(
+                  child: OverflowBox(
+                    alignment: AlignmentDirectional.centerStart,
+                    minWidth: 0,
+                    maxWidth: math.max(_columnWidths.widths[0], needed),
+                    child: Padding(
+                      padding: EdgeInsetsDirectional.only(start: indent),
+                      child: content,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          for (var i = 1; i < columns.length; i++)
-            SizedBox(
-              width: _columnWidths.widths[i],
-              child: Padding(
-                padding: const EdgeInsetsDirectional.only(
-                  start: Oito2Spacing.xs,
-                  end: Oito2Spacing.sm,
-                ),
-                child: Align(
-                  alignment: columns[i].alignment,
-                  child: columns[i].cellBuilder?.call(context, node),
+            for (var i = 1; i < columns.length; i++)
+              SizedBox(
+                width: _columnWidths.widths[i],
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.only(
+                    start: Oito2Spacing.xs,
+                    end: Oito2Spacing.sm,
+                  ),
+                  child: Align(
+                    alignment: columns[i].alignment,
+                    child: columns[i].cellBuilder?.call(context, node),
+                  ),
                 ),
               ),
-            ),
-        ],
-      ),
-      const EdgeInsetsDirectional.only(
-        start: Oito2Spacing.xs,
-        end: Oito2Spacing.sm,
+          ],
+        ),
+        const EdgeInsetsDirectional.only(
+          start: Oito2Spacing.xs,
+          end: Oito2Spacing.sm,
+        ),
       ),
     );
+  }
+
+  /// Adds to the [row] of [node] the start of row drags, the mark of the
+  /// drop on it and the app's [Oito2TreeView.rowDropTargetBuilder].
+  Widget _decorate(BuildContext context, Oito2TreeNode<T> node, Widget row) {
+    var result = row;
+    if (widget.onMove != null) {
+      result = RowDragDetector(
+        onStart: _canMove && !node.disabled && !widget.dragHandle
+            ? (global) => _startDrag(node, global)
+            : null,
+        longPress: widget.onContextMenu == null,
+        child: result,
+      );
+    }
+    if (widget.onMove != null ||
+        widget.dropHighlight != null ||
+        widget.rowDropTargetBuilder != null) {
+      final drop = _drag?.drop;
+      final Widget? mark;
+      if (widget.dropHighlight == node.value ||
+          (drop != null &&
+              drop.row == node.value &&
+              drop.valid &&
+              !drop.noop &&
+              drop.placement == DropPlacement.inside)) {
+        mark = const DropInsideFrame(
+          margin: EdgeInsets.symmetric(horizontal: _rowMargin),
+        );
+      } else if (drop != null &&
+          drop.row == node.value &&
+          drop.valid &&
+          !drop.noop) {
+        mark = DropLine(
+          placement: drop.placement,
+          start: _rowMargin + Oito2Spacing.xs + drop.depth * widget.indent,
+        );
+      } else {
+        mark = null;
+      }
+      result = Stack(fit: StackFit.passthrough, children: [result, ?mark]);
+    }
+    return widget.rowDropTargetBuilder?.call(context, node, result) ?? result;
   }
 
   @override
@@ -1082,17 +1575,25 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     _scheduleLoads();
     if (_active != null && _indexOf(_active) < 0) _active = null;
     if (_anchor != null && _indexOf(_anchor) < 0) _anchor = null;
+    final drag = _drag;
     final list = Focus(
       focusNode: _focusNode,
       autofocus: widget.autofocus,
       onKeyEvent: _onKey,
-      child: ListView.builder(
-        key: _listKey,
-        controller: _scroll,
-        itemExtent: _rowHeight,
-        padding: const EdgeInsets.symmetric(vertical: _listPadding),
-        itemCount: _entries.length,
-        itemBuilder: (context, index) => _row(context, _entries[index]),
+      child: MouseRegion(
+        cursor: drag == null
+            ? MouseCursor.defer
+            : drag.drop?.valid ?? false
+            ? SystemMouseCursors.grabbing
+            : SystemMouseCursors.noDrop,
+        child: ListView.builder(
+          key: _listKey,
+          controller: _scroll,
+          itemExtent: _rowHeight,
+          padding: const EdgeInsets.symmetric(vertical: _listPadding),
+          itemCount: _entries.length,
+          itemBuilder: (context, index) => _row(context, _entries[index]),
+        ),
       ),
     );
     final columns = _columns;
@@ -1206,4 +1707,52 @@ class _RenameFieldState extends State<_RenameField> {
       ),
     );
   }
+}
+
+/// A way the keyboard or an accessibility action moves a tree node.
+enum _KeyMove {
+  /// Before the previous sibling.
+  up,
+
+  /// After the next sibling.
+  down,
+
+  /// Into the previous sibling, a branch, as its last child.
+  indent,
+
+  /// Out of the parent, right after it.
+  outdent,
+}
+
+/// Where a drag would drop: the row it marks, before, into or after it,
+/// with the depth of the line; the parent and the index the nodes would
+/// get; whether the drop is allowed; and whether it would leave the tree
+/// unchanged.
+typedef _TreeDrop = ({
+  String row,
+  DropPlacement placement,
+  int depth,
+  String? parent,
+  int index,
+  bool valid,
+  bool noop,
+});
+
+/// A drag of tree rows: the dragged [nodes], the pointer and the drop
+/// under it.
+class _TreeDrag<T> {
+  _TreeDrag(this.nodes, this.pointer)
+    : values = {for (final node in nodes) node.value};
+
+  /// The dragged nodes, the topmost ones in tree order.
+  final List<Oito2TreeNode<T>> nodes;
+
+  /// The values of [nodes].
+  final Set<String> values;
+
+  /// The global pointer position.
+  Offset pointer;
+
+  /// The drop under [pointer], or null when it is outside the rows.
+  _TreeDrop? drop;
 }

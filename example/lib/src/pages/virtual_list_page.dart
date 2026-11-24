@@ -96,6 +96,21 @@ class _VirtualListPageState extends State<VirtualListPage> {
   }
   // #endregion
 
+  // #region reorder-data
+  var _queue = Oito2ListCollection([for (var i = 1; i <= 200; i++) 'Track $i']);
+  late final _queueSelection = Oito2SelectionController(collection: _queue);
+  bool _handles = true;
+
+  /// Moves the track at [from] to [to], the index it ends at once taken
+  /// out of its place.
+  void _reorder(int from, int to) {
+    final items = [..._queue.items];
+    items.insert(to, items.removeAt(from));
+    setState(() => _queue = _queue.copyWith(items));
+    _queueSelection.collection = _queue;
+  }
+  // #endregion
+
   bool _failNext = false;
   String _activated = 'None';
 
@@ -118,6 +133,7 @@ class _VirtualListPageState extends State<VirtualListPage> {
       ..removeListener(_onPages)
       ..dispose();
     _messageSelection.dispose();
+    _queueSelection.dispose();
     super.dispose();
   }
 
@@ -263,13 +279,52 @@ class _VirtualListPageState extends State<VirtualListPage> {
             ],
           ),
         ),
+        const DocHeading('Reordering', level: 3),
+        const DocText(
+          'With `onReorder`, the user drags a row to a new place, the list '
+          'scrolling while the pointer is near its top or bottom edge, or '
+          'moves the active row with `Alt+Up` and `Alt+Down`. With '
+          '`dragHandle`, only the grip at the start of each row drags it, '
+          'so a touch on the rest of the row still scrolls; without it, a '
+          'mouse drags the whole row and a touch drags it after a long '
+          'press. The callback receives the item index and the index it '
+          'ends at once taken out of its place; the app moves the item. '
+          '`Oito2DataTable` takes the same `onReorder`.',
+        ),
+        ExamplePanel(
+          regions: const ['reorder-data', 'reorder'],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: Oito2Spacing.sm,
+            children: [
+              Oito2SwitchButton(
+                value: _handles,
+                onChanged: (value) => setState(() => _handles = value),
+                title: const Text('Drag handles'),
+              ),
+              _border(
+                // #region reorder
+                Oito2VirtualList<String>(
+                  collection: _queue,
+                  controller: _queueSelection,
+                  semanticLabel: 'Play queue',
+                  dragHandle: _handles,
+                  onReorder: _reorder,
+                ),
+                // #endregion
+              ),
+            ],
+          ),
+        ),
         const DocHeading('Accessibility'),
         const DocText(
           'The list is a semantics container labeled by `semanticLabel`, '
           'with the number of rows; each row reports its position, whether '
           'it is selected, enabled and active. The loading and error rows '
           'are live regions. Set `autofocus` to give the list the focus when '
-          'it shows.',
+          'it shows. With `onReorder`, rows offer the "Move up" and "Move '
+          'down" actions, and every move is announced with the new '
+          'position.',
         ),
         const DocHeading('Keyboard', level: 3),
         const DocTable(
@@ -297,6 +352,11 @@ class _VirtualListPageState extends State<VirtualListPage> {
               'Selects all, in a multiple-selection list.',
             ],
             ['`Enter`', 'Activates the active row.'],
+            [
+              '`Alt+Up` / `Alt+Down`',
+              'Moves the active row up or down by one, with `onReorder`.',
+            ],
+            ['`Escape`', 'Cancels a drag in progress, with `onReorder`.'],
             ['Letters', 'Jump to the next row whose label matches.'],
           ],
         ),

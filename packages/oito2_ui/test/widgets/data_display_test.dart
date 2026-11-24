@@ -1615,6 +1615,18 @@ void main() {
       );
     });
 
+    testWidgets('the focus border of the active row keeps the cells aligned', (
+      tester,
+    ) async {
+      await pumpColumnTree(tester);
+      final before = tester.getRect(find.text('src/widgets#')).right;
+      await _key(tester, LogicalKeyboardKey.tab);
+      await _key(tester, LogicalKeyboardKey.arrowDown);
+      await _key(tester, LogicalKeyboardKey.arrowDown);
+      expect(tester.takeException(), isNull);
+      expect(tester.getRect(find.text('src/widgets#')).right, before);
+    });
+
     testWidgets('dragging a header handle resizes the column', (tester) async {
       final resized = await pumpColumnTree(tester);
       double sizeWidth() => tester

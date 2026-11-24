@@ -495,6 +495,35 @@ abstract class Oito2Localizations {
 
   /// The state of the last segment of a path bar, where the user is.
   String get currentLocation;
+
+  /// The tooltip of the handle that drags a row to a new place.
+  String get dragToReorder;
+
+  /// Tells that a dragged item can't be dropped where the pointer is, or
+  /// that a keyboard move isn't allowed there.
+  String get cantDropHere;
+
+  /// The label of a drag of [count] items at once.
+  String dragItemCount(int count);
+
+  /// Announces that [item] moved to [position] (from 1) of the [count]
+  /// items of a list.
+  String movedToPosition(String item, int position, int count);
+
+  /// Announces that [item] moved into the branch [parent] of a tree, at
+  /// [position] (from 1) among its children.
+  String movedInto(String item, String parent, int position);
+
+  /// Announces that [item] moved to the top level of a tree, at
+  /// [position] (from 1).
+  String movedToTopLevel(String item, int position);
+
+  /// The action that moves a tree node into the branch above it, as its
+  /// last child.
+  String get indentItem;
+
+  /// The action that moves a tree node out of its branch, after it.
+  String get outdentItem;
 }
 
 /// The units of a relative time, from [second] to [year].
@@ -963,6 +992,33 @@ class Oito2LocalizationsEn extends Oito2Localizations {
 
   @override
   String get currentLocation => 'Current location';
+
+  @override
+  String get dragToReorder => 'Drag to reorder';
+
+  @override
+  String get cantDropHere => "Can't drop here";
+
+  @override
+  String dragItemCount(int count) => count == 1 ? '1 item' : '$count items';
+
+  @override
+  String movedToPosition(String item, int position, int count) =>
+      'Moved $item to position $position of $count';
+
+  @override
+  String movedInto(String item, String parent, int position) =>
+      'Moved $item into $parent, position $position';
+
+  @override
+  String movedToTopLevel(String item, int position) =>
+      'Moved $item to the top level, position $position';
+
+  @override
+  String get indentItem => 'Indent';
+
+  @override
+  String get outdentItem => 'Outdent';
 }
 
 /// The Brazilian Portuguese [Oito2Localizations].
@@ -1421,6 +1477,33 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String get currentLocation => 'Local atual';
+
+  @override
+  String get dragToReorder => 'Arraste para reordenar';
+
+  @override
+  String get cantDropHere => 'Não é possível soltar aqui';
+
+  @override
+  String dragItemCount(int count) => count == 1 ? '1 item' : '$count itens';
+
+  @override
+  String movedToPosition(String item, int position, int count) =>
+      'Item "$item" movido para a posição $position de $count';
+
+  @override
+  String movedInto(String item, String parent, int position) =>
+      'Item "$item" movido para $parent, posição $position';
+
+  @override
+  String movedToTopLevel(String item, int position) =>
+      'Item "$item" movido para o nível superior, posição $position';
+
+  @override
+  String get indentItem => 'Aumentar recuo';
+
+  @override
+  String get outdentItem => 'Diminuir recuo';
 }
 
 /// Loads [Oito2Localizations.forLocale] synchronously for English and
