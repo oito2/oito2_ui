@@ -305,6 +305,174 @@ void main() {
       semantics.dispose();
     });
 
+    group('data table and virtual list rows', () {
+      final files = Oito2ListCollection<String>(const ['a.txt', 'b.txt']);
+
+      /// Pumps [table] in [theme] and returns the height of the
+      /// semantics node of the row of `a.txt`.
+      Future<double> rowHeight(
+        WidgetTester tester,
+        Widget Function(Oito2SelectionController selection) table, {
+        ThemeData? theme,
+      }) async {
+        final selection = Oito2SelectionController(collection: files);
+        addTearDown(selection.dispose);
+        await pumpOito2(
+          tester,
+          Center(
+            child: SizedBox(width: 400, height: 300, child: table(selection)),
+          ),
+          theme: theme,
+        );
+        return tester.getSemantics(find.text('a.txt')).rect.height;
+      }
+
+      Widget Function(Oito2SelectionController) dataTable({
+        double? rowHeight,
+      }) =>
+          (selection) => Oito2DataTable<String>(
+            collection: files,
+            controller: selection,
+            rowHeight: rowHeight,
+            columns: const [
+              Oito2TableColumn<String>(id: 'name', label: 'Name'),
+            ],
+          );
+
+      Widget Function(Oito2SelectionController) virtualList({
+        double? itemExtent,
+        bool variableHeight = false,
+      }) =>
+          (selection) => Oito2VirtualList<String>(
+            collection: files,
+            controller: selection,
+            itemExtent: itemExtent,
+            variableHeight: variableHeight,
+          );
+
+      testWidgets('data table rows are 48 pixels tall on touch', (
+        tester,
+      ) async {
+        final semantics = tester.ensureSemantics();
+        expect(
+          await rowHeight(tester, dataTable(), theme: _touchTheme),
+          greaterThanOrEqualTo(48),
+        );
+        semantics.dispose();
+      });
+
+      testWidgets('virtual list rows are 48 pixels tall on touch', (
+        tester,
+      ) async {
+        final semantics = tester.ensureSemantics();
+        expect(
+          await rowHeight(tester, virtualList(), theme: _touchTheme),
+          greaterThanOrEqualTo(48),
+        );
+        semantics.dispose();
+      });
+
+      testWidgets('variable-height list rows are 48 pixels tall on touch', (
+        tester,
+      ) async {
+        final semantics = tester.ensureSemantics();
+        expect(
+          await rowHeight(
+            tester,
+            virtualList(variableHeight: true),
+            theme: _touchTheme,
+          ),
+          greaterThanOrEqualTo(48),
+        );
+        semantics.dispose();
+      });
+
+      testWidgets('rows keep their pointer height', (tester) async {
+        final semantics = tester.ensureSemantics();
+        final row = Oito2Sizes.buttonHeight - 2;
+        expect(await rowHeight(tester, dataTable()), row);
+        expect(await rowHeight(tester, virtualList()), row);
+        expect(await rowHeight(tester, virtualList(variableHeight: true)), 30);
+        semantics.dispose();
+      });
+
+      testWidgets('an explicit row height wins on touch', (tester) async {
+        final semantics = tester.ensureSemantics();
+        expect(
+          await rowHeight(tester, dataTable(rowHeight: 36), theme: _touchTheme),
+          34,
+        );
+        expect(
+          await rowHeight(
+            tester,
+            virtualList(itemExtent: 36),
+            theme: _touchTheme,
+          ),
+          34,
+        );
+        semantics.dispose();
+      });
+    });
+
+    testWidgets('color picker sliders and fields', (tester) async {
+      await _expectTouchTargets(
+        tester,
+        Oito2ColorPicker(value: const Color(0xFF3584E4), onChanged: (_) {}),
+      );
+    });
+
+    testWidgets('floating panel window buttons', (tester) async {
+      await _expectTouchTargets(
+        tester,
+        SizedBox(
+          width: 500,
+          height: 400,
+          child: Stack(
+            children: [
+              Oito2FloatingPanel(
+                title: 'Inspector',
+                onClose: () {},
+                child: const SizedBox.expand(),
+              ),
+            ],
+          ),
+        ),
+      );
+      expect(
+        tester.getSize(find.byType(Oito2TitleBar)).height,
+        Oito2Sizes.minTouchTarget + 1,
+      );
+    });
+
+    testWidgets('floating panel keeps its pointer title bar', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpOito2(
+        tester,
+        SizedBox(
+          width: 500,
+          height: 400,
+          child: Stack(
+            children: [
+              Oito2FloatingPanel(
+                title: 'Inspector',
+                onClose: () {},
+                child: const SizedBox.expand(),
+              ),
+            ],
+          ),
+        ),
+      );
+      expect(
+        tester.getSize(find.byType(Oito2TitleBar)).height,
+        Oito2Sizes.titleBarHeight,
+      );
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Close')).rect.size,
+        const Size.square(Oito2Sizes.windowControlSize),
+      );
+      semantics.dispose();
+    });
+
     testWidgets('week schedule legend', (tester) async {
       final semantics = tester.ensureSemantics();
       await pumpOito2(

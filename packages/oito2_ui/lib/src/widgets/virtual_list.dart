@@ -97,13 +97,20 @@ class Oito2VirtualList<T> extends StatefulWidget {
   /// Called on Enter or a double click on an enabled item.
   final ValueChanged<T>? onActivate;
 
-  /// The height of every row; the theme's control height when null. With
+  /// The height of every row; the theme's control height when null, or,
+  /// where the theme pads tap targets (touch platforms), a height that
+  /// makes each row [Oito2Sizes.minTouchTarget] tall. With
   /// [variableHeight], the estimated height of the rows not built yet.
+  ///
+  /// A height set here is kept on every platform, even below the touch
+  /// target size.
   final double? itemExtent;
 
   /// Whether each row is as tall as its content, instead of [itemExtent].
   ///
-  /// Each row is then laid out as it scrolls into view, and moving the
+  /// A row is at least 30 pixels tall, or [Oito2Sizes.minTouchTarget]
+  /// where the theme pads tap targets. Each row is then laid out as it
+  /// scrolls into view, and moving the
   /// active row to one far away scrolls to an estimated position first.
   final bool variableHeight;
 
@@ -179,6 +186,9 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>> {
 
   /// The space around the rows.
   static const _padding = Oito2Spacing.xs;
+
+  /// The space above and below the tappable part of each row.
+  static const _rowGap = 1.0;
 
   @override
   void initState() {
@@ -275,8 +285,13 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>> {
   }
 
   /// The height of every row, or the estimate of a row of variable
-  /// height.
-  double get _extent => widget.itemExtent ?? controlHeightOf(context);
+  /// height: [Oito2VirtualList.itemExtent], or a row of the touch target
+  /// size where the theme pads tap targets, or the control height.
+  double get _extent =>
+      widget.itemExtent ??
+      (padsTapTargets(context)
+          ? Oito2Sizes.minTouchTarget + 2 * _rowGap
+          : controlHeightOf(context));
 
   /// The height of the [Oito2VirtualList.header], or 0.
   double get _headerHeight {
@@ -524,7 +539,7 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>> {
           overflow: widget.variableHeight ? null : TextOverflow.ellipsis,
         );
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1),
+      padding: const EdgeInsets.symmetric(vertical: _rowGap),
       child: Semantics(
         container: true,
         selected: selected,
@@ -545,7 +560,11 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>> {
           canRequestFocus: false,
           borderRadius: Oito2Radius.smallAll,
           child: Container(
-            constraints: const BoxConstraints(minHeight: 30),
+            constraints: BoxConstraints(
+              minHeight: padsTapTargets(context)
+                  ? Oito2Sizes.minTouchTarget
+                  : 30,
+            ),
             padding: const EdgeInsets.symmetric(
               horizontal: Oito2Spacing.sm,
               vertical: Oito2Spacing.xxs,

@@ -49,14 +49,10 @@ const _touchTargetExceptions = {
   'carousel': '$_touchDense The page dots are 24 px.',
   'color-disk': '$_touchDense The color swatches are 28 px.',
   'color-picker':
-      '$_touchDense The color swatches are 28 px, beside compact channel '
-      'sliders.',
+      '$_touchDense Only the swatch grid: the color swatches are 28 px.',
   'page-indicator': '$_touchDense The page dots are 24 px.',
   'week-schedule-grid':
       '$_touchDense The hour cells are 30 by 28 px in a 24-column week.',
-  'floating-panel':
-      'The window buttons of the title bar keep the 24-px desktop window '
-      'control size inside the 46-px title bar.',
 };
 
 /// Checks the text contrast, unless [slug] is in [_contrastExceptions],

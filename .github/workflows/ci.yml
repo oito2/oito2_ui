@@ -145,6 +145,35 @@ jobs:
       - name: Build Linux
         working-directory: example
         run: flutter build linux --debug
+      # The NDK version Flutter's Gradle plugin asks for (flutter.ndkVersion).
+      # It is cached and installed ahead of Gradle with retries, because the
+      # runner image doesn't ship it and a download sometimes arrives broken.
+      - name: Locate the Android NDK
+        run: |
+          echo "ANDROID_NDK_VERSION=28.2.13676358" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_DIR=$ANDROID_HOME/ndk/28.2.13676358" >> "$GITHUB_ENV"
+      - name: Cache the Android NDK
+        id: ndk-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.ANDROID_NDK_DIR }}
+          key: android-ndk-${{ runner.os }}-${{ env.ANDROID_NDK_VERSION }}
+      - name: Install the Android NDK
+        if: steps.ndk-cache.outputs.cache-hit != 'true'
+        run: |
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          for attempt in 1 2 3; do
+            status=0
+            yes | "$sdkmanager" --install "ndk;$ANDROID_NDK_VERSION" >/dev/null \
+              || status=${PIPESTATUS[1]}
+            if [ "$status" -eq 0 ] && [ -f "$ANDROID_NDK_DIR/source.properties" ]; then
+              exit 0
+            fi
+            echo "NDK install attempt $attempt failed; retrying."
+            rm -rf "$ANDROID_NDK_DIR"
+            sleep 15
+          done
+          exit 1
       - name: Build Android
         working-directory: example
         run: flutter build apk --debug

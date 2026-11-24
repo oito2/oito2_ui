@@ -21,6 +21,7 @@ import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'controls.dart';
 import 'popover.dart';
+import 'touch_target.dart';
 import 'utilities.dart';
 import 'widget_helpers.dart';
 
@@ -429,7 +430,7 @@ class _ChannelSlider extends StatelessWidget {
     final rtl = Directionality.of(context) == TextDirection.rtl;
     void by(double delta) => onChanged((value + delta).clamp(0.0, 1.0));
     final (:back, :forward) = readingArrowsOf(context);
-    return Semantics(
+    final slider = Semantics(
       slider: true,
       label: label,
       value: format(value),
@@ -482,6 +483,7 @@ class _ChannelSlider extends StatelessWidget {
         ),
       ),
     );
+    return Oito2TouchTarget(mergeSemantics: true, child: slider);
   }
 }
 
@@ -748,20 +750,22 @@ class _CommitFieldState extends State<_CommitField> {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      label: widget.semanticLabel,
-      child: TextField(
-        controller: _controller,
-        focusNode: _focusNode,
-        keyboardType: widget.numeric ? TextInputType.number : null,
-        inputFormatters: [
-          if (widget.numeric) FilteringTextInputFormatter.digitsOnly,
-        ],
-        onSubmitted: (_) => _commit(),
-        decoration: InputDecoration(
-          prefixText: '${widget.label} ',
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: Oito2Spacing.sm,
+    return Oito2TouchTarget(
+      child: Semantics(
+        label: widget.semanticLabel,
+        child: TextField(
+          controller: _controller,
+          focusNode: _focusNode,
+          keyboardType: widget.numeric ? TextInputType.number : null,
+          inputFormatters: [
+            if (widget.numeric) FilteringTextInputFormatter.digitsOnly,
+          ],
+          onSubmitted: (_) => _commit(),
+          decoration: InputDecoration(
+            prefixText: '${widget.label} ',
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: Oito2Spacing.sm,
+            ),
           ),
         ),
       ),

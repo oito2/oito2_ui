@@ -237,6 +237,44 @@ void main() {
       );
     });
 
+    for (final (name, platform, height, button) in [
+      ('touch', _android, Oito2Sizes.minTouchTarget + 1, 48.0),
+      ('pointer', _linux, Oito2Sizes.titleBarHeight, 24.0),
+    ]) {
+      testWidgets('preferredSizeOf fits the laid-out bar on $name', (
+        tester,
+      ) async {
+        final semantics = tester.ensureSemantics();
+        late Size preferred;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: Oito2Theme.light(platform: platform),
+            home: Builder(
+              builder: (context) {
+                preferred = Oito2TitleBar.preferredSizeOf(context);
+                return Scaffold(
+                  appBar: PreferredSize(
+                    preferredSize: preferred,
+                    child: Oito2TitleBar(
+                      title: const Text('Files'),
+                      controller: FakeWindowController(),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+        expect(preferred.height, height);
+        expect(tester.getSize(find.byType(Oito2TitleBar)).height, height);
+        expect(
+          tester.getSemantics(find.bySemanticsLabel('Close')).rect.size,
+          Size.square(button),
+        );
+        semantics.dispose();
+      });
+    }
+
     testWidgets('dims its content while the window is inactive', (
       tester,
     ) async {

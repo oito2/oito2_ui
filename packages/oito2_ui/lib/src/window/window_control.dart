@@ -13,11 +13,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:math' as math;
+
 import 'package:material_ui/material_ui.dart';
 
 import '../foundation/window_button_layout.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
+import '../widgets/widget_helpers.dart';
 
 /// The action and glyph of a window control button.
 enum Oito2WindowControlType {
@@ -91,6 +94,11 @@ class Oito2WindowControlLabels {
 ///
 /// The button stays out of keyboard focus traversal, as native window
 /// buttons do, and exposes its [label] to assistive technologies.
+///
+/// Where the theme pads tap targets (touch platforms), the button takes a
+/// box of at least [Oito2Sizes.minTouchTarget] on each axis, with its
+/// shape drawn at the same size in the middle, and the whole box takes
+/// taps.
 class Oito2WindowControl extends StatefulWidget {
   /// Creates a window control button.
   const Oito2WindowControl({
@@ -126,8 +134,9 @@ class Oito2WindowControl extends StatefulWidget {
   /// Whether the window is active; inactive macOS buttons turn grey.
   final bool isActive;
 
-  /// Returns the width this button takes for [style]; every style has a
-  /// fixed width, so [height] doesn't change it.
+  /// Returns the width this button takes for [style] where the theme
+  /// doesn't pad tap targets; every style has a fixed width, so [height]
+  /// doesn't change it.
   static double widthFor(Oito2WindowControlStyle style, double height) {
     return switch (style) {
       Oito2WindowControlStyle.windows => Oito2Sizes.windowsWindowControlWidth,
@@ -233,6 +242,8 @@ class _Oito2WindowControlState extends State<Oito2WindowControl> {
         ? const Size.square(12)
         : const Size.square(Oito2Sizes.windowControlSize);
     final glyphSize = isWindows ? 10.0 : (isMac ? 6.0 : 8.0);
+    // The smallest side of the tappable box.
+    final minSide = padsTapTargets(context) ? Oito2Sizes.minTouchTarget : 0.0;
     final label =
         widget.label ?? Oito2WindowControlLabels.resolve(context, widget.type);
 
@@ -258,8 +269,14 @@ class _Oito2WindowControlState extends State<Oito2WindowControl> {
           onTapUp: (_) => setState(() => _pressed = false),
           onTap: widget.onPressed,
           child: SizedBox(
-            width: Oito2WindowControl.widthFor(widget.style, widget.height),
-            height: isWindows ? widget.height : Oito2Sizes.windowControlSize,
+            width: math.max(
+              Oito2WindowControl.widthFor(widget.style, widget.height),
+              minSide,
+            ),
+            height: math.max(
+              isWindows ? widget.height : Oito2Sizes.windowControlSize,
+              minSide,
+            ),
             child: Center(
               child: Container(
                 width: buttonSize.width,

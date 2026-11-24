@@ -97,7 +97,12 @@ class Oito2DataTable<T> extends StatefulWidget {
   final ValueChanged<T>? onActivate;
 
   /// The height of the rows and the header; the theme's control height
-  /// when null.
+  /// when null, except that, where the theme pads tap targets (touch
+  /// platforms), the rows are then [Oito2Sizes.minTouchTarget] tall, as
+  /// in an [Oito2VirtualList].
+  ///
+  /// A height set here is kept on every platform, even below the touch
+  /// target size.
   final double? rowHeight;
 
   /// How far beyond the visible area rows are built ahead of scrolling.
@@ -255,7 +260,7 @@ class _Oito2DataTableState<T> extends State<Oito2DataTable<T>> {
           controller: widget.controller,
           itemBuilder: (context, item, selected) => _cells(context, item),
           onActivate: widget.onActivate,
-          itemExtent: height,
+          itemExtent: widget.rowHeight,
           cacheExtent: widget.cacheExtent,
           onReachEnd: widget.onReachEnd,
           asyncController: widget.asyncController,

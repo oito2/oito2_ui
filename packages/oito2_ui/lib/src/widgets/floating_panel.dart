@@ -132,7 +132,9 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
   /// The latest global position of that pointer.
   Offset _pointer = Offset.zero;
 
-  static const double _barHeight = Oito2Sizes.titleBarHeight;
+  /// The height of the title bar, taller where the theme pads tap targets
+  /// to fit 48-pixel window buttons above its 1-pixel border.
+  double _barHeight = Oito2Sizes.titleBarHeight;
 
   @override
   void dispose() {
@@ -245,6 +247,10 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final touch = padsTapTargets(context);
+    _barHeight = touch
+        ? Oito2Sizes.minTouchTarget + 1
+        : Oito2Sizes.titleBarHeight;
     return Positioned.fill(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -282,6 +288,7 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
                   controller: _window,
                   onClose: widget.onClose,
                   controlStyle: widget.controlStyle,
+                  height: touch ? _barHeight : null,
                   buttonLayout: Oito2WindowButtonLayout(
                     trailing: [
                       Oito2WindowButton.minimize,

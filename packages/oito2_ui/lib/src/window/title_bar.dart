@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:math' as math;
+
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
@@ -20,6 +22,7 @@ import '../foundation/platform_info.dart';
 import '../foundation/system_settings.dart';
 import '../foundation/window_button_layout.dart';
 import '../tokens/geometry.dart';
+import '../widgets/widget_helpers.dart';
 import 'title_bar_gesture_detector.dart';
 import 'title_bar_theme.dart';
 import 'window_control.dart';
@@ -115,11 +118,17 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
   /// The bar height; defaults to the [Oito2TitleBarThemeData] height, then
   /// [Oito2Sizes.titleBarHeight].
   ///
+  /// Where the theme pads tap targets (touch platforms) and the bar shows
+  /// window buttons, the default grows to fit the
+  /// [Oito2Sizes.minTouchTarget] buttons above the bottom border; a
+  /// height set here is kept.
+  ///
   /// [preferredSize] has no context to read the theme from, so a
   /// [Scaffold] gives the bar [Oito2Sizes.titleBarHeight] unless [height]
   /// is set, and reserves it even when only the theme hides the bar. To
-  /// follow a themed height or style there, wrap the bar in a
-  /// [PreferredSize] sized by [preferredSizeOf].
+  /// follow a themed height or style there, or the taller bar of touch
+  /// platforms, wrap the bar in a [PreferredSize] sized by
+  /// [preferredSizeOf].
   final double? height;
 
   /// Whether dragging the bar moves the window.
@@ -130,6 +139,12 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
   /// moves the window like the rest of the bar.
   final bool interactiveTitle;
 
+  /// The size of the bar without reading the theme: zero tall when
+  /// [style] is hidden, otherwise [height] or [Oito2Sizes.titleBarHeight].
+  ///
+  /// It doesn't follow the themed height or style, nor the taller bar
+  /// where the theme pads tap targets (touch platforms); use
+  /// [preferredSizeOf] there.
   @override
   Size get preferredSize => Size.fromHeight(
     style == Oito2TitleBarStyle.hidden
@@ -137,21 +152,45 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
         : height ?? Oito2Sizes.titleBarHeight,
   );
 
-  /// Returns the size of a title bar with [style] and [height] in
-  /// [context]'s theme: zero tall when hidden, otherwise [height], the
-  /// theme height or [Oito2Sizes.titleBarHeight].
+  /// Returns the size of a title bar with [style], [height] and the
+  /// bottom [border] in [context]'s theme, as the bar lays itself out when
+  /// it shows window buttons: zero tall when hidden, otherwise [height],
+  /// or the theme height or [Oito2Sizes.titleBarHeight], grown where the
+  /// theme pads tap targets (touch platforms) to fit
+  /// [Oito2Sizes.minTouchTarget] buttons above the border.
   static Size preferredSizeOf(
     BuildContext context, {
     Oito2TitleBarStyle? style,
     double? height,
+    BorderSide? border,
   }) {
     final barTheme = Oito2TitleBarThemeData.of(context);
     if ((style ?? barTheme.style) == Oito2TitleBarStyle.hidden) {
       return const Size.fromHeight(0);
     }
     return Size.fromHeight(
-      height ?? barTheme.height ?? Oito2Sizes.titleBarHeight,
+      _heightOf(
+        barTheme,
+        height: height,
+        touchControls: padsTapTargets(context),
+        border: border ?? barTheme.border ?? const BorderSide(),
+      ),
     );
+  }
+
+  /// Returns the bar height: [height] when set, otherwise the height of
+  /// [barTheme] or [Oito2Sizes.titleBarHeight], grown with [touchControls]
+  /// to fit [Oito2Sizes.minTouchTarget] window buttons above [border].
+  static double _heightOf(
+    Oito2TitleBarThemeData barTheme, {
+    required double? height,
+    required bool touchControls,
+    required BorderSide border,
+  }) {
+    if (height != null) return height;
+    final base = barTheme.height ?? Oito2Sizes.titleBarHeight;
+    if (!touchControls) return base;
+    return math.max(base, Oito2Sizes.minTouchTarget + border.width);
   }
 
   @override
@@ -176,7 +215,6 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
       return const SizedBox.shrink();
     }
 
-    final barHeight = height ?? barTheme.height ?? Oito2Sizes.titleBarHeight;
     final background =
         backgroundColor ??
         barTheme.backgroundColor ??
@@ -200,6 +238,18 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
     final showControls =
         resolvedStyle == Oito2TitleBarStyle.normal &&
         controlStyle != Oito2WindowControlStyle.none;
+    // Touch window buttons are 48 pixels square, without gaps between
+    // them, in a bar tall enough for them above the border.
+    final touchControls =
+        showControls &&
+        (buttonLayout.leading.isNotEmpty || buttonLayout.trailing.isNotEmpty) &&
+        padsTapTargets(context);
+    final barHeight = _heightOf(
+      barTheme,
+      height: height,
+      touchControls: touchControls,
+      border: bottomBorder,
+    );
 
     Widget control(Oito2WindowButton button) {
       final type = switch (button) {
@@ -228,6 +278,7 @@ class Oito2TitleBar extends StatelessWidget implements PreferredSizeWidget {
 
     final isWindows = controlStyle == Oito2WindowControlStyle.windows;
     final gap = switch (controlStyle) {
+      _ when touchControls => 0.0,
       Oito2WindowControlStyle.windows || Oito2WindowControlStyle.macos => 0.0,
       _ => Oito2Spacing.sm,
     };
@@ -519,6 +570,11 @@ class Oito2DialogTitleBar extends StatelessWidget
   /// comes from [Oito2Localizations].
   final Oito2WindowControlLabels? labels;
 
+  /// The size of the bar on pointer platforms.
+  ///
+  /// Where the theme pads tap targets (touch platforms), the bar grows to
+  /// fit a 48-pixel close button; size a [PreferredSize] around it with
+  /// [Oito2TitleBar.preferredSizeOf] and [BorderSide.none] there.
   @override
   Size get preferredSize => const Size.fromHeight(Oito2Sizes.titleBarHeight);
 
