@@ -181,6 +181,12 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2TreeView.rowDropTargetBuilder` and `dropHighlight`: wrap each row in the app's own drop target, such as a `DragTarget` or a file drop target, and mark the row it hovers with the frame of a drop into a branch.
 - `Oito2ListBox.onReorder`, `Oito2VirtualList.onReorder` and `Oito2DataTable.onReorder`: reordering by dragging a row (a mouse after a few pixels, a touch after a long press), or only a grip at its start with `dragHandle` on the list box and the virtual list, with a drop line, auto-scroll and Escape to cancel; Alt+Up and Alt+Down move the active row, also offered as "Move up" and "Move down" accessibility actions, with the new position announced. `to` is the index the item ends at once taken out of its place.
 - `Oito2Localizations.dragToReorder`, `cantDropHere`, `dragItemCount`, `movedToPosition`, `movedInto`, `movedToTopLevel`, `indentItem` and `outdentItem`.
+- `Oito2DataTable.hiddenColumns` and `onHiddenColumnsChanged`: a secondary click or a long press on a header, or the menu key or Shift+F10 on a focused header, opens a column menu with a check box per column; at least one column stays shown, and `Oito2TableColumn.hideable: false` keeps a column from being hidden. Hidden columns don't show or take width.
+- `Oito2DataTable.columnOrder` and `onColumnsReordered`: dragging a header with a mouse (not from its resize handle) moves its column, with a drop line between headers and sideways auto-scroll; Alt+Left and Alt+Right on a focused header (by the screen, right to left included), the "Move column left" and "Move column right" menu items and accessibility actions move it too, with the new position announced. Every header takes the focus and shows the grab cursor while columns can be moved or hidden. Escape cancels a column drag.
+- `Oito2DataTable.onResetColumns` and `Oito2TreeView.onResetColumns`: a "Reset columns" item in the header menu, shown only when set; the app puts back its own default hidden columns and order.
+- `Oito2TreeView.hiddenColumns`, `onHiddenColumnsChanged`, `columnOrder` and `onColumnsReordered`: the tree grid's other columns hide and move as in `Oito2DataTable`; the first column always shows first and its id is ignored in both.
+- `Oito2DataTable.pinnedColumns` and `Oito2TreeView.pinnedColumns`: the first shown columns stay in place while the others scroll sideways, header included, with a divider after them once scrolled; pinned columns move only among themselves.
+- `Oito2Localizations.moveColumnLeft`, `moveColumnRight`, `movedColumn` and `resetColumns`.
 
 ### Changed
 
@@ -228,6 +234,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- `Oito2DataTable` and `Oito2TreeView` columns: a touch drag of a resize handle in a table or tree grid that scrolls sideways resizes by the whole movement, instead of losing the first touch-slop pixels while the sideways scroll competed for the drag.
 - `Oito2TreeView`: the focus border of the active row is drawn over the row, so in a tree grid it no longer takes room from the cells and overflows the row.
 - Selected list tiles (and `Oito2MasterTile`) keep their text and icon at the text contrast target over the primary-tinted fill on every surface; the light sidebar fell to 3.9:1.
 - `Oito2SplitButton` and `Oito2OptionButton`: assistive technologies read the label on the button itself instead of on an unlabeled button inside a labeled group.

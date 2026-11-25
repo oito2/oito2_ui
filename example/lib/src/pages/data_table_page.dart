@@ -89,12 +89,25 @@ class _DataTablePageState extends State<DataTablePage> {
       _sort = sort;
       _rows = _collectionOf(sorted);
       _selection.collection = _rows;
+      _columnsSelection.collection = _rows;
     });
   }
   // #endregion
 
+  // #region columns-state
+  late final _columnsSelection = Oito2SelectionController(collection: _rows);
+
+  /// The columns the user hid and the order they put them in.
+  Set<String> _hidden = const {};
+  List<String>? _order;
+
+  /// Whether the first column stays in place while the others scroll.
+  bool _pinFirst = true;
+  // #endregion
+
   @override
   void dispose() {
+    _columnsSelection.dispose();
     _selection.dispose();
     super.dispose();
   }
@@ -113,7 +126,8 @@ class _DataTablePageState extends State<DataTablePage> {
       title: 'Data Table',
       description:
           'A table that builds only the rows in view, with a sticky header '
-          'and sortable, resizable columns.',
+          'and sortable, resizable columns that the user can hide and move, '
+          'with pinned columns.',
       source: 'lib/src/pages/data_table_page.dart',
       children: [
         ExamplePanel(
@@ -198,7 +212,102 @@ class _DataTablePageState extends State<DataTablePage> {
           'width. Columns wider than the table scroll sideways, header '
           'included.',
         ),
+        const DocText(
+          'To let the user choose the columns, keep `hiddenColumns` and '
+          '`columnOrder` (column ids) in the app and update them from '
+          '`onHiddenColumnsChanged` and `onColumnsReordered`. The header '
+          'menu then shows or hides each column (at least one stays, and a '
+          'column with `hideable: false` never hides), and dragging a header '
+          'with the mouse moves its column (Escape cancels the drag). With '
+          '`onResetColumns`, the menu also has "Reset columns", where the '
+          'app puts back its own defaults. `pinnedColumns` keeps the first '
+          'shown columns in place while the others scroll sideways; pinned '
+          'columns move only among themselves. `Oito2TreeView` takes '
+          '`pinnedColumns` too.',
+        ),
         const DocCode("import 'package:oito2_ui/oito2_ui.dart';"),
+        const DocHeading('Examples'),
+        const DocHeading('Customize columns', level: 3),
+        const DocText(
+          'Right-click a header (or long-press it, or press the menu key or '
+          'Shift+F10 on it) to show or hide columns, or reset them; Status '
+          'always shows. '
+          'Drag a header with the mouse, or press Alt with Left or Right on '
+          'it, to move its column. The first column stays in place while the '
+          'others scroll sideways.',
+        ),
+        ExamplePanel(
+          regions: const ['columns-state', 'columns-preview'],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Oito2SwitchButton(
+                value: _pinFirst,
+                onChanged: (value) => setState(() => _pinFirst = value),
+                title: const Text('Pin the first column'),
+              ),
+              Container(
+                height: 300,
+                constraints: const BoxConstraints(maxWidth: 440),
+                decoration: BoxDecoration(
+                  border: Border.all(color: scheme.outlineVariant),
+                  borderRadius: Oito2Radius.mediumAll,
+                ),
+                // #region columns-preview
+                child: Oito2DataTable<_Transfer>(
+                  collection: _rows,
+                  controller: _columnsSelection,
+                  semanticLabel: 'Transfers with chosen columns',
+                  sort: _sort,
+                  onSortChanged: _setSort,
+                  hiddenColumns: _hidden,
+                  onHiddenColumnsChanged: (hidden) =>
+                      setState(() => _hidden = hidden),
+                  columnOrder: _order,
+                  onColumnsReordered: (order) => setState(() => _order = order),
+                  onResetColumns: () => setState(() {
+                    _hidden = const {};
+                    _order = null;
+                  }),
+                  pinnedColumns: _pinFirst ? 1 : 0,
+                  columns: [
+                    const Oito2TableColumn(
+                      id: 'name',
+                      label: 'Name',
+                      width: Oito2ColumnWidth.fixed(160),
+                      sortable: true,
+                    ),
+                    Oito2TableColumn(
+                      id: 'size',
+                      label: 'Size',
+                      width: const Oito2ColumnWidth.fixed(96),
+                      alignment: AlignmentDirectional.centerEnd,
+                      sortable: true,
+                      cellBuilder: (context, t) => Text(format.bytes(t.size)),
+                    ),
+                    Oito2TableColumn(
+                      id: 'progress',
+                      label: 'Progress',
+                      width: const Oito2ColumnWidth.fixed(140),
+                      cellBuilder: (context, t) => Oito2LinearProgressIndicator(
+                        value: t.progress,
+                        semanticsLabel: t.name,
+                      ),
+                    ),
+                    Oito2TableColumn(
+                      id: 'status',
+                      label: 'Status',
+                      width: const Oito2ColumnWidth.fixed(110),
+                      hideable: false,
+                      cellBuilder: (context, t) => Text(t.status),
+                    ),
+                  ],
+                ),
+                // #endregion
+              ),
+            ],
+          ),
+        ),
         const DocHeading('Accessibility'),
         const DocText(
           'The table is a semantics container labeled by `semanticLabel`. '
@@ -207,7 +316,9 @@ class _DataTablePageState extends State<DataTablePage> {
           'Each row reads as one item labeled by its cell texts in column '
           'order, or by `rowLabel`, with its position among the rows and its '
           'selection state. Resize handles are sliders that the arrow keys '
-          'move.',
+          'move. When the columns can move, each header has the "Move column '
+          'left" and "Move column right" actions, and a move announces the '
+          'new position, such as "Moved column Size to position 2 of 4".',
         ),
         const DocHeading('Keyboard', level: 3),
         const DocTable(
@@ -215,10 +326,21 @@ class _DataTablePageState extends State<DataTablePage> {
           rows: [
             [
               '`Tab`',
-              'Moves through the sortable headers and resize handles, then '
+              'Moves through the sortable headers (every header when the '
+                  'columns can be hidden or moved) and resize handles, then '
                   'the rows.',
             ],
             ['`Enter` / `Space` on a header', 'Sorts by that column.'],
+            [
+              '`Menu` / `Shift+F10` on a header',
+              'Opens the column menu, with `onHiddenColumnsChanged` or '
+                  '`onColumnsReordered`.',
+            ],
+            [
+              '`Alt+Left` / `Alt+Right` on a header',
+              'Moves the column left or right, with `onColumnsReordered`.',
+            ],
+            ['`Escape`', 'Cancels a column drag in progress.'],
             [
               '`Left arrow` / `Right arrow` on a handle',
               'Narrows or widens the column.',

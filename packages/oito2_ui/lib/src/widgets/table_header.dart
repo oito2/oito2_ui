@@ -15,6 +15,8 @@
 
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart' show DragStartBehavior;
+import 'package:flutter/semantics.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -24,6 +26,7 @@ import '../tokens/geometry.dart';
 import 'resize_handle.dart';
 import 'table_column.dart';
 import 'touch_target.dart';
+import 'utilities.dart';
 import 'widget_helpers.dart';
 
 /// Returns the padding of the cell in the column at [index] of a widget
@@ -92,9 +95,145 @@ class TableColumnWidths {
   }
 }
 
+/// Returns how far [scroll], the sideways scroll of a widget with table
+/// columns, has moved from its start, never less than zero; zero when it
+/// isn't attached.
+double tableScrollOffset(ScrollController? scroll) {
+  if (scroll == null || !scroll.hasClients) return 0;
+  final position = scroll.position;
+  if (!position.hasPixels) return 0;
+  return math.max(0, position.pixels);
+}
+
+/// Returns whether [scroll] moves its content toward the start as its
+/// offset grows, as a sideways scroll does in a right-to-left layout.
+bool _reversed(ScrollController scroll) =>
+    scroll.hasClients && axisDirectionIsReversed(scroll.position.axisDirection);
+
+/// Lays out the [cells] of a row of a widget with table columns side by
+/// side. The first [pinned] cells, at most all but the last one, stay in
+/// place while [scroll], the sideways scroll the row is in, moves the
+/// others, which are clipped where they pass under the pinned cells; a
+/// divider marks the end of the pinned cells once the row has scrolled.
+class TableCellsRow extends StatelessWidget {
+  /// Creates a row of table cells.
+  const TableCellsRow({
+    super.key,
+    required this.cells,
+    this.pinned = 0,
+    this.scroll,
+  });
+
+  /// The cells, each sized to the width of its column.
+  final List<Widget> cells;
+
+  /// How many cells at the start stay in place.
+  final int pinned;
+
+  /// The sideways scroll the row is in; nothing stays in place when null.
+  final ScrollController? scroll;
+
+  @override
+  Widget build(BuildContext context) {
+    final scroll = this.scroll;
+    final count = math.min(pinned, cells.length - 1);
+    if (count <= 0 || scroll == null) return Row(children: cells);
+    return Row(
+      children: [
+        _PinnedCells(
+          scroll: scroll,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: cells.sublist(0, count),
+          ),
+        ),
+        ClipRect(
+          clipper: _ScrolledCellsClipper(scroll),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: cells.sublist(count),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Moves [child], the pinned cells of a row, against the sideways [scroll]
+/// so that they stay in place, with a divider at their end once the row
+/// has scrolled.
+class _PinnedCells extends StatelessWidget {
+  const _PinnedCells({required this.scroll, required this.child});
+
+  final ScrollController scroll;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.outlineVariant;
+    return ListenableBuilder(
+      listenable: scroll,
+      child: child,
+      builder: (context, child) {
+        final offset = tableScrollOffset(scroll);
+        return Transform.translate(
+          offset: Offset(_reversed(scroll) ? -offset : offset, 0),
+          child: DecoratedBox(
+            position: DecorationPosition.foreground,
+            decoration: BoxDecoration(
+              border: offset > 0
+                  ? BorderDirectional(end: BorderSide(color: color))
+                  : null,
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Clips the scrolling cells of a row where they pass under the pinned
+/// cells, which [scroll] has moved by its offset.
+class _ScrolledCellsClipper extends CustomClipper<Rect> {
+  _ScrolledCellsClipper(this.scroll) : super(reclip: scroll);
+
+  final ScrollController scroll;
+
+  @override
+  Rect getClip(Size size) {
+    final offset = math.min(tableScrollOffset(scroll), size.width);
+    // Focus rings and the like may paint a little outside the cells.
+    final margin = size.height;
+    // Unscrolled, nothing is cut; otherwise the start side is cut by the
+    // offset.
+    final cut = offset > 0 ? offset : -margin;
+    return _reversed(scroll)
+        ? Rect.fromLTRB(
+            -margin,
+            -margin,
+            size.width - cut,
+            size.height + margin,
+          )
+        : Rect.fromLTRB(
+            cut,
+            -margin,
+            size.width + margin,
+            size.height + margin,
+          );
+  }
+
+  @override
+  bool shouldReclip(_ScrolledCellsClipper oldClipper) =>
+      oldClipper.scroll != scroll;
+}
+
 /// The header row of a widget with table columns: the label of each
 /// column, a resize handle at the end of each resizable one and, on
 /// sortable ones, a sort button with an arrow for the current [sort].
+///
+/// The first [pinned] columns stay in place while [scroll] moves the
+/// others, as in a [TableCellsRow].
 class TableHeader<R> extends StatelessWidget {
   /// Creates a table header.
   const TableHeader({
@@ -108,6 +247,14 @@ class TableHeader<R> extends StatelessWidget {
     required this.onResizeEnd,
     this.sort,
     this.onSort,
+    this.pinned = 0,
+    this.scroll,
+    this.focusable = false,
+    this.labelCursorOf,
+    this.actionsOf,
+    this.wrapCell,
+    this.dropGap,
+    this.keyOf,
   });
 
   /// The columns.
@@ -141,6 +288,41 @@ class TableHeader<R> extends StatelessWidget {
   /// activated; sortable headers aren't buttons when null.
   final ValueChanged<int>? onSort;
 
+  /// How many columns at the start stay in place while [scroll] moves.
+  final int pinned;
+
+  /// The sideways scroll the header is in.
+  final ScrollController? scroll;
+
+  /// Whether the labels that aren't sort buttons take the keyboard focus,
+  /// with a focus ring.
+  final bool focusable;
+
+  /// Returns the mouse cursor over the label of the column at an index,
+  /// instead of the click cursor of sort buttons and the default one of
+  /// the others; those cursors when it, or the function, is null.
+  final MouseCursor? Function(int index)? labelCursorOf;
+
+  /// Returns the accessibility actions of the label of the column at an
+  /// index.
+  final Map<CustomSemanticsAction, VoidCallback>? Function(int index)?
+  actionsOf;
+
+  /// Wraps the content of the header cell of the column at an index, its
+  /// label in its padding, such as to add gestures, keys or a menu; the
+  /// resize handle stays outside it.
+  final Widget Function(BuildContext context, int index, Widget content)?
+  wrapCell;
+
+  /// The gap between columns where a dragged column would drop, from 0
+  /// before the first column to the column count after the last one,
+  /// marked by a line; no line when null.
+  final int? dropGap;
+
+  /// Returns the key of the header cell of the column at an index; the
+  /// column id as a [ValueKey] when null.
+  final Key Function(int index)? keyOf;
+
   /// Returns the accessibility value of the header of [column]: its sort
   /// direction, or that it isn't sorted.
   String _sortValue(Oito2Localizations strings, Oito2TableColumn<R> column) {
@@ -160,41 +342,72 @@ class TableHeader<R> extends StatelessWidget {
     final sortable = column.sortable && onSort != null;
     final sorted = sort?.column == column.id ? sort!.direction : null;
     final end = column.alignment.resolve(Directionality.of(context)).x > 0;
+    final actions = actionsOf?.call(index);
     final text = Text(
       column.label,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     );
-    Widget label = !sortable
-        ? Semantics(header: true, child: text)
-        : Semantics(
-            header: true,
-            button: true,
-            label: column.label,
-            value: _sortValue(strings, column),
-            onTap: () => onSort(index),
-            excludeSemantics: true,
-            child: InkWell(
-              mouseCursor: WidgetStateMouseCursor.clickable,
-              borderRadius: Oito2Radius.smallAll,
-              onTap: () => onSort(index),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: Oito2Spacing.xxs,
-                children: [
-                  if (end && sorted != null) _arrow(sorted),
-                  Flexible(child: text),
-                  if (!end && sorted != null) _arrow(sorted),
-                ],
-              ),
-            ),
-          );
+    Widget label;
+    if (!sortable) {
+      label = Semantics(
+        header: true,
+        customSemanticsActions: actions,
+        child: text,
+      );
+      final cursor = labelCursorOf?.call(index);
+      if (cursor != null) label = MouseRegion(cursor: cursor, child: label);
+      if (focusable) {
+        label = Oito2FocusBorder(
+          borderRadius: Oito2Radius.smallAll,
+          child: Focus(child: label),
+        );
+      }
+    } else {
+      label = Semantics(
+        header: true,
+        button: true,
+        label: column.label,
+        value: _sortValue(strings, column),
+        onTap: () => onSort(index),
+        customSemanticsActions: actions,
+        excludeSemantics: true,
+        child: InkWell(
+          mouseCursor:
+              labelCursorOf?.call(index) ?? WidgetStateMouseCursor.clickable,
+          borderRadius: Oito2Radius.smallAll,
+          onTap: () => onSort(index),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: Oito2Spacing.xxs,
+            children: [
+              if (end && sorted != null) _arrow(sorted),
+              Flexible(child: text),
+              if (!end && sorted != null) _arrow(sorted),
+            ],
+          ),
+        ),
+      );
+    }
     final tooltip = column.tooltip;
     if (tooltip != null) label = Tooltip(message: tooltip, child: label);
     if (sortable) {
       label = Oito2TouchTarget(mergeSemantics: true, child: label);
     }
     return label;
+  }
+
+  /// Builds the content of the header cell of the column at [index]: its
+  /// label in its padding, wrapped by [wrapCell].
+  Widget _cell(BuildContext context, int index) {
+    final cell = Padding(
+      padding: tableCellPadding(index),
+      child: Align(
+        alignment: columns[index].alignment,
+        child: _label(context, index),
+      ),
+    );
+    return wrapCell?.call(context, index, cell) ?? cell;
   }
 
   /// The arrow of a column sorted in [direction].
@@ -205,12 +418,30 @@ class TableHeader<R> extends StatelessWidget {
     size: 14,
   );
 
+  /// The line that marks a column drop at the [end] or the start edge of a
+  /// header cell.
+  Widget _dropLine(BuildContext context, {required bool end}) =>
+      PositionedDirectional(
+        top: 0,
+        bottom: 0,
+        start: end ? null : 0,
+        end: end ? 0 : null,
+        width: 2,
+        child: IgnorePointer(
+          child: ColoredBox(
+            key: const ValueKey('oito2-column-drop-line'),
+            color: semanticColorsOf(context).primaryText,
+          ),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final strings = Oito2Localizations.of(context);
     final rtl = Directionality.of(context) == TextDirection.rtl;
+    final dropGap = this.dropGap;
     const step = 8.0;
     return Container(
       // The 1-pixel bottom border sits below the 48-pixel sort buttons.
@@ -228,22 +459,17 @@ class TableHeader<R> extends StatelessWidget {
           style: theme.textTheme.labelMedium?.copyWith(
             color: scheme.onSurfaceVariant,
           ),
-          child: Row(
-            children: [
+          child: TableCellsRow(
+            pinned: pinned,
+            scroll: scroll,
+            cells: [
               for (var i = 0; i < columns.length; i++)
                 SizedBox(
+                  key: keyOf?.call(i) ?? ValueKey(columns[i].id),
                   width: widths[i],
                   child: Stack(
                     children: [
-                      Positioned.fill(
-                        child: Padding(
-                          padding: tableCellPadding(i),
-                          child: Align(
-                            alignment: columns[i].alignment,
-                            child: _label(context, i),
-                          ),
-                        ),
-                      ),
+                      Positioned.fill(child: _cell(context, i)),
                       if (columns[i].resizable)
                         PositionedDirectional(
                           top: 0,
@@ -251,6 +477,10 @@ class TableHeader<R> extends StatelessWidget {
                           end: 0,
                           child: ResizeHandle(
                             axis: Axis.horizontal,
+                            // The handle follows the pointer from where it
+                            // went down, also when the sideways scroll
+                            // competes for the drag until the touch slop.
+                            dragStartBehavior: DragStartBehavior.down,
                             keyboardStep: step,
                             onMove: (delta) => onResize(i, delta),
                             onMoveEnd: () => onResizeEnd(i),
@@ -271,6 +501,9 @@ class TableHeader<R> extends StatelessWidget {
                             },
                           ),
                         ),
+                      if (dropGap == i) _dropLine(context, end: false),
+                      if (dropGap == columns.length && i == columns.length - 1)
+                        _dropLine(context, end: true),
                     ],
                   ),
                 ),

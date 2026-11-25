@@ -96,6 +96,7 @@ class Oito2TableColumn<R> {
     this.sortable = false,
     this.cellBuilder,
     this.tooltip,
+    this.hideable = true,
   });
 
   /// The narrowest a resize makes any column, in logical pixels.
@@ -126,6 +127,11 @@ class Oito2TableColumn<R> {
 
   /// The tooltip of the column header.
   final String? tooltip;
+
+  /// Whether the user can hide the column, in a widget that lets the user
+  /// choose the columns, such as an [Oito2DataTable] with
+  /// [Oito2DataTable.onHiddenColumnsChanged].
+  final bool hideable;
 
   /// Returns the width of each of [columns] that fits in [available]
   /// logical pixels: fixed columns keep their width, or the one in

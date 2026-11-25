@@ -568,7 +568,10 @@
 			"dragToReorder": "Drag to reorder",
 			"cantDropHere": "Can't drop here",
 			"indentItem": "Indent",
-			"outdentItem": "Outdent"
+			"outdentItem": "Outdent",
+			"moveColumnLeft": "Move column left",
+			"moveColumnRight": "Move column right",
+			"resetColumns": "Reset columns"
 		},
 		"calls": [
 			{
@@ -1035,6 +1038,15 @@
 					5
 				],
 				"result": "Moved Docs to position 2 of 5"
+			},
+			{
+				"name": "movedColumn",
+				"args": [
+					"Size",
+					2,
+					4
+				],
+				"result": "Moved column Size to position 2 of 4"
 			},
 			{
 				"name": "movedInto",
@@ -1624,7 +1636,10 @@
 			"dragToReorder": "Arraste para reordenar",
 			"cantDropHere": "Não é possível soltar aqui",
 			"indentItem": "Aumentar recuo",
-			"outdentItem": "Diminuir recuo"
+			"outdentItem": "Diminuir recuo",
+			"moveColumnLeft": "Mover coluna para a esquerda",
+			"moveColumnRight": "Mover coluna para a direita",
+			"resetColumns": "Redefinir colunas"
 		},
 		"calls": [
 			{
@@ -2091,6 +2106,15 @@
 					5
 				],
 				"result": "Item \"Docs\" movido para a posição 2 de 5"
+			},
+			{
+				"name": "movedColumn",
+				"args": [
+					"Size",
+					2,
+					4
+				],
+				"result": "Coluna \"Size\" movida para a posição 2 de 4"
 			},
 			{
 				"name": "movedInto",

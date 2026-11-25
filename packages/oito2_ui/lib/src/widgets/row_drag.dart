@@ -179,9 +179,9 @@ class RowDrag implements Drag {
   }
 }
 
-/// Scrolls a scroll position while a dragged pointer is near the top or
-/// bottom edge of its viewport, faster the closer it gets, and calls
-/// [onScrolled] after every step.
+/// Scrolls a scroll position while a dragged pointer is near an edge of
+/// its viewport along the scroll axis, faster the closer it gets, and
+/// calls [onScrolled] after every step.
 class DragAutoScroller {
   /// Creates an auto-scroller that calls [onScrolled] after each step.
   DragAutoScroller(this.onScrolled);
@@ -203,31 +203,48 @@ class DragAutoScroller {
   bool get isScrolling => _timer != null;
 
   /// Starts, adjusts or stops the scrolling of [position] for a pointer at
-  /// [global] over [viewport]: within [edge] pixels of the top or bottom
-  /// edge, or beyond it, it scrolls toward that edge.
+  /// [global] over [viewport]: within [edge] pixels of an edge along
+  /// [axis], or beyond it, it scrolls toward that edge.
+  ///
+  /// With [axis] horizontal, [leadingInset] and [trailingInset] move the
+  /// left and the right edge inward by that many pixels, such as past
+  /// columns that don't scroll.
   void update(
     Offset global,
     RenderBox? viewport,
     ScrollPosition? position, {
     double edge = 32,
+    Axis axis = Axis.vertical,
+    double leadingInset = 0,
+    double trailingInset = 0,
   }) {
     if (viewport == null || !viewport.hasSize || position == null) {
       stop();
       return;
     }
     final local = viewport.globalToLocal(global);
-    final height = viewport.size.height;
-    final zone = math.min(edge, height / 4);
-    final double step;
-    if (local.dx < 0 || local.dx > viewport.size.width) {
+    final vertical = axis == Axis.vertical;
+    final along = (vertical ? local.dy : local.dx) - leadingInset;
+    final across = vertical ? local.dx : local.dy;
+    final length = math.max(
+      0.0,
+      (vertical ? viewport.size.height : viewport.size.width) -
+          leadingInset -
+          trailingInset,
+    );
+    final breadth = vertical ? viewport.size.width : viewport.size.height;
+    final zone = math.min(edge, length / 4);
+    double step;
+    if (across < 0 || across > breadth || zone <= 0) {
       step = 0;
-    } else if (local.dy < zone) {
-      step = -maxStep * ((zone - local.dy) / zone).clamp(0.2, 1.0);
-    } else if (local.dy > height - zone) {
-      step = maxStep * ((local.dy - (height - zone)) / zone).clamp(0.2, 1.0);
+    } else if (along < zone) {
+      step = -maxStep * ((zone - along) / zone).clamp(0.2, 1.0);
+    } else if (along > length - zone) {
+      step = maxStep * ((along - (length - zone)) / zone).clamp(0.2, 1.0);
     } else {
       step = 0;
     }
+    if (axisDirectionIsReversed(position.axisDirection)) step = -step;
     _position = position;
     _step = step;
     if (step == 0) {

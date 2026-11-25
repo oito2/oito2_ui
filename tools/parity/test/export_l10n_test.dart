@@ -147,6 +147,9 @@ final Map<String, Getter> getters = {
   'cantDropHere': (l) => l.cantDropHere,
   'indentItem': (l) => l.indentItem,
   'outdentItem': (l) => l.outdentItem,
+  'moveColumnLeft': (l) => l.moveColumnLeft,
+  'moveColumnRight': (l) => l.moveColumnRight,
+  'resetColumns': (l) => l.resetColumns,
 };
 
 /// One call of a method of [Oito2Localizations]: its name, its arguments
@@ -227,6 +230,7 @@ List<Call> calls() => [
   ('dragItemCount', [1], (l) => l.dragItemCount(1)),
   ('dragItemCount', [3], (l) => l.dragItemCount(3)),
   ('movedToPosition', ['Docs', 2, 5], (l) => l.movedToPosition('Docs', 2, 5)),
+  ('movedColumn', ['Size', 2, 4], (l) => l.movedColumn('Size', 2, 4)),
   (
     'movedInto',
     ['Docs', 'Projects', 3],

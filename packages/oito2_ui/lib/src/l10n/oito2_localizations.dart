@@ -524,6 +524,20 @@ abstract class Oito2Localizations {
 
   /// The action that moves a tree node out of its branch, after it.
   String get outdentItem;
+
+  /// The action that moves a table column one place to the left.
+  String get moveColumnLeft;
+
+  /// The action that moves a table column one place to the right.
+  String get moveColumnRight;
+
+  /// Announces that the table column [column] moved to [position] (from 1)
+  /// of the [count] shown columns.
+  String movedColumn(String column, int position, int count);
+
+  /// The menu item that puts the columns of a table back as the app
+  /// first showed them.
+  String get resetColumns;
 }
 
 /// The units of a relative time, from [second] to [year].
@@ -1019,6 +1033,19 @@ class Oito2LocalizationsEn extends Oito2Localizations {
 
   @override
   String get outdentItem => 'Outdent';
+
+  @override
+  String get moveColumnLeft => 'Move column left';
+
+  @override
+  String get moveColumnRight => 'Move column right';
+
+  @override
+  String movedColumn(String column, int position, int count) =>
+      'Moved column $column to position $position of $count';
+
+  @override
+  String get resetColumns => 'Reset columns';
 }
 
 /// The Brazilian Portuguese [Oito2Localizations].
@@ -1504,6 +1531,19 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String get outdentItem => 'Diminuir recuo';
+
+  @override
+  String get moveColumnLeft => 'Mover coluna para a esquerda';
+
+  @override
+  String get moveColumnRight => 'Mover coluna para a direita';
+
+  @override
+  String movedColumn(String column, int position, int count) =>
+      'Coluna "$column" movida para a posição $position de $count';
+
+  @override
+  String get resetColumns => 'Redefinir colunas';
 }
 
 /// Loads [Oito2Localizations.forLocale] synchronously for English and

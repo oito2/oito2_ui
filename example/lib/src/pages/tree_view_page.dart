@@ -95,6 +95,10 @@ class _TreeViewPageState extends State<TreeViewPage> {
 
   /// The width of the Size column, kept when the user resizes it.
   double _sizeWidth = 88;
+
+  /// The columns the user hid and the order they put them in.
+  Set<String> _gridHidden = const {};
+  List<String>? _gridOrder;
   // #endregion
   // #region organize-data
   var _folders = Oito2TreeCollection<void>([
@@ -475,6 +479,15 @@ class _TreeViewPageState extends State<TreeViewPage> {
           '`onColumnResized` reports its width when a resize ends, so the '
           'app can keep it and pass it back as a fixed width.',
         ),
+        const DocText(
+          'As in `Oito2DataTable`, `hiddenColumns`, `onHiddenColumnsChanged`, '
+          '`columnOrder`, `onColumnsReordered` and `onResetColumns` let the '
+          'user choose the other columns: right-click a header to show, hide, '
+          'move or reset them, or drag a header with the mouse, or press Alt '
+          'with Left or Right on it. The first column always shows first. '
+          '`pinnedColumns` keeps the first columns in place while the others '
+          'scroll sideways.',
+        ),
         ExamplePanel(
           regions: const ['columns-data', 'columns'],
           child: _frame(
@@ -487,6 +500,15 @@ class _TreeViewPageState extends State<TreeViewPage> {
               semanticLabel: 'Files with details',
               onColumnResized: (id, width) =>
                   setState(() => _sizeWidth = width),
+              hiddenColumns: _gridHidden,
+              onHiddenColumnsChanged: (hidden) =>
+                  setState(() => _gridHidden = hidden),
+              columnOrder: _gridOrder,
+              onColumnsReordered: (order) => setState(() => _gridOrder = order),
+              onResetColumns: () => setState(() {
+                _gridHidden = const {};
+                _gridOrder = null;
+              }),
               columns: [
                 const Oito2TableColumn(
                   id: 'name',
@@ -689,8 +711,19 @@ class _TreeViewPageState extends State<TreeViewPage> {
               'Moves the active node out of its branch, right after it, when '
                   '`onMove` is set (`Alt+Right` in right-to-left layouts).',
             ],
-            ['`Escape`', 'Cancels a row drag in progress.'],
+            ['`Escape`', 'Cancels a row or column drag in progress.'],
             ['Letters', 'Jump to the next shown label that starts with them.'],
+            [
+              '`Menu` / `Shift+F10` on a header',
+              'Opens the column menu of a tree grid, with '
+                  '`onHiddenColumnsChanged`, `onColumnsReordered` or '
+                  '`onResetColumns`.',
+            ],
+            [
+              '`Alt+Left` / `Alt+Right` on a header',
+              'Moves that column (not the first one) left or right, with '
+                  '`onColumnsReordered`.',
+            ],
           ],
         ),
         ...apiReferenceWidgets([

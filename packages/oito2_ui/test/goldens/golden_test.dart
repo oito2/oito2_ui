@@ -1129,9 +1129,12 @@ class _RailsScene extends StatelessWidget {
 typedef _Transfer = (String, String, double, String);
 
 /// A data table of transfers, sorted by size, with a selected row and a
-/// progress column.
+/// progress column, its first [pinned] columns pinned and, when there are
+/// any, a fixed-width name column.
 class _DataTableScene extends StatelessWidget {
-  const _DataTableScene();
+  const _DataTableScene({this.pinned = 0});
+
+  final int pinned;
 
   static final _transfers = Oito2ListCollection(const [
     ('report.pdf', '2.4 MB', 1.0, 'Done'),
@@ -1156,10 +1159,15 @@ class _DataTableScene extends StatelessWidget {
             Oito2SortDirection.descending,
           ),
           onSortChanged: (_) {},
+          pinnedColumns: pinned,
           columns: [
-            const Oito2TableColumn<_Transfer>(
+            Oito2TableColumn<_Transfer>(
               id: 'name',
               label: 'Name',
+              // A pinned name keeps its width while the table scrolls.
+              width: pinned > 0
+                  ? const Oito2ColumnWidth.fixed(140)
+                  : const Oito2ColumnWidth.flex(1),
               sortable: true,
               resizable: true,
             ),
@@ -1921,6 +1929,26 @@ void main() {
         name: 'data_table_$name',
         colors: goldenSchemes[name]!,
         size: const Size(560, 220),
+      );
+    });
+  }
+
+  for (final name in ['light', 'dark']) {
+    testWidgets('data table with a pinned column scrolled in $name', (
+      tester,
+    ) async {
+      await expectGoldenScene(
+        tester,
+        const _DataTableScene(pinned: 1),
+        name: 'data_table_pinned_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(400, 220),
+        setup: () async {
+          final scrollable = find.byWidgetPredicate(
+            (w) => w is Scrollable && w.axisDirection == AxisDirection.right,
+          );
+          tester.state<ScrollableState>(scrollable).position.jumpTo(80);
+        },
       );
     });
   }

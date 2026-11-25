@@ -20,6 +20,7 @@ import '../collections/list_collection.dart';
 import '../collections/selection_controller.dart';
 import '../tokens/geometry.dart';
 import 'table_column.dart';
+import 'table_columns_customization.dart';
 import 'table_header.dart';
 import 'virtual_list.dart';
 import 'widget_helpers.dart';
@@ -39,6 +40,27 @@ import 'widget_helpers.dart';
 /// passes them back with the new [sort].
 ///
 /// Columns wider in total than the table scroll sideways, with the header.
+/// The first [pinnedColumns] shown columns stay in place while the others
+/// scroll, with a divider after them once the table has scrolled.
+///
+/// The user can choose the columns when the app handles the changes:
+///
+/// * With [onHiddenColumnsChanged], a secondary click or a long press on
+///   a header, or the menu key or Shift+F10 on a focused header, opens a
+///   menu that shows or hides each column, keeping at least one shown and
+///   never hiding a column whose [Oito2TableColumn.hideable] is false.
+///   The table doesn't show the columns in [hiddenColumns].
+/// * With [onColumnsReordered], the user moves a column by dragging its
+///   header with a mouse, by Alt with Left or Right on its focused header,
+///   by the "Move column left" and "Move column right" items of the header
+///   menu or by the accessibility actions of the same names. The table
+///   shows the columns in [columnOrder]. Pinned columns move only among
+///   themselves, and the others only after them. A drag ends without a
+///   move on Escape.
+/// * With [onResetColumns], the header menu has a "Reset columns" item.
+///
+/// The table doesn't change [hiddenColumns] or [columnOrder]: the app
+/// keeps the values it is called with and passes them back.
 ///
 /// Assistive technologies read the header labels as headers, with their
 /// sort state as the value of sortable ones, and each row as one item
@@ -71,7 +93,13 @@ class Oito2DataTable<T> extends StatefulWidget {
     this.semanticLabel,
     this.autofocus = false,
     this.onReorder,
-  });
+    this.hiddenColumns = const {},
+    this.onHiddenColumnsChanged,
+    this.columnOrder,
+    this.onColumnsReordered,
+    this.onResetColumns,
+    this.pinnedColumns = 0,
+  }) : assert(pinnedColumns >= 0);
 
   /// The rows.
   final Oito2ListCollection<T> collection;
@@ -146,6 +174,34 @@ class Oito2DataTable<T> extends StatefulWidget {
   /// [sort], as the new order no longer follows it.
   final void Function(int from, int to)? onReorder;
 
+  /// The ids of the columns the table doesn't show. When every column is
+  /// hidden, the first one in [columnOrder] shows.
+  final Set<String> hiddenColumns;
+
+  /// Called with the ids of the columns to hide when the user shows or
+  /// hides a column through the header menu; the columns can't be hidden
+  /// when null.
+  final ValueChanged<Set<String>>? onHiddenColumnsChanged;
+
+  /// The order of the columns, by id; the columns it doesn't list follow
+  /// in the order of [columns], and the ids of no column are ignored. The
+  /// order of [columns] when null.
+  final List<String>? columnOrder;
+
+  /// Called with the ids of all the columns, hidden ones included, in
+  /// their new order when the user moves a column; the columns can't be
+  /// moved when null.
+  final ValueChanged<List<String>>? onColumnsReordered;
+
+  /// Called when the user picks "Reset columns" in the header menu, which
+  /// shows that item only when this is set; the app puts back its own
+  /// default [hiddenColumns] and [columnOrder].
+  final VoidCallback? onResetColumns;
+
+  /// How many of the shown columns, from the start, stay in place while
+  /// the others scroll sideways; at most all but the last shown column.
+  final int pinnedColumns;
+
   /// Returns the sort after activating the header of the column [id] in a
   /// table sorted by [current]: ascending, then descending, then none.
   static Oito2SortDescriptor? nextSort(
@@ -164,8 +220,10 @@ class Oito2DataTable<T> extends StatefulWidget {
   State<Oito2DataTable<T>> createState() => _Oito2DataTableState<T>();
 }
 
-/// Keeps the column widths and the sideways scroll of [Oito2DataTable].
-class _Oito2DataTableState<T> extends State<Oito2DataTable<T>> {
+/// Keeps the column widths, the sideways scroll and the column choices of
+/// [Oito2DataTable].
+class _Oito2DataTableState<T> extends State<Oito2DataTable<T>>
+    with TableColumnsCustomization<T, Oito2DataTable<T>> {
   final _horizontalScroll = ScrollController();
   final _columnWidths = TableColumnWidths();
 
@@ -174,13 +232,50 @@ class _Oito2DataTableState<T> extends State<Oito2DataTable<T>> {
   static const _padding = Oito2Spacing.sm;
 
   @override
+  List<Oito2TableColumn<T>> get declaredColumns => widget.columns;
+
+  @override
+  Set<String> get hiddenColumnIds => widget.hiddenColumns;
+
+  @override
+  List<String>? get columnOrderIds => widget.columnOrder;
+
+  @override
+  ValueChanged<Set<String>>? get onHiddenColumnsChanged =>
+      widget.onHiddenColumnsChanged;
+
+  @override
+  ValueChanged<List<String>>? get onColumnsReordered =>
+      widget.onColumnsReordered;
+
+  @override
+  VoidCallback? get onResetColumns => widget.onResetColumns;
+
+  @override
+  int get requestedPinnedColumns => widget.pinnedColumns;
+
+  @override
+  bool get firstColumnFixed => false;
+
+  @override
+  ScrollController get columnsScroll => _horizontalScroll;
+
+  @override
+  TableColumnWidths get columnWidths => _columnWidths;
+
+  @override
+  double get columnsStartInset => _margin + _padding;
+
+  @override
   void didUpdateWidget(Oito2DataTable<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
     _columnWidths.update(oldWidget.columns, widget.columns);
+    updateColumnsCustomization();
   }
 
   @override
   void dispose() {
+    disposeColumnsCustomization();
     _horizontalScroll.dispose();
     super.dispose();
   }
@@ -189,7 +284,7 @@ class _Oito2DataTableState<T> extends State<Oito2DataTable<T>> {
   void _resize(int index, double delta) {
     setState(() {
       _columnWidths.resize(
-        widget.columns[index],
+        visibleColumns[index],
         index,
         delta,
         Directionality.of(context),
@@ -200,7 +295,7 @@ class _Oito2DataTableState<T> extends State<Oito2DataTable<T>> {
   /// Reports the width of the column at [index] through
   /// [Oito2DataTable.onColumnResized].
   void _endResize(int index) {
-    final column = widget.columns[index];
+    final column = visibleColumns[index];
     final width = _columnWidths.widthOf(column, index);
     if (width != null) widget.onColumnResized?.call(column.id, width);
   }
@@ -209,16 +304,19 @@ class _Oito2DataTableState<T> extends State<Oito2DataTable<T>> {
   /// activated.
   void _sort(int index) {
     widget.onSortChanged?.call(
-      Oito2DataTable.nextSort(widget.sort, widget.columns[index].id),
+      Oito2DataTable.nextSort(widget.sort, visibleColumns[index].id),
     );
   }
 
   /// Builds the cells of the row of [item].
   Widget _cells(BuildContext context, T item) {
-    final columns = widget.columns;
+    final columns = visibleColumns;
     final widths = _columnWidths.widths;
-    final row = Row(
-      children: [
+    final labelColumn = widget.columns.firstOrNull;
+    final row = TableCellsRow(
+      pinned: pinnedColumnCount,
+      scroll: _horizontalScroll,
+      cells: [
         for (var i = 0; i < columns.length && i < widths.length; i++)
           SizedBox(
             width: widths[i],
@@ -228,7 +326,7 @@ class _Oito2DataTableState<T> extends State<Oito2DataTable<T>> {
                 alignment: columns[i].alignment,
                 child:
                     columns[i].cellBuilder?.call(context, item) ??
-                    (i == 0
+                    (identical(columns[i], labelColumn)
                         ? Text(
                             widget.collection.labelOf(item),
                             maxLines: 1,
@@ -247,9 +345,10 @@ class _Oito2DataTableState<T> extends State<Oito2DataTable<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final columns = widget.columns;
+    final columns = refreshVisibleColumns();
     final height = widget.rowHeight ?? controlHeightOf(context);
     return Semantics(
+      key: columnsViewportKey,
       label: widget.semanticLabel,
       container: true,
       explicitChildNodes: true,
@@ -259,9 +358,7 @@ class _Oito2DataTableState<T> extends State<Oito2DataTable<T>> {
         resolve: (available) => _columnWidths.resolve(columns, available),
         header: !widget.showHeader
             ? null
-            : (context) => TableHeader(
-                columns: columns,
-                widths: _columnWidths.widths,
+            : (context) => buildColumnsHeader(
                 height: height,
                 margin: const EdgeInsets.symmetric(horizontal: _margin),
                 padding: const EdgeInsets.symmetric(horizontal: _padding),

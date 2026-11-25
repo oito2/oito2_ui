@@ -34,6 +34,7 @@ import 'highlighted_text.dart';
 import 'progress.dart';
 import 'row_drag.dart';
 import 'table_column.dart';
+import 'table_columns_customization.dart';
 import 'table_header.dart';
 import 'toggles.dart';
 import 'touch_target.dart';
@@ -228,6 +229,12 @@ typedef Oito2TreeItemBuilder<T> = Widget Function(
 /// indentation, disclosure, check box, icon and label of each row, the
 /// other columns show cells aligned across every depth, and a header row
 /// with the column labels stays above the rows.
+/// As in an [Oito2DataTable], the user can hide and move the other
+/// columns through the header with [onHiddenColumnsChanged] and
+/// [onColumnsReordered], reset them with [onResetColumns], and
+/// [pinnedColumns] keeps the first ones in place while the rest scroll
+/// sideways. The first column always shows first: it can't be hidden or
+/// moved.
 class Oito2TreeView<T> extends StatefulWidget {
   /// Creates a tree view.
   const Oito2TreeView({
@@ -252,12 +259,18 @@ class Oito2TreeView<T> extends StatefulWidget {
     this.columns,
     this.onColumnResized,
     this.showHeader = true,
+    this.pinnedColumns = 0,
+    this.hiddenColumns = const {},
+    this.onHiddenColumnsChanged,
+    this.columnOrder,
+    this.onColumnsReordered,
+    this.onResetColumns,
     this.onMove,
     this.canDrop,
     this.rowDropTargetBuilder,
     this.dropHighlight,
     this.dragHandle = false,
-  });
+  }) : assert(pinnedColumns >= 0);
 
   /// The nodes of the tree.
   final Oito2TreeCollection<T> collection;
@@ -360,6 +373,36 @@ class Oito2TreeView<T> extends StatefulWidget {
   /// Whether a tree with [columns] shows the header row.
   final bool showHeader;
 
+  /// How many shown [columns], from the start, stay in place while the
+  /// others scroll sideways, with a divider after them once the tree has
+  /// scrolled; at most all but the last shown column.
+  final int pinnedColumns;
+
+  /// The ids of the [columns] the tree doesn't show; the first column
+  /// always shows, so its id is ignored.
+  final Set<String> hiddenColumns;
+
+  /// Called with the ids of the columns to hide when the user shows or
+  /// hides a column through the header menu, as
+  /// [Oito2DataTable.onHiddenColumnsChanged]; the first column can't be
+  /// hidden. The columns can't be hidden when null.
+  final ValueChanged<Set<String>>? onHiddenColumnsChanged;
+
+  /// The order of the [columns], by id, as [Oito2DataTable.columnOrder];
+  /// the first column always comes first, so its id is ignored.
+  final List<String>? columnOrder;
+
+  /// Called with the ids of all the columns in their new order when the
+  /// user moves a column, as [Oito2DataTable.onColumnsReordered]; the
+  /// first column can't move, and no column moves before it. The columns
+  /// can't be moved when null.
+  final ValueChanged<List<String>>? onColumnsReordered;
+
+  /// Called when the user picks "Reset columns" in the header menu, which
+  /// shows that item only when this is set; the app puts back its own
+  /// default [hiddenColumns] and [columnOrder].
+  final VoidCallback? onResetColumns;
+
   /// Called when nodes are dragged to a new place, or the active node is
   /// moved with the keyboard or an accessibility action, with the moved
   /// nodes in tree order, the value of their new parent (null for the top
@@ -412,7 +455,8 @@ class Oito2TreeView<T> extends StatefulWidget {
   State<Oito2TreeView<T>> createState() => _Oito2TreeViewState<T>();
 }
 
-class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
+class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
+    with TableColumnsCustomization<Oito2TreeNode<T>, Oito2TreeView<T>> {
   final _focusNode = FocusNode(debugLabel: 'Oito2TreeView');
   final _scroll = ScrollController();
   final Set<String> _loading = {};
@@ -458,11 +502,47 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
   /// [Oito2TreeView.checkState].
   bool get _controlled => widget.checkable && widget.checkState != null;
 
-  /// The columns of a tree grid, or null for a plain tree.
+  /// The shown columns of a tree grid, in order, or null for a plain tree.
   List<Oito2TableColumn<Oito2TreeNode<T>>>? get _columns {
     final columns = widget.columns;
-    return columns == null || columns.isEmpty ? null : columns;
+    return columns == null || columns.isEmpty ? null : visibleColumns;
   }
+
+  @override
+  List<Oito2TableColumn<Oito2TreeNode<T>>> get declaredColumns =>
+      widget.columns ?? const [];
+
+  @override
+  Set<String> get hiddenColumnIds => widget.hiddenColumns;
+
+  @override
+  List<String>? get columnOrderIds => widget.columnOrder;
+
+  @override
+  ValueChanged<Set<String>>? get onHiddenColumnsChanged =>
+      widget.onHiddenColumnsChanged;
+
+  @override
+  ValueChanged<List<String>>? get onColumnsReordered =>
+      widget.onColumnsReordered;
+
+  @override
+  VoidCallback? get onResetColumns => widget.onResetColumns;
+
+  @override
+  int get requestedPinnedColumns => widget.pinnedColumns;
+
+  @override
+  bool get firstColumnFixed => true;
+
+  @override
+  ScrollController get columnsScroll => _horizontalScroll;
+
+  @override
+  TableColumnWidths get columnWidths => _columnWidths;
+
+  @override
+  double get columnsStartInset => _rowMargin + Oito2Spacing.xs;
 
   @override
   void initState() {
@@ -479,6 +559,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
       widget.controller.addListener(_refresh);
     }
     _columnWidths.update(oldWidget.columns, widget.columns);
+    updateColumnsCustomization();
     if (_drag != null && !_canMove) _stopDrag(rebuild: false);
   }
 
@@ -487,6 +568,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
     _controller.removeListener(_refresh);
     _focusNode.dispose();
     _scroll.dispose();
+    disposeColumnsCustomization();
     _horizontalScroll.dispose();
     _typeTimer?.cancel();
     _clicks.cancel();
@@ -1483,8 +1565,10 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
       context,
       node,
       frame(
-        Row(
-          children: [
+        TableCellsRow(
+          pinned: pinnedColumnCount,
+          scroll: _horizontalScroll,
+          cells: [
             SizedBox(
               width: _columnWidths.widths[0],
               child: semantics(
@@ -1596,8 +1680,10 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
         ),
       ),
     );
+    if (_columns != null) refreshVisibleColumns();
     final columns = _columns;
     return Semantics(
+      key: columnsViewportKey,
       label: widget.semanticLabel,
       container: true,
       explicitChildNodes: true,
@@ -1610,9 +1696,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>> {
               resolve: (available) => _columnWidths.resolve(columns, available),
               header: !widget.showHeader
                   ? null
-                  : (context) => TableHeader(
-                      columns: columns,
-                      widths: _columnWidths.widths,
+                  : (context) => buildColumnsHeader(
                       height: _rowHeight,
                       margin: const EdgeInsets.symmetric(
                         horizontal: _rowMargin,
