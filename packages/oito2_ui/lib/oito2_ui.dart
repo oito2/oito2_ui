@@ -106,6 +106,7 @@ export 'src/widgets/selectable.dart';
 export 'src/widgets/sheet.dart';
 export 'src/widgets/skeleton.dart';
 export 'src/widgets/slider.dart';
+export 'src/widgets/sparkline.dart';
 export 'src/widgets/splitter.dart';
 export 'src/widgets/status_page.dart';
 export 'src/widgets/status_pill.dart';

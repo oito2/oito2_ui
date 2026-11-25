@@ -200,6 +200,9 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2Command.alternateShortcuts` and `shortcuts`: more shortcuts that run a command; the shortcuts help lists them, and conflict detection checks them.
 - `Oito2Commands.availableAt(includeDisabled: true)`: the disabled commands too.
 - `Oito2Localizations.keyboardShortcuts`, `searchShortcutsHint`, `noShortcutsFound`, `generalShortcuts` and `shortcutEntry`.
+- `Oito2Sparkline`: a small, static chart of a series as a line, an area or bars (`Oito2SparklineType`), in the primary color, a semantic `tone` or an explicit `color`, with optional dots on the minimum, maximum and last values, an optional fixed `min`/`max` range (bars include zero), right-to-left drawing in right-to-left text, and values that aren't finite skipped. It doesn't take focus or animate, and reads as one image with a summary such as "Download speed, Minimum 1.2 MB/s, maximum 8 MB/s, last 6.5 MB/s, rising", formatted by `formatValue`.
+- `Oito2SparklineStats` and `Oito2SparklineTrend`: the minimum, maximum, first and last finite values of a series, their positions, and the trend (`trendOf`: rising or falling when the last value differs from the first by more than `trendThreshold` times the range, a tenth by default, steady otherwise); `describe` writes the localized summary. The parity `widgets.json` exports them.
+- `Oito2Localizations.noData`, `trendRising`, `trendSteady`, `trendFalling`, `sparklineValue` and `sparklineSummary`.
 
 ### Changed
 

@@ -1454,6 +1454,81 @@ class _UsageScene extends StatelessWidget {
   }
 }
 
+/// The sparkline variants, tones, markers, negative values, a gap of
+/// non-finite values, equal values and an empty series.
+class _SparklineScene extends StatelessWidget {
+  const _SparklineScene();
+
+  static const _series = <double>[3, 5, 4, 8, 6, 9, 7, 12, 10, 11, 6, 9];
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Padding(
+        padding: EdgeInsets.all(Oito2Spacing.md),
+        child: Wrap(
+          spacing: Oito2Spacing.lg,
+          runSpacing: Oito2Spacing.lg,
+          children: [
+            Oito2Sparkline(
+              values: _series,
+              width: 160,
+              height: 40,
+              showMin: true,
+              showMax: true,
+              showLast: true,
+            ),
+            Oito2Sparkline(
+              values: _series,
+              type: Oito2SparklineType.area,
+              tone: Oito2InfoType.success,
+              width: 160,
+              height: 40,
+              showLast: true,
+            ),
+            Oito2Sparkline(
+              values: _series,
+              type: Oito2SparklineType.bars,
+              tone: Oito2InfoType.warning,
+              width: 160,
+              height: 40,
+              showMax: true,
+            ),
+            Oito2Sparkline(
+              values: [2, -1, 3, -4, 1, -2, 5, 0],
+              type: Oito2SparklineType.bars,
+              tone: Oito2InfoType.danger,
+              width: 160,
+              height: 40,
+            ),
+            Oito2Sparkline(
+              values: [-3, -1, -5, -2, -6, -4],
+              type: Oito2SparklineType.area,
+              tone: Oito2InfoType.information,
+              width: 160,
+              height: 40,
+            ),
+            Oito2Sparkline(
+              values: [4, 6, double.nan, double.nan, 3, 7, double.infinity, 5],
+              width: 160,
+              height: 40,
+              showMin: true,
+            ),
+            Oito2Sparkline(
+              values: [5, 5, 5, 5],
+              tone: Oito2InfoType.important,
+              width: 160,
+              height: 40,
+            ),
+            Oito2Sparkline(values: [7], width: 160, height: 40, showLast: true),
+            Oito2Sparkline(values: [], width: 160, height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// The accounts of the account switcher scene.
 const _goldenAccounts = [
   Oito2Account(
@@ -2132,6 +2207,16 @@ void main() {
         name: 'usage_bars_$name',
         colors: goldenSchemes[name]!,
         size: const Size(560, 300),
+      );
+    });
+
+    testWidgets('sparklines in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        const _SparklineScene(),
+        name: 'sparklines_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(560, 220),
       );
     });
 

@@ -373,6 +373,28 @@ void main() {
     expect(find.text('No messages'), findsOneWidget);
   });
 
+  testWidgets('the live sparkline updates every second and pauses', (
+    tester,
+  ) async {
+    await pumpShowcase(tester, slug: 'sparkline');
+    Oito2Sparkline live() => tester.widget(
+      find.byWidgetPredicate(
+        (w) => w is Oito2Sparkline && w.semanticsLabel == 'Download speed',
+      ),
+    );
+    final before = [...live().values];
+    await tester.pump(const Duration(seconds: 1));
+    final after = [...live().values];
+    expect(after, hasLength(before.length));
+    expect(after.sublist(0, after.length - 1), before.sublist(1));
+    await tester.ensureVisible(find.text('Pause'));
+    await tester.tap(find.text('Pause'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
+    expect(live().values, after);
+    expect(find.text('Resume'), findsOneWidget);
+  });
+
   testWidgets('F1 and Ctrl+? open the shortcuts help', (tester) async {
     await pumpShowcase(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.f1);

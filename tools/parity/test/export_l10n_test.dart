@@ -46,6 +46,10 @@ final Map<String, Getter> getters = {
   'noShortcutsFound': (l) => l.noShortcutsFound,
   'generalShortcuts': (l) => l.generalShortcuts,
   'noResults': (l) => l.noResults,
+  'noData': (l) => l.noData,
+  'trendRising': (l) => l.trendRising,
+  'trendSteady': (l) => l.trendSteady,
+  'trendFalling': (l) => l.trendFalling,
   'close': (l) => l.close,
   'dismiss': (l) => l.dismiss,
   'notifications': (l) => l.notifications,
@@ -231,6 +235,12 @@ List<Call> calls() => [
     (l) => l.scheduleSlot('Monday', '14:00', '15:00', 'Limited'),
   ),
   ('usageOf', ['1.2 GB', '15 GB'], (l) => l.usageOf('1.2 GB', '15 GB')),
+  ('sparklineValue', ['5'], (l) => l.sparklineValue('5')),
+  (
+    'sparklineSummary',
+    ['3', '12', '8', 'rising'],
+    (l) => l.sparklineSummary('3', '12', '8', 'rising'),
+  ),
   (
     'lineMessage',
     [3, 'Error', 'Unexpected token'],

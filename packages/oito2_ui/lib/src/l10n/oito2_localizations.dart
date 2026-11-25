@@ -476,6 +476,28 @@ abstract class Oito2Localizations {
   /// "1.2 GB of 15 GB".
   String usageOf(String used, String total);
 
+  /// The accessibility summary of a chart without values.
+  String get noData;
+
+  /// The trend of a series whose last value is higher than its first.
+  String get trendRising;
+
+  /// The trend of a series whose last value is about its first.
+  String get trendSteady;
+
+  /// The trend of a series whose last value is lower than its first.
+  String get trendFalling;
+
+  /// Returns the accessibility summary of a sparkline with one [value],
+  /// such as "Value 5".
+  String sparklineValue(String value);
+
+  /// Returns the accessibility summary of a sparkline: its [min], [max]
+  /// and [last] values and its [trend] (one of [trendRising],
+  /// [trendSteady] and [trendFalling]), such as "Minimum 3, maximum 12,
+  /// last 8, rising".
+  String sparklineSummary(String min, String max, String last, String trend);
+
   /// The accessibility label of a code editor.
   String get codeEditor;
 
@@ -1039,6 +1061,25 @@ class Oito2LocalizationsEn extends Oito2Localizations {
   String usageOf(String used, String total) => '$used of $total';
 
   @override
+  String get noData => 'No data';
+
+  @override
+  String get trendRising => 'rising';
+
+  @override
+  String get trendSteady => 'steady';
+
+  @override
+  String get trendFalling => 'falling';
+
+  @override
+  String sparklineValue(String value) => 'Value $value';
+
+  @override
+  String sparklineSummary(String min, String max, String last, String trend) =>
+      'Minimum $min, maximum $max, last $last, $trend';
+
+  @override
   String get codeEditor => 'Code editor';
 
   @override
@@ -1584,6 +1625,25 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String usageOf(String used, String total) => '$used de $total';
+
+  @override
+  String get noData => 'Sem dados';
+
+  @override
+  String get trendRising => 'em alta';
+
+  @override
+  String get trendSteady => 'estável';
+
+  @override
+  String get trendFalling => 'em queda';
+
+  @override
+  String sparklineValue(String value) => 'Valor $value';
+
+  @override
+  String sparklineSummary(String min, String max, String last, String trend) =>
+      'Mínimo $min, máximo $max, último valor $last, $trend';
 
   @override
   String get codeEditor => 'Editor de código';

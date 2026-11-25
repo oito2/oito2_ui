@@ -1439,5 +1439,365 @@
 				]
 			}
 		}
+	},
+	"sparkline": {
+		"defaultTrendThreshold": 0.1,
+		"cases": [
+			{
+				"values": [],
+				"trendThreshold": 0.1,
+				"stats": null,
+				"summary": {
+					"en": "No data",
+					"pt-BR": "Sem dados"
+				}
+			},
+			{
+				"values": [
+					5.0
+				],
+				"trendThreshold": 0.1,
+				"stats": {
+					"count": 1,
+					"min": 5.0,
+					"max": 5.0,
+					"first": 5.0,
+					"last": 5.0,
+					"minIndex": 0,
+					"maxIndex": 0,
+					"lastIndex": 0,
+					"trend": "steady"
+				},
+				"summary": {
+					"en": "Value 5",
+					"pt-BR": "Valor 5"
+				}
+			},
+			{
+				"values": [
+					4.0,
+					4.0,
+					4.0,
+					4.0
+				],
+				"trendThreshold": 0.1,
+				"stats": {
+					"count": 4,
+					"min": 4.0,
+					"max": 4.0,
+					"first": 4.0,
+					"last": 4.0,
+					"minIndex": 0,
+					"maxIndex": 0,
+					"lastIndex": 3,
+					"trend": "steady"
+				},
+				"summary": {
+					"en": "Minimum 4, maximum 4, last 4, steady",
+					"pt-BR": "Mínimo 4, máximo 4, último valor 4, estável"
+				}
+			},
+			{
+				"values": [
+					1.0,
+					3.0,
+					2.0,
+					5.0,
+					8.0
+				],
+				"trendThreshold": 0.1,
+				"stats": {
+					"count": 5,
+					"min": 1.0,
+					"max": 8.0,
+					"first": 1.0,
+					"last": 8.0,
+					"minIndex": 0,
+					"maxIndex": 4,
+					"lastIndex": 4,
+					"trend": "rising"
+				},
+				"summary": {
+					"en": "Minimum 1, maximum 8, last 8, rising",
+					"pt-BR": "Mínimo 1, máximo 8, último valor 8, em alta"
+				}
+			},
+			{
+				"values": [
+					8.0,
+					5.0,
+					6.0,
+					3.0,
+					1.0
+				],
+				"trendThreshold": 0.1,
+				"stats": {
+					"count": 5,
+					"min": 1.0,
+					"max": 8.0,
+					"first": 8.0,
+					"last": 1.0,
+					"minIndex": 4,
+					"maxIndex": 0,
+					"lastIndex": 4,
+					"trend": "falling"
+				},
+				"summary": {
+					"en": "Minimum 1, maximum 8, last 1, falling",
+					"pt-BR": "Mínimo 1, máximo 8, último valor 1, em queda"
+				}
+			},
+			{
+				"values": [
+					5.0,
+					9.0,
+					1.0,
+					5.4
+				],
+				"trendThreshold": 0.1,
+				"stats": {
+					"count": 4,
+					"min": 1.0,
+					"max": 9.0,
+					"first": 5.0,
+					"last": 5.4,
+					"minIndex": 2,
+					"maxIndex": 1,
+					"lastIndex": 3,
+					"trend": "steady"
+				},
+				"summary": {
+					"en": "Minimum 1, maximum 9, last 5.4, steady",
+					"pt-BR": "Mínimo 1, máximo 9, último valor 5,4, estável"
+				}
+			},
+			{
+				"values": [
+					5.0,
+					9.0,
+					1.0,
+					6.0
+				],
+				"trendThreshold": 0.1,
+				"stats": {
+					"count": 4,
+					"min": 1.0,
+					"max": 9.0,
+					"first": 5.0,
+					"last": 6.0,
+					"minIndex": 2,
+					"maxIndex": 1,
+					"lastIndex": 3,
+					"trend": "rising"
+				},
+				"summary": {
+					"en": "Minimum 1, maximum 9, last 6, rising",
+					"pt-BR": "Mínimo 1, máximo 9, último valor 6, em alta"
+				}
+			},
+			{
+				"values": [
+					5.0,
+					9.0,
+					1.0,
+					6.0
+				],
+				"trendThreshold": 0.2,
+				"stats": {
+					"count": 4,
+					"min": 1.0,
+					"max": 9.0,
+					"first": 5.0,
+					"last": 6.0,
+					"minIndex": 2,
+					"maxIndex": 1,
+					"lastIndex": 3,
+					"trend": "steady"
+				},
+				"summary": {
+					"en": "Minimum 1, maximum 9, last 6, steady",
+					"pt-BR": "Mínimo 1, máximo 9, último valor 6, estável"
+				}
+			},
+			{
+				"values": [
+					-3.0,
+					-1.5,
+					-7.0,
+					-2.0
+				],
+				"trendThreshold": 0.1,
+				"stats": {
+					"count": 4,
+					"min": -7.0,
+					"max": -1.5,
+					"first": -3.0,
+					"last": -2.0,
+					"minIndex": 2,
+					"maxIndex": 1,
+					"lastIndex": 3,
+					"trend": "rising"
+				},
+				"summary": {
+					"en": "Minimum -7, maximum -1.5, last -2, rising",
+					"pt-BR": "Mínimo -7, máximo -1,5, último valor -2, em alta"
+				}
+			},
+			{
+				"values": [
+					-2.0,
+					0.0,
+					2.0,
+					0.5
+				],
+				"trendThreshold": 0.1,
+				"stats": {
+					"count": 4,
+					"min": -2.0,
+					"max": 2.0,
+					"first": -2.0,
+					"last": 0.5,
+					"minIndex": 0,
+					"maxIndex": 2,
+					"lastIndex": 3,
+					"trend": "rising"
+				},
+				"summary": {
+					"en": "Minimum -2, maximum 2, last 0.5, rising",
+					"pt-BR": "Mínimo -2, máximo 2, último valor 0,5, em alta"
+				}
+			},
+			{
+				"values": [
+					0.0,
+					0.0,
+					0.0,
+					10.0
+				],
+				"trendThreshold": 0.0,
+				"stats": {
+					"count": 4,
+					"min": 0.0,
+					"max": 10.0,
+					"first": 0.0,
+					"last": 10.0,
+					"minIndex": 0,
+					"maxIndex": 3,
+					"lastIndex": 3,
+					"trend": "rising"
+				},
+				"summary": {
+					"en": "Minimum 0, maximum 10, last 10, rising",
+					"pt-BR": "Mínimo 0, máximo 10, último valor 10, em alta"
+				}
+			},
+			{
+				"values": [
+					1.25,
+					2.5,
+					3.75
+				],
+				"trendThreshold": 0.1,
+				"stats": {
+					"count": 3,
+					"min": 1.25,
+					"max": 3.75,
+					"first": 1.25,
+					"last": 3.75,
+					"minIndex": 0,
+					"maxIndex": 2,
+					"lastIndex": 2,
+					"trend": "rising"
+				},
+				"summary": {
+					"en": "Minimum 1.25, maximum 3.75, last 3.75, rising",
+					"pt-BR": "Mínimo 1,25, máximo 3,75, último valor 3,75, em alta"
+				}
+			},
+			{
+				"values": [
+					"NaN",
+					2.0,
+					"Infinity",
+					4.0,
+					"-Infinity"
+				],
+				"trendThreshold": 0.1,
+				"stats": {
+					"count": 2,
+					"min": 2.0,
+					"max": 4.0,
+					"first": 2.0,
+					"last": 4.0,
+					"minIndex": 1,
+					"maxIndex": 3,
+					"lastIndex": 3,
+					"trend": "rising"
+				},
+				"summary": {
+					"en": "Minimum 2, maximum 4, last 4, rising",
+					"pt-BR": "Mínimo 2, máximo 4, último valor 4, em alta"
+				}
+			},
+			{
+				"values": [
+					"NaN",
+					"Infinity"
+				],
+				"trendThreshold": 0.1,
+				"stats": null,
+				"summary": {
+					"en": "No data",
+					"pt-BR": "Sem dados"
+				}
+			},
+			{
+				"values": [
+					"NaN",
+					7.0,
+					"NaN"
+				],
+				"trendThreshold": 0.1,
+				"stats": {
+					"count": 1,
+					"min": 7.0,
+					"max": 7.0,
+					"first": 7.0,
+					"last": 7.0,
+					"minIndex": 1,
+					"maxIndex": 1,
+					"lastIndex": 1,
+					"trend": "steady"
+				},
+				"summary": {
+					"en": "Value 7",
+					"pt-BR": "Valor 7"
+				}
+			},
+			{
+				"values": [
+					1200.5,
+					980.25,
+					1500.0,
+					1499.75
+				],
+				"trendThreshold": 0.1,
+				"stats": {
+					"count": 4,
+					"min": 980.25,
+					"max": 1500.0,
+					"first": 1200.5,
+					"last": 1499.75,
+					"minIndex": 1,
+					"maxIndex": 2,
+					"lastIndex": 3,
+					"trend": "rising"
+				},
+				"summary": {
+					"en": "Minimum 980.25, maximum 1,500, last 1,499.75, rising",
+					"pt-BR": "Mínimo 980,25, máximo 1.500, último valor 1.499,75, em alta"
+				}
+			}
+		]
 	}
 }

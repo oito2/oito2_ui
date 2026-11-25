@@ -96,6 +96,7 @@ import 'pages/sheet_page.dart';
 import 'pages/signature_pad_page.dart';
 import 'pages/skeleton_page.dart';
 import 'pages/slider_page.dart';
+import 'pages/sparkline_page.dart';
 import 'pages/split_button_page.dart';
 import 'pages/splitter_page.dart';
 import 'pages/status_page_page.dart';
@@ -716,6 +717,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.sliders_horizontal,
     source: 'slider_page.dart',
     builder: _page(const SliderPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Sparkline',
+    icon: LucideIcons.chart_spline,
+    source: 'sparkline_page.dart',
+    builder: _page(const SparklinePage()),
   ),
   ShowcasePage(
     title: 'Oito2SplitButton',

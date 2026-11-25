@@ -15,7 +15,8 @@
 
 // Writes the results of the pure rules behind oito2_ui widgets (info
 // severity, alert stack order, sort cycle, usage bar tone, column widths,
-// breadcrumb collapse and week schedule layout) as a JSON fixture.
+// breadcrumb collapse, week schedule layout and sparkline statistics) as
+// a JSON fixture.
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -153,6 +154,70 @@ const indexCases = <(int, int, int)>[
   (4, 0, 1),
   (6, 0, 1),
 ];
+
+/// Sparkline series: the values and the trend threshold.
+const sparklineCases = <(List<double>, double)>[
+  ([], 0.1),
+  ([5], 0.1),
+  ([4, 4, 4, 4], 0.1),
+  ([1, 3, 2, 5, 8], 0.1),
+  ([8, 5, 6, 3, 1], 0.1),
+  ([5, 9, 1, 5.4], 0.1),
+  ([5, 9, 1, 6], 0.1),
+  ([5, 9, 1, 6], 0.2),
+  ([-3, -1.5, -7, -2], 0.1),
+  ([-2, 0, 2, 0.5], 0.1),
+  ([0, 0, 0, 10], 0),
+  ([1.25, 2.5, 3.75], 0.1),
+  ([double.nan, 2, double.infinity, 4, double.negativeInfinity], 0.1),
+  ([double.nan, double.infinity], 0.1),
+  ([double.nan, 7, double.nan], 0.1),
+  ([1200.5, 980.25, 1500, 1499.75], 0.1),
+];
+
+/// Returns [value] as a JSON number, or as "NaN", "Infinity" or
+/// "-Infinity" when it isn't finite.
+Object jsonDouble(double value) => value.isFinite
+    ? value
+    : value.isNaN
+    ? 'NaN'
+    : value > 0
+    ? 'Infinity'
+    : '-Infinity';
+
+Map<String, Object> exportSparkline() => {
+  'defaultTrendThreshold': Oito2SparklineStats.defaultTrendThreshold,
+  'cases': [
+    for (final (values, threshold) in sparklineCases)
+      () {
+        final stats = Oito2SparklineStats.of(values, trendThreshold: threshold);
+        return {
+          'values': [for (final value in values) jsonDouble(value)],
+          'trendThreshold': threshold,
+          'stats': stats == null
+              ? null
+              : {
+                  'count': stats.count,
+                  'min': stats.min,
+                  'max': stats.max,
+                  'first': stats.first,
+                  'last': stats.last,
+                  'minIndex': stats.minIndex,
+                  'maxIndex': stats.maxIndex,
+                  'lastIndex': stats.lastIndex,
+                  'trend': stats.trend.name,
+                },
+          'summary': {
+            for (final (name, strings) in const [
+              ('en', Oito2LocalizationsEn()),
+              ('pt-BR', Oito2LocalizationsPtBr()),
+            ])
+              name: stats?.describe(strings) ?? strings.noData,
+          },
+        };
+      }(),
+  ],
+};
 
 Map<String, Object?>? sortJson(Oito2SortDescriptor? sort) => sort == null
     ? null
@@ -343,6 +408,7 @@ void main() {
       'columnWidths': exportWidths(),
       'breadcrumb': exportBreadcrumb(),
       'weekSchedule': exportWeekSchedule(locales),
+      'sparkline': exportSparkline(),
     });
     expect(file.existsSync(), isTrue);
   });
