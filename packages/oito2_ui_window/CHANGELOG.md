@@ -10,6 +10,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial package skeleton.
 - `Oito2Window.ensureInitialized`: hides the native title bar for client-side decorations on Linux, Windows and macOS (keeping the macOS traffic lights) and returns an `Oito2WindowController` backed by `window_manager`; returns null on the web, Android and iOS.
+- `Oito2NativeWindowController` implements `Oito2WindowCloseGuard`: while close handlers are added, such as an `Oito2UnsavedChangesGuard` with unsaved changes, it holds back the native close with `setPreventClose`, asks the handlers when the window is asked to close and destroys it once they all allow it.
 
 ### Changed
 

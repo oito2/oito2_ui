@@ -82,6 +82,10 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
   );
   String _query = '';
   final _searchFocus = FocusNode(debugLabel: 'Page search');
+
+  /// The guards of the shown page with unsaved changes, asked before the
+  /// shell switches pages.
+  final _leave = Oito2UnsavedChangesController();
   final _searchController = TextEditingController();
 
   List<ShowcasePage> get _filtered => _query.isEmpty
@@ -279,8 +283,26 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
       ),
   ];
 
-  /// Shows [page], clearing the search so it is in the list.
+  /// Shows [page], clearing the search so it is in the list, once the
+  /// guards of the shown page allow leaving it. When they don't, the
+  /// address goes back to the shown page.
   void _goTo(ShowcasePage page) {
+    if (page == _selected || !_leave.hasUnsavedChanges) {
+      _show(page);
+      return;
+    }
+    _leave.confirmLeave().then((confirmed) {
+      if (!mounted) return;
+      if (confirmed) {
+        _show(page);
+      } else if (widget.location.value != _selected.slug) {
+        widget.location.value = _selected.slug;
+      }
+    });
+  }
+
+  /// Shows [page], clearing the search so it is in the list.
+  void _show(ShowcasePage page) {
     if (_query.isNotEmpty) {
       _searchController.clear();
       _search('');
@@ -327,20 +349,25 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
   @override
   Widget build(BuildContext context) {
     final platform = Oito2SystemScope.of(context).platform;
-    return Oito2Commands(
-      commands: _commands(),
-      // Gives the shell the initial focus, so the shortcuts work before
-      // the user clicks anything.
-      child: Focus(
-        autofocus: true,
-        child: widget.controller.value.compactMode
-            ? _compact(platform)
-            : LayoutBuilder(
-                builder: (context, constraints) => _masterDetail(
-                  platform,
-                  wide: constraints.maxWidth >= _breakpoint,
+    // The page list and the rail ask the guards of the shown page before
+    // they switch pages.
+    return Oito2UnsavedChangesScope(
+      controller: _leave,
+      child: Oito2Commands(
+        commands: _commands(),
+        // Gives the shell the initial focus, so the shortcuts work before
+        // the user clicks anything.
+        child: Focus(
+          autofocus: true,
+          child: widget.controller.value.compactMode
+              ? _compact(platform)
+              : LayoutBuilder(
+                  builder: (context, constraints) => _masterDetail(
+                    platform,
+                    wide: constraints.maxWidth >= _breakpoint,
+                  ),
                 ),
-              ),
+        ),
       ),
     );
   }

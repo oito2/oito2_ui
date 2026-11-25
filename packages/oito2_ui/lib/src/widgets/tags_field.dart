@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
@@ -20,6 +21,7 @@ import 'package:material_ui/material_ui.dart';
 import '../collections/list_collection.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
+import 'form.dart';
 import 'options_view.dart';
 import 'touch_target.dart';
 import 'utilities.dart';
@@ -40,7 +42,7 @@ enum Oito2TagsFieldStyle {
 /// Enter or a [delimiters] character adds the typed text, trimmed, as a
 /// tag; a pasted list is split on the delimiters. A tag is refused when it
 /// is empty, repeated (unless [allowDuplicates]), past [maxTags] or
-/// rejected by [validator]. A typed tag that is refused stays in the input
+/// rejected by [tagValidator]. A typed tag that is refused stays in the input
 /// to be fixed; the refused tags of a pasted list are dropped.
 ///
 /// Backspace in the empty input, or the start arrow with the caret at the
@@ -49,15 +51,20 @@ enum Oito2TagsFieldStyle {
 /// focused one. With [suggestions], matching items not yet added show
 /// below the input as it is typed. With [clearable], a button at the end
 /// removes every tag at once.
+///
+/// The error of [validator] or [required] shows under the field after
+/// it loses focus, or at once after its [Oito2Form] found errors. In a
+/// form, resetting it calls [onChanged] with the clean tags.
 class Oito2TagsField extends StatefulWidget {
   /// Creates a tags field.
   const Oito2TagsField({
     super.key,
+    this.participatesInForm = true,
     required this.tags,
     required this.onChanged,
     this.delimiters = const [','],
     this.maxTags,
-    this.validator,
+    this.tagValidator,
     this.allowDuplicates = false,
     this.labelText,
     this.hintText,
@@ -65,6 +72,8 @@ class Oito2TagsField extends StatefulWidget {
     this.focusNode,
     this.style = Oito2TagsFieldStyle.filled,
     this.clearable = false,
+    this.validator,
+    this.required = false,
   });
 
   /// The tags, in order.
@@ -84,7 +93,7 @@ class Oito2TagsField extends StatefulWidget {
 
   /// Decides whether a trimmed, non-empty tag is accepted; every such tag
   /// is accepted when null.
-  final bool Function(String tag)? validator;
+  final bool Function(String tag)? tagValidator;
 
   /// Whether the same tag can be added twice.
   final bool allowDuplicates;
@@ -109,15 +118,69 @@ class Oito2TagsField extends StatefulWidget {
   /// field is editable and has tags.
   final bool clearable;
 
+  /// Checks the whole tag list and returns an error message, or null to
+  /// accept it; unlike [tagValidator], it doesn't refuse single tags.
+  final String? Function(List<String> tags)? validator;
+
+  /// Whether a field without tags shows the localized "This field is
+  /// required" error.
+  final bool required;
+
+  /// Whether the field registers with the closest [Oito2Form], taking
+  /// part in its validation, error summary and dirty state; true by
+  /// default. When false, the field shows its own errors as outside a
+  /// form.
+  final bool participatesInForm;
+
   @override
   State<Oito2TagsField> createState() => _Oito2TagsFieldState();
 }
 
 class _Oito2TagsFieldState extends State<Oito2TagsField>
-    with OwnedFocusNodeMixin {
+    with OwnedFocusNodeMixin, Oito2FormFieldMixin {
   final _controller = TextEditingController();
   final List<FocusNode> _tagNodes = [];
   bool _hasFocus = false;
+
+  /// Whether the validation error shows, once the field lost focus.
+  bool _showError = false;
+
+  /// The tags while the field has no unsaved changes.
+  late List<String> _cleanTags;
+
+  @override
+  bool get participatesInForm => widget.participatesInForm;
+
+  @override
+  String? get formFieldLabel => widget.labelText;
+
+  @override
+  FocusNode get formFieldFocusNode => _input;
+
+  @override
+  String? get formFieldError {
+    if (widget.required && widget.tags.isEmpty) {
+      return Oito2Localizations.of(context).fieldRequired;
+    }
+    return widget.validator?.call(widget.tags);
+  }
+
+  @override
+  bool get isFormFieldDirty => !listEquals(widget.tags, _cleanTags);
+
+  @override
+  void showFormFieldError() {
+    if (mounted) setState(() => _showError = true);
+  }
+
+  @override
+  void markFormFieldClean() => _cleanTags = [...widget.tags];
+
+  @override
+  void resetFormField() {
+    setState(() => _showError = false);
+    if (isFormFieldDirty) widget.onChanged?.call([..._cleanTags]);
+  }
 
   @override
   FocusNode? get widgetFocusNode => widget.focusNode;
@@ -141,6 +204,7 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
   @override
   void initState() {
     super.initState();
+    _cleanTags = [...widget.tags];
     _syncNodes();
   }
 
@@ -148,6 +212,7 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
   void didUpdateWidget(Oito2TagsField oldWidget) {
     super.didUpdateWidget(oldWidget);
     _syncNodes();
+    if (!listEquals(oldWidget.tags, widget.tags)) notifyFormFieldChanged();
   }
 
   /// Keeps one focus node per tag. Removed nodes are disposed after the
@@ -173,7 +238,7 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
       tag.isNotEmpty &&
       (widget.allowDuplicates || !tags.contains(tag)) &&
       (widget.maxTags == null || tags.length < widget.maxTags!) &&
-      (widget.validator?.call(tag) ?? true);
+      (widget.tagValidator?.call(tag) ?? true);
 
   /// Adds the accepted tags of [raw] and returns the refused texts, which
   /// stay in the field.
@@ -451,7 +516,10 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
     return Focus(
       canRequestFocus: false,
       skipTraversal: true,
-      onFocusChange: (focused) => setState(() => _hasFocus = focused),
+      onFocusChange: (focused) => setState(() {
+        _hasFocus = focused;
+        if (!focused) _showError = true;
+      }),
       child: MouseRegion(
         cursor: _enabled ? SystemMouseCursors.text : MouseCursor.defer,
         child: GestureDetector(
@@ -466,6 +534,9 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
               decoration: InputDecoration(
                 labelText: widget.labelText,
                 enabled: _enabled,
+                errorText: _showError || formShowsErrors
+                    ? formFieldError
+                    : null,
                 suffixIcon:
                     widget.clearable && _enabled && widget.tags.isNotEmpty
                     ? IconButton(

@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
@@ -20,6 +21,7 @@ import 'package:material_ui/material_ui.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'calendar.dart';
+import 'form.dart';
 import 'popover.dart';
 import 'touch_target.dart';
 import 'widget_helpers.dart';
@@ -27,14 +29,23 @@ import 'widget_helpers.dart';
 /// Shared behaviour of the date and time entries: a text field whose text
 /// is parsed into a value, with the error shown only after the field
 /// loses focus or is submitted, so partial input isn't flagged while
-/// typing.
+/// typing, or at once after its form found errors.
 abstract class _ParsedEntryState<W extends StatefulWidget, T> extends State<W>
-    with OwnedFocusNodeMixin<W> {
+    with OwnedFocusNodeMixin<W>, Oito2FormFieldMixin<W> {
   /// The controller of the text field.
   final controller = TextEditingController();
   bool _initialized = false;
   bool _showError = false;
   String? _error;
+
+  /// The text the field holds while it has no unsaved changes.
+  String _cleanText = '';
+
+  /// Checks a parsed value; null accepts every value.
+  String? Function(T? value)? get validator;
+
+  /// Whether an empty field shows the required error.
+  bool get isRequired;
 
   /// The focus node in use: the widget's, or the one this state owns.
   FocusNode get focusNode => effectiveFocusNode;
@@ -63,6 +74,7 @@ abstract class _ParsedEntryState<W extends StatefulWidget, T> extends State<W>
       _initialized = true;
       final value = initialValue;
       if (value != null) controller.text = format(value);
+      _cleanText = controller.text;
     }
   }
 
@@ -77,8 +89,8 @@ abstract class _ParsedEntryState<W extends StatefulWidget, T> extends State<W>
     if (!focusNode.hasFocus) setState(() => _showError = true);
   }
 
-  /// Parses [text], reports a change of error and, when it parses, the
-  /// value; a valid text also hides the shown error.
+  /// Parses [text], reports a change of the parse error and, when it
+  /// parses, the value; a valid text also hides the shown error.
   void onTextChanged(String text) {
     final (value, error) = parse(text);
     if (error != _error) reportError(error);
@@ -87,10 +99,48 @@ abstract class _ParsedEntryState<W extends StatefulWidget, T> extends State<W>
       if (error == null) _showError = false;
     });
     if (error == null) report(value);
+    notifyFormFieldChanged();
   }
 
   /// Shows the current error, if any, after the field is submitted.
   void onSubmitted(String _) => setState(() => _showError = true);
+
+  /// Returns the error of [text]: the parse error, the required error of
+  /// an empty field, or the validator error of the parsed value.
+  String? errorOf(String text) {
+    final (value, error) = parse(text);
+    if (error != null) return error;
+    if (isRequired && text.trim().isEmpty) {
+      return Oito2Localizations.of(context).fieldRequired;
+    }
+    return validator?.call(value);
+  }
+
+  @override
+  String? get formFieldError => errorOf(controller.text);
+
+  @override
+  FocusNode get formFieldFocusNode => focusNode;
+
+  @override
+  bool get isFormFieldDirty => controller.text != _cleanText;
+
+  @override
+  void showFormFieldError() {
+    if (mounted) setState(() => _showError = true);
+  }
+
+  @override
+  void markFormFieldClean() => _cleanText = controller.text;
+
+  @override
+  void resetFormField() {
+    if (controller.text != _cleanText) {
+      controller.text = _cleanText;
+      onTextChanged(_cleanText);
+    }
+    setState(() => _showError = false);
+  }
 
   /// Shows [value] in the field and reports it.
   void setValue(T value) {
@@ -98,9 +148,11 @@ abstract class _ParsedEntryState<W extends StatefulWidget, T> extends State<W>
     onTextChanged(controller.text);
   }
 
-  /// The error to show: the parse error once the field has lost focus or
-  /// been submitted, otherwise null.
-  String? get visibleError => _showError ? _error : null;
+  /// The error to show once the field has lost focus or been submitted,
+  /// or after its form found errors: the parse error, the required error
+  /// or the validator error; otherwise null.
+  String? get visibleError =>
+      _showError || formShowsErrors ? errorOf(controller.text) : null;
 }
 
 /// A date text field that accepts the locale's compact date format (such
@@ -108,16 +160,20 @@ abstract class _ParsedEntryState<W extends StatefulWidget, T> extends State<W>
 ///
 /// Parsing, the format hint and the error messages come from
 /// `MaterialLocalizations`, so they follow the app language. Errors show
-/// after the field loses focus or is submitted.
+/// after the field loses focus or is submitted, or at once after its
+/// [Oito2Form] found errors.
 class Oito2DateEntry extends StatefulWidget {
   /// Creates a date entry.
   const Oito2DateEntry({
     super.key,
+    this.participatesInForm = true,
     required this.firstDate,
     required this.lastDate,
     this.initialDate,
     this.onChanged,
     this.onErrorChanged,
+    this.validator,
+    this.required = false,
     this.selectableDayPredicate,
     this.labelText,
     this.acceptEmpty = true,
@@ -144,7 +200,21 @@ class Oito2DateEntry extends StatefulWidget {
 
   /// Called with the error message when the text stops being a valid
   /// date, and with null when it is valid again.
+  ///
+  /// It reports only the parse errors, not those of [validator] or
+  /// [required].
   final ValueChanged<String?>? onErrorChanged;
+
+  /// Checks a valid date, or null for an empty field, and returns an
+  /// error message, or null to accept it.
+  ///
+  /// The error shows like a parse error; [onChanged] still reports the
+  /// date.
+  final String? Function(DateTime? date)? validator;
+
+  /// Whether an empty field shows the localized "This field is required"
+  /// error.
+  final bool required;
 
   /// Decides which days between [firstDate] and [lastDate] are accepted;
   /// every day is when null.
@@ -199,6 +269,12 @@ class Oito2DateEntry extends StatefulWidget {
   /// Matches a run of three or more decimal digits in any script.
   static final _longNumber = RegExp(r'\p{Nd}{3,}', unicode: true);
 
+  /// Whether the field registers with the closest [Oito2Form], taking
+  /// part in its validation, error summary and dirty state; true by
+  /// default. When false, the field shows its own errors as outside a
+  /// form.
+  final bool participatesInForm;
+
   @override
   State<Oito2DateEntry> createState() => _Oito2DateEntryState();
 }
@@ -213,6 +289,18 @@ class _Oito2DateEntryState extends _ParsedEntryState<Oito2DateEntry, DateTime> {
 
   @override
   DateTime? get initialValue => widget.initialDate;
+
+  @override
+  String? Function(DateTime? value)? get validator => widget.validator;
+
+  @override
+  bool get isRequired => widget.required;
+
+  @override
+  bool get participatesInForm => widget.participatesInForm;
+
+  @override
+  String get formFieldLabel => widget.labelText ?? _l10n.dateInputLabel;
 
   @override
   String format(DateTime value) => _l10n.formatCompactDate(value);
@@ -307,14 +395,18 @@ class _Oito2DateEntryState extends _ParsedEntryState<Oito2DateEntry, DateTime> {
 ///
 /// The display format follows the locale and the platform 24-hour
 /// setting; the error message and the labels come from
-/// `MaterialLocalizations`.
+/// `MaterialLocalizations`. Errors show after the field loses focus or is
+/// submitted, or at once after its [Oito2Form] found errors.
 class Oito2TimeEntry extends StatefulWidget {
   /// Creates a time entry.
   const Oito2TimeEntry({
     super.key,
+    this.participatesInForm = true,
     this.initialTime,
     this.onChanged,
     this.onErrorChanged,
+    this.validator,
+    this.required = false,
     this.labelText,
     this.acceptEmpty = true,
     this.autofocus = false,
@@ -333,7 +425,18 @@ class Oito2TimeEntry extends StatefulWidget {
 
   /// Called with the error message when the text stops being a valid
   /// time, and with null when it is valid again.
+  ///
+  /// It reports only the parse errors, not those of [validator] or
+  /// [required].
   final ValueChanged<String?>? onErrorChanged;
+
+  /// Checks a valid time, or null for an empty field, and returns an
+  /// error message, or null to accept it.
+  final String? Function(TimeOfDay? time)? validator;
+
+  /// Whether an empty field shows the localized "This field is required"
+  /// error.
+  final bool required;
 
   /// The field label; defaults to the localized "Enter time".
   final String? labelText;
@@ -388,6 +491,12 @@ class Oito2TimeEntry extends StatefulWidget {
     r'^\s*(\D*?)\s*(\d{1,2})\s*[:.hH]\s*(\d{2})\s*(\S*)\s*$',
   );
 
+  /// Whether the field registers with the closest [Oito2Form], taking
+  /// part in its validation, error summary and dirty state; true by
+  /// default. When false, the field shows its own errors as outside a
+  /// form.
+  final bool participatesInForm;
+
   @override
   State<Oito2TimeEntry> createState() => _Oito2TimeEntryState();
 }
@@ -403,6 +512,19 @@ class _Oito2TimeEntryState
 
   @override
   TimeOfDay? get initialValue => widget.initialTime;
+
+  @override
+  String? Function(TimeOfDay? value)? get validator => widget.validator;
+
+  @override
+  bool get isRequired => widget.required;
+
+  @override
+  bool get participatesInForm => widget.participatesInForm;
+
+  @override
+  String get formFieldLabel =>
+      widget.labelText ?? _l10n.timePickerInputHelpText;
 
   @override
   String format(TimeOfDay value) => _l10n.formatTimeOfDay(
@@ -468,15 +590,20 @@ class _Oito2TimeEntryState
 
 /// A date entry and a time entry side by side that report one combined
 /// [DateTime]. An empty time means midnight.
+///
+/// In an [Oito2Form], the two entries take part as two fields.
 class Oito2DateTimeEntry extends StatefulWidget {
   /// Creates a date and time entry.
   const Oito2DateTimeEntry({
     super.key,
+    this.participatesInForm = true,
     required this.firstDate,
     required this.lastDate,
     this.initialDateTime,
     this.onChanged,
     this.onErrorChanged,
+    this.validator,
+    this.required = false,
     this.dateLabelText,
     this.timeLabelText,
   });
@@ -499,13 +626,31 @@ class Oito2DateTimeEntry extends StatefulWidget {
 
   /// Called with the error message of the date field, or else of the time
   /// field, when either stops parsing, and with null when both parse.
+  ///
+  /// It reports only the parse errors, not those of [validator] or
+  /// [required].
   final ValueChanged<String?>? onErrorChanged;
+
+  /// Checks the combination of a valid date and time, or null without a
+  /// date, and returns an error message, shown under the date field, or
+  /// null to accept it.
+  final String? Function(DateTime? dateTime)? validator;
+
+  /// Whether an empty date field shows the localized "This field is
+  /// required" error.
+  final bool required;
 
   /// The date field label; defaults to the localized "Enter Date".
   final String? dateLabelText;
 
   /// The time field label; defaults to the localized "Enter time".
   final String? timeLabelText;
+
+  /// Whether the field registers with the closest [Oito2Form], taking
+  /// part in its validation, error summary and dirty state; true by
+  /// default. When false, the field shows its own errors as outside a
+  /// form.
+  final bool participatesInForm;
 
   @override
   State<Oito2DateTimeEntry> createState() => _Oito2DateTimeEntryState();
@@ -544,8 +689,11 @@ class _Oito2DateTimeEntryState extends State<Oito2DateTimeEntry> {
 
   /// The date at the time, or at midnight without a time, or null without
   /// a date.
-  DateTime? get _combined {
-    final date = _date;
+  DateTime? get _combined => _combine(_date);
+
+  /// Returns [date] at the last valid time, or at midnight without a time,
+  /// or null without a date.
+  DateTime? _combine(DateTime? date) {
     final time = _time ?? const TimeOfDay(hour: 0, minute: 0);
     return date == null
         ? null
@@ -564,6 +712,7 @@ class _Oito2DateTimeEntryState extends State<Oito2DateTimeEntry> {
 
   @override
   Widget build(BuildContext context) {
+    final validator = widget.validator;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: Oito2Spacing.sm,
@@ -575,6 +724,11 @@ class _Oito2DateTimeEntryState extends State<Oito2DateTimeEntry> {
             lastDate: widget.lastDate,
             initialDate: _date,
             labelText: widget.dateLabelText,
+            required: widget.required,
+            participatesInForm: widget.participatesInForm,
+            validator: validator == null
+                ? null
+                : (date) => validator(_combine(date)),
             onChanged: (date) {
               _date = date;
               _report();
@@ -591,8 +745,10 @@ class _Oito2DateTimeEntryState extends State<Oito2DateTimeEntry> {
           child: Oito2TimeEntry(
             initialTime: _time,
             labelText: widget.timeLabelText,
+            participatesInForm: widget.participatesInForm,
             onChanged: (time) {
-              _time = time;
+              // Rebuilds so the date field checks the new combination.
+              setState(() => _time = time);
               _report();
             },
             onErrorChanged: (error) {
@@ -640,14 +796,22 @@ class Oito2EntrySegment {
 /// one on Backspace in an empty segment or on the arrow toward the start
 /// of the reading direction (the left arrow in left-to-right text) at its
 /// start.
+///
+/// With [validator] or [required], an error shows below the segments once
+/// the focus leaves the entry, or at once after its [Oito2Form] found
+/// errors.
 class Oito2SegmentedEntry extends StatefulWidget {
   /// Creates a segmented entry.
   const Oito2SegmentedEntry({
     super.key,
+    this.participatesInForm = true,
     required this.segments,
     this.delimiter = '.',
     this.initialValues,
     this.onChanged,
+    this.validator,
+    this.required = false,
+    this.labelText,
   });
 
   /// The segments, in order.
@@ -663,20 +827,87 @@ class Oito2SegmentedEntry extends StatefulWidget {
   /// Called with the text of every segment whenever one changes.
   final ValueChanged<List<String>>? onChanged;
 
+  /// Checks the text of every segment and returns an error message, or
+  /// null to accept it.
+  final String? Function(List<String> values)? validator;
+
+  /// Whether an entry with every segment empty shows the localized "This
+  /// field is required" error.
+  final bool required;
+
+  /// The name of the entry in an [Oito2FormErrorSummary].
+  final String? labelText;
+
+  /// Whether the field registers with the closest [Oito2Form], taking
+  /// part in its validation, error summary and dirty state; true by
+  /// default. When false, the field shows its own errors as outside a
+  /// form.
+  final bool participatesInForm;
+
   @override
   State<Oito2SegmentedEntry> createState() => _Oito2SegmentedEntryState();
 }
 
 /// Owns a controller and a focus node per segment of
 /// [Oito2SegmentedEntry] and moves the focus between segments.
-class _Oito2SegmentedEntryState extends State<Oito2SegmentedEntry> {
+class _Oito2SegmentedEntryState extends State<Oito2SegmentedEntry>
+    with Oito2FormFieldMixin {
   final List<TextEditingController> _controllers = [];
   final List<FocusNode> _nodes = [];
+
+  /// Whether the error shows, once the focus left the entry.
+  bool _showError = false;
+
+  /// The text of every segment while the entry has no unsaved changes.
+  late List<String> _cleanValues;
 
   @override
   void initState() {
     super.initState();
     _syncSegments();
+    _cleanValues = _values;
+  }
+
+  /// The text of every segment.
+  List<String> get _values => [for (final c in _controllers) c.text];
+
+  @override
+  bool get participatesInForm => widget.participatesInForm;
+
+  @override
+  String? get formFieldLabel => widget.labelText;
+
+  @override
+  FocusNode? get formFieldFocusNode => _nodes.firstOrNull;
+
+  @override
+  String? get formFieldError {
+    final values = _values;
+    if (widget.required && values.every((value) => value.isEmpty)) {
+      return Oito2Localizations.of(context).fieldRequired;
+    }
+    return widget.validator?.call(values);
+  }
+
+  @override
+  bool get isFormFieldDirty => !listEquals(_values, _cleanValues);
+
+  @override
+  void showFormFieldError() {
+    if (mounted) setState(() => _showError = true);
+  }
+
+  @override
+  void markFormFieldClean() => _cleanValues = _values;
+
+  @override
+  void resetFormField() {
+    for (var i = 0; i < _controllers.length; i++) {
+      _controllers[i].text = i < _cleanValues.length ? _cleanValues[i] : '';
+    }
+    setState(() => _showError = false);
+    widget.onChanged?.call(_values);
+    notifyFormFieldChanged();
   }
 
   @override
@@ -773,7 +1004,10 @@ class _Oito2SegmentedEntryState extends State<Oito2SegmentedEntry> {
   /// reports every segment's text.
   void _onChanged(int index, String text) {
     if (text.length >= widget.segments[index].length) _focus(index + 1);
-    widget.onChanged?.call([for (final c in _controllers) c.text]);
+    widget.onChanged?.call(_values);
+    // Rebuilds so a shown error follows the text.
+    setState(() {});
+    notifyFormFieldChanged();
   }
 
   /// The measured segment widths, by digit count, for [_widthsKey].
@@ -806,6 +1040,46 @@ class _Oito2SegmentedEntryState extends State<Oito2SegmentedEntry> {
 
   @override
   Widget build(BuildContext context) {
+    final error = _showError || formShowsErrors ? formFieldError : null;
+    final row = Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      includeSemantics: false,
+      onFocusChange: (focused) {
+        if (!focused) setState(() => _showError = true);
+      },
+      child: _segmentsRow(context),
+    );
+    if (error == null) return row;
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        row,
+        Padding(
+          padding: const EdgeInsetsDirectional.only(
+            start: Oito2Spacing.md,
+            top: Oito2Spacing.xs,
+          ),
+          child: Semantics(
+            liveRegion: true,
+            child: Text(
+              error,
+              style:
+                  theme.inputDecorationTheme.errorStyle ??
+                  theme.textTheme.bodySmall?.copyWith(
+                    color: semanticColorsOf(context).errorText,
+                  ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Builds the segments with the delimiters between them.
+  Widget _segmentsRow(BuildContext context) {
     final count = widget.segments.length;
     return Row(
       mainAxisSize: MainAxisSize.min,

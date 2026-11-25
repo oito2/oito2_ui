@@ -98,6 +98,29 @@ abstract interface class Oito2WindowController {
   Future<void> showMenu();
 }
 
+/// Asked before the window closes; completes with whether the window may
+/// close.
+typedef Oito2WindowCloseHandler = Future<bool> Function();
+
+/// A window controller that asks handlers before the window closes, such
+/// as the handler of an `Oito2UnsavedChangesGuard` with unsaved changes.
+///
+/// While at least one handler is added, a request to close the window,
+/// from the title bar, the keyboard or the window manager, waits for the
+/// handlers, the last added first, and closes the window only when every
+/// one of them completes with true. Without handlers the window closes as
+/// usual.
+///
+/// An [Oito2WindowController] may also implement this interface; widgets
+/// check for it with `is`.
+abstract interface class Oito2WindowCloseGuard {
+  /// Adds [handler], asked before the window closes.
+  void addCloseHandler(Oito2WindowCloseHandler handler);
+
+  /// Removes [handler], added by [addCloseHandler].
+  void removeCloseHandler(Oito2WindowCloseHandler handler);
+}
+
 /// Exposes an [Oito2WindowController] to the widgets below it.
 class Oito2WindowScope extends InheritedWidget {
   /// Creates a scope that provides [controller] to [child].

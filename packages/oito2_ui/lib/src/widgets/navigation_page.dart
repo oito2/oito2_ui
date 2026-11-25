@@ -13,11 +13,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../theme/extensions/navigation_themes.dart';
 import 'navigation_rail.dart';
 import 'page_controller.dart';
+import 'unsaved_changes.dart';
 import 'widget_helpers.dart';
 
 /// Top-level navigation between pages that adapts to the available width
@@ -33,6 +36,9 @@ import 'widget_helpers.dart';
 /// Breakpoints, the rail color and padding and the separator default to
 /// the theme's [Oito2NavigationPageThemeData]. The selected page fades in
 /// when it changes.
+///
+/// Under an [Oito2UnsavedChangesScope], picking another destination while
+/// a guard of the shown page has unsaved changes asks first.
 class Oito2NavigationPage extends StatefulWidget {
   /// Creates a navigation page.
   const Oito2NavigationPage({
@@ -113,9 +119,27 @@ class _Oito2NavigationPageState extends State<Oito2NavigationPage>
 
   void _onChanged() => setState(() {});
 
-  /// Selects the destination at [index] and reports it to the
-  /// `onSelected` callback.
+  /// Selects the destination at [index] and reports it to the `onSelected`
+  /// callback, once the closest [Oito2UnsavedChangesScope], if any,
+  /// confirms leaving the destination shown.
   void _select(int index) {
+    final leave = Oito2UnsavedChangesScope.maybeOf(context, listen: false);
+    if (leave == null ||
+        !leave.hasUnsavedChanges ||
+        index == _controller.index) {
+      _apply(index);
+      return;
+    }
+    unawaited(
+      leave.confirmLeave().then((confirmed) {
+        if (confirmed && mounted) _apply(index);
+      }),
+    );
+  }
+
+  /// Selects the destination at [index] and reports it to the `onSelected`
+  /// callback.
+  void _apply(int index) {
     _controller.index = index;
     widget.onSelected?.call(index);
   }

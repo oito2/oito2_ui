@@ -571,7 +571,15 @@
 			"outdentItem": "Outdent",
 			"moveColumnLeft": "Move column left",
 			"moveColumnRight": "Move column right",
-			"resetColumns": "Reset columns"
+			"resetColumns": "Reset columns",
+			"fieldRequired": "This field is required",
+			"invalidValue": "Invalid value",
+			"goToField": "Go to the field",
+			"unsavedChangesTitle": "Discard unsaved changes?",
+			"unsavedChangesMessage": "The changes made here will be lost.",
+			"keepEditing": "Keep editing",
+			"discardChanges": "Discard",
+			"saveChanges": "Save"
 		},
 		"calls": [
 			{
@@ -1047,6 +1055,34 @@
 					4
 				],
 				"result": "Moved column Size to position 2 of 4"
+			},
+			{
+				"name": "formErrorSummary",
+				"args": [
+					1
+				],
+				"result": "Fix 1 error to continue"
+			},
+			{
+				"name": "formErrorSummary",
+				"args": [
+					3
+				],
+				"result": "Fix 3 errors to continue"
+			},
+			{
+				"name": "formErrorCount",
+				"args": [
+					1
+				],
+				"result": "1 error in the form"
+			},
+			{
+				"name": "formErrorCount",
+				"args": [
+					3
+				],
+				"result": "3 errors in the form"
 			},
 			{
 				"name": "movedInto",
@@ -1639,7 +1675,15 @@
 			"outdentItem": "Diminuir recuo",
 			"moveColumnLeft": "Mover coluna para a esquerda",
 			"moveColumnRight": "Mover coluna para a direita",
-			"resetColumns": "Redefinir colunas"
+			"resetColumns": "Redefinir colunas",
+			"fieldRequired": "Este campo é obrigatório",
+			"invalidValue": "Valor inválido",
+			"goToField": "Ir para o campo",
+			"unsavedChangesTitle": "Descartar as alterações não salvas?",
+			"unsavedChangesMessage": "As alterações feitas aqui serão perdidas.",
+			"keepEditing": "Continuar editando",
+			"discardChanges": "Descartar",
+			"saveChanges": "Salvar"
 		},
 		"calls": [
 			{
@@ -2115,6 +2159,34 @@
 					4
 				],
 				"result": "Coluna \"Size\" movida para a posição 2 de 4"
+			},
+			{
+				"name": "formErrorSummary",
+				"args": [
+					1
+				],
+				"result": "Corrija 1 erro para continuar"
+			},
+			{
+				"name": "formErrorSummary",
+				"args": [
+					3
+				],
+				"result": "Corrija 3 erros para continuar"
+			},
+			{
+				"name": "formErrorCount",
+				"args": [
+					1
+				],
+				"result": "1 erro no formulário"
+			},
+			{
+				"name": "formErrorCount",
+				"args": [
+					3
+				],
+				"result": "3 erros no formulário"
 			},
 			{
 				"name": "movedInto",

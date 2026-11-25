@@ -52,6 +52,7 @@ import 'pages/expansion_panel_page.dart';
 import 'pages/file_upload_page.dart';
 import 'pages/floating_panel_page.dart';
 import 'pages/focus_border_page.dart';
+import 'pages/form_page.dart';
 import 'pages/format_page.dart';
 import 'pages/foundation_page.dart';
 import 'pages/freedesktop_icons_page.dart';
@@ -487,6 +488,12 @@ final List<ShowcasePage> showcasePages = [
     icon: LucideIcons.focus,
     source: 'focus_border_page.dart',
     builder: _page(const FocusBorderPage()),
+  ),
+  ShowcasePage(
+    title: 'Oito2Form',
+    icon: LucideIcons.clipboard_check,
+    source: 'form_page.dart',
+    builder: _page(const FormPage()),
   ),
   ShowcasePage(
     title: 'Oito2HeaderBar',

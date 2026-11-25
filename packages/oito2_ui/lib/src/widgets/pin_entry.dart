@@ -18,6 +18,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
+import 'form.dart';
 import 'touch_target.dart';
 import 'widget_helpers.dart';
 
@@ -28,6 +29,9 @@ import 'widget_helpers.dart';
 /// whole code and one-time code autofill all work as in any field; a
 /// pasted code fills the cells in order. When the last cell is filled the
 /// entry calls [onCompleted] and gives up the focus.
+///
+/// The error of [validator] or [required] shows below the cells after the
+/// entry loses focus, or at once after its [Oito2Form] found errors.
 class Oito2PinEntry extends StatefulWidget {
   /// Creates a code entry.
   ///
@@ -35,6 +39,7 @@ class Oito2PinEntry extends StatefulWidget {
   /// than zero.
   const Oito2PinEntry({
     super.key,
+    this.participatesInForm = true,
     this.length = 6,
     this.onChanged,
     this.onCompleted,
@@ -46,6 +51,8 @@ class Oito2PinEntry extends StatefulWidget {
     this.autofocus = false,
     this.enabled = true,
     this.semanticLabel,
+    this.validator,
+    this.required = false,
   }) : assert(length > 0);
 
   /// The number of characters.
@@ -82,6 +89,19 @@ class Oito2PinEntry extends StatefulWidget {
   /// length.
   final String? semanticLabel;
 
+  /// Checks the code and returns an error message, or null to accept it.
+  final String? Function(String code)? validator;
+
+  /// Whether an empty entry shows the localized "This field is required"
+  /// error.
+  final bool required;
+
+  /// Whether the field registers with the closest [Oito2Form], taking
+  /// part in its validation, error summary and dirty state; true by
+  /// default. When false, the field shows its own errors as outside a
+  /// form.
+  final bool participatesInForm;
+
   @override
   State<Oito2PinEntry> createState() => _Oito2PinEntryState();
 }
@@ -89,7 +109,62 @@ class Oito2PinEntry extends StatefulWidget {
 class _Oito2PinEntryState extends State<Oito2PinEntry>
     with
         OwnedFocusNodeMixin,
-        OwnedControllerMixin<Oito2PinEntry, TextEditingController> {
+        OwnedControllerMixin<Oito2PinEntry, TextEditingController>,
+        Oito2FormFieldMixin {
+  /// Whether the validation error shows, once the entry lost focus.
+  bool _showError = false;
+
+  /// The code while the entry has no unsaved changes.
+  late String _cleanText;
+
+  /// The code the form was last told about.
+  late String _notifiedText;
+
+  @override
+  void initState() {
+    super.initState();
+    _cleanText = _notifiedText = _controller.text;
+  }
+
+  @override
+  bool get participatesInForm => widget.participatesInForm;
+
+  @override
+  String get formFieldLabel =>
+      widget.semanticLabel ??
+      Oito2Localizations.of(context).codeEntry(widget.length);
+
+  @override
+  FocusNode get formFieldFocusNode => _focusNode;
+
+  @override
+  String? get formFieldError {
+    final text = _controller.text;
+    if (widget.required && text.isEmpty) {
+      return Oito2Localizations.of(context).fieldRequired;
+    }
+    return widget.validator?.call(text);
+  }
+
+  @override
+  bool get isFormFieldDirty => _controller.text != _cleanText;
+
+  @override
+  void showFormFieldError() {
+    if (mounted) setState(() => _showError = true);
+  }
+
+  @override
+  void markFormFieldClean() => _cleanText = _controller.text;
+
+  @override
+  void resetFormField() {
+    setState(() => _showError = false);
+    if (_controller.text == _cleanText) return;
+    _controller.text = _cleanText;
+    widget.onChanged?.call(_cleanText);
+  }
+
   @override
   TextEditingController? get widgetController => widget.controller;
 
@@ -103,7 +178,10 @@ class _Oito2PinEntryState extends State<Oito2PinEntry>
   FocusNode? get widgetFocusNode => widget.focusNode;
 
   @override
-  void onEffectiveFocusChange() => _refresh();
+  void onEffectiveFocusChange() {
+    if (!_focusNode.hasFocus) _showError = true;
+    _refresh();
+  }
 
   TextEditingController get _controller => effectiveController;
 
@@ -123,6 +201,10 @@ class _Oito2PinEntryState extends State<Oito2PinEntry>
       _controller.selection = TextSelection.collapsed(offset: end);
     }
     _refresh();
+    if (value.text != _notifiedText) {
+      _notifiedText = value.text;
+      notifyFormFieldChanged();
+    }
   }
 
   /// Reports [text], and when every cell is filled reports the completed
@@ -144,6 +226,8 @@ class _Oito2PinEntryState extends State<Oito2PinEntry>
     final height = controlHeightOf(context) + 6;
     final chars = _controller.text.characters.toList();
     final focused = _focusNode.hasFocus;
+    final error = _showError || formShowsErrors ? formFieldError : null;
+    final hasError = widget.hasError || error != null;
     final active = chars.length.clamp(0, widget.length - 1);
     final style = theme.textTheme.titleLarge?.copyWith(
       color: widget.enabled
@@ -154,7 +238,7 @@ class _Oito2PinEntryState extends State<Oito2PinEntry>
     Widget cell(int index) {
       final char = index < chars.length ? chars[index] : '';
       final isActive = focused && index == active;
-      final color = widget.hasError
+      final color = hasError
           ? semantic.errorText
           : isActive
           ? semantic.primaryText
@@ -168,9 +252,7 @@ class _Oito2PinEntryState extends State<Oito2PinEntry>
           borderRadius: Oito2Radius.mediumAll,
           border: Border.all(
             color: widget.enabled ? color : color.withValues(alpha: 0.38),
-            width: isActive || widget.hasError
-                ? Oito2Sizes.focusBorderWidth
-                : 1,
+            width: isActive || hasError ? Oito2Sizes.focusBorderWidth : 1,
           ),
         ),
         child: Text(
@@ -219,13 +301,35 @@ class _Oito2PinEntryState extends State<Oito2PinEntry>
         decoration: bareInputDecoration(),
       ),
     );
-    return Oito2TouchTarget(
+    final entry = Oito2TouchTarget(
       child: Stack(
         children: [
           cells,
           Positioned.fill(child: field),
         ],
       ),
+    );
+    if (error == null) return entry;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        entry,
+        Padding(
+          padding: const EdgeInsets.only(top: Oito2Spacing.xs),
+          child: Semantics(
+            liveRegion: true,
+            child: Text(
+              error,
+              style:
+                  theme.inputDecorationTheme.errorStyle ??
+                  theme.textTheme.bodySmall?.copyWith(
+                    color: semantic.errorText,
+                  ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

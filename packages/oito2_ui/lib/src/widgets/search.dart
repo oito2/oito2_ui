@@ -17,7 +17,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
+import 'form.dart';
 import 'touch_target.dart';
 import 'widget_helpers.dart';
 
@@ -27,10 +29,14 @@ import 'widget_helpers.dart';
 /// Pressing Escape clears the text; pressing it again on an empty field
 /// calls [onEscape]. The hint and the clear button tooltip come from
 /// `MaterialLocalizations`, so they follow the app language.
+///
+/// The error of [validator] or [required] shows under the field after it
+/// loses focus, or at once after its [Oito2Form] found errors.
 class Oito2SearchField extends StatefulWidget {
   /// Creates a search field.
   const Oito2SearchField({
     super.key,
+    this.participatesInForm = false,
     this.controller,
     this.focusNode,
     this.hintText,
@@ -40,6 +46,8 @@ class Oito2SearchField extends StatefulWidget {
     this.onEscape,
     this.autofocus = false,
     this.prefixIcon,
+    this.validator,
+    this.required = false,
   });
 
   /// Controls the text; one is created when null.
@@ -69,12 +77,92 @@ class Oito2SearchField extends StatefulWidget {
   /// The widget before the text; defaults to a search icon.
   final Widget? prefixIcon;
 
+  /// Checks the text and returns an error message, or null to accept it.
+  final String? Function(String text)? validator;
+
+  /// Whether an empty field shows the localized "This field is required"
+  /// error.
+  final bool required;
+
+  /// Whether the field registers with the closest [Oito2Form], taking
+  /// part in its validation, error summary and dirty state; false by
+  /// default, since a search usually filters the screen rather than
+  /// holding form data. When false, the field shows its own errors as
+  /// outside a form.
+  final bool participatesInForm;
+
   @override
   State<Oito2SearchField> createState() => _Oito2SearchFieldState();
 }
 
 class _Oito2SearchFieldState extends State<Oito2SearchField>
-    with OwnedControllerMixin<Oito2SearchField, TextEditingController> {
+    with
+        OwnedFocusNodeMixin,
+        OwnedControllerMixin<Oito2SearchField, TextEditingController>,
+        Oito2FormFieldMixin {
+  /// Whether the validation error shows, once the field lost focus.
+  bool _showError = false;
+
+  /// The text while the field has no unsaved changes.
+  late String _cleanText;
+
+  /// The text the form was last told about.
+  late String _notifiedText;
+
+  @override
+  void initState() {
+    super.initState();
+    _cleanText = _notifiedText = _controller.text;
+  }
+
+  @override
+  FocusNode? get widgetFocusNode => widget.focusNode;
+
+  @override
+  void onEffectiveFocusChange() {
+    if (!effectiveFocusNode.hasFocus && !_showError && mounted) {
+      setState(() => _showError = true);
+    }
+  }
+
+  @override
+  bool get participatesInForm => widget.participatesInForm;
+
+  @override
+  String? get formFieldLabel =>
+      widget.hintText ?? MaterialLocalizations.of(context).searchFieldLabel;
+
+  @override
+  FocusNode get formFieldFocusNode => effectiveFocusNode;
+
+  @override
+  String? get formFieldError {
+    final text = _controller.text;
+    if (widget.required && text.trim().isEmpty) {
+      return Oito2Localizations.of(context).fieldRequired;
+    }
+    return widget.validator?.call(text);
+  }
+
+  @override
+  bool get isFormFieldDirty => _controller.text != _cleanText;
+
+  @override
+  void showFormFieldError() {
+    if (mounted) setState(() => _showError = true);
+  }
+
+  @override
+  void markFormFieldClean() => _cleanText = _controller.text;
+
+  @override
+  void resetFormField() {
+    setState(() => _showError = false);
+    if (_controller.text == _cleanText) return;
+    _controller.text = _cleanText;
+    widget.onChanged?.call(_cleanText);
+  }
+
   @override
   TextEditingController? get widgetController => widget.controller;
 
@@ -86,7 +174,16 @@ class _Oito2SearchFieldState extends State<Oito2SearchField>
 
   TextEditingController get _controller => effectiveController;
 
-  void _onText() => setState(() {});
+  /// Rebuilds for the clear button and tells the form when the text
+  /// changed.
+  void _onText() {
+    setState(() {});
+    final text = _controller.text;
+    if (text != _notifiedText) {
+      _notifiedText = text;
+      notifyFormFieldChanged();
+    }
+  }
 
   /// Empties the field and reports the empty text and the clearing.
   void _clear() {
@@ -121,13 +218,14 @@ class _Oito2SearchFieldState extends State<Oito2SearchField>
       child: Oito2TouchTarget(
         child: TextField(
           controller: _controller,
-          focusNode: widget.focusNode,
+          focusNode: effectiveFocusNode,
           autofocus: widget.autofocus,
           onChanged: widget.onChanged,
           onSubmitted: widget.onSubmitted,
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
             hintText: widget.hintText ?? localizations.searchFieldLabel,
+            errorText: _showError || formShowsErrors ? formFieldError : null,
             prefixIcon:
                 widget.prefixIcon ??
                 const Icon(LucideIcons.search, size: Oito2Sizes.iconSize),

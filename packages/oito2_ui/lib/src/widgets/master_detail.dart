@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
@@ -23,6 +25,7 @@ import 'icon_buttons.dart';
 import 'page_controller.dart';
 import 'paned_view.dart';
 import 'utilities.dart';
+import 'unsaved_changes.dart';
 import 'widget_helpers.dart';
 
 /// Builds the master list tile at [index]; [selected] tells whether its
@@ -41,6 +44,9 @@ typedef Oito2MasterTileBuilder = Widget Function(
 /// the detail. Below it, the master fills the area and selecting an item
 /// pushes its detail page on a nested navigator; going back clears the
 /// selection. The selection survives switching between the two layouts.
+///
+/// Under an [Oito2UnsavedChangesScope], picking another item while a
+/// guard of the shown page has unsaved changes asks first.
 class Oito2MasterDetailPage extends StatefulWidget {
   /// Creates a master-detail page.
   ///
@@ -156,8 +162,26 @@ class _Oito2MasterDetailPageState extends State<Oito2MasterDetailPage>
   }
 
   /// Selects the item at [index] and reports it to the `onSelected`
-  /// callback.
+  /// callback, once the closest [Oito2UnsavedChangesScope], if any,
+  /// confirms leaving the item shown.
   void _select(int index) {
+    final leave = Oito2UnsavedChangesScope.maybeOf(context, listen: false);
+    if (leave == null ||
+        !leave.hasUnsavedChanges ||
+        index == _controller.index) {
+      _apply(index);
+      return;
+    }
+    unawaited(
+      leave.confirmLeave().then((confirmed) {
+        if (confirmed && mounted) _apply(index);
+      }),
+    );
+  }
+
+  /// Selects the item at [index] and reports it to the `onSelected`
+  /// callback.
+  void _apply(int index) {
     _controller.index = index;
     widget.onSelected?.call(index);
   }

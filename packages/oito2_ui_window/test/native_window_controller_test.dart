@@ -178,6 +178,76 @@ void main() {
     expect(await Oito2Window.ensureInitialized(), isNull);
   });
 
+  test('close handlers hold back the native close while added', () async {
+    final controller = await attach();
+    Future<bool> allow() async => true;
+    Future<bool> refuse() async => false;
+    calls.clear();
+    controller
+      ..addCloseHandler(allow)
+      ..addCloseHandler(refuse);
+    await Future<void>.delayed(Duration.zero);
+    expect(calls, ['setPreventClose']);
+    controller
+      ..removeCloseHandler(refuse)
+      ..removeCloseHandler(allow);
+    await Future<void>.delayed(Duration.zero);
+    expect(calls, ['setPreventClose', 'setPreventClose']);
+  });
+
+  test('a close request asks the handlers before destroying', () async {
+    final controller = await attach();
+    final asked = <String>[];
+    var allowFirst = false;
+    controller
+      ..addCloseHandler(() async {
+        asked.add('first');
+        return allowFirst;
+      })
+      ..addCloseHandler(() async {
+        asked.add('second');
+        return true;
+      });
+    await Future<void>.delayed(Duration.zero);
+    calls.clear();
+
+    await sendEvent('close');
+    await Future<void>.delayed(Duration.zero);
+    expect(asked, ['second', 'first']);
+    expect(calls, isNot(contains('destroy')));
+
+    allowFirst = true;
+    asked.clear();
+    await sendEvent('close');
+    await Future<void>.delayed(Duration.zero);
+    expect(asked, ['second', 'first']);
+    expect(calls, contains('destroy'));
+  });
+
+  test('a close request without handlers leaves the window alone', () async {
+    await attach();
+    calls.clear();
+    await sendEvent('close');
+    await Future<void>.delayed(Duration.zero);
+    expect(calls, isEmpty);
+  });
+
+  test('a close request while the handlers are asked is ignored', () async {
+    final controller = await attach();
+    final gate = Completer<bool>();
+    var asked = 0;
+    controller.addCloseHandler(() {
+      asked++;
+      return gate.future;
+    });
+    await sendEvent('close');
+    await sendEvent('close');
+    gate.complete(true);
+    await Future<void>.delayed(Duration.zero);
+    expect(asked, 1);
+    expect(calls.where((call) => call == 'destroy'), hasLength(1));
+  });
+
   test('dispose stops listening to window events', () async {
     final controller = await Oito2NativeWindowController.attach(
       windowManager,

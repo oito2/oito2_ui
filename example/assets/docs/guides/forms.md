@@ -19,6 +19,8 @@ Use `TextField` or `TextFormField` for free text; the theme gives them the oito2
 
 Entries call `onChanged` only with valid values, and `onErrorChanged` with the error message when the text stops parsing, or null when it parses again. Errors show under the field once it loses focus or is submitted.
 
+Fields work on their own, as above, or together in an `Oito2Form`.
+
 ```dart
 Oito2DateEntry(
   firstDate: DateTime(2020),
@@ -30,34 +32,53 @@ Oito2DateEntry(
 
 ## Validating a form
 
-Keep the latest value and error of each entry in your state, and check them when the form is submitted. Fields of a `Form` can sit beside them:
+Put the fields below an `Oito2Form` with an `Oito2FormController`. The oito2 entries register with it on their own; wrap a `TextFormField` or another `FormField` in an `Oito2FormFieldAdapter`. Entries take a `validator`, which runs after the text parses, and `required`, which shows "This field is required" for an empty field.
 
 ```dart
-final _form = GlobalKey<FormState>();
+final _form = Oito2FormController();
 
-void _submit() {
-  final valid = _form.currentState!.validate() && _dateError == null;
-  if (valid) save(_name, _date);
-}
+Future<bool> _save() => _form.submit(() {
+  save();
+  _form.markClean();
+});
 
-Form(
-  key: _form,
+Oito2Form(
+  controller: _form,
   child: Column(
     children: [
-      TextFormField(
-        decoration: const InputDecoration(labelText: 'Name'),
-        validator: (text) => text!.isEmpty ? 'Enter a name' : null,
-        onSaved: (text) => _name = text!,
+      const Oito2FormErrorSummary(),
+      Oito2FormFieldAdapter(
+        label: 'Name',
+        child: TextFormField(
+          decoration: const InputDecoration(labelText: 'Name'),
+          validator: (text) => text!.isEmpty ? 'Enter a name' : null,
+        ),
       ),
       Oito2DateEntry(
+        labelText: 'Start',
         firstDate: DateTime(2020),
         lastDate: DateTime(2030),
-        onChanged: (date) => _date = date,
-        onErrorChanged: (error) => _dateError = error,
+        required: true,
       ),
-      FilledButton(onPressed: _submit, child: const Text('Save')),
+      FilledButton(onPressed: _save, child: const Text('Save')),
     ],
   ),
+);
+```
+
+`validate` and `submit` show every error at once, focus and scroll to the first invalid field and announce the number of errors; after that, errors follow the values while they are fixed. `Oito2FormErrorSummary` lists the errors with links to their fields. `isDirty` tells whether a value changed since the start or the last `markClean`, and `reset` puts the clean values back.
+
+Set `participatesInForm: false` on a field that isn't form data; it keeps showing its own errors. `Oito2SearchField` defaults to false, since a search usually filters the screen; pass `participatesInForm: true` to make it part of the form.
+
+## Unsaved changes
+
+Wrap the page in an `Oito2UnsavedChangesGuard` with the form, and optionally `onSave`. While the form has changes, going back asks whether to keep editing, discard or save. An `Oito2MasterDetailPage` or `Oito2NavigationPage` under an `Oito2UnsavedChangesScope` asks before switching pages, and with the `oito2_ui_window` controller in an `Oito2WindowScope`, closing the window asks too.
+
+```dart
+Oito2UnsavedChangesGuard(
+  form: _form,
+  onSave: _save,
+  child: Oito2Form(controller: _form, child: fields),
 );
 ```
 

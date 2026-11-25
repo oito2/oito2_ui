@@ -481,6 +481,89 @@ void main() {
       );
     });
 
+    group('unsaved changes on the form page', () {
+      /// The name field of the form page.
+      final name = find
+          .descendant(
+            of: find.byType(Oito2FormFieldAdapter),
+            matching: find.byType(TextField),
+          )
+          .first;
+
+      /// The title bar of the watermark page.
+      final watermarkTitle = find.widgetWithText(
+        Oito2WindowTitleBar,
+        'Oito2Watermark',
+      );
+
+      /// Opens the form page in a view of [size] and changes the name.
+      Future<void> pumpEdited(
+        WidgetTester tester, {
+        Size size = const Size(1400, 1000),
+      }) async {
+        await pumpShowcase(tester, slug: 'form', size: size);
+        await tester.enterText(name, 'Bo');
+        await _settle(tester);
+        expect(find.text('Not saved'), findsOneWidget);
+      }
+
+      testWidgets('picking another page asks first', (tester) async {
+        await pumpEdited(tester);
+        await _scrollToPage(tester, 'Oito2Watermark');
+        await tester.tap(find.text('Oito2Watermark'));
+        await _settle(tester);
+        expect(find.text('Discard unsaved changes?'), findsOneWidget);
+        await tester.tap(find.text('Keep editing'));
+        await _settle(tester);
+        expect(watermarkTitle, findsNothing);
+        expect(find.text('Bo'), findsOneWidget);
+
+        await tester.tap(find.text('Oito2Watermark'));
+        await _settle(tester);
+        await tester.tap(find.text('Discard'));
+        await _settle(tester);
+        expect(watermarkTitle, findsOneWidget);
+      });
+
+      testWidgets('a refused address change keeps the page and its address', (
+        tester,
+      ) async {
+        await pumpEdited(tester);
+        await pushAddress(tester, '/watermark');
+        expect(find.text('Discard unsaved changes?'), findsOneWidget);
+        await tester.tap(find.text('Keep editing'));
+        await _settle(tester);
+        expect(
+          find.widgetWithText(Oito2WindowTitleBar, 'Oito2Form'),
+          findsOneWidget,
+        );
+        expect(find.text('Bo'), findsOneWidget);
+      });
+
+      testWidgets('going back in the narrow layout asks first', (tester) async {
+        await pumpEdited(tester, size: const Size(500, 900));
+        await tester.tap(find.byType(Oito2BackButton));
+        await _settle(tester);
+        expect(find.text('Discard unsaved changes?'), findsOneWidget);
+        await tester.tap(find.text('Discard'));
+        await _settle(tester);
+        expect(find.byType(Oito2BackButton), findsNothing);
+      });
+
+      testWidgets('saving from the dialog with errors stays and shows them', (
+        tester,
+      ) async {
+        await pumpEdited(tester);
+        await _scrollToPage(tester, 'Oito2Watermark');
+        await tester.tap(find.text('Oito2Watermark'));
+        await _settle(tester);
+        await tester.tap(find.text('Save').last);
+        await _settle(tester);
+        expect(watermarkTitle, findsNothing);
+        expect(find.text('Fix 1 error to continue'), findsOneWidget);
+      });
+    });
+
     testWidgets('an address change shows its page in compact mode', (
       tester,
     ) async {

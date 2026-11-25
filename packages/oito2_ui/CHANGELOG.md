@@ -187,6 +187,14 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2TreeView.hiddenColumns`, `onHiddenColumnsChanged`, `columnOrder` and `onColumnsReordered`: the tree grid's other columns hide and move as in `Oito2DataTable`; the first column always shows first and its id is ignored in both.
 - `Oito2DataTable.pinnedColumns` and `Oito2TreeView.pinnedColumns`: the first shown columns stay in place while the others scroll sideways, header included, with a divider after them once scrolled; pinned columns move only among themselves.
 - `Oito2Localizations.moveColumnLeft`, `moveColumnRight`, `movedColumn` and `resetColumns`.
+- `Oito2Form` and `Oito2FormController`: fields below the form register with the controller, which validates them (`validate`, `submit`), shows every error at once after a failed validation, focuses and scrolls to the first invalid field in the order of the widget tree, politely announces the number of errors, lists them in `errors` and tracks `isDirty`, `markClean` and `reset`. Fields outside a form behave as before.
+- `Oito2FormFieldMixin`, for custom fields that take part in an `Oito2Form`, and `Oito2FormFieldAdapter`, which registers a Flutter `FormField` such as a `TextFormField`.
+- `Oito2FormErrorSummary`: a danger `Oito2Alert` with the form errors, such as "Fix 2 errors to continue", whose links scroll to their field and focus it; it shows after a failed validation and goes away once the errors are fixed.
+- `validator` and `required` on `Oito2DateEntry`, `Oito2TimeEntry`, `Oito2DateTimeEntry`, `Oito2SegmentedEntry`, `Oito2PasswordField`, `Oito2PinEntry`, `Oito2Autocomplete` and `Oito2SearchField`, `validator` on `Oito2NumberEntry`, and `validator` (the whole tag list) and `required` on `Oito2TagsField`. Validators run after the text parses, their errors show like parse errors, and `onErrorChanged` keeps reporting only parse errors. `Oito2SegmentedEntry.labelText` and `Oito2Autocomplete.labelText` name those fields.
+- `participatesInForm` on the entries above: false leaves a field out of its `Oito2Form`; it defaults to true, except on `Oito2SearchField`, which takes part only when it opts in.
+- `Oito2UnsavedChangesGuard`: while a form or an `isDirty` listenable has changes, it asks before its route pops, before an `Oito2MasterDetailPage` or `Oito2NavigationPage` under an `Oito2UnsavedChangesScope` switches pages, and before the window closes; the dialog offers "Keep editing", "Discard" and, with `onSave`, "Save". `showOito2UnsavedChangesDialog`, `Oito2UnsavedChangesController` and `Oito2UnsavedChangesScope` serve shells that switch pages on their own.
+- `Oito2WindowCloseGuard`: an optional interface of a window controller that asks close handlers before the window closes.
+- `Oito2Localizations.fieldRequired`, `invalidValue`, `formErrorSummary`, `formErrorCount`, `goToField`, `unsavedChangesTitle`, `unsavedChangesMessage`, `keepEditing`, `discardChanges` and `saveChanges`.
 
 ### Changed
 
@@ -230,6 +238,9 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2NumberEntry` asserts that `decimals` is at most 20.
 - `Oito2DateTimeEntry` reports a new combination only while both fields parse, and once they parse again if it changed.
 - `Oito2TagsField` drops the refused tags of a pasted list instead of joining the refused text to the rest.
+- `Oito2TagsField.validator`, which accepted or refused each tag, is renamed `tagValidator`; `validator` now checks the whole tag list and returns an error message, as on the other fields.
+- `Oito2MasterDetailPage` and `Oito2NavigationPage` ask the closest `Oito2UnsavedChangesScope` before switching to another item while a guard below it has unsaved changes.
+- `Oito2SearchField` owns a focus node when none is given.
 - `Oito2TabBar.tabHeight` defaults to `Oito2Sizes.minTouchTarget` (48), the height of a touch tab with its indicator space, so `preferredSize` fits the bar on every platform.
 
 ### Fixed

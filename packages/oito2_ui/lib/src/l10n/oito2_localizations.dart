@@ -538,6 +538,37 @@ abstract class Oito2Localizations {
   /// The menu item that puts the columns of a table back as the app
   /// first showed them.
   String get resetColumns;
+
+  /// The error of a required field left empty.
+  String get fieldRequired;
+
+  /// The error of a form field whose value its validator refuses, when the
+  /// validator gives no message.
+  String get invalidValue;
+
+  /// The headline of a form error summary with [count] errors.
+  String formErrorSummary(int count);
+
+  /// Announces that a validated form has [count] errors.
+  String formErrorCount(int count);
+
+  /// The accessibility hint of a link that leads to a form field.
+  String get goToField;
+
+  /// The title of the dialog that asks whether to leave unsaved changes.
+  String get unsavedChangesTitle;
+
+  /// The message of the dialog that asks whether to leave unsaved changes.
+  String get unsavedChangesMessage;
+
+  /// The button that stays on a page with unsaved changes.
+  String get keepEditing;
+
+  /// The button that leaves a page and drops its unsaved changes.
+  String get discardChanges;
+
+  /// The button that saves the changes before leaving a page.
+  String get saveChanges;
 }
 
 /// The units of a relative time, from [second] to [year].
@@ -1046,6 +1077,38 @@ class Oito2LocalizationsEn extends Oito2Localizations {
 
   @override
   String get resetColumns => 'Reset columns';
+
+  @override
+  String get fieldRequired => 'This field is required';
+
+  @override
+  String get invalidValue => 'Invalid value';
+
+  @override
+  String formErrorSummary(int count) =>
+      count == 1 ? 'Fix 1 error to continue' : 'Fix $count errors to continue';
+
+  @override
+  String formErrorCount(int count) =>
+      count == 1 ? '1 error in the form' : '$count errors in the form';
+
+  @override
+  String get goToField => 'Go to the field';
+
+  @override
+  String get unsavedChangesTitle => 'Discard unsaved changes?';
+
+  @override
+  String get unsavedChangesMessage => 'The changes made here will be lost.';
+
+  @override
+  String get keepEditing => 'Keep editing';
+
+  @override
+  String get discardChanges => 'Discard';
+
+  @override
+  String get saveChanges => 'Save';
 }
 
 /// The Brazilian Portuguese [Oito2Localizations].
@@ -1544,6 +1607,40 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String get resetColumns => 'Redefinir colunas';
+
+  @override
+  String get fieldRequired => 'Este campo é obrigatório';
+
+  @override
+  String get invalidValue => 'Valor inválido';
+
+  @override
+  String formErrorSummary(int count) => count == 1
+      ? 'Corrija 1 erro para continuar'
+      : 'Corrija $count erros para continuar';
+
+  @override
+  String formErrorCount(int count) =>
+      count == 1 ? '1 erro no formulário' : '$count erros no formulário';
+
+  @override
+  String get goToField => 'Ir para o campo';
+
+  @override
+  String get unsavedChangesTitle => 'Descartar as alterações não salvas?';
+
+  @override
+  String get unsavedChangesMessage =>
+      'As alterações feitas aqui serão perdidas.';
+
+  @override
+  String get keepEditing => 'Continuar editando';
+
+  @override
+  String get discardChanges => 'Descartar';
+
+  @override
+  String get saveChanges => 'Salvar';
 }
 
 /// Loads [Oito2Localizations.forLocale] synchronously for English and

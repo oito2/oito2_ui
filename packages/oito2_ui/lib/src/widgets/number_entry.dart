@@ -20,6 +20,7 @@ import 'package:intl/intl.dart' show NumberFormat;
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
+import 'form.dart';
 import 'touch_target.dart';
 import 'widget_helpers.dart';
 
@@ -37,6 +38,10 @@ import 'widget_helpers.dart';
 /// [min] and [max] when they are finite. With the focus in the field the
 /// mouse wheel steps too, and dragging sideways on the buttons scrubs the
 /// value one [step] per 4 pixels.
+///
+/// The error of [validator] shows after the field loses focus, or at once
+/// after its [Oito2Form] found errors. In a form, resetting it calls
+/// [onChanged] with the clean value.
 class Oito2NumberEntry extends StatefulWidget {
   /// Creates a number entry.
   ///
@@ -45,6 +50,7 @@ class Oito2NumberEntry extends StatefulWidget {
   /// greater than zero, or when [decimals] is not between 0 and 20.
   const Oito2NumberEntry({
     super.key,
+    this.participatesInForm = true,
     required this.value,
     required this.onChanged,
     this.min = double.negativeInfinity,
@@ -56,6 +62,7 @@ class Oito2NumberEntry extends StatefulWidget {
     this.hintText,
     this.focusNode,
     this.autofocus = false,
+    this.validator,
   }) : pageStep = pageStep ?? step * 10,
        assert(min <= max),
        assert(step > 0),
@@ -94,15 +101,66 @@ class Oito2NumberEntry extends StatefulWidget {
   /// Whether the field takes the focus when shown.
   final bool autofocus;
 
+  /// Checks the value and returns an error message, or null to accept
+  /// it.
+  final String? Function(double value)? validator;
+
+  /// Whether the field registers with the closest [Oito2Form], taking
+  /// part in its validation, error summary and dirty state; true by
+  /// default. When false, the field shows its own errors as outside a
+  /// form.
+  final bool participatesInForm;
+
   @override
   State<Oito2NumberEntry> createState() => _Oito2NumberEntryState();
 }
 
 class _Oito2NumberEntryState extends State<Oito2NumberEntry>
-    with OwnedFocusNodeMixin {
+    with OwnedFocusNodeMixin, Oito2FormFieldMixin {
   final _controller = TextEditingController();
   NumberFormat? _format;
   double _scrub = 0;
+
+  /// Whether the error shows, once the field lost focus.
+  bool _showError = false;
+
+  /// The value while the entry has no unsaved changes.
+  late double _cleanValue;
+
+  @override
+  void initState() {
+    super.initState();
+    _cleanValue = widget.value;
+  }
+
+  @override
+  bool get participatesInForm => widget.participatesInForm;
+
+  @override
+  String? get formFieldLabel => widget.labelText;
+
+  @override
+  FocusNode get formFieldFocusNode => _focusNode;
+
+  @override
+  String? get formFieldError => widget.validator?.call(widget.value);
+
+  @override
+  bool get isFormFieldDirty => widget.value != _cleanValue;
+
+  @override
+  void showFormFieldError() {
+    if (mounted) setState(() => _showError = true);
+  }
+
+  @override
+  void markFormFieldClean() => _cleanValue = widget.value;
+
+  @override
+  void resetFormField() {
+    setState(() => _showError = false);
+    if (widget.value != _cleanValue) widget.onChanged?.call(_cleanValue);
+  }
 
   @override
   FocusNode? get widgetFocusNode => widget.focusNode;
@@ -136,6 +194,7 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry>
     if (decimalsChanged || oldWidget.value != widget.value) {
       _show(widget.value);
     }
+    if (oldWidget.value != widget.value) notifyFormFieldChanged();
   }
 
   @override
@@ -225,7 +284,9 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry>
 
   @override
   void onEffectiveFocusChange() {
-    if (!_focusNode.hasFocus) _commit();
+    if (_focusNode.hasFocus) return;
+    _commit();
+    if (widget.validator != null) setState(() => _showError = true);
   }
 
   /// Steps the value on a vertical mouse wheel scroll while the field has
@@ -321,6 +382,7 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry>
             decoration: InputDecoration(
               labelText: widget.labelText,
               hintText: widget.hintText,
+              errorText: _showError || formShowsErrors ? formFieldError : null,
               suffixIcon: buttons,
             ),
           ),

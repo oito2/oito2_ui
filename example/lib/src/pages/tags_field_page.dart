@@ -101,7 +101,7 @@ class _TagsFieldPageState extends State<TagsFieldPage> {
         const DocHeading('Limits and validation', level: 3),
         const DocText(
           '`maxTags` caps the list, `delimiters` sets the characters that '
-          'end a tag, and `validator` refuses tags that don\'t fit. A typed '
+          'end a tag, and `tagValidator` refuses tags that don\'t fit. A typed '
           'tag that is refused stays in the input to be fixed; repeated '
           'tags are refused unless `allowDuplicates` is set.',
         ),
@@ -115,7 +115,7 @@ class _TagsFieldPageState extends State<TagsFieldPage> {
               maxTags: 3,
               delimiters: const [',', ' ', ';'],
               hintText: 'name@example.com',
-              validator: (tag) => tag.contains('@'),
+              tagValidator: (tag) => tag.contains('@'),
               onChanged: (tags) => setState(() => _emails = tags),
             ),
             // #endregion

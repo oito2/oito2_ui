@@ -24,9 +24,13 @@ import 'package:window_manager/window_manager.dart';
 ///
 /// Forwards the window actions to a [WindowManager] and keeps [state] in
 /// sync with its maximize, focus and full-screen events.
+///
+/// As an [Oito2WindowCloseGuard], it keeps the native close from going
+/// through while close handlers are added: a close request then asks the
+/// handlers and destroys the window once every one of them allows it.
 class Oito2NativeWindowController
     with WindowListener
-    implements Oito2WindowController {
+    implements Oito2WindowController, Oito2WindowCloseGuard {
   Oito2NativeWindowController._(this._manager, {required bool canShowMenu})
     : _state = ValueNotifier(Oito2WindowState(canShowMenu: canShowMenu));
 
@@ -104,6 +108,69 @@ class Oito2NativeWindowController
   @override
   Future<void> close() => _manager.close();
 
+  final List<Oito2WindowCloseHandler> _closeHandlers = [];
+
+  /// Whether the native close is held back, as last asked.
+  bool _preventingClose = false;
+
+  /// Whether the close handlers are being asked.
+  bool _askingToClose = false;
+
+  @override
+  void addCloseHandler(Oito2WindowCloseHandler handler) {
+    _closeHandlers.add(handler);
+    _syncPreventClose();
+  }
+
+  @override
+  void removeCloseHandler(Oito2WindowCloseHandler handler) {
+    _closeHandlers.remove(handler);
+    _syncPreventClose();
+  }
+
+  /// Holds back the native close while there are close handlers and lets
+  /// it through otherwise.
+  void _syncPreventClose() {
+    final prevent = _closeHandlers.isNotEmpty;
+    if (_disposed || prevent == _preventingClose) return;
+    _preventingClose = prevent;
+    unawaited(_setPreventClose(prevent));
+  }
+
+  /// Asks the window to hold back the native close when [prevent] is true;
+  /// a window that can't be asked keeps closing as usual.
+  Future<void> _setPreventClose(bool prevent) async {
+    try {
+      await _manager.setPreventClose(prevent);
+    } on PlatformException {
+      return;
+    } on MissingPluginException {
+      return;
+    }
+  }
+
+  /// Asks the close handlers, the last added first, and destroys the
+  /// window when every one of them allows it.
+  ///
+  /// Does nothing while the native close isn't held back, since the window
+  /// then closes on its own, or while the handlers are already being
+  /// asked.
+  Future<void> _askToClose() async {
+    if (!_preventingClose || _askingToClose || _disposed) return;
+    _askingToClose = true;
+    try {
+      for (final handler in _closeHandlers.reversed.toList()) {
+        if (!await handler()) return;
+      }
+      if (_disposed) return;
+      _closeHandlers.clear();
+      _preventingClose = false;
+      await _manager.destroy();
+    } finally {
+      _askingToClose = false;
+    }
+  }
+
   @override
   Future<void> startDrag() => _manager.startDragging();
 
@@ -141,4 +208,7 @@ class Oito2NativeWindowController
 
   @override
   void onWindowRestore() => unawaited(refresh());
+
+  @override
+  void onWindowClose() => unawaited(_askToClose());
 }

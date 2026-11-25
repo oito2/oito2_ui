@@ -19,6 +19,7 @@ import 'package:material_ui/material_ui.dart';
 import '../collections/list_collection.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
+import 'form.dart';
 import 'options_view.dart';
 import 'touch_target.dart';
 import 'widget_helpers.dart';
@@ -32,6 +33,9 @@ import 'widget_helpers.dart';
 /// The Up and Down arrows move the highlight, Enter picks it, and Escape
 /// closes the list. A live region announces the number of suggestions to
 /// screen readers, or that none matched.
+///
+/// The error of [validator] or [required] shows under the field after it
+/// loses focus, or at once after its [Oito2Form] found errors.
 class Oito2Autocomplete<T extends Object> extends StatefulWidget {
   /// Creates an autocomplete field.
   ///
@@ -39,6 +43,7 @@ class Oito2Autocomplete<T extends Object> extends StatefulWidget {
   /// [controller] and [focusNode] is given.
   const Oito2Autocomplete({
     super.key,
+    this.participatesInForm = true,
     required this.collection,
     this.onSelected,
     this.initialValue,
@@ -48,6 +53,9 @@ class Oito2Autocomplete<T extends Object> extends StatefulWidget {
     this.optionsWidth,
     this.controller,
     this.focusNode,
+    this.labelText,
+    this.validator,
+    this.required = false,
   }) : assert((controller == null) == (focusNode == null));
 
   /// The items to suggest.
@@ -78,6 +86,22 @@ class Oito2Autocomplete<T extends Object> extends StatefulWidget {
   /// The field focus node; give it together with [controller].
   final FocusNode? focusNode;
 
+  /// The field label.
+  final String? labelText;
+
+  /// Checks the text and returns an error message, or null to accept it.
+  final String? Function(String text)? validator;
+
+  /// Whether an empty field shows the localized "This field is required"
+  /// error.
+  final bool required;
+
+  /// Whether the field registers with the closest [Oito2Form], taking
+  /// part in its validation, error summary and dirty state; true by
+  /// default. When false, the field shows its own errors as outside a
+  /// form.
+  final bool participatesInForm;
+
   @override
   State<Oito2Autocomplete<T>> createState() => _Oito2AutocompleteState<T>();
 }
@@ -88,7 +112,58 @@ class _Oito2AutocompleteState<T extends Object>
     extends State<Oito2Autocomplete<T>>
     with
         OwnedFocusNodeMixin,
-        OwnedControllerMixin<Oito2Autocomplete<T>, TextEditingController> {
+        OwnedControllerMixin<Oito2Autocomplete<T>, TextEditingController>,
+        Oito2FormFieldMixin {
+  /// Whether the validation error shows, once the field lost focus.
+  bool _showError = false;
+
+  /// The text while the field has no unsaved changes.
+  late String _cleanText;
+
+  /// The text the form was last told about.
+  late String _notifiedText;
+
+  @override
+  void initState() {
+    super.initState();
+    _cleanText = _notifiedText = _controller.text;
+  }
+
+  @override
+  bool get participatesInForm => widget.participatesInForm;
+
+  @override
+  String? get formFieldLabel => widget.labelText ?? widget.hintText;
+
+  @override
+  FocusNode get formFieldFocusNode => _focusNode;
+
+  @override
+  String? get formFieldError {
+    final text = _controller.text;
+    if (widget.required && text.trim().isEmpty) {
+      return Oito2Localizations.of(context).fieldRequired;
+    }
+    return widget.validator?.call(text);
+  }
+
+  @override
+  bool get isFormFieldDirty => _controller.text != _cleanText;
+
+  @override
+  void showFormFieldError() {
+    if (mounted) setState(() => _showError = true);
+  }
+
+  @override
+  void markFormFieldClean() => _cleanText = _controller.text;
+
+  @override
+  void resetFormField() {
+    setState(() => _showError = false);
+    if (_controller.text != _cleanText) _controller.text = _cleanText;
+  }
+
   @override
   TextEditingController? get widgetController => widget.controller;
 
@@ -107,7 +182,10 @@ class _Oito2AutocompleteState<T extends Object>
   FocusNode? get widgetFocusNode => widget.focusNode;
 
   @override
-  void onEffectiveFocusChange() => _onText();
+  void onEffectiveFocusChange() {
+    if (!_focusNode.hasFocus) _showError = true;
+    _onText();
+  }
 
   TextEditingController get _controller => effectiveController;
 
@@ -121,8 +199,16 @@ class _Oito2AutocompleteState<T extends Object>
     }
   }
 
-  /// Rebuilds to refresh the suggestions and the announcement.
-  void _onText() => setState(() {});
+  /// Rebuilds to refresh the suggestions and the announcement, and tells
+  /// the form when the text changed.
+  void _onText() {
+    setState(() {});
+    final text = _controller.text;
+    if (text != _notifiedText) {
+      _notifiedText = text;
+      notifyFormFieldChanged();
+    }
+  }
 
   Oito2ListCollection<T>? _optionsSource;
   String? _lastQuery;
@@ -172,7 +258,11 @@ class _Oito2AutocompleteState<T extends Object>
                     focusNode: focusNode,
                     onSubmitted: (_) => onSubmitted(),
                     decoration: InputDecoration(
+                      labelText: widget.labelText,
                       hintText: widget.hintText,
+                      errorText: _showError || formShowsErrors
+                          ? formFieldError
+                          : null,
                       suffixIcon: const Icon(
                         LucideIcons.chevrons_up_down,
                         size: Oito2Sizes.iconSize,

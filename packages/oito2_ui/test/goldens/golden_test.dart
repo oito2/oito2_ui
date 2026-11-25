@@ -1523,6 +1523,41 @@ class _AccountSwitcherScene extends StatelessWidget {
 
 /// A path bar with every segment, the same path collapsed in a narrow
 /// width, and an editable one.
+/// A form with two invalid fields, its error summary shown by a
+/// validation in the test setup.
+class _FormSummaryScene extends StatelessWidget {
+  const _FormSummaryScene({required this.form});
+
+  final Oito2FormController form;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(Oito2Spacing.lg),
+        child: Oito2Form(
+          controller: form,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: Oito2Spacing.md,
+            children: [
+              const Oito2FormErrorSummary(),
+              const Oito2PasswordField(labelText: 'Name', required: true),
+              Oito2DateEntry(
+                labelText: 'Birthday',
+                firstDate: DateTime(1900),
+                lastDate: DateTime(2100),
+                required: true,
+                showPickerButton: false,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _BreadcrumbScene extends StatelessWidget {
   const _BreadcrumbScene();
 
@@ -1865,6 +1900,21 @@ void main() {
   }
 
   for (final name in ['light', 'dark']) {
+    testWidgets('form error summary in $name', (tester) async {
+      final form = Oito2FormController();
+      addTearDown(form.dispose);
+      await expectGoldenScene(
+        tester,
+        _FormSummaryScene(form: form),
+        name: 'form_error_summary_$name',
+        colors: goldenSchemes[name]!,
+        size: const Size(480, 380),
+        setup: () async {
+          form.validate(focusFirstError: false, announce: false);
+        },
+      );
+    });
+
     testWidgets('shortcuts in $name', (tester) async {
       await expectGoldenScene(
         tester,
