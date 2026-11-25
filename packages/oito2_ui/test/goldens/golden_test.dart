@@ -1972,6 +1972,68 @@ void main() {
   }
 
   for (final name in ['light', 'dark']) {
+    testWidgets('shortcuts help in $name', (tester) async {
+      await expectGoldenScene(
+        tester,
+        Oito2Commands(
+          commands: [
+            Oito2Command.shortcutsHelp(
+              label: 'Keyboard shortcuts',
+              onInvoke: () {},
+            ),
+            Oito2Command(
+              id: 'palette',
+              label: 'Show all commands',
+              shortcut: Oito2Shortcut.parse('Mod+K'),
+              onInvoke: () {},
+            ),
+            Oito2Command(
+              id: 'theme',
+              label: 'Switch style',
+              group: 'Appearance',
+              description: 'Light, dark or system',
+              shortcut: Oito2Shortcut.parse('Mod+Shift+L'),
+              onInvoke: () {},
+            ),
+            Oito2Command(
+              id: 'contrast',
+              label: 'Toggle high contrast',
+              group: 'Appearance',
+              shortcut: Oito2Shortcut.parse('Alt+H'),
+              enabled: false,
+              onInvoke: () {},
+            ),
+            Oito2Command(
+              id: 'home',
+              label: 'Go to the first page',
+              group: 'Pages',
+              shortcut: Oito2Shortcut.parse('G H'),
+              onInvoke: () {},
+            ),
+            Oito2Command(
+              id: 'next',
+              label: 'Go to the next page',
+              group: 'Pages',
+              shortcut: Oito2Shortcut.parse('Alt+Down'),
+              onInvoke: () {},
+            ),
+          ],
+          child: const Scaffold(),
+        ),
+        name: 'shortcuts_help_$name',
+        setup: () async {
+          // The help's future completes when it closes, so it isn't
+          // awaited.
+          unawaited(
+            showOito2ShortcutsHelp(tester.element(find.byType(Scaffold))),
+          );
+        },
+        colors: goldenSchemes[name]!,
+        size: const Size(840, 480),
+        wholeApp: true,
+      );
+    });
+
     testWidgets('data table in $name', (tester) async {
       await expectGoldenScene(
         tester,

@@ -195,6 +195,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2UnsavedChangesGuard`: while a form or an `isDirty` listenable has changes, it asks before its route pops, before an `Oito2MasterDetailPage` or `Oito2NavigationPage` under an `Oito2UnsavedChangesScope` switches pages, and before the window closes; the dialog offers "Keep editing", "Discard" and, with `onSave`, "Save". `showOito2UnsavedChangesDialog`, `Oito2UnsavedChangesController` and `Oito2UnsavedChangesScope` serve shells that switch pages on their own.
 - `Oito2WindowCloseGuard`: an optional interface of a window controller that asks close handlers before the window closes.
 - `Oito2Localizations.fieldRequired`, `invalidValue`, `formErrorSummary`, `formErrorCount`, `goToField`, `unsavedChangesTitle`, `unsavedChangesMessage`, `keepEditing`, `discardChanges` and `saveChanges`.
+- `showOito2ShortcutsHelp` and `Oito2ShortcutsHelpView`: a searchable list of the commands with shortcuts available at the context (disabled ones dimmed) or of the given commands, grouped by `Oito2Command.group` under headings ("General" for commands without a group), in two columns from 600 pixels wide. The search matches the label, description, group, keywords and key names, ignoring case and accents, and highlights the matches; the arrow keys and Tab move through the rows, which are touch-target tall and read as "Label, shortcut Ctrl+K", and Escape clears the search, then closes the dialog.
+- `Oito2Command.shortcutsHelp`: an opt-in command bound to F1 and to `Mod+Shift+/` (Ctrl+? or ⌘? on layouts that type `?` with Shift and the `/` key), with `shortcutsHelpId`, `shortcutsHelpShortcut` and `shortcutsHelpAlternateShortcut`.
+- `Oito2Command.alternateShortcuts` and `shortcuts`: more shortcuts that run a command; the shortcuts help lists them, and conflict detection checks them.
+- `Oito2Commands.availableAt(includeDisabled: true)`: the disabled commands too.
+- `Oito2Localizations.keyboardShortcuts`, `searchShortcutsHint`, `noShortcutsFound`, `generalShortcuts` and `shortcutEntry`.
 
 ### Changed
 
@@ -241,6 +246,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2TagsField.validator`, which accepted or refused each tag, is renamed `tagValidator`; `validator` now checks the whole tag list and returns an error message, as on the other fields.
 - `Oito2MasterDetailPage` and `Oito2NavigationPage` ask the closest `Oito2UnsavedChangesScope` before switching to another item while a guard below it has unsaved changes.
 - `Oito2SearchField` owns a focus node when none is given.
+- `Oito2Commands` runs shortcuts that start with a function key (F1 to F24) while a text field has focus, since function keys don't type text.
 - `Oito2TabBar.tabHeight` defaults to `Oito2Sizes.minTouchTarget` (48), the height of a touch tab with its indicator space, so `preferredSize` fits the bar on every platform.
 
 ### Fixed

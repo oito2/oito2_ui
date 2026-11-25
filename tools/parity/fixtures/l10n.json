@@ -463,6 +463,10 @@
 			"pressShortcut": "Press a shortcut",
 			"noShortcut": "No shortcut",
 			"clearShortcut": "Clear shortcut",
+			"keyboardShortcuts": "Keyboard shortcuts",
+			"searchShortcutsHint": "Search shortcuts",
+			"noShortcutsFound": "No shortcuts found",
+			"generalShortcuts": "General",
 			"noResults": "No results",
 			"close": "Close",
 			"dismiss": "Dismiss",
@@ -1009,6 +1013,27 @@
 					"Ana"
 				],
 				"result": "Switch account, current: Ana"
+			},
+			{
+				"name": "shortcutEntry",
+				"args": [
+					"Open settings",
+					[
+						"Ctrl+,"
+					]
+				],
+				"result": "Open settings, shortcut Ctrl+,"
+			},
+			{
+				"name": "shortcutEntry",
+				"args": [
+					"Keyboard shortcuts",
+					[
+						"F1",
+						"Ctrl+Shift+/"
+					]
+				],
+				"result": "Keyboard shortcuts, shortcuts F1 or Ctrl+Shift+/"
 			},
 			{
 				"name": "pendingCount",
@@ -1567,6 +1592,10 @@
 			"pressShortcut": "Pressione um atalho",
 			"noShortcut": "Sem atalho",
 			"clearShortcut": "Limpar atalho",
+			"keyboardShortcuts": "Atalhos de teclado",
+			"searchShortcutsHint": "Buscar atalhos",
+			"noShortcutsFound": "Nenhum atalho encontrado",
+			"generalShortcuts": "Geral",
 			"noResults": "Nenhum resultado",
 			"close": "Fechar",
 			"dismiss": "Dispensar",
@@ -2113,6 +2142,27 @@
 					"Ana"
 				],
 				"result": "Trocar de conta, atual: Ana"
+			},
+			{
+				"name": "shortcutEntry",
+				"args": [
+					"Open settings",
+					[
+						"Ctrl+,"
+					]
+				],
+				"result": "Open settings, atalho Ctrl+,"
+			},
+			{
+				"name": "shortcutEntry",
+				"args": [
+					"Keyboard shortcuts",
+					[
+						"F1",
+						"Ctrl+Shift+/"
+					]
+				],
+				"result": "Keyboard shortcuts, atalhos F1 ou Ctrl+Shift+/"
 			},
 			{
 				"name": "pendingCount",

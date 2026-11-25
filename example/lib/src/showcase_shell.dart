@@ -185,6 +185,12 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
     FocusManager.instance.primaryFocus?.context ?? context,
   );
 
+  /// Opens the keyboard shortcuts help with the commands available where
+  /// the keyboard focus is, so page-level shortcuts are listed too.
+  void _openShortcutsHelp() => showOito2ShortcutsHelp(
+    FocusManager.instance.primaryFocus?.context ?? context,
+  );
+
   /// Cycles the theme mode: system, light, dark.
   void _cycleThemeMode() => widget.controller.update(
     (o) => o.copyWith(
@@ -196,8 +202,8 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
     ),
   );
 
-  /// The app-wide commands: palette, search, settings, appearance and one
-  /// "Go to" command per page.
+  /// The app-wide commands: palette, shortcuts help, search, settings,
+  /// appearance and one "Go to" command per page.
   List<Oito2Command> _commands() {
     final options = widget.controller.value;
     return [
@@ -207,6 +213,11 @@ class _ShowcaseShellState extends State<ShowcaseShell> {
         icon: LucideIcons.command,
         shortcut: Oito2Shortcut.parse('Mod+K'),
         onInvoke: _openPalette,
+      ),
+      Oito2Command.shortcutsHelp(
+        label: 'Keyboard shortcuts',
+        keywords: const ['help', 'keys'],
+        onInvoke: _openShortcutsHelp,
       ),
       Oito2Command(
         id: 'app.search',

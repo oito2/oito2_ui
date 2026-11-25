@@ -17,8 +17,10 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../l10n/oito2_localizations.dart';
 import 'shortcut.dart';
 
 /// An action the user can run by a keyboard shortcut or from the command
@@ -31,6 +33,7 @@ class Oito2Command {
     required this.label,
     required this.onInvoke,
     this.shortcut,
+    this.alternateShortcuts = const [],
     this.description,
     this.group,
     this.icon,
@@ -49,8 +52,65 @@ class Oito2Command {
   /// palette.
   final VoidCallback onInvoke;
 
-  /// The keyboard shortcut, if any.
+  /// Creates the command that opens the keyboard shortcuts help, bound to
+  /// [shortcutsHelpShortcut] (F1) and [shortcutsHelpAlternateShortcut]
+  /// (the primary modifier with Shift and `/`, which reads as Ctrl+? or
+  /// ⌘? on layouts that type `?` with Shift and the `/` key).
+  ///
+  /// Nothing is bound until the app adds this command to an
+  /// [Oito2Commands] scope. [onInvoke] usually calls
+  /// `showOito2ShortcutsHelp`; [label] is usually the localized
+  /// [Oito2Localizations.keyboardShortcuts]. The command shows in the
+  /// command palette and in the help itself.
+  factory Oito2Command.shortcutsHelp({
+    required String label,
+    required VoidCallback onInvoke,
+    String id = shortcutsHelpId,
+    String? description,
+    String? group,
+    IconData? icon = LucideIcons.keyboard,
+    List<String> keywords = const [],
+    bool enabled = true,
+  }) => Oito2Command(
+    id: id,
+    label: label,
+    onInvoke: onInvoke,
+    shortcut: shortcutsHelpShortcut,
+    alternateShortcuts: [shortcutsHelpAlternateShortcut],
+    description: description,
+    group: group,
+    icon: icon,
+    keywords: keywords,
+    enabled: enabled,
+  );
+
+  /// The default id of [Oito2Command.shortcutsHelp].
+  static const String shortcutsHelpId = 'oito2.shortcutsHelp';
+
+  /// The main shortcut of [Oito2Command.shortcutsHelp]: F1.
+  static final Oito2Shortcut shortcutsHelpShortcut = Oito2Shortcut(const [
+    Oito2KeyChord(LogicalKeyboardKey.f1),
+  ]);
+
+  /// The second shortcut of [Oito2Command.shortcutsHelp]: the primary
+  /// modifier with Shift and `/` (Ctrl+Shift+/ or ⇧⌘/), which is Ctrl+? or
+  /// ⌘? on layouts that type `?` with Shift and the `/` key, such as US
+  /// English and Brazilian ABNT2. Shortcuts match the key, not the
+  /// character it types, so on layouts where `?` sits elsewhere (such as
+  /// German) only F1 opens the help.
+  static final Oito2Shortcut shortcutsHelpAlternateShortcut = Oito2Shortcut(
+    const [Oito2KeyChord(LogicalKeyboardKey.slash, primary: true, shift: true)],
+  );
+
+  /// The keyboard shortcut, if any; the command palette shows it.
   final Oito2Shortcut? shortcut;
+
+  /// More shortcuts that also run the command; the shortcuts help lists
+  /// them after [shortcut].
+  final List<Oito2Shortcut> alternateShortcuts;
+
+  /// Returns [shortcut], when set, followed by [alternateShortcuts].
+  List<Oito2Shortcut> get shortcuts => [?shortcut, ...alternateShortcuts];
 
   /// A longer explanation shown in the command palette.
   final String? description;
@@ -65,7 +125,8 @@ class Oito2Command {
   final List<String> keywords;
 
   /// Whether the command can run now; disabled commands neither react to
-  /// their shortcut nor appear in the command palette.
+  /// their shortcuts nor appear in the command palette, and the shortcuts
+  /// help shows them dimmed.
   final bool enabled;
 }
 
@@ -79,7 +140,8 @@ class Oito2Command {
 /// Sequences such as `G H` wait up to [sequenceTimeout] between chords.
 /// Shortcuts without Control, Alt, Command or the primary modifier (such
 /// as `G H` or `Shift+/`) don't run while a text field has focus, so they
-/// don't steal typing.
+/// don't steal typing; those that start with a function key (F1 to F24)
+/// still run, since function keys don't type text.
 class Oito2Commands extends StatefulWidget {
   /// Creates a command scope.
   const Oito2Commands({
@@ -101,13 +163,24 @@ class Oito2Commands extends StatefulWidget {
   /// Returns the enabled commands available at [context]: those of every
   /// enclosing scope, the innermost first, with inner commands replacing
   /// outer ones of the same id.
-  static List<Oito2Command> availableAt(BuildContext context) {
+  ///
+  /// When [includeDisabled] is true, the disabled commands are returned
+  /// too, and a disabled inner command replaces an outer one of the same
+  /// id, as it does for shortcuts.
+  static List<Oito2Command> availableAt(
+    BuildContext context, {
+    bool includeDisabled = false,
+  }) {
     final result = <Oito2Command>[];
     final ids = <String>{};
     var scope = _CommandScope.of(context);
     while (scope != null) {
       for (final command in scope.commands) {
-        if (command.enabled && ids.add(command.id)) result.add(command);
+        if (includeDisabled) {
+          if (ids.add(command.id)) result.add(command);
+        } else if (command.enabled && ids.add(command.id)) {
+          result.add(command);
+        }
       }
       scope = scope.parent;
     }
@@ -116,7 +189,8 @@ class Oito2Commands extends StatefulWidget {
 
   /// Returns the pairs of [commands] whose shortcuts clash on [platform]
   /// (the current platform by default): the same shortcut, or one that is
-  /// a prefix of another (the longer one could never run).
+  /// a prefix of another (the longer one could never run). Every shortcut
+  /// of a command counts, its [Oito2Command.alternateShortcuts] included.
   static List<(Oito2Command, Oito2Command)> conflicts(
     List<Oito2Command> commands, {
     TargetPlatform? platform,
@@ -125,12 +199,12 @@ class Oito2Commands extends StatefulWidget {
     final result = <(Oito2Command, Oito2Command)>[];
     for (var i = 0; i < commands.length; i++) {
       for (var j = i + 1; j < commands.length; j++) {
-        final a = commands[i].shortcut;
-        final b = commands[j].shortcut;
-        if (a == null || b == null) continue;
-        if (a.startsWith(b, target) || b.startsWith(a, target)) {
-          result.add((commands[i], commands[j]));
-        }
+        final clash = commands[i].shortcuts.any(
+          (a) => commands[j].shortcuts.any(
+            (b) => a.startsWith(b, target) || b.startsWith(a, target),
+          ),
+        );
+        if (clash) result.add((commands[i], commands[j]));
       }
     }
     return result;
@@ -234,6 +308,14 @@ class _Oito2CommandsState extends State<Oito2Commands> {
     return ids;
   }
 
+  /// Whether a shortcut starting with [chord] runs while a text field has
+  /// focus: one with a command modifier or a function key, which can't be
+  /// typed as text.
+  static bool _runsWhileTyping(Oito2KeyChord chord) =>
+      chord.hasCommandModifier ||
+      (chord.key.keyId >= LogicalKeyboardKey.f1.keyId &&
+          chord.key.keyId <= LogicalKeyboardKey.f24.keyId);
+
   /// Runs the command whose shortcut the pending chords plus [chord]
   /// complete, or keeps [chord] pending when it continues a longer
   /// shortcut, until [Oito2Commands.sequenceTimeout] passes.
@@ -244,20 +326,19 @@ class _Oito2CommandsState extends State<Oito2Commands> {
     final overridden = _overriddenIds();
     final own = [
       for (final command in widget.commands)
-        if (command.enabled &&
-            !overridden.contains(command.id) &&
-            command.shortcut != null &&
-            (!typing || command.shortcut!.chords.first.hasCommandModifier))
-          command,
+        if (command.enabled && !overridden.contains(command.id))
+          for (final shortcut in command.shortcuts)
+            if (!typing || _runsWhileTyping(shortcut.chords.first))
+              (command, shortcut),
     ];
-    for (final command in own) {
-      if (command.shortcut!.matches(sequence, platform)) {
+    for (final (command, shortcut) in own) {
+      if (shortcut.matches(sequence, platform)) {
         _reset();
         command.onInvoke();
         return KeyEventResult.handled;
       }
     }
-    if (own.any((c) => c.shortcut!.startsWith(sequence, platform))) {
+    if (own.any((entry) => entry.$2.startsWith(sequence, platform))) {
       _pending.add(chord);
       _timer?.cancel();
       _timer = Timer(widget.sequenceTimeout, _reset);

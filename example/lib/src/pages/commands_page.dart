@@ -68,8 +68,8 @@ class _CommandsPageState extends State<CommandsPage> {
           title: 'Commands',
           description:
               'Actions that run from keyboard shortcuts or a searchable '
-              'command palette, with shortcut labels and a shortcut '
-              'recorder.',
+              'command palette, with shortcut labels, a shortcut recorder '
+              'and a keyboard shortcuts help.',
           source: 'lib/src/pages/commands_page.dart',
           children: [
             ExamplePanel(
@@ -122,7 +122,8 @@ class _CommandsPageState extends State<CommandsPage> {
             const DocNote(
               'Shortcuts without Control, Alt, Command or the primary '
               'modifier, such as `R R` or `Shift+/`, don\'t run while a text '
-              'field has focus, so they don\'t steal typing.',
+              'field has focus, so they don\'t steal typing. Shortcuts that '
+              'start with a function key, such as `F1`, still run.',
             ),
             const DocHeading('Examples'),
             const DocHeading('Shortcuts', level: 3),
@@ -217,12 +218,54 @@ class _CommandsPageState extends State<CommandsPage> {
               ),
               // #endregion
             ),
+            const DocHeading('Keyboard shortcuts help', level: 3),
+            const DocText(
+              '`showOito2ShortcutsHelp` opens a dialog that lists the '
+              'commands with a shortcut available at the context, or the '
+              'given `commands`, under the headings of their groups ("General" '
+              'for those without one), in two columns on wide screens. '
+              'Disabled commands stay in place, dimmed. The search field '
+              'keeps the commands whose label, description, group, keywords '
+              'and key names contain every typed word, ignoring case and '
+              'accents, and highlights the matches. '
+              '`Oito2ShortcutsHelpView` is the same list without the '
+              'dialog, for a settings page.',
+            ),
+            const DocText(
+              'Nothing is bound by default. `Oito2Command.shortcutsHelp` '
+              'creates the command that opens it on `F1` and on '
+              '`Mod+Shift+/` (Ctrl+? or ⌘? on layouts that type `?` with '
+              'Shift and the `/` key, such as US English and Brazilian '
+              'ABNT2); add it to an `Oito2Commands` scope so it also shows '
+              'in the palette and in the help. Shortcuts match keys, not '
+              'characters, so on layouts with `?` elsewhere, such as German, '
+              'only `F1` opens it. This showcase binds it: press `F1`.',
+            ),
+            const DocCode(
+              'Oito2Command.shortcutsHelp(\n'
+              "  label: 'Keyboard shortcuts',\n"
+              '  onInvoke: () => showOito2ShortcutsHelp(context),\n'
+              ')',
+            ),
+            ExamplePanel(
+              region: 'help',
+              child: OutlinedButton.icon(
+                icon: const Icon(LucideIcons.keyboard),
+                label: const Text('Show keyboard shortcuts'),
+                // #region help
+                onPressed: () => showOito2ShortcutsHelp(context),
+                // #endregion
+              ),
+            ),
             const DocHeading('Accessibility'),
             const DocText(
               'Assistive technologies read an `Oito2ShortcutLabel` as text, '
               'such as "Ctrl+Shift+K". The recorder is a button whose label '
               'is the current shortcut, "No shortcut", or the prompt to '
-              'press one while recording.',
+              'press one while recording. Each row of the shortcuts help is '
+              'focusable and reads as its label and shortcuts, such as '
+              '"Open settings, shortcut Ctrl+,", with the description as '
+              'its hint; disabled commands read as disabled.',
             ),
             const DocHeading('Keyboard', level: 3),
             const DocTable(
@@ -249,6 +292,25 @@ class _CommandsPageState extends State<CommandsPage> {
                   '`Enter`',
                   'In the palette, closes it and runs the highlighted command.',
                 ],
+                [
+                  '`F1` / `Ctrl+Shift+/`',
+                  'Where `Oito2Command.shortcutsHelp` is bound, opens the '
+                      'shortcuts help.',
+                ],
+                [
+                  '`Down arrow` / `Up arrow`',
+                  'In the shortcuts help, moves from the search field '
+                      'through the rows and back.',
+                ],
+                [
+                  '`Tab` / `Shift+Tab`',
+                  'In the shortcuts help, moves through the rows in reading '
+                      'order.',
+                ],
+                [
+                  '`Esc`',
+                  'In the shortcuts help, clears the search, then closes it.',
+                ],
               ],
             ),
             ...apiReferenceWidgets([
@@ -259,6 +321,8 @@ class _CommandsPageState extends State<CommandsPage> {
               'Oito2ShortcutLabel',
               'Oito2ShortcutRecorder',
               'showOito2CommandPalette',
+              'showOito2ShortcutsHelp',
+              'Oito2ShortcutsHelpView',
               'oito2UsesCommandKey',
             ]),
           ],

@@ -39,6 +39,7 @@ export 'src/shortcuts/command_palette.dart';
 export 'src/shortcuts/commands.dart';
 export 'src/shortcuts/shortcut.dart';
 export 'src/shortcuts/shortcut_widgets.dart';
+export 'src/shortcuts/shortcuts_help.dart';
 export 'src/syntax/syntax_palette.dart';
 export 'src/theme/color_roles.dart';
 export 'src/theme/color_scheme.dart';

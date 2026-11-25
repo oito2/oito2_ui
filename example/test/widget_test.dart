@@ -373,6 +373,39 @@ void main() {
     expect(find.text('No messages'), findsOneWidget);
   });
 
+  testWidgets('F1 and Ctrl+? open the shortcuts help', (tester) async {
+    await pumpShowcase(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+    await _settle(tester);
+    expect(find.byType(Oito2ShortcutsHelpView), findsOneWidget);
+    expect(find.text('Show all commands'), findsOneWidget);
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await _settle(tester);
+    expect(find.byType(Oito2ShortcutsHelpView), findsNothing);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.slash);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await _settle(tester);
+    expect(find.byType(Oito2ShortcutsHelpView), findsOneWidget);
+  });
+
+  testWidgets('the palette lists the keyboard shortcuts help', (tester) async {
+    await pumpShowcase(tester);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await _settle(tester);
+    await tester.enterText(find.byType(TextField).last, 'keyboard shortcuts');
+    await _settle(tester);
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await _settle(tester);
+    expect(find.byType(Oito2ShortcutsHelpView), findsOneWidget);
+  });
+
   testWidgets('Ctrl+F focuses the page search', (tester) async {
     await pumpShowcase(tester);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);

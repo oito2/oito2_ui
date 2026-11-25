@@ -41,6 +41,10 @@ final Map<String, Getter> getters = {
   'pressShortcut': (l) => l.pressShortcut,
   'noShortcut': (l) => l.noShortcut,
   'clearShortcut': (l) => l.clearShortcut,
+  'keyboardShortcuts': (l) => l.keyboardShortcuts,
+  'searchShortcutsHint': (l) => l.searchShortcutsHint,
+  'noShortcutsFound': (l) => l.noShortcutsFound,
+  'generalShortcuts': (l) => l.generalShortcuts,
   'noResults': (l) => l.noResults,
   'close': (l) => l.close,
   'dismiss': (l) => l.dismiss,
@@ -233,6 +237,22 @@ List<Call> calls() => [
     (l) => l.lineMessage(3, 'Error', 'Unexpected token'),
   ),
   ('switchAccount', ['Ana'], (l) => l.switchAccount('Ana')),
+  (
+    'shortcutEntry',
+    [
+      'Open settings',
+      ['Ctrl+,'],
+    ],
+    (l) => l.shortcutEntry('Open settings', ['Ctrl+,']),
+  ),
+  (
+    'shortcutEntry',
+    [
+      'Keyboard shortcuts',
+      ['F1', 'Ctrl+Shift+/'],
+    ],
+    (l) => l.shortcutEntry('Keyboard shortcuts', ['F1', 'Ctrl+Shift+/']),
+  ),
   ('pendingCount', [1], (l) => l.pendingCount(1)),
   ('pendingCount', [3], (l) => l.pendingCount(3)),
   ('dragItemCount', [1], (l) => l.dragItemCount(1)),

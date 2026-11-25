@@ -188,8 +188,10 @@ jobs:
       # Only downloads are kept, not the transforms Gradle builds locally,
       # to stay small. The key follows the Flutter version (its Gradle
       # plugin pins the Android Gradle and Kotlin versions) and the
-      # example's Gradle files; an older cache is restored as a starting
-      # point when they change.
+      # example's Gradle files; an older cache of the same Flutter version
+      # is restored as a starting point when the Gradle files change. A new
+      # Flutter version starts empty, so old dependencies aren't carried
+      # into the new cache.
       - name: Cache Gradle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -199,7 +201,6 @@ jobs:
           key: gradle-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-${{ hashFiles('example/android/**/*.gradle*', 'example/android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             gradle-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-
-            gradle-${{ runner.os }}-
       - name: Build Android
         working-directory: example
         # No daemon is left running, so the Gradle cache is saved from

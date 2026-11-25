@@ -115,6 +115,25 @@ abstract class Oito2Localizations {
   /// Label of the button that clears a recorded shortcut.
   String get clearShortcut;
 
+  /// The title of the keyboard shortcuts help, also the label of the
+  /// command that opens it.
+  String get keyboardShortcuts;
+
+  /// The hint of the keyboard shortcuts help search field.
+  String get searchShortcutsHint;
+
+  /// Shown when no shortcut matches the keyboard shortcuts help search.
+  String get noShortcutsFound;
+
+  /// The heading of the commands without a group in the keyboard
+  /// shortcuts help.
+  String get generalShortcuts;
+
+  /// Returns the accessibility label of a row of the keyboard shortcuts
+  /// help: the command [label] and its [shortcuts], such as "Open
+  /// settings, shortcut Ctrl+,".
+  String shortcutEntry(String label, List<String> shortcuts);
+
   /// Announced when a search or autocomplete finds nothing.
   String get noResults;
 
@@ -662,6 +681,24 @@ class Oito2LocalizationsEn extends Oito2Localizations {
   String get clearShortcut => 'Clear shortcut';
 
   @override
+  String get keyboardShortcuts => 'Keyboard shortcuts';
+
+  @override
+  String get searchShortcutsHint => 'Search shortcuts';
+
+  @override
+  String get noShortcutsFound => 'No shortcuts found';
+
+  @override
+  String get generalShortcuts => 'General';
+
+  @override
+  String shortcutEntry(String label, List<String> shortcuts) =>
+      shortcuts.length == 1
+      ? '$label, shortcut ${shortcuts.single}'
+      : '$label, shortcuts ${shortcuts.join(' or ')}';
+
+  @override
   String get noResults => 'No results';
 
   @override
@@ -1184,6 +1221,24 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String get clearShortcut => 'Limpar atalho';
+
+  @override
+  String get keyboardShortcuts => 'Atalhos de teclado';
+
+  @override
+  String get searchShortcutsHint => 'Buscar atalhos';
+
+  @override
+  String get noShortcutsFound => 'Nenhum atalho encontrado';
+
+  @override
+  String get generalShortcuts => 'Geral';
+
+  @override
+  String shortcutEntry(String label, List<String> shortcuts) =>
+      shortcuts.length == 1
+      ? '$label, atalho ${shortcuts.single}'
+      : '$label, atalhos ${shortcuts.join(' ou ')}';
 
   @override
   String get noResults => 'Nenhum resultado';
