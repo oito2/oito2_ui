@@ -202,6 +202,9 @@ class Oito2Toaster extends StatefulWidget {
 /// The state of an [Oito2Toaster], which queues, shows and times the
 /// toasts.
 class Oito2ToasterState extends State<Oito2Toaster> {
+  /// Creates the state of an [Oito2Toaster], with no toasts queued.
+  Oito2ToasterState();
+
   final List<_ToastEntry> _entries = [];
   late final OverlayEntry _content = OverlayEntry(
     maintainState: true,

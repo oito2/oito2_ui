@@ -25,6 +25,9 @@ export 'anchored_panel.dart' show Oito2PopoverAlignment, Oito2PopoverPlacement;
 
 /// Opens and closes an [Oito2Popover].
 class Oito2PopoverController extends ChangeNotifier {
+  /// Creates a controller whose popover starts closed.
+  Oito2PopoverController();
+
   bool _isOpen = false;
 
   /// Whether the popover is open.

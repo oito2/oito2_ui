@@ -29,6 +29,9 @@ typedef Oito2SignaturePoint = ({Offset position, double width});
 /// Positions are in the pad's logical pixels; [size] is the pad size the
 /// strokes were drawn in, which the exports use.
 class Oito2SignatureController extends ChangeNotifier {
+  /// Creates a controller with no strokes and a [size] of [Size.zero].
+  Oito2SignatureController();
+
   final List<List<Oito2SignaturePoint>> _strokes = [];
 
   /// The size of the pad, updated as it lays out; [toSvg] and [toImage]

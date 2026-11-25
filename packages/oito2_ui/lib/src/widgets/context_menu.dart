@@ -206,6 +206,9 @@ class _Oito2ContextMenuRegionState extends State<Oito2ContextMenuRegion> {
 /// Opens and closes the menu of the [Oito2ContextMenuRegion] it is given
 /// to.
 class Oito2ContextMenuController {
+  /// Creates a controller that is not attached to a region yet.
+  Oito2ContextMenuController();
+
   _Oito2ContextMenuRegionState? _region;
 
   /// Whether the menu is open.
