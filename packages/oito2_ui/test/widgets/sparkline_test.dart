@@ -261,6 +261,30 @@ void main() {
       }
     });
 
+    test('a min or max that is not finite asserts', () {
+      for (final bad in [
+        double.nan,
+        double.infinity,
+        double.negativeInfinity,
+      ]) {
+        expect(
+          () => Oito2Sparkline(values: const [1, 2], min: bad),
+          throwsA(
+            isA<AssertionError>().having(
+              (e) => e.message,
+              'message',
+              contains('min of Oito2Sparkline'),
+            ),
+          ),
+        );
+        expect(
+          () => Oito2Sparkline(values: const [1, 2], max: bad),
+          throwsA(isA<AssertionError>()),
+        );
+      }
+      expect(Oito2Sparkline(values: const [1], min: 0, max: 2).max, 2);
+    });
+
     testWidgets('repaints a list changed in place', (tester) async {
       final values = <double>[1, 2, 3];
       const key = ValueKey('boundary');

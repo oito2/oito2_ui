@@ -225,6 +225,50 @@ void main() {
       final png = await tester.runAsync(controller.toPngBytes);
       expect(png, isNotNull);
       expect(png!.sublist(1, 4), 'PNG'.codeUnits);
+      // A smaller export scales the pad's drawing instead of cropping it.
+      final box = controller.size;
+      final half = controller.toSvg(size: Size(box.width / 2, box.height / 2));
+      String n(double v) => v.toStringAsFixed(1);
+      expect(
+        half,
+        contains(
+          'width="${n(box.width / 2)}" height="${n(box.height / 2)}" '
+          'viewBox="0 0 ${n(box.width)} ${n(box.height)}"',
+        ),
+      );
+    });
+
+    testWidgets('an undo while drawing ends the stroke being drawn', (
+      tester,
+    ) async {
+      final controller = Oito2SignatureController();
+      addTearDown(controller.dispose);
+      await pumpOito2(
+        tester,
+        Center(
+          child: SizedBox(
+            width: 300,
+            child: Oito2SignaturePad(controller: controller),
+          ),
+        ),
+      );
+      final pad = tester.getRect(find.byType(Oito2SignaturePad));
+      await tester.dragFrom(pad.center, const Offset(50, 10));
+      await tester.pump();
+      final first = controller.strokes.single.length;
+      final gesture = await tester.startGesture(
+        pad.center + const Offset(0, 20),
+      );
+      await gesture.moveBy(const Offset(20, 0));
+      await tester.pump();
+      expect(controller.strokes, hasLength(2));
+      controller.undo();
+      await gesture.moveBy(const Offset(20, 0));
+      await gesture.moveBy(const Offset(20, 0));
+      await gesture.up();
+      await tester.pump();
+      expect(controller.strokes, hasLength(1));
+      expect(controller.strokes.single.length, first);
     });
   });
 
@@ -532,6 +576,29 @@ void main() {
     testWidgets('Down opens a panel with the focus inside', (tester) async {
       await pumpMenu(tester);
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      expect(find.text('Products panel'), findsOneWidget);
+      expect(
+        Focus.of(tester.element(find.text('Products panel'))).hasFocus,
+        isTrue,
+      );
+    });
+
+    testWidgets('Down moves the focus into a panel opened by hover', (
+      tester,
+    ) async {
+      await pumpMenu(tester);
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(tester.getCenter(find.text('Products')));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+      expect(find.text('Products panel'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      expect(Focus.of(tester.element(find.text('Products'))).hasFocus, isTrue);
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
       await tester.pumpAndSettle();
       expect(find.text('Products panel'), findsOneWidget);

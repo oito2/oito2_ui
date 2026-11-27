@@ -217,6 +217,31 @@ void main() {
     });
   });
 
+  group('robustness', () {
+    test('drops a leading byte order mark', () {
+      final matcher = Oito2GitignoreMatcher.parse('\u{FEFF}build/');
+      expect(matcher.rules.single.pattern, 'build/');
+      expect(matcher.isIgnored('build/'), isTrue);
+    });
+
+    test('patterns with many asterisks take time linear in the path', () {
+      final matcher = Oito2GitignoreMatcher.parse(
+        '${'*a' * 6}b\n'
+        '**/a/**/a/**/a/**/a/**/b\n',
+      );
+      expect(matcher.isIgnored('a' * 200), isFalse);
+      expect(matcher.isIgnored(List.filled(200, 'a').join('/')), isFalse);
+      expect(matcher.isIgnored('${'a' * 200}b'), isTrue);
+      expect(matcher.isIgnored('${List.filled(200, 'a').join('/')}/b'), isTrue);
+    }, timeout: const Timeout(Duration(seconds: 2)));
+
+    test('a line break in a name is an ordinary character', () {
+      expect(_ignored('foo', 'a\nb/foo'), isTrue);
+      expect(_ignored('a/**', 'a/b\nc'), isTrue);
+      expect(_ignored('a?b', 'a\nb'), isTrue);
+    });
+  });
+
   group('bracket expressions', () {
     test('match ranges and lists', () {
       final rule = _rule('file[0-9a].txt');

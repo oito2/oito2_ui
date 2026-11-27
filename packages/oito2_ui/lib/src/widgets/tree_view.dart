@@ -38,6 +38,7 @@ import 'table_columns_customization.dart';
 import 'table_header.dart';
 import 'toggles.dart';
 import 'touch_target.dart';
+import 'type_ahead.dart';
 import 'widget_helpers.dart';
 
 /// The expanded, selected and checked nodes of an [Oito2TreeView], by
@@ -67,6 +68,14 @@ class Oito2TreeController extends ChangeNotifier {
   final Set<String> _expanded = {};
   final Set<String> _selected = {};
   final Set<String> _checked = {};
+
+  /// Grows each time [_checked] changes, so a tree view can tell whether
+  /// the check states it computed are still current.
+  int _checkedVersion = 0;
+
+  /// The branches [reloadChildren] asked to load again, until the tree
+  /// views listening to this controller take them.
+  final Set<String> _reloads = {};
 
   /// An unmodifiable copy of the values of the open branches.
   Set<String> get expanded => Set.unmodifiable(_expanded);
@@ -103,6 +112,19 @@ class Oito2TreeController extends ChangeNotifier {
   /// open.
   void expandAll(Oito2TreeCollection<Object?> collection) {
     _expanded.addAll(collection.branchValues);
+    notifyListeners();
+  }
+
+  /// Makes the tree views of this controller call
+  /// [Oito2TreeView.onLoadChildren] for the branch [value] again, as if it
+  /// had never loaded: right away when the branch is open and empty, or
+  /// else the next time it opens empty.
+  ///
+  /// A tree loads an empty branch only the first time it opens; to
+  /// refresh a branch, the app empties its children in the collection and
+  /// calls this method.
+  void reloadChildren(String value) {
+    _reloads.add(value);
     notifyListeners();
   }
 
@@ -158,6 +180,7 @@ class Oito2TreeController extends ChangeNotifier {
     final leaves = collection.leavesOf(value);
     final check = checkStateOf(collection, value) != true;
     check ? _checked.addAll(leaves) : _checked.removeAll(leaves);
+    _checkedVersion++;
     notifyListeners();
   }
 }
@@ -294,7 +317,11 @@ class Oito2TreeView<T> extends StatefulWidget {
   ///
   /// When the future fails, the error is reported through
   /// [FlutterError.reportError] and the branch closes; opening it again
-  /// retries the load.
+  /// retries the load. [Oito2TreeController.reloadChildren] makes a
+  /// loaded branch load again.
+  ///
+  /// Nodes dropped or moved with the keyboard into a branch that hasn't
+  /// loaded yet wait for the load and go after the loaded children.
   final Future<void> Function(Oito2TreeNode<T> node)? onLoadChildren;
 
   /// Called with a node and its new, trimmed label when a rename is
@@ -461,11 +488,13 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
   final _scroll = ScrollController();
   final Set<String> _loading = {};
   final Set<String> _loaded = {};
+
+  /// The running loads of [Oito2TreeView.onLoadChildren], by branch value.
+  final Map<String, Future<void>> _loads = {};
   String? _active;
   String? _anchor;
   String? _renaming;
-  String _typed = '';
-  Timer? _typeTimer;
+  final _typeBuffer = TypeAheadBuffer();
   List<Oito2TreeEntry<T>> _entries = const [];
   final _clicks = DoubleClickDetector();
   final _listKey = GlobalKey();
@@ -570,7 +599,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
     _scroll.dispose();
     disposeColumnsCustomization();
     _horizontalScroll.dispose();
-    _typeTimer?.cancel();
+    _typeBuffer.dispose();
     _clicks.cancel();
     _openTimer?.cancel();
     _autoScroll.stop();
@@ -579,6 +608,11 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
   }
 
   void _refresh() {
+    final reloads = _controller._reloads;
+    if (reloads.isNotEmpty) {
+      _loaded.removeAll(reloads);
+      reloads.clear();
+    }
     if (mounted) setState(() {});
   }
 
@@ -600,9 +634,13 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
   String? _filteredQuery;
   Oito2TreeCollection<T>? _filteredSource;
 
-  /// The check state of every node, filled once per build when the tree is
-  /// checkable.
+  /// The check state of every node, filled when the tree is checkable and
+  /// not controlled.
   final Map<String, bool?> _checkStates = {};
+
+  /// The collection, controller and checked leaves [_checkStates] was
+  /// computed for, so a build that changes none of them reuses it.
+  Object? _checkStatesKey;
 
   /// The rows to show: the open part of the tree, or every node of the
   /// search result while filtering.
@@ -623,9 +661,19 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
   /// Fills [_checkStates] in one pass: a branch is checked when all of its
   /// leaves are, unchecked when none or it has no leaves, and mixed
   /// otherwise.
+  ///
+  /// The states are computed again only when the collection, the
+  /// controller or its checked leaves change.
   void _computeCheckStates() {
+    if (!widget.checkable || _controlled) {
+      _checkStates.clear();
+      _checkStatesKey = null;
+      return;
+    }
+    final key = (widget.collection, _controller, _controller._checkedVersion);
+    if (key == _checkStatesKey) return;
+    _checkStatesKey = key;
     _checkStates.clear();
-    if (!widget.checkable || _controlled) return;
     (int, int) visit(Oito2TreeNode<T> node) {
       final children = node.children;
       if (children == null) {
@@ -728,9 +776,42 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
 
   /// Loads the children of [node] through [Oito2TreeView.onLoadChildren]
   /// when it needs them; a failed load is reported and closes the branch.
-  Future<void> _load(Oito2TreeNode<T> node) async {
-    final load = widget.onLoadChildren;
-    if (load == null || !_needsLoad(node)) return;
+  Future<void> _load(Oito2TreeNode<T> node) {
+    if (widget.onLoadChildren == null || !_needsLoad(node)) {
+      return Future.value();
+    }
+    final value = node.value;
+    // The callback returns nothing: whenComplete waits for a returned
+    // future, and the removed one is this load itself.
+    return _loads[value] = _runLoad(node).whenComplete(() {
+      _loads.remove(value);
+    });
+  }
+
+  /// Opens the branch [value] and waits until its children are loaded,
+  /// when it is an empty branch that [Oito2TreeView.onLoadChildren] still
+  /// has to load or is loading, and the collection with them is built.
+  ///
+  /// Returns whether the tree is still mounted.
+  Future<bool> _ensureLoaded(String? value) async {
+    if (value == null) return true;
+    final node = widget.collection.find(value);
+    if (node == null) return true;
+    final running = _loads[value];
+    if (running == null && !_needsLoad(node)) return true;
+    _controller.setExpanded(value, true);
+    await (running ?? _load(node));
+    if (!mounted) return false;
+    // The app adds the children with a rebuild; the new collection is the
+    // widget's after the next frame.
+    await WidgetsBinding.instance.endOfFrame;
+    return mounted;
+  }
+
+  /// Calls [Oito2TreeView.onLoadChildren] for [node], keeping it in
+  /// [_loading] meanwhile.
+  Future<void> _runLoad(Oito2TreeNode<T> node) async {
+    final load = widget.onLoadChildren!;
     setState(() => _loading.add(node.value));
     var loaded = false;
     try {
@@ -930,13 +1011,10 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
       setState(() => _renaming = current.node.value);
     } else {
       final character = event.character;
-      if (character == null ||
-          command ||
-          character.trim().isEmpty ||
-          character.codeUnitAt(0) < 0x20) {
+      if (command || !TypeAheadBuffer.accepts(character)) {
         return KeyEventResult.ignored;
       }
-      _typeAhead(character, index);
+      _typeAhead(character!, index);
     }
     return KeyEventResult.handled;
   }
@@ -945,12 +1023,9 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
   /// and activates the next enabled row after [index] whose label starts
   /// with it; repeating one character cycles through its matches.
   void _typeAhead(String character, int index) {
-    _typeTimer?.cancel();
-    _typeTimer = Timer(const Duration(milliseconds: 600), () => _typed = '');
-    final repeat = _typed == character;
-    _typed = repeat ? character : _typed + character;
-    final needle = foldText(_typed);
-    final start = repeat || _typed.length == 1 ? index + 1 : index;
+    final (:prefix, :fromNext) = _typeBuffer.add(character);
+    final needle = foldText(prefix);
+    final start = fromNext ? index + 1 : index;
     for (var n = 0; n < _entries.length; n++) {
       final entry = _entries[(start + n) % _entries.length];
       if (!entry.node.disabled &&
@@ -1094,11 +1169,24 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
   /// [Oito2TreeView.canDrop] allows it, opens the branch it goes into and
   /// announces the result; announces that it can't move when [canDrop]
   /// refuses, and does nothing when it can't go that way.
-  void _moveBy(Oito2TreeNode<T> node, _KeyMove move) {
-    final onMove = widget.onMove;
-    if (onMove == null || node.disabled || !_canMove) return;
-    final target = _keyMoveTarget(node, move);
+  ///
+  /// Moving into a branch whose children [Oito2TreeView.onLoadChildren]
+  /// hasn't loaded yet first opens it and waits for the load, then moves
+  /// [node] after the loaded children.
+  Future<void> _moveBy(Oito2TreeNode<T> node, _KeyMove move) async {
+    if (widget.onMove == null || node.disabled || !_canMove) return;
+    var target = _keyMoveTarget(node, move);
     if (target == null) return;
+    if (target.into case final into? when _pendingLoad(into.value)) {
+      if (!await _ensureLoaded(into.value)) return;
+      target = (
+        parent: target.parent,
+        index: widget.collection.childrenOf(into.value).length,
+        into: target.into,
+      );
+    }
+    final onMove = widget.onMove;
+    if (onMove == null || !mounted) return;
     final (:parent, :index, :into) = target;
     final strings = Oito2Localizations.of(context);
     if (!(widget.canDrop?.call([node], parent, index) ?? true)) {
@@ -1120,6 +1208,29 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _reveal(_indexOf(value));
     });
+  }
+
+  /// The width of the branch chevron box: the 48-pixel minimum tap target
+  /// when the theme pads tap targets, as on touch platforms, 20 pixels
+  /// otherwise.
+  double _disclosureWidth(BuildContext context) =>
+      padsTapTargets(context) ? Oito2Sizes.minTouchTarget : 20;
+
+  /// The custom accessibility actions of the row of [node]: the localized
+  /// "Open", which calls [Oito2TreeView.onActivate], when it is set and
+  /// [node] is enabled, and the actions from [_moveActions]; null when
+  /// there are none.
+  Map<CustomSemanticsAction, VoidCallback>? _rowActions(Oito2TreeNode<T> node) {
+    final activate = widget.onActivate;
+    final moves = _moveActions(node);
+    if (activate == null || node.disabled) return moves;
+    return {
+      CustomSemanticsAction(
+        label: Oito2Localizations.of(context).activateItem,
+      ): () =>
+          activate(node),
+      ...?moves,
+    };
   }
 
   /// The accessibility actions that move [node], for the ways it can go,
@@ -1144,6 +1255,10 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
   /// The nodes a drag that starts on [node] carries: the topmost enabled
   /// nodes of a multiple selection that holds it, in tree order, or else
   /// [node] alone.
+  ///
+  /// Disabled nodes of the selection, which the app can select through
+  /// the controller, don't move and don't hold back their enabled
+  /// descendants.
   List<Oito2TreeNode<T>> _dragNodes(Oito2TreeNode<T> node) {
     final selected = _controller.selected;
     if (_controller.selectionMode != Oito2SelectionMode.multiple ||
@@ -1152,11 +1267,15 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
       return [node];
     }
     final collection = widget.collection;
+    final movable = {
+      for (final value in selected)
+        if (collection.find(value) case final found? when !found.disabled)
+          value,
+    };
     return [
       for (final e in collection.flatten())
-        if (selected.contains(e.node.value) &&
-            !e.node.disabled &&
-            !collection.ancestorsOf(e.node.value).any(selected.contains))
+        if (movable.contains(e.node.value) &&
+            !collection.ancestorsOf(e.node.value).any(movable.contains))
           e.node,
     ];
   }
@@ -1167,6 +1286,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
   Drag? _startDrag(Oito2TreeNode<T> node, Offset global) {
     if (!_canMove || node.disabled || _drag != null) return null;
     final nodes = _dragNodes(node);
+    if (nodes.isEmpty) return null;
     _focusNode.requestFocus();
     setState(() {
       _active = node.value;
@@ -1201,14 +1321,33 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
 
   /// Ends the drag: when the pointer was released over an allowed drop
   /// that changes the tree, calls [Oito2TreeView.onMove].
-  void _endDrag(bool dropped) {
+  ///
+  /// A drop into a branch whose children [Oito2TreeView.onLoadChildren]
+  /// hasn't loaded yet first opens it and waits for the load, then moves
+  /// the nodes after the loaded children.
+  Future<void> _endDrag(bool dropped) async {
     final drag = _drag;
     if (drag == null) return;
     final drop = drag.drop;
     _stopDrag();
-    if (dropped && drop != null && drop.valid && !drop.noop) {
-      widget.onMove?.call(drag.nodes, drop.parent, drop.index);
+    if (!dropped || drop == null || !drop.valid || drop.noop) return;
+    var index = drop.index;
+    final parent = drop.parent;
+    if (drop.placement == DropPlacement.inside &&
+        parent != null &&
+        _pendingLoad(parent)) {
+      if (!await _ensureLoaded(parent)) return;
+      index = widget.collection.childrenOf(parent).length;
     }
+    widget.onMove?.call(drag.nodes, parent, index);
+  }
+
+  /// Whether the branch [value] is loading its children or still has to
+  /// load them.
+  bool _pendingLoad(String value) {
+    if (_loads.containsKey(value)) return true;
+    final node = widget.collection.find(value);
+    return node != null && _needsLoad(node);
   }
 
   /// Ends the drag without moving anything, rebuilding unless [rebuild] is
@@ -1373,7 +1512,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
     final rtl = Directionality.of(context) == TextDirection.rtl;
 
     final disclosure = SizedBox(
-      width: 20,
+      width: _disclosureWidth(context),
       child: !node.isBranch
           ? null
           : loading
@@ -1478,13 +1617,20 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
       enabled: !node.disabled,
       focused: active,
       expanded: node.isBranch ? open : null,
+      // Branch actions for assistive technologies without a keyboard.
+      onExpand: node.isBranch && !open && !_filtering && !node.disabled
+          ? () => _setExpanded(node, true)
+          : null,
+      onCollapse: node.isBranch && open && !_filtering && !node.disabled
+          ? () => _setExpanded(node, false)
+          : null,
       checked: widget.checkable ? checkState ?? false : null,
       mixed: widget.checkable && checkState == null ? true : null,
       label: node.label,
       hint: pending ? Oito2Localizations.of(context).pendingChange : null,
       excludeSemantics: _renaming != value,
       onTap: node.disabled ? null : () => _tap(node),
-      customSemanticsActions: _moveActions(node),
+      customSemanticsActions: _rowActions(node),
       child: child,
     );
 
@@ -1552,7 +1698,7 @@ class _Oito2TreeViewState<T> extends State<Oito2TreeView<T>>
     final indent = entry.depth * widget.indent;
     final needed =
         indent +
-        20 +
+        _disclosureWidth(context) +
         (widget.checkable ? kMinInteractiveDimension + Oito2Spacing.xs : 0) +
         (icon == null ? 0 : 16 + Oito2Spacing.xs) +
         Oito2Spacing.xs +

@@ -42,6 +42,19 @@ class Oito2TocEntry {
 
   /// The nesting level, from 0; each level indents the entry further.
   final int depth;
+
+  /// Two entries are equal when their [title], [target] and [depth] are
+  /// equal, so a table of contents rebuilt with equal entries doesn't
+  /// measure its headings again.
+  @override
+  bool operator ==(Object other) =>
+      other is Oito2TocEntry &&
+      other.title == title &&
+      other.target == target &&
+      other.depth == depth;
+
+  @override
+  int get hashCode => Object.hash(title, target, depth);
 }
 
 /// A list of the sections of a scroll view that highlights the section in

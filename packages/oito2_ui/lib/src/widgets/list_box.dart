@@ -13,8 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'dart:async';
-
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
@@ -24,6 +22,7 @@ import '../collections/selection_controller.dart';
 import '../tokens/geometry.dart';
 import 'list_reorder.dart';
 import 'row_drag.dart';
+import 'type_ahead.dart';
 import 'widget_helpers.dart';
 
 /// Builds the content of an [Oito2ListBox] row.
@@ -124,8 +123,7 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>>
   String? _active;
 
   /// The text typed for type-ahead search, cleared after a pause.
-  String _typed = '';
-  Timer? _typeTimer;
+  final _typeAhead = TypeAheadBuffer();
   final _clicks = DoubleClickDetector();
 
   Oito2ListCollection<T> get _collection => widget.collection;
@@ -207,7 +205,7 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>>
     _selection.removeListener(_refresh);
     _focusNode.dispose();
     _scroll.dispose();
-    _typeTimer?.cancel();
+    _typeAhead.dispose();
     _clicks.cancel();
     disposeReorder();
     super.dispose();
@@ -239,19 +237,9 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>>
     } else if (extend && anchor != null) {
       _selection.extend(anchor, value);
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final context = _keys[value]?.currentContext;
-      if (context != null && context.mounted) {
-        Scrollable.ensureVisible(
-          context,
-          alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
-        );
-        Scrollable.ensureVisible(
-          context,
-          alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtStart,
-        );
-      }
-    });
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => revealForReorder(value),
+    );
   }
 
   /// Handles navigation, selection, activation and type-ahead keys.
@@ -296,20 +284,14 @@ class _Oito2ListBoxState<T> extends State<Oito2ListBox<T>>
       widget.onActivate?.call(item);
     } else {
       final character = event.character;
-      if (character == null ||
-          command ||
-          character.trim().isEmpty ||
-          character.codeUnitAt(0) < 0x20) {
+      if (command || !TypeAheadBuffer.accepts(character)) {
         return KeyEventResult.ignored;
       }
-      _typeTimer?.cancel();
-      _typeTimer = Timer(const Duration(milliseconds: 600), () => _typed = '');
-      final repeat = _typed == character;
-      _typed = repeat ? character : _typed + character;
-      final from = repeat || _typed.length == 1 ? active : null;
+      final (:prefix, :fromNext) = _typeAhead.add(character!);
+      final from = fromNext ? active : null;
       final match =
-          _collection.search(_typed, from: from) ??
-          (from == null ? null : _collection.search(_typed));
+          _collection.search(prefix, from: from) ??
+          (from == null ? null : _collection.search(prefix));
       if (match != null) _activate(match);
     }
     return KeyEventResult.handled;

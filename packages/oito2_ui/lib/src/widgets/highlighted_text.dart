@@ -88,7 +88,8 @@ class Oito2HighlightedText extends StatelessWidget {
   /// Returns the ranges of [text] that match [query] and [queries], sorted
   /// and merged where they overlap or touch. The options work as on the
   /// widget: by default each word matches everywhere, ignoring case and
-  /// accents.
+  /// accents. A match of part of a character that folds into several,
+  /// such as "stras" in "Straße", covers the whole character.
   static List<TextRange> matches(
     String text,
     String query, {
@@ -125,8 +126,14 @@ class Oito2HighlightedText extends StatelessWidget {
       ) {
         final end = i + term.length;
         if (wholeWords && (isWordChar(i - 1) || isWordChar(end))) continue;
-        // Back to indexes of [text], which may differ in length.
-        ranges.add(TextRange(start: starts[i], end: starts[end]));
+        // Back to indexes of [text], which may differ in length. A match
+        // that ends inside a character folded into several, such as the
+        // first "s" of "ß", takes the whole character.
+        var last = end;
+        while (last < starts.length - 1 && starts[last] == starts[last - 1]) {
+          last++;
+        }
+        ranges.add(TextRange(start: starts[i], end: starts[last]));
         if (!matchAll) break;
       }
     }

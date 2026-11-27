@@ -118,6 +118,9 @@ class Oito2WeekScheduleGrid<T> extends StatefulWidget {
   final ValueChanged<T>? onPaintValueChanged;
 
   /// The number of slots in a day.
+  ///
+  /// When it changes, the active cell moves to the last slot of the new
+  /// day if it is beyond it, and the selection is dropped.
   final int slotsPerDay;
 
   /// Returns the header text of [slot]; by default the start time of the
@@ -192,6 +195,22 @@ class _Oito2WeekScheduleGridState<T> extends State<Oito2WeekScheduleGrid<T>> {
   void initState() {
     super.initState();
     _focus.addListener(_onFocus);
+  }
+
+  @override
+  void didUpdateWidget(Oito2WeekScheduleGrid<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.slotsPerDay != widget.slotsPerDay) {
+      // Keeps the active cell inside the new day and drops the selection
+      // and drag, whose slots belong to the old day.
+      _active = (
+        row: _active.row,
+        slot: math.min(_active.slot, widget.slotsPerDay - 1),
+      );
+      _anchor = null;
+      _dragStart = null;
+      _dragEnd = null;
+    }
   }
 
   @override
@@ -417,6 +436,12 @@ class _Oito2WeekScheduleGridState<T> extends State<Oito2WeekScheduleGrid<T>> {
   String? _slotLabel(int slot) {
     final custom = widget.slotLabel;
     if (custom != null) return custom(context, slot);
+    return _defaultSlotLabel(slot);
+  }
+
+  /// Returns the default header text of [slot]: the hour it starts at, or
+  /// null when it doesn't start on the hour.
+  String? _defaultSlotLabel(int slot) {
     final minute = _minuteOf(slot);
     if (minute % 60 != 0) return null;
     return _time(minute).replaceFirst(RegExp(r'[:.]00'), '');
@@ -439,20 +464,73 @@ class _Oito2WeekScheduleGridState<T> extends State<Oito2WeekScheduleGrid<T>> {
   /// in the slots up to the next one: the smallest divisor of the slot
   /// count that fits [labelWidth] in cells of [cellWidth] and, for the
   /// default labels, lands on whole hours.
-  int _labelStep(double labelWidth, double cellWidth) {
+  ///
+  /// [labels] holds the header text of every slot, as [_slotLabel] returns
+  /// it.
+  int _labelStep(double labelWidth, double cellWidth, List<String?> labels) {
     final slots = widget.slotsPerDay;
     for (var step = 1; step <= slots; step++) {
       if (slots % step != 0) continue;
       if (step * cellWidth < labelWidth + 6) continue;
-      if (widget.slotLabel == null &&
-          _slotLabel(step) == null &&
-          step < slots) {
+      if (widget.slotLabel == null && step < slots && labels[step] == null) {
         continue;
       }
       return step;
     }
     return slots;
   }
+
+  /// The day names, times, default slot labels and their widths, for
+  /// [_textsKey].
+  _WeekTexts? _texts;
+
+  /// What [_texts] was built from: the localizations, the time format,
+  /// the slot count, the text styles and the text scaler.
+  Object? _textsKey;
+
+  /// Returns the day names, times and default slot labels in the locale,
+  /// with the widths they take in [dayStyle] and [labelStyle]; they are
+  /// built again only when the locale, the time format, the slot count,
+  /// a style or the text scale changes.
+  _WeekTexts _textsFor(TextStyle? dayStyle, TextStyle? labelStyle) {
+    final slots = widget.slotsPerDay;
+    final key = (
+      Localizations.maybeLocaleOf(context),
+      MaterialLocalizations.of(context),
+      MediaQuery.alwaysUse24HourFormatOf(context),
+      MediaQuery.textScalerOf(context),
+      slots,
+      dayStyle,
+      labelStyle,
+    );
+    final cached = _texts;
+    if (cached != null && key == _textsKey) return cached;
+    final days = [for (var row = 0; row < 7; row++) _dayOfRow(row)];
+    final shortNames = [for (final day in days) _dayName(day, short: true)];
+    final labels = [
+      for (var slot = 0; slot < slots; slot++) _defaultSlotLabel(slot),
+    ];
+    _textsKey = key;
+    return _texts = (
+      shortNames: shortNames,
+      fullNames: [for (final day in days) _dayName(day, short: false)],
+      times: [for (var slot = 0; slot <= slots; slot++) _time(_minuteOf(slot))],
+      dayWidth:
+          shortNames
+              .map((name) => _textWidth(name, dayStyle))
+              .reduce(math.max) +
+          Oito2Spacing.md,
+      labels: labels,
+      labelWidth: _labelsWidth(labels, labelStyle),
+    );
+  }
+
+  /// Returns the width of the widest of [labels] in [style], or 0 when
+  /// they are all null.
+  double _labelsWidth(List<String?> labels, TextStyle? style) => labels
+      .whereType<String>()
+      .map((label) => _textWidth(label, style))
+      .fold(0.0, math.max);
 
   @override
   Widget build(BuildContext context) {
@@ -475,20 +553,19 @@ class _Oito2WeekScheduleGridState<T> extends State<Oito2WeekScheduleGrid<T>> {
       for (final (index, value) in widget.values.indexed)
         value.value: (value, index),
     };
+    final texts = _textsFor(dayStyle, muted);
     final days = [for (var row = 0; row < 7; row++) _dayOfRow(row)];
-    final shortNames = [for (final day in days) _dayName(day, short: true)];
-    final fullNames = [for (final day in days) _dayName(day, short: false)];
-    final times = [
-      for (var slot = 0; slot <= slots; slot++) _time(_minuteOf(slot)),
-    ];
-    final dayWidth =
-        shortNames.map((name) => _textWidth(name, dayStyle)).reduce(math.max) +
-        Oito2Spacing.md;
-    final labels = [for (var slot = 0; slot < slots; slot++) _slotLabel(slot)];
-    final labelWidth = labels
-        .whereType<String>()
-        .map((label) => _textWidth(label, muted))
-        .fold(0.0, math.max);
+    final shortNames = texts.shortNames;
+    final fullNames = texts.fullNames;
+    final times = texts.times;
+    final dayWidth = texts.dayWidth;
+    final custom = widget.slotLabel != null;
+    // Custom labels may change with any build, so only the default ones
+    // are kept between builds.
+    final labels = custom
+        ? [for (var slot = 0; slot < slots; slot++) _slotLabel(slot)]
+        : texts.labels;
+    final labelWidth = custom ? _labelsWidth(labels, muted) : texts.labelWidth;
 
     final grid = LayoutBuilder(
       builder: (context, constraints) {
@@ -501,7 +578,7 @@ class _Oito2WeekScheduleGridState<T> extends State<Oito2WeekScheduleGrid<T>> {
         );
         _dayWidth = dayWidth;
         _cellWidth = cellWidth;
-        final step = _labelStep(labelWidth, cellWidth);
+        final step = _labelStep(labelWidth, cellWidth, labels);
         final cellsWidth = cellWidth * slots;
         final header = SizedBox(
           width: cellsWidth,
@@ -782,3 +859,16 @@ class _LegendChip extends StatelessWidget {
     );
   }
 }
+
+/// The texts of an [Oito2WeekScheduleGrid] that depend on the locale and
+/// the slot count: the short and full day names in row order, the time
+/// at every slot boundary, the default slot labels, the width of the day
+/// column and the width of the widest label.
+typedef _WeekTexts = ({
+  List<String> shortNames,
+  List<String> fullNames,
+  List<String> times,
+  double dayWidth,
+  List<String?> labels,
+  double labelWidth,
+});

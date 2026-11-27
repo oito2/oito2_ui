@@ -17,6 +17,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
 import 'utilities.dart';
+import 'widget_helpers.dart';
 
 /// An interactive row with a title, an optional subtitle and widgets on
 /// both sides, styled for desktop lists and settings pages.
@@ -128,7 +129,7 @@ class Oito2ListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final touch = theme.materialTapTargetSize == MaterialTapTargetSize.padded;
+    final touch = padsTapTargets(context);
     final title = this.title ?? (titleText == null ? null : Text(titleText!));
     final subtitle =
         this.subtitle ?? (subtitleText == null ? null : Text(subtitleText!));

@@ -36,20 +36,33 @@ import 'shortcut_widgets.dart';
 /// opens; Escape on an empty search field or on a row closes the dialog,
 /// as does the close button.
 ///
+/// While a help dialog opened by this function is showing on the same
+/// root `Navigator`, another call opens nothing and returns the future of
+/// the open dialog, so pressing
+/// F1 again, with an [Oito2Commands] scope above the `Navigator`, doesn't
+/// stack a second help.
+///
 /// Returns a future that completes when the dialog closes.
 Future<void> showOito2ShortcutsHelp(
   BuildContext context, {
   Iterable<Oito2Command>? commands,
   String? title,
 }) {
+  final navigator = Navigator.of(context, rootNavigator: true);
+  if (_openHelp[navigator] case final open?) return open;
   final listed = List<Oito2Command>.of(
     commands ?? Oito2Commands.availableAt(context, includeDisabled: true),
   );
-  return showDialog<void>(
+  final future = showDialog<void>(
     context: context,
     builder: (context) => _ShortcutsHelpDialog(commands: listed, title: title),
-  );
+  ).whenComplete(() => _openHelp[navigator] = null);
+  return _openHelp[navigator] = future;
 }
+
+/// The future of the help dialog [showOito2ShortcutsHelp] is showing on
+/// each root navigator; null while none is open there.
+final Expando<Future<void>> _openHelp = Expando('oito2ShortcutsHelp');
 
 /// The dialog of [showOito2ShortcutsHelp].
 class _ShortcutsHelpDialog extends StatelessWidget {
@@ -272,10 +285,7 @@ class _Oito2ShortcutsHelpViewState extends State<Oito2ShortcutsHelpView> {
     final theme = Theme.of(context);
     final l10n = Oito2Localizations.of(context);
     final platform = theme.platform;
-    final words = foldText(_query)
-        .split(RegExp(r'\s+'))
-        .where((w) => w.isNotEmpty)
-        .toList();
+    final words = foldWords(_query);
     final matches = [
       for (final entry in _entries(platform))
         if (words.every(entry.text.contains)) entry,

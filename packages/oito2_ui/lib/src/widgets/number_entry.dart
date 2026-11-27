@@ -119,6 +119,12 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry>
     with OwnedFocusNodeMixin, Oito2FormFieldMixin {
   final _controller = TextEditingController();
   NumberFormat? _format;
+
+  /// The locale [_format] was built for.
+  Locale? _formatLocale;
+
+  /// The input filter of [_format], built along with it.
+  TextInputFormatter? _filter;
   double _scrub = 0;
 
   /// Whether the error shows, once the field lost focus.
@@ -169,19 +175,26 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry>
 
   bool get _enabled => widget.onChanged != null;
 
-  /// Builds the number format of the locale and [Oito2NumberEntry.decimals].
+  /// Builds the number format of the locale and [Oito2NumberEntry.decimals],
+  /// and the input filter that goes with it.
   void _updateFormat() {
-    _format = NumberFormat.decimalPatternDigits(
-      locale: Localizations.maybeLocaleOf(context)?.toString(),
+    _formatLocale = Localizations.maybeLocaleOf(context);
+    final format = _format = NumberFormat.decimalPatternDigits(
+      locale: _formatLocale?.toString(),
       decimalDigits: widget.decimals,
     );
+    _filter = _filterOf(format);
   }
 
   /// Reformats the value when the locale changes, unless the text is being
-  /// edited.
+  /// edited; other dependency changes keep the format.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (_format != null &&
+        Localizations.maybeLocaleOf(context) == _formatLocale) {
+      return;
+    }
     _updateFormat();
     if (!_focusNode.hasFocus) _show(widget.value);
   }
@@ -215,12 +228,10 @@ class _Oito2NumberEntryState extends State<Oito2NumberEntry>
     }
   }
 
-  /// Allows ASCII and locale digits, the separators and signs of
-  /// [_format], and white space, which includes the no-break spaces some
-  /// locales group digits with.
-  TextInputFormatter? get _filter {
-    final format = _format;
-    if (format == null) return null;
+  /// Returns a filter that allows ASCII and locale digits, the separators
+  /// and signs of [format], and white space, which includes the no-break
+  /// spaces some locales group digits with.
+  static TextInputFormatter _filterOf(NumberFormat format) {
     final symbols = format.symbols;
     final zero = symbols.ZERO_DIGIT.codeUnitAt(0);
     final allowed = [

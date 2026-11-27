@@ -510,8 +510,8 @@ class RowDragHandle extends StatelessWidget {
             message: Oito2Localizations.of(context).dragToReorder,
             child: SizedBox(
               key: const ValueKey('oito2-drag-handle'),
-              width: padsTapTargets(context) ? 40 : 24,
-              height: padsTapTargets(context) ? 40 : 24,
+              width: padsTapTargets(context) ? Oito2Sizes.minTouchTarget : 24,
+              height: padsTapTargets(context) ? Oito2Sizes.minTouchTarget : 24,
               child: const Icon(LucideIcons.grip_vertical, size: 16),
             ),
           ),

@@ -27,7 +27,7 @@ import 'shortcut_widgets.dart';
 
 /// Opens the command palette over [context]: a search field above the
 /// commands available at [context] (or [commands] when given), each with
-/// its shortcut.
+/// its shortcut. Disabled commands are left out, [commands] included.
 ///
 /// Typing filters the commands to those whose label, description, group
 /// and keywords contain every typed word, ignoring case and accents.
@@ -39,7 +39,10 @@ Future<void> showOito2CommandPalette(
   BuildContext context, {
   List<Oito2Command>? commands,
 }) {
-  final available = commands ?? Oito2Commands.availableAt(context);
+  final available = [
+    for (final command in commands ?? Oito2Commands.availableAt(context))
+      if (command.enabled) command,
+  ];
   return showDialog<void>(
     context: context,
     builder: (context) => _CommandPalette(commands: available),
@@ -88,10 +91,7 @@ class _CommandPaletteState extends State<_CommandPalette> {
 
   /// The commands that contain every word of the query, best match first.
   List<Oito2Command> get _matches {
-    final words = foldText(_query)
-        .split(RegExp(r'\s+'))
-        .where((w) => w.isNotEmpty)
-        .toList();
+    final words = foldWords(_query);
     final scored = <(int, Oito2Command)>[];
     for (final (command, label, text) in _folded) {
       if (!words.every(text.contains)) continue;

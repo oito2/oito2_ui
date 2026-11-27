@@ -14,8 +14,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../tokens/geometry.dart';
+import 'utilities.dart';
 import 'widget_helpers.dart';
 
 /// Scrolls [child] continuously when it is longer than the space it has,
@@ -23,10 +26,14 @@ import 'widget_helpers.dart';
 ///
 /// The child moves toward the start (up when vertical), or the other way
 /// with [reverse], at [speed] logical pixels per second, followed by a
-/// copy after [gap]. It stops while the pointer or the focus is on it, and
-/// stays still at its start when animations are disabled. [fadeEdges]
-/// fades the content at both ends. A child that fits doesn't move.
-/// Assistive technologies read the child once.
+/// copy after [gap]. With [pauseOnHover], it stops while the pointer or
+/// the focus is on it. A tap or a click pauses it and another one resumes
+/// it, and it takes the keyboard focus, where Enter or Space pause and
+/// resume it too, so it can always be stopped. It stays still at its
+/// start when animations are disabled. [fadeEdges] fades the content at
+/// both ends. A child that fits doesn't move; while it fits or animations
+/// are disabled, the marquee takes neither taps nor the focus. Assistive
+/// technologies read the child once.
 ///
 /// While it scrolls, [child] is built twice, side by side, so it must not
 /// hold a [GlobalKey], and each copy keeps its own state: a plain child,
@@ -63,7 +70,8 @@ class Oito2Marquee extends StatefulWidget {
   /// The space between the content and its copy.
   final double gap;
 
-  /// Whether the pointer or the focus stops the scroll.
+  /// Whether the pointer or the focus stops the scroll while on the
+  /// marquee; a tap, Enter or Space pause and resume it either way.
   final bool pauseOnHover;
 
   /// Whether the content fades at both ends.
@@ -88,19 +96,30 @@ class _Oito2MarqueeState extends State<Oito2Marquee>
   bool _hovered = false;
   bool _focused = false;
 
+  /// Whether a tap, Enter or Space paused the scroll.
+  bool _paused = false;
+
   bool get _horizontal => widget.axis == Axis.horizontal;
 
   bool get _overflows => _extent > _viewport && _viewport > 0;
 
   bool get _shouldRun {
     final reduced = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    final paused = widget.pauseOnHover && (_hovered || _focused);
+    final paused = _paused || (widget.pauseOnHover && (_hovered || _focused));
     return _overflows && !reduced && !paused;
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(Oito2Marquee oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A change of pauseOnHover while hovered or focused starts or stops
+    // the scroll at once.
     _sync();
   }
 
@@ -133,6 +152,25 @@ class _Oito2MarqueeState extends State<Oito2Marquee>
     _last = elapsed;
     final period = _extent + widget.gap;
     _offset.value = (_offset.value + widget.speed * dt) % period;
+  }
+
+  /// Pauses a running scroll, or resumes a paused one.
+  void _togglePause() => setState(() {
+    _paused = !_paused;
+    _sync();
+  });
+
+  /// Pauses or resumes the scroll on Enter or Space.
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    final key = event.logicalKey;
+    if (key != LogicalKeyboardKey.enter &&
+        key != LogicalKeyboardKey.numpadEnter &&
+        key != LogicalKeyboardKey.space) {
+      return KeyEventResult.ignored;
+    }
+    _togglePause();
+    return KeyEventResult.handled;
   }
 
   /// Records the child's length along the axis and resyncs after the
@@ -226,7 +264,13 @@ class _Oito2MarqueeState extends State<Oito2Marquee>
             child: content,
           );
         }
+        // While the content can scroll, a tap, a click, Enter or Space
+        // pause and resume it.
+        final movable =
+            overflows &&
+            !(MediaQuery.maybeDisableAnimationsOf(context) ?? false);
         return MouseRegion(
+          cursor: movable ? SystemMouseCursors.click : MouseCursor.defer,
           onEnter: (_) => setState(() {
             _hovered = true;
             _sync();
@@ -235,14 +279,25 @@ class _Oito2MarqueeState extends State<Oito2Marquee>
             _hovered = false;
             _sync();
           }),
-          child: Focus(
-            canRequestFocus: false,
-            skipTraversal: true,
-            onFocusChange: (focused) => setState(() {
-              _focused = focused;
-              _sync();
-            }),
-            child: content,
+          child: Oito2FocusBorder(
+            borderRadius: Oito2Radius.smallAll,
+            child: Focus(
+              canRequestFocus: movable,
+              skipTraversal: !movable,
+              onKeyEvent: _onKey,
+              onFocusChange: (focused) => setState(() {
+                _focused = focused;
+                _sync();
+              }),
+              child: GestureDetector(
+                behavior: movable
+                    ? HitTestBehavior.opaque
+                    : HitTestBehavior.deferToChild,
+                excludeFromSemantics: true,
+                onTap: movable ? _togglePause : null,
+                child: content,
+              ),
+            ),
           ),
         );
       },

@@ -20,9 +20,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
-/// Encodes a 100 by 100 white PNG with a black square of [blackSide]
-/// pixels in its top-left corner.
-Future<Uint8List> _png(int blackSide) async {
+/// Encodes a 100 by 100 white PNG with a square of [blackSide] pixels in
+/// its top-left corner, black or of [color].
+Future<Uint8List> _png(
+  int blackSide, {
+  ui.Color color = const ui.Color(0xFF000000),
+}) async {
   final recorder = ui.PictureRecorder();
   ui.Canvas(recorder)
     ..drawRect(
@@ -31,7 +34,7 @@ Future<Uint8List> _png(int blackSide) async {
     )
     ..drawRect(
       ui.Rect.fromLTWH(0, 0, blackSide.toDouble(), blackSide.toDouble()),
-      ui.Paint()..color = const ui.Color(0xFF000000),
+      ui.Paint()..color = color,
     );
   final image = await recorder.endRecording().toImage(100, 100);
   final data = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -64,16 +67,66 @@ void main() {
     await file().writeAsBytes(golden);
   }
 
-  test('an image within the tolerance passes and is not written', () async {
+  test('many pixels with a small change pass and are not written', () async {
     await writeGolden();
     final modified = file().lastModifiedSync();
-    // 4 x 4 = 16 pixels, 0.16% of the image.
-    final image = await _png(4);
+    // 7 x 7 = 49 pixels, 0.49% of the image, each channel off by 40.
+    final image = await _png(7, color: const ui.Color(0xFFD7D7D7));
     for (final enabled in [false, true]) {
       expect(await comparator(enabled: enabled).compare(image, uri), isTrue);
       expect(file().readAsBytesSync(), golden);
       expect(file().lastModifiedSync(), modified);
     }
+  });
+
+  test('a single pixel with a large change passes', () async {
+    await writeGolden();
+    // 1 pixel, 0.01% of the image.
+    expect(
+      await comparator(enabled: false).compare(await _png(1), uri),
+      isTrue,
+    );
+  });
+
+  test('a few pixels with a large change fail', () async {
+    await writeGolden();
+    // 2 x 2 = 4 pixels, 0.04% of the image, and 4 x 4 = 16 pixels, 0.16%.
+    for (final side in [2, 4]) {
+      await expectLater(
+        comparator(enabled: false).compare(await _png(side), uri),
+        throwsA(
+          isA<FlutterError>().having(
+            (error) => error.message,
+            'message',
+            contains('by more than $goldenStrongDelta'),
+          ),
+        ),
+      );
+    }
+    expect(file().readAsBytesSync(), golden);
+  });
+
+  test('too many pixels with a small change fail', () async {
+    await writeGolden();
+    // 8 x 8 = 64 pixels, 0.64% of the image, each channel off by 40.
+    await expectLater(
+      comparator(enabled: false)
+          .compare(await _png(8, color: const ui.Color(0xFFD7D7D7)), uri),
+      throwsA(isA<FlutterError>()),
+    );
+  });
+
+  test('measureGoldenDiff counts the differing and the strongly differing '
+      'pixels', () async {
+    final faint = await measureGoldenDiff(
+      await _png(3, color: const ui.Color(0xFFD7D7D7)),
+      golden,
+    );
+    expect(faint, (pixels: 10000, differing: 9, strong: 0, maxDelta: 40));
+    expect(isWithinGoldenTolerance(faint!), isTrue);
+    final dark = await measureGoldenDiff(await _png(3), golden);
+    expect(dark, (pixels: 10000, differing: 9, strong: 9, maxDelta: 255));
+    expect(isWithinGoldenTolerance(dark!), isFalse);
   });
 
   test('an image beyond the tolerance fails when the mode is off', () async {

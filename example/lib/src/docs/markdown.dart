@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:math' as math;
+
 /// A block of a Markdown document, as [parseMarkdown] reads it.
 sealed class MdBlock {
   const MdBlock();
@@ -39,16 +41,24 @@ class MdParagraph extends MdBlock {
   final String text;
 }
 
-/// A bulleted or numbered list of inline items.
+/// A bulleted or numbered list of inline items, which can nest.
 class MdList extends MdBlock {
-  /// Creates a list.
-  const MdList(this.items, {this.ordered = false});
+  /// Creates a list; [depths] holds the nesting depth of each item, and
+  /// every item is top-level when it is empty.
+  const MdList(this.items, {this.ordered = false, this.depths = const []});
 
   /// The item texts.
   final List<String> items;
 
   /// Whether the items are numbered.
   final bool ordered;
+
+  /// The nesting depth of each item, 0 for top-level items, or empty
+  /// when every item is top-level.
+  final List<int> depths;
+
+  /// Returns the nesting depth of the item at [index].
+  int depthOf(int index) => index < depths.length ? depths[index] : 0;
 }
 
 /// A fenced code block.
@@ -84,9 +94,15 @@ class MdQuote extends MdBlock {
   final String text;
 }
 
+/// The deepest nesting level of a list item.
+const _maxListDepth = 3;
+
+/// Returns the number of spaces that start [line].
+int _indent(String line) => line.length - line.trimLeft().length;
+
 /// Parses the Markdown subset the showcase documents use: headings,
-/// paragraphs, bulleted and numbered lists, fenced code, pipe tables and
-/// quotes. Inline formatting is left in the texts for the renderer.
+/// paragraphs, bulleted and numbered lists (nested by indenting items two
+/// spaces per level), fenced code, pipe tables and quotes. Inline formatting is left in the texts for the renderer.
 List<MdBlock> parseMarkdown(String source) {
   final lines = source.replaceAll('\r\n', '\n').split('\n');
   final blocks = <MdBlock>[];
@@ -165,10 +181,18 @@ List<MdBlock> parseMarkdown(String source) {
       flushParagraph();
       final pattern = isBullet ? bullet : numbered;
       final items = <String>[];
+      final depths = <int>[];
+      final baseIndent = _indent(line);
       while (i < lines.length) {
         final current = lines[i];
         if (pattern.firstMatch(current) case final match?) {
           items.add(match.group(1)!.trim());
+          // Every two spaces of indentation past the first item nest one
+          // level deeper, at most one level below the previous item.
+          final limit = depths.isEmpty
+              ? 0
+              : math.min(depths.last + 1, _maxListDepth);
+          depths.add(((_indent(current) - baseIndent) ~/ 2).clamp(0, limit));
         } else if (current.startsWith('  ') &&
             current.trim().isNotEmpty &&
             items.isNotEmpty) {
@@ -179,7 +203,7 @@ List<MdBlock> parseMarkdown(String source) {
         }
         i++;
       }
-      blocks.add(MdList(items, ordered: !isBullet));
+      blocks.add(MdList(items, ordered: !isBullet, depths: depths));
       continue;
     }
     paragraph.add(trimmed);

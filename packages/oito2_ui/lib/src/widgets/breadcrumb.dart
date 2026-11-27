@@ -210,6 +210,33 @@ class _Oito2BreadcrumbState<T> extends State<Oito2Breadcrumb<T>> {
   }
 
   @override
+  void didUpdateWidget(Oito2Breadcrumb<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _pruneNodes();
+  }
+
+  /// Releases the focus nodes of segment buttons past the new last
+  /// segment, and of the edit button when the path can't be edited. They
+  /// are disposed after the frame, once the buttons that hold them are
+  /// gone.
+  void _pruneNodes() {
+    final stale = <FocusNode>[];
+    _nodes.removeWhere((slot, node) {
+      final remove =
+          slot >= widget.items.length - 1 ||
+          (slot == _editSlot && widget.onSubmitted == null);
+      if (remove) stale.add(node);
+      return remove;
+    });
+    if (stale.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final node in stale) {
+        node.dispose();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     for (final node in _nodes.values) {
       node.dispose();
@@ -275,24 +302,45 @@ class _Oito2BreadcrumbState<T> extends State<Oito2Breadcrumb<T>> {
     if (next >= 0 && next < _order.length) _order[next].requestFocus();
   }
 
+  /// The measured label widths, by label and current state, for
+  /// [_widthsKey].
+  Map<(String, bool), double> _widths = {};
+
+  /// The styles, text scaler and direction the cached widths were
+  /// measured with.
+  Object? _widthsKey;
+
   /// Returns the width of a segment showing [item], measured with [style]
-  /// and [scaler].
+  /// and [scaler], reusing the label width measured for [widths] when it
+  /// holds one.
   double _segmentWidth(
     Oito2BreadcrumbItem<T> item,
     TextStyle? style,
     TextScaler scaler,
+    bool current,
+    Map<(String, bool), double> widths,
   ) {
+    final width = widths[(item.label, current)] ??= _labelWidth(
+      item.label,
+      style,
+      scaler,
+    );
+    return _padding * 2 +
+        (item.icon == null ? 0 : _iconSize + _iconGap) +
+        width;
+  }
+
+  /// Returns the width of [label] in [style] at [scaler], rounded up.
+  double _labelWidth(String label, TextStyle? style, TextScaler scaler) {
     final painter = TextPainter(
-      text: TextSpan(text: item.label, style: style),
+      text: TextSpan(text: label, style: style),
       textDirection: Directionality.of(context),
       textScaler: scaler,
       maxLines: 1,
     )..layout();
     final width = painter.width;
     painter.dispose();
-    return _padding * 2 +
-        (item.icon == null ? 0 : _iconSize + _iconGap) +
-        width.ceilToDouble();
+    return width.ceilToDouble();
   }
 
   /// Returns the range of segment indexes, start inclusive and end
@@ -307,14 +355,27 @@ class _Oito2BreadcrumbState<T> extends State<Oito2Breadcrumb<T>> {
     final items = widget.items;
     final n = items.length;
     if (n < 2) return null;
+    // Labels are measured once per style, scaler and direction; the cache
+    // keeps only the labels of the current items.
+    final key = (style, currentStyle, scaler, Directionality.of(context));
+    final previous = key == _widthsKey
+        ? _widths
+        : const <(String, bool), double>{};
+    _widthsKey = key;
+    final widths = <(String, bool), double>{
+      for (var i = 0; i < n; i++)
+        (items[i].label, i == n - 1): ?previous[(items[i].label, i == n - 1)],
+    };
+    _widths = widths;
     final (
       :collapsedStart,
       :collapsedEnd,
       lastTruncated: _,
     ) = Oito2Breadcrumb.collapse(
       [
-        for (var i = 0; i < n - 1; i++) _segmentWidth(items[i], style, scaler),
-        _segmentWidth(items[n - 1], currentStyle, scaler),
+        for (var i = 0; i < n - 1; i++)
+          _segmentWidth(items[i], style, scaler, false, widths),
+        _segmentWidth(items[n - 1], currentStyle, scaler, true, widths),
       ],
       maxWidth: maxWidth,
       buttonWidth: _iconButtonWidth,

@@ -15,6 +15,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oito2_ui/oito2_ui.dart';
@@ -29,13 +30,18 @@ void main() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
 
   late List<String> calls;
+  late List<Object?> preventClose;
   late bool maximized;
 
   setUp(() {
     calls = [];
+    preventClose = [];
     maximized = false;
     messenger.setMockMethodCallHandler(_channel, (call) async {
       calls.add(call.method);
+      if (call.method == 'setPreventClose') {
+        preventClose.add((call.arguments as Map)['isPreventClose']);
+      }
       return switch (call.method) {
         'isMaximized' => maximized,
         'isFullScreen' => false,
@@ -246,6 +252,56 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(asked, 1);
     expect(calls.where((call) => call == 'destroy'), hasLength(1));
+  });
+
+  test('a close handler that throws keeps the window open and reports '
+      'the error', () async {
+    final controller = await attach();
+    final reported = <FlutterErrorDetails>[];
+    final previous = FlutterError.onError;
+    FlutterError.onError = reported.add;
+    addTearDown(() => FlutterError.onError = previous);
+    var asked = 0;
+    var fail = true;
+    controller
+      ..addCloseHandler(() async {
+        asked++;
+        return true;
+      })
+      ..addCloseHandler(() async {
+        if (fail) throw StateError('broken handler');
+        return true;
+      });
+    await Future<void>.delayed(Duration.zero);
+    calls.clear();
+
+    await sendEvent('close');
+    await Future<void>.delayed(Duration.zero);
+    expect(reported.single.exception, isA<StateError>());
+    expect(reported.single.library, 'oito2_ui_window');
+    expect(asked, 0);
+    expect(calls, isNot(contains('destroy')));
+
+    // The next close request asks the handlers again.
+    fail = false;
+    await sendEvent('close');
+    await Future<void>.delayed(Duration.zero);
+    expect(asked, 1);
+    expect(calls, contains('destroy'));
+  });
+
+  test('dispose lets the native close through again', () async {
+    final controller = await attach();
+    controller.addCloseHandler(() async => false);
+    await Future<void>.delayed(Duration.zero);
+    expect(preventClose, [true]);
+    controller.dispose();
+    await Future<void>.delayed(Duration.zero);
+    expect(preventClose, [true, false]);
+    calls.clear();
+    await sendEvent('close');
+    await Future<void>.delayed(Duration.zero);
+    expect(calls, isEmpty);
   });
 
   test('dispose stops listening to window events', () async {

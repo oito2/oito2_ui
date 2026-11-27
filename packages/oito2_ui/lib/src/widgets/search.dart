@@ -17,9 +17,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'form.dart';
+import 'text_form_field_state.dart';
 import 'touch_target.dart';
 import 'widget_helpers.dart';
 
@@ -27,7 +27,8 @@ import 'widget_helpers.dart';
 /// while it has text.
 ///
 /// Pressing Escape clears the text; pressing it again on an empty field
-/// calls [onEscape]. The hint and the clear button tooltip come from
+/// calls [onEscape], or lets the key reach the ancestors when [onEscape]
+/// is null. The hint and the clear button tooltip come from
 /// `MaterialLocalizations`, so they follow the app language.
 ///
 /// The error of [validator] or [required] shows under the field after it
@@ -69,6 +70,10 @@ class Oito2SearchField extends StatefulWidget {
   final VoidCallback? onClear;
 
   /// Called when Escape is pressed on an empty field.
+  ///
+  /// When null, Escape on an empty field is not handled by the field and
+  /// reaches the ancestors, so an enclosing dialog, popover or sheet can
+  /// close.
   final VoidCallback? onEscape;
 
   /// Whether the field takes focus when shown.
@@ -81,7 +86,7 @@ class Oito2SearchField extends StatefulWidget {
   final String? Function(String text)? validator;
 
   /// Whether an empty field shows the localized "This field is required"
-  /// error.
+  /// error; a text of only spaces counts as empty.
   final bool required;
 
   /// Whether the field registers with the closest [Oito2Form], taking
@@ -99,29 +104,15 @@ class _Oito2SearchFieldState extends State<Oito2SearchField>
     with
         OwnedFocusNodeMixin,
         OwnedControllerMixin<Oito2SearchField, TextEditingController>,
-        Oito2FormFieldMixin {
-  /// Whether the validation error shows, once the field lost focus.
-  bool _showError = false;
-
-  /// The text while the field has no unsaved changes.
-  late String _cleanText;
-
-  /// The text the form was last told about.
-  late String _notifiedText;
-
-  @override
-  void initState() {
-    super.initState();
-    _cleanText = _notifiedText = _controller.text;
-  }
-
+        Oito2FormFieldMixin,
+        TextFormFieldStateMixin {
   @override
   FocusNode? get widgetFocusNode => widget.focusNode;
 
   @override
   void onEffectiveFocusChange() {
-    if (!effectiveFocusNode.hasFocus && !_showError && mounted) {
-      setState(() => _showError = true);
+    if (!effectiveFocusNode.hasFocus && !showsValidationError && mounted) {
+      setState(() => showsValidationError = true);
     }
   }
 
@@ -136,32 +127,17 @@ class _Oito2SearchFieldState extends State<Oito2SearchField>
   FocusNode get formFieldFocusNode => effectiveFocusNode;
 
   @override
-  String? get formFieldError {
-    final text = _controller.text;
-    if (widget.required && text.trim().isEmpty) {
-      return Oito2Localizations.of(context).fieldRequired;
-    }
-    return widget.validator?.call(text);
-  }
+  bool get fieldRequired => widget.required;
+
+  /// A query of only spaces finds nothing, so it counts as empty.
+  @override
+  bool get requiredTrimsText => true;
 
   @override
-  bool get isFormFieldDirty => _controller.text != _cleanText;
+  String? Function(String text)? get fieldValidator => widget.validator;
 
   @override
-  void showFormFieldError() {
-    if (mounted) setState(() => _showError = true);
-  }
-
-  @override
-  void markFormFieldClean() => _cleanText = _controller.text;
-
-  @override
-  void resetFormField() {
-    setState(() => _showError = false);
-    if (_controller.text == _cleanText) return;
-    _controller.text = _cleanText;
-    widget.onChanged?.call(_cleanText);
-  }
+  ValueChanged<String>? get onTextReset => widget.onChanged;
 
   @override
   TextEditingController? get widgetController => widget.controller;
@@ -178,11 +154,7 @@ class _Oito2SearchFieldState extends State<Oito2SearchField>
   /// changed.
   void _onText() {
     setState(() {});
-    final text = _controller.text;
-    if (text != _notifiedText) {
-      _notifiedText = text;
-      notifyFormFieldChanged();
-    }
+    notifyIfTextChanged();
   }
 
   /// Empties the field and reports the empty text and the clearing.
@@ -193,18 +165,21 @@ class _Oito2SearchFieldState extends State<Oito2SearchField>
   }
 
   /// Handles Escape: clears a field with text, or calls `onEscape` on an
-  /// empty one.
+  /// empty one. On an empty field without `onEscape`, the key is left to
+  /// the ancestors.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
-    if (event is KeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.escape) {
-      if (_controller.text.isNotEmpty) {
-        _clear();
-      } else {
-        widget.onEscape?.call();
-      }
+    if (event is! KeyDownEvent ||
+        event.logicalKey != LogicalKeyboardKey.escape) {
+      return KeyEventResult.ignored;
+    }
+    if (_controller.text.isNotEmpty) {
+      _clear();
       return KeyEventResult.handled;
     }
-    return KeyEventResult.ignored;
+    final onEscape = widget.onEscape;
+    if (onEscape == null) return KeyEventResult.ignored;
+    onEscape();
+    return KeyEventResult.handled;
   }
 
   @override
@@ -225,7 +200,9 @@ class _Oito2SearchFieldState extends State<Oito2SearchField>
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
             hintText: widget.hintText ?? localizations.searchFieldLabel,
-            errorText: _showError || formShowsErrors ? formFieldError : null,
+            errorText: showsValidationError || formShowsErrors
+                ? formFieldError
+                : null,
             prefixIcon:
                 widget.prefixIcon ??
                 const Icon(LucideIcons.search, size: Oito2Sizes.iconSize),
@@ -323,18 +300,27 @@ class _Oito2SearchTitleFieldState extends State<Oito2SearchTitleField> {
     final label =
         widget.toggleLabel ??
         MaterialLocalizations.of(context).searchFieldLabel;
-    final buttonSize =
+    final padded = padsTapTargets(context);
+    final iconButtonSize =
         Theme.of(context).iconButtonTheme.style?.minimumSize
             ?.resolve({})
             ?.height ??
         Oito2Sizes.buttonHeight;
+    // The width the toggle takes: its padded 48-pixel tap target on touch
+    // platforms, its own size elsewhere.
+    final buttonSize = padded && iconButtonSize < Oito2Sizes.minTouchTarget
+        ? Oito2Sizes.minTouchTarget
+        : iconButtonSize;
     return SizedBox(
       width: widget.fieldWidth,
       child: Stack(
         alignment: AlignmentDirectional.centerStart,
         children: [
           AnimatedSwitcher(
-            duration: const Duration(milliseconds: 150),
+            duration: motionDuration(
+              context,
+              const Duration(milliseconds: 150),
+            ),
             layoutBuilder: (current, previous) => Stack(
               alignment: AlignmentDirectional.centerStart,
               children: [...previous, ?current],
@@ -363,7 +349,9 @@ class _Oito2SearchTitleFieldState extends State<Oito2SearchTitleField> {
             tooltip: label,
             isSelected: widget.searchActive,
             style: IconButton.styleFrom(
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              tapTargetSize: padded
+                  ? MaterialTapTargetSize.padded
+                  : MaterialTapTargetSize.shrinkWrap,
             ),
             onPressed: () => widget.searchActive
                 ? _close()

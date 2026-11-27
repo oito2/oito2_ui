@@ -319,13 +319,30 @@ class _Oito2FormState extends State<Oito2Form> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      _Oito2FormScope(notifier: widget.controller, child: widget.child);
+  Widget build(BuildContext context) => _Oito2FormRegistration(
+    controller: widget.controller,
+    child: _Oito2FormScope(notifier: widget.controller, child: widget.child),
+  );
 }
 
 /// Provides the controller of an [Oito2Form] to its fields.
 class _Oito2FormScope extends InheritedNotifier<Oito2FormController> {
   const _Oito2FormScope({required super.notifier, required super.child});
+}
+
+/// Provides the controller of an [Oito2Form] to the fields that register
+/// with it, notifying them only when the controller is replaced.
+class _Oito2FormRegistration extends InheritedWidget {
+  const _Oito2FormRegistration({
+    required this.controller,
+    required super.child,
+  });
+
+  final Oito2FormController controller;
+
+  @override
+  bool updateShouldNotify(_Oito2FormRegistration oldWidget) =>
+      !identical(controller, oldWidget.controller);
 }
 
 /// Lets the state of a field take part in an [Oito2Form].
@@ -338,8 +355,15 @@ class _Oito2FormScope extends InheritedNotifier<Oito2FormController> {
 /// Call [notifyFormFieldChanged] whenever the value or the error changes,
 /// so the form summary and the dirty state follow. Override
 /// [participatesInForm] to let the widget leave the form.
+///
+/// The state rebuilds when [formShowsErrors] changes, not on every change
+/// of the form, so a change in one field doesn't rebuild the others.
 mixin Oito2FormFieldMixin<W extends StatefulWidget> on State<W> {
   Oito2FormController? _form;
+
+  /// The [formShowsErrors] value of the last build, to rebuild only when
+  /// it changes.
+  bool _formShowedErrors = false;
 
   /// The controller of the form the field is registered with, or null
   /// outside a form.
@@ -400,16 +424,35 @@ mixin Oito2FormFieldMixin<W extends StatefulWidget> on State<W> {
 
   /// Registers with the closest form while [participatesInForm], and
   /// leaves the form otherwise.
+  ///
+  /// The lookup depends only on which controller the form holds, so a
+  /// change of the form's state doesn't rebuild the field.
   void _syncForm() {
-    final form = participatesInForm ? Oito2Form.maybeOf(context) : null;
+    final form = participatesInForm
+        ? context
+              .dependOnInheritedWidgetOfExactType<_Oito2FormRegistration>()
+              ?.controller
+        : null;
     if (identical(form, _form)) return;
+    _form?.removeListener(_onFormChanged);
     _form?._unregister(this);
     _form = form;
     form?._register(this);
+    form?.addListener(_onFormChanged);
+    _formShowedErrors = formShowsErrors;
+  }
+
+  /// Rebuilds the field when the form starts or stops showing every
+  /// error.
+  void _onFormChanged() {
+    final shows = formShowsErrors;
+    if (shows == _formShowedErrors || !mounted) return;
+    setState(() => _formShowedErrors = shows);
   }
 
   @override
   void dispose() {
+    _form?.removeListener(_onFormChanged);
     _form?._unregister(this);
     _form = null;
     super.dispose();

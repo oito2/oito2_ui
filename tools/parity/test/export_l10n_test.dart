@@ -82,6 +82,7 @@ final Map<String, Getter> getters = {
   'moveDown': (l) => l.moveDown,
   'moveLeft': (l) => l.moveLeft,
   'moveRight': (l) => l.moveRight,
+  'activateItem': (l) => l.activateItem,
   'itemsPerPage': (l) => l.itemsPerPage,
   'stepCompleted': (l) => l.stepCompleted,
   'stepCurrent': (l) => l.stepCurrent,
@@ -229,6 +230,7 @@ List<Call> calls() => [
   ('tooManyFiles', ['a.png', 1], (l) => l.tooManyFiles('a.png', 1)),
   ('tooManyFiles', ['a.png', 3], (l) => l.tooManyFiles('a.png', 3)),
   ('folderNotAccepted', ['docs'], (l) => l.folderNotAccepted('docs')),
+  ('fileUnreadable', ['a.png'], (l) => l.fileUnreadable('a.png')),
   (
     'scheduleSlot',
     ['Monday', '14:00', '15:00', 'Limited'],

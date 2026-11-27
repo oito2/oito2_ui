@@ -237,11 +237,14 @@ mixin ListReorderMixin<T, W extends StatefulWidget> on State<W> {
   }
 
   /// Moves the item [value] [delta] places, -1 or 1, through [onReorder]
-  /// and announces its new position; does nothing at either end.
+  /// and announces its new position; does nothing at either end or when
+  /// the item is disabled.
   void moveRowBy(String value, int delta) {
     final reorder = onReorder;
     final item = reorderCollection.find(value);
-    if (reorder == null || item == null) return;
+    if (reorder == null || item == null || reorderCollection.isDisabled(item)) {
+      return;
+    }
     final from = reorderCollection.indexOf(value);
     final to = from + delta;
     if (to < 0 || to >= reorderCollection.length) return;
@@ -260,9 +263,12 @@ mixin ListReorderMixin<T, W extends StatefulWidget> on State<W> {
   }
 
   /// The "Move up" and "Move down" accessibility actions of the row of
-  /// [value], for the ways it can go, or null when it can't be reordered.
+  /// [value], for the ways it can go, or null when it can't be reordered
+  /// or is disabled.
   Map<CustomSemanticsAction, VoidCallback>? reorderActions(String value) {
     if (!canReorder) return null;
+    final item = reorderCollection.find(value);
+    if (item == null || reorderCollection.isDisabled(item)) return null;
     final index = reorderCollection.indexOf(value);
     if (index < 0) return null;
     final strings = Oito2Localizations.of(context);

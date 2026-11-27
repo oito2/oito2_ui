@@ -50,6 +50,52 @@ Future<void> _pump(
 
 void main() {
   group('Oito2HeaderBar', () {
+    testWidgets('on touch, two start buttons fit the leading slot', (
+      tester,
+    ) async {
+      const android = Oito2Platform(
+        targetPlatform: TargetPlatform.android,
+        isWeb: false,
+      );
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        Oito2SystemScope(
+          settings: Oito2SystemSettings.fallback(android),
+          child: MaterialApp(
+            theme: Oito2Theme.light(platform: android),
+            home: Scaffold(
+              appBar: Oito2HeaderBar(
+                title: const Text('Files'),
+                start: [
+                  Oito2IconButton(
+                    tooltip: 'Back',
+                    icon: const Icon(LucideIcons.arrow_left),
+                    onPressed: () {},
+                  ),
+                  Oito2IconButton(
+                    tooltip: 'Sidebar',
+                    icon: const Icon(LucideIcons.panel_left),
+                    onPressed: () {},
+                  ),
+                ],
+                platform: android,
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.byType(AppBar), findsOneWidget);
+      final buttons = find.byType(Oito2IconButton);
+      final back = tester.getRect(buttons.first);
+      final sidebar = tester.getRect(buttons.last);
+      final title = tester.getRect(find.text('Files'));
+      expect(sidebar.left, greaterThanOrEqualTo(back.right));
+      expect(sidebar.right, lessThanOrEqualTo(title.left));
+    });
+
     testWidgets('lays out start, title, end and the main menu', (tester) async {
       var opened = 0;
       await _pump(

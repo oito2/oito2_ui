@@ -322,9 +322,8 @@ class _Oito2VerticalTabBarState extends State<Oito2VerticalTabBar> {
     final subtle = widget.style == Oito2TabBarStyle.subtle;
     final accent = semanticColorsOf(context).primaryText;
     final touch = theme.materialTapTargetSize == MaterialTapTargetSize.padded;
-    final height = touch
-        ? Oito2Sizes.touchButtonHeight
-        : Oito2Sizes.buttonHeight;
+    // On touch platforms each tab reaches the 48-pixel minimum tap target.
+    final height = touch ? Oito2Sizes.minTouchTarget : Oito2Sizes.buttonHeight;
     const gap = Oito2Spacing.xxs;
     final animation = controller.animation!;
     return Semantics(

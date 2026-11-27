@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
@@ -200,10 +202,22 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
 
   /// Grows the panel by [dx] and [dy]; does nothing while maximized or
   /// when not resizable.
+  ///
+  /// The left edge stays in place: the width stops at the right edge of
+  /// the bounds, unless [Oito2FloatingPanel.minSize] needs more.
   void _resize(double dx, double dy) {
     if (_maximized || !widget.resizable) return;
+    final maxWidth = (_bounds.width - _rect.left).clamp(
+      widget.minSize.width,
+      double.infinity,
+    );
     _setRect(
-      Rect.fromLTWH(_rect.left, _rect.top, _rect.width + dx, _rect.height + dy),
+      Rect.fromLTWH(
+        _rect.left,
+        _rect.top,
+        (_rect.width + dx).clamp(0.0, maxWidth),
+        _rect.height + dy,
+      ),
     );
   }
 
@@ -328,7 +342,16 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
               ],
             ),
           );
-          const grip = 6.0;
+          // The resize grips lie inside the panel edges, 6 pixels thick,
+          // on pointer platforms. When the theme pads tap targets, as on
+          // touch platforms, each one reaches the 48-pixel minimum tap
+          // target centered on its edge, half outside the panel. Grips
+          // only take drags, so taps under them still reach the widgets
+          // beneath.
+          final grip = touch ? Oito2Sizes.minTouchTarget : 6.0;
+          final inset = touch ? grip / 2 : grip;
+          final corner = touch ? grip : grip * 2;
+          final cornerInset = touch ? grip / 2 : grip * 2;
           final canResize = widget.resizable && !_maximized && !_minimized;
           return Stack(
             children: [
@@ -338,45 +361,41 @@ class _Oito2FloatingPanelState extends State<Oito2FloatingPanel> {
                   container: true,
                   explicitChildNodes: true,
                   label: widget.title,
-                  child: Stack(
-                    children: [
-                      Positioned.fill(child: panel),
-                      if (canResize) ...[
-                        Positioned(
-                          top: _barHeight,
-                          right: 0,
-                          bottom: grip,
-                          width: grip,
-                          child: _edge(
-                            cursor: SystemMouseCursors.resizeLeftRight,
-                            onDrag: (d) => _resize(d.delta.dx, 0),
-                          ),
-                        ),
-                        Positioned(
-                          left: 0,
-                          right: grip,
-                          bottom: 0,
-                          height: grip,
-                          child: _edge(
-                            cursor: SystemMouseCursors.resizeUpDown,
-                            onDrag: (d) => _resize(0, d.delta.dy),
-                          ),
-                        ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          width: grip * 2,
-                          height: grip * 2,
-                          child: _edge(
-                            cursor: SystemMouseCursors.resizeDownRight,
-                            onDrag: (d) => _resize(d.delta.dx, d.delta.dy),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                  child: Stack(children: [Positioned.fill(child: panel)]),
                 ),
               ),
+              if (canResize) ...[
+                Positioned(
+                  left: rect.right - inset,
+                  top: rect.top + _barHeight,
+                  width: grip,
+                  height: math.max(0, rect.height - _barHeight - inset),
+                  child: _edge(
+                    cursor: SystemMouseCursors.resizeLeftRight,
+                    onDrag: (d) => _resize(d.delta.dx, 0),
+                  ),
+                ),
+                Positioned(
+                  left: rect.left,
+                  top: rect.bottom - inset,
+                  width: math.max(0, rect.width - inset),
+                  height: grip,
+                  child: _edge(
+                    cursor: SystemMouseCursors.resizeUpDown,
+                    onDrag: (d) => _resize(0, d.delta.dy),
+                  ),
+                ),
+                Positioned(
+                  left: rect.right - cornerInset,
+                  top: rect.bottom - cornerInset,
+                  width: corner,
+                  height: corner,
+                  child: _edge(
+                    cursor: SystemMouseCursors.resizeDownRight,
+                    onDrag: (d) => _resize(d.delta.dx, d.delta.dy),
+                  ),
+                ),
+              ],
             ],
           );
         },

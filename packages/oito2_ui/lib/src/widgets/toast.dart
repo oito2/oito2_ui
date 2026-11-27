@@ -25,6 +25,7 @@ import '../tokens/colors.dart';
 import '../tokens/geometry.dart';
 import 'info.dart';
 import 'progress.dart';
+import 'widget_helpers.dart';
 
 /// Where an [Oito2Toaster] stacks its toasts.
 enum Oito2ToasterPlacement {
@@ -583,7 +584,9 @@ class _ToastViewState extends State<_ToastView>
                     tooltip: Oito2Localizations.of(context).dismiss,
                     color: foreground,
                     style: IconButton.styleFrom(
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      tapTargetSize: padsTapTargets(context)
+                          ? MaterialTapTargetSize.padded
+                          : MaterialTapTargetSize.shrinkWrap,
                     ),
                     onPressed: widget.onDismiss,
                     icon: const Icon(LucideIcons.x, size: 16),

@@ -98,15 +98,20 @@ class Oito2Alert extends StatelessWidget {
       data: IconThemeData(color: foreground, size: Oito2Sizes.iconSize),
       child: icon ?? Icon(type.icon, semanticLabel: type.labelIn(strings)),
     );
+    // On touch platforms the button keeps the theme's padded 48-pixel tap
+    // target; elsewhere it is compact and shrink-wrapped.
+    final padded = padsTapTargets(context);
     final dismiss = onDismiss == null
         ? null
         : IconButton(
             tooltip: strings.dismiss,
             color: theme.colorScheme.onSurfaceVariant,
-            visualDensity: VisualDensity.compact,
-            style: IconButton.styleFrom(
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
+            visualDensity: padded ? null : VisualDensity.compact,
+            style: padded
+                ? null
+                : IconButton.styleFrom(
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
             onPressed: onDismiss,
             icon: const Icon(LucideIcons.x, size: 16),
           );

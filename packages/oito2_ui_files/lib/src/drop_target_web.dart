@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:typed_data';
 
@@ -21,6 +22,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:web/web.dart' as web;
 
 import 'directories.dart';
+import 'drop_hit_test.dart';
 
 /// Files dragged from the desktop can be dropped on the page.
 const bool canDropFiles = true;
@@ -88,13 +90,12 @@ class _WebDropTargetState extends State<_WebDropTarget> {
     widget.onHover(hovering);
   }
 
-  /// Whether the drag carries files and points inside this widget.
+  /// Whether the drag carries files and points at this widget, with
+  /// nothing drawn over it there.
   bool _accepts(web.DragEvent event) {
     if (!widget.enabled || !mounted) return false;
     final types = event.dataTransfer?.types.toDart ?? const <JSString>[];
     if (!types.any((type) => type.toDart == 'Files')) return false;
-    final box = context.findRenderObject() as RenderBox?;
-    if (box == null || !box.attached || !box.hasSize) return false;
     // Logical pixels of the Flutter view are CSS pixels; the view may not
     // start at the page origin.
     final view = web.document.querySelector('flutter-view');
@@ -103,7 +104,7 @@ class _WebDropTargetState extends State<_WebDropTarget> {
       event.clientX - (origin?.left ?? 0),
       event.clientY - (origin?.top ?? 0),
     );
-    return (box.localToGlobal(Offset.zero) & box.size).contains(point);
+    return dropReaches(context, point);
   }
 
   /// Accepts a file drag over this widget as a copy and updates the hover
@@ -147,40 +148,68 @@ class _WebDropTargetState extends State<_WebDropTarget> {
     _read(items);
   }
 
-  /// Reads the dropped files into memory, so they don't depend on blob
-  /// URLs, and hands them over in order with the dropped directories,
-  /// which are marked as such; files the browser can't read are skipped.
-  Future<void> _read(List<_DroppedItem> items) async {
-    final read = <XFile>[];
-    for (final (:name, :file) in items) {
-      if (file == null) {
-        read.add(
-          oito2MarkAsDirectory(XFile.fromData(Uint8List(0), name: name)),
-        );
-        continue;
-      }
-      final JSArrayBuffer buffer;
-      try {
-        buffer = await file.arrayBuffer().toDart;
-      } catch (_) {
-        continue;
-      }
-      read.add(
-        XFile.fromData(
-          buffer.toDart.asUint8List(),
-          name: file.name,
-          mimeType: file.type.isEmpty ? null : file.type,
-          length: file.size,
-          lastModified: DateTime.fromMillisecondsSinceEpoch(file.lastModified),
-        ),
-      );
-    }
+  /// Hands the dropped files over in order with the dropped directories,
+  /// which are marked as such.
+  ///
+  /// The files carry their name, type, size and date from the browser's
+  /// metadata and are read into memory only when their bytes are asked
+  /// for, so the files a receiver refuses by type, size or count are never
+  /// loaded.
+  void _read(List<_DroppedItem> items) {
+    final read = <XFile>[
+      for (final (:name, :file) in items)
+        file == null
+            ? oito2MarkAsDirectory(XFile.fromData(Uint8List(0), name: name))
+            : _DroppedFile(file),
+    ];
     if (mounted && read.isNotEmpty) widget.onDrop(read);
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) => dropHitRegion(widget.child);
 }
 
 /// A dropped item: a file, or a directory when [file] is null.
 typedef _DroppedItem = ({String name, web.File? file});
+
+/// A dropped file that reads its bytes from the browser's [web.File] into
+/// memory each time they are asked for, instead of when it is dropped.
+///
+/// Its name, MIME type, length and date come from the file's metadata. Its
+/// [path] is empty: no object URL is created for it. Reading throws when
+/// the browser can no longer read the file, such as when it was removed
+/// from the disk after the drop.
+class _DroppedFile extends XFile {
+  _DroppedFile(this._file)
+    : super(
+        '',
+        name: _file.name,
+        mimeType: _file.type.isEmpty ? null : _file.type,
+        length: _file.size,
+        lastModified: DateTime.fromMillisecondsSinceEpoch(_file.lastModified),
+      );
+
+  final web.File _file;
+
+  @override
+  Future<Uint8List> readAsBytes() async =>
+      (await _file.arrayBuffer().toDart).toDart.asUint8List();
+
+  @override
+  Future<String> readAsString({Encoding encoding = utf8}) async =>
+      encoding.decode(await readAsBytes());
+
+  @override
+  Stream<Uint8List> openRead([int? start, int? end]) async* {
+    final slice = _file.slice(start ?? 0, end ?? _file.size);
+    yield (await slice.arrayBuffer().toDart).toDart.asUint8List();
+  }
+
+  /// Reads the bytes and saves them as an in-memory file would.
+  @override
+  Future<void> saveTo(String path) async => XFile.fromData(
+    await readAsBytes(),
+    name: name,
+    mimeType: mimeType,
+  ).saveTo(path);
+}

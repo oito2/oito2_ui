@@ -33,7 +33,7 @@ typedef RuleSet = ({
   List<Query> paths,
 });
 
-const ruleSets = <RuleSet>[
+final ruleSets = <RuleSet>[
   (
     name: 'git documentation: hello.* and doc/frotz/',
     text: 'hello.*\ndoc/frotz/\nfrotz/\n',
@@ -268,7 +268,7 @@ const ruleSets = <RuleSet>[
   ),
   (
     name: 'carriage returns and a byte order mark',
-    text: '﻿*.tmp\r\n!keep.tmp\r\nbin/\r\n',
+    text: '\u{FEFF}*.tmp\r\n!keep.tmp\r\nbin/\r\n',
     ignoreCase: false,
     paths: [
       ('a.tmp', false),
@@ -292,7 +292,30 @@ const ruleSets = <RuleSet>[
       ('dx', false),
     ],
   ),
+  (
+    name: 'pathological patterns take linear time',
+    text:
+        '*a*a*a*a*a*b\n'
+        '**/a/**/a/**/a/**/a/**/b\n'
+        '*x*x*x*x*x*x*x*x*x*x*y/\n',
+    ignoreCase: false,
+    paths: [
+      (longName, false),
+      ('${longName}b', false),
+      (deepPath, false),
+      ('$deepPath/b', false),
+      ('${'x' * 120}y', true),
+      ('${'x' * 120}y', false),
+      ('${'x' * 120}z', true),
+    ],
+  ),
 ];
+
+/// A name of 200 "a" characters.
+final longName = 'a' * 200;
+
+/// A path of 200 directories named "a".
+final deepPath = List.filled(200, 'a').join('/');
 
 /// Lines whose trailing spaces [Oito2GitignoreRule.trimTrailingSpaces]
 /// drops.

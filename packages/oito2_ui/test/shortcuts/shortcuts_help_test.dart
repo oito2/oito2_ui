@@ -495,6 +495,48 @@ void main() {
       expect(find.byType(Oito2ShortcutLabel), findsNWidgets(6));
     });
 
+    testWidgets('F1 with the help open from above the Navigator opens no '
+        'second help', (tester) async {
+      var runs = 0;
+      late BuildContext navigatorContext;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: Oito2Theme.light(),
+          builder: (context, child) => Oito2Commands(
+            commands: [
+              Oito2Command.shortcutsHelp(
+                label: 'Keyboard shortcuts',
+                onInvoke: () {
+                  runs++;
+                  showOito2ShortcutsHelp(navigatorContext);
+                },
+              ),
+            ],
+            child: child!,
+          ),
+          home: Builder(
+            builder: (context) {
+              navigatorContext = context;
+              return const Focus(autofocus: true, child: SizedBox());
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+      await tester.pumpAndSettle();
+      expect(runs, 2);
+      expect(find.byType(Oito2ShortcutsHelpView), findsOneWidget);
+      await tester.tap(find.byType(Oito2CloseButton));
+      await tester.pumpAndSettle();
+      expect(find.byType(Oito2ShortcutsHelpView), findsNothing);
+      await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+      await tester.pumpAndSettle();
+      expect(find.byType(Oito2ShortcutsHelpView), findsOneWidget);
+    });
+
     test('lists both shortcuts and labels them per platform', () {
       final command = Oito2Command.shortcutsHelp(
         label: 'Keyboard shortcuts',

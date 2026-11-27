@@ -22,6 +22,7 @@ import 'package:material_ui/material_ui.dart';
 import '../l10n/oito2_localizations.dart';
 import 'icon_buttons.dart';
 import 'swap.dart';
+import 'touch_target.dart';
 import 'widget_helpers.dart';
 
 /// An icon button that copies [text] to the clipboard.
@@ -178,16 +179,22 @@ class _Oito2CopyFieldState extends State<Oito2CopyField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: _controller,
-      readOnly: true,
-      obscureText: widget.obscure,
-      decoration: InputDecoration(
-        labelText: widget.labelText,
-        suffixIcon: Oito2CopyButton(
-          text: widget.value,
-          onCopied: widget.onCopied,
-          onError: widget.onError,
+    // On touch platforms the field and its copy button reach 48-pixel tap
+    // targets without growing the field.
+    return Oito2TouchTarget(
+      child: TextField(
+        controller: _controller,
+        readOnly: true,
+        obscureText: widget.obscure,
+        decoration: InputDecoration(
+          labelText: widget.labelText,
+          suffixIcon: FieldButtonSlot(
+            child: Oito2CopyButton(
+              text: widget.value,
+              onCopied: widget.onCopied,
+              onError: widget.onError,
+            ),
+          ),
         ),
       ),
     );

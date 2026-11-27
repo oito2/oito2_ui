@@ -119,6 +119,9 @@ class Oito2PasswordStrength {
   /// stronger estimator, such as a port of zxcvbn, that returns this
   /// value.
   ///
+  /// Each character counts once, also one outside the Basic Multilingual
+  /// Plane, such as an emoji.
+  ///
   /// Returns level 0 without hints for an empty password.
   static Oito2PasswordStrength estimate(
     String password, {
@@ -131,7 +134,10 @@ class Oito2PasswordStrength {
     final hints = <Oito2PasswordHint>{};
 
     final core = _coreKind(readings);
-    final plain = lower.join();
+    // One UTF-16 code unit for each character, so the offsets of the
+    // regular expressions and of `plain` match the indexes of `chars`.
+    final plain = [for (final c in lower) c.length == 1 ? c : '\u{FFFD}']
+        .join();
     final alphabet = _alphabetSize(chars);
     final perChar = math.log(alphabet) / math.ln2;
     final matches = <_Match>[
@@ -706,13 +712,12 @@ List<_Match> _repeats(List<String> lower, double perChar) {
     }
     i = end;
   }
-  final text = lower.join();
   for (var size = 2; size <= lower.length ~/ 2; size++) {
     for (var start = 0; start + size * 2 <= lower.length; start++) {
-      final unit = text.substring(start, start + size);
+      final unit = lower.sublist(start, start + size);
       var end = start + size;
       while (end + size <= lower.length &&
-          text.substring(end, end + size) == unit) {
+          listEquals(lower.sublist(end, end + size), unit)) {
         end += size;
       }
       if (end - start >= size * 2) {

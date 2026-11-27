@@ -103,6 +103,11 @@ class Oito2NavigationRailItem extends StatelessWidget {
     );
     final pillColor = selected ? scheme.secondaryContainer : null;
     const pillRadius = Oito2Radius.largeAll;
+    // The height of the compact and extended pills: the 48-pixel minimum
+    // tap target on touch platforms, 40 pixels elsewhere.
+    final rowHeight = padsTapTargets(context)
+        ? Oito2Sizes.minTouchTarget
+        : 40.0;
 
     Widget pill(Widget child, {double? width, double height = 32}) =>
         Oito2FocusBorder(
@@ -123,28 +128,31 @@ class Oito2NavigationRailItem extends StatelessWidget {
     final Widget content = switch (style) {
       Oito2NavigationRailStyle.compact => Tooltip(
         message: item.tooltip ?? item.label,
-        child: pill(Center(child: icon), width: 48, height: 40),
+        child: pill(Center(child: icon), width: 48, height: rowHeight),
       ),
-      Oito2NavigationRailStyle.labelled => GestureDetector(
-        // The label under the pill activates the item too.
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: Oito2Spacing.xxs,
-          children: [
-            pill(Center(child: icon), width: 56),
-            Text(
-              item.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: selected ? scheme.onSurface : scheme.onSurfaceVariant,
-                fontWeight: selected ? FontWeight.w600 : null,
+      Oito2NavigationRailStyle.labelled => MouseRegion(
+        cursor: onTap == null ? MouseCursor.defer : SystemMouseCursors.click,
+        child: GestureDetector(
+          // The label under the pill activates the item too.
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: Oito2Spacing.xxs,
+            children: [
+              pill(Center(child: icon), width: 56),
+              Text(
+                item.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: selected ? scheme.onSurface : scheme.onSurfaceVariant,
+                  fontWeight: selected ? FontWeight.w600 : null,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       Oito2NavigationRailStyle.labelledExtended => pill(
@@ -168,7 +176,7 @@ class Oito2NavigationRailItem extends StatelessWidget {
             ],
           ),
         ),
-        height: 40,
+        height: rowHeight,
       ),
     };
 

@@ -152,6 +152,9 @@ class Oito2NativeWindowController
   /// Asks the close handlers, the last added first, and destroys the
   /// window when every one of them allows it.
   ///
+  /// A handler that throws keeps the window open: its error goes to
+  /// [FlutterError.reportError] and the remaining handlers aren't asked.
+  ///
   /// Does nothing while the native close isn't held back, since the window
   /// then closes on its own, or while the handlers are already being
   /// asked.
@@ -160,7 +163,21 @@ class Oito2NativeWindowController
     _askingToClose = true;
     try {
       for (final handler in _closeHandlers.reversed.toList()) {
-        if (!await handler()) return;
+        final bool allowed;
+        try {
+          allowed = await handler();
+        } on Object catch (error, stack) {
+          FlutterError.reportError(
+            FlutterErrorDetails(
+              exception: error,
+              stack: stack,
+              library: 'oito2_ui_window',
+              context: ErrorDescription('while asking a window close handler'),
+            ),
+          );
+          return;
+        }
+        if (!allowed) return;
       }
       if (_disposed) return;
       _closeHandlers.clear();
@@ -179,10 +196,20 @@ class Oito2NativeWindowController
     if (_state.value.canShowMenu) await _manager.popUpWindowMenu();
   }
 
-  /// Stops listening to window events and releases [state].
+  /// Stops listening to window events, lets the native close through
+  /// again when close handlers held it back, forgets the close handlers
+  /// and releases [state].
+  ///
+  /// Calling it again does nothing.
   void dispose() {
+    if (_disposed) return;
     _disposed = true;
     _manager.removeListener(this);
+    if (_preventingClose) {
+      _preventingClose = false;
+      unawaited(_setPreventClose(false));
+    }
+    _closeHandlers.clear();
     _state.dispose();
   }
 

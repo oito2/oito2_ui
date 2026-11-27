@@ -8,6 +8,14 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `Oito2Localizations.activateItem` ("Open" / "Abrir"): the accessibility action that opens an item of a list or tree.
+- `Oito2VirtualList` and `Oito2TreeView` rows offer an "Open" accessibility action that calls `onActivate`, so a screen reader on a touch device can open an item without a keyboard or a double tap.
+- `Oito2TreeView` branch rows offer the expand and collapse accessibility actions, so a screen reader on a touch device can open and close branches.
+- `Oito2Localizations.fileUnreadable`: why a file upload refused a file whose size couldn't be read, in English and Brazilian Portuguese.
+- `Oito2TreeController.reloadChildren`: makes `Oito2TreeView` call `onLoadChildren` for a branch again, to refresh a branch it already loaded.
+- `Oito2WindowTitleBar.leadingWidth`: the width of the leading slot on touch platforms, where the bar is an `AppBar`; `Oito2HeaderBar` sets it for two or more `start` widgets.
+- `Oito2Draggable.boundedByStack` (true by default): moves stop at the edges of the `Stack`; false lets the widget leave it.
+- `Oito2NavigationPage.titleBarWidgetsOf`: the `leading` and `trailing` widgets a navigation page hands to its page's title bar while it shows the bottom bar.
 - Initial package skeleton.
 - Bundled Inter variable font (regular and italic, SIL Open Font License).
 - `Oito2Platform`: web, native desktop, native touch and web-on-touch detection with platform-driven `VisualDensity`.
@@ -206,6 +214,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Touch targets reach 48 pixels on touch platforms, with the pointer look unchanged: the dismiss button of `Oito2Alert`, the close button of toasts, the copy button of `Oito2PropertyList`, the toggle of `Oito2SearchTitleField`, the `Oito2AccountSwitcher` button, `Oito2CopyField` and its button (the field keeps the height of the other fields), the compact and extended `Oito2NavigationRail` items, the `Oito2Expandable` and `Oito2ExpansionPanel` headers, the autocomplete suggestions, the `Oito2VerticalTabBar` tabs, the snap handle of bottom sheets, the vertical `Oito2Steps` headers, the row drag handles, the `Oito2TreeView` branch chevron and `Oito2ShortcutRecorder`.
+- The resize handles of `Oito2PanedView` and `Oito2Splitter` and the resize grips of `Oito2FloatingPanel` take drags across 48 pixels on touch platforms, centered on the divider or the panel edge, while the line stays thin; taps there still reach the widgets beneath, and a double tap toggles only on the central band.
+- `Oito2Marquee` pauses and resumes on a tap or a click, and takes the keyboard focus while it scrolls, where Enter or Space pause and resume it; with `pauseOnHover` the focus alone stops it.
+- The `Oito2AngleSlider` dial, the label of a labelled `Oito2NavigationRail` item, the bottom sheet snap handle and `Oito2ShortcutRecorder` show the click cursor.
+- `Oito2SearchTitleField` switches between the title and the search field at once when animations are disabled.
+- `Oito2Select` group titles are announced as headings.
+- `Oito2NavigationPage` asserts in debug mode that `items` isn't empty and that the length of a given `controller` matches the number of `items`, with a message that names the problem.
 - Requires `flutter_lucide` 1.78 and `material_ui` 1.11.1. The re-exported `LucideIcons` follows the upstream renames: `bold` → `letter_b`, `heading` → `letter_h`, `circle_alert`, `triangle_alert`, `clock_alert` and `cloud_alert` → `*_exclamation_point`, `battery_warning` → `battery_exclamation_point`, `circle_arrow_out_*` and `square_arrow_out_*` → `*_arrow_*_exit` (such as `square_arrow_up_right_exit`), `fold_horizontal` → `arrows_to_axis_dashed_vertical`, `fold_vertical` → `arrows_to_axis_dashed_horizontal`, `unfold_horizontal` → `arrows_from_axis_dashed_vertical`, `unfold_vertical` → `arrows_from_axis_dashed_horizontal`, `square_centerline_dashed_horizontal` → `square_axis_dashed_vertical`, `square_centerline_dashed_vertical` → `square_axis_dashed_horizontal` and `triangles_centerline_dashed_*` → `carets_to_axis_dashed_*`.
 - Clickable controls show the click (hand) cursor on every platform, not only on the web: the `Oito2Theme` buttons, icon buttons, segmented buttons, floating action buttons, menu items, popup menus, check boxes, radio buttons and switches, plus the library's own clickable widgets (tiles, list rows, tree rows and disclosure arrows, tabs, steps, table of contents entries, expandable headers, choice chips and the color picker's area and sliders). Disabled controls keep the arrow. `Oito2TagsField` shows the text cursor over its input area.
 - `Oito2ContextMenuRegion` opened from the keyboard focuses the first menu item.
@@ -240,7 +255,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Menu items, including the `Oito2Select` and `Oito2PopupMenuButton` lists, show hover, keyboard focus and the selected item with the highlighted background only, without the focus ring border.
 - `Oito2ExpansionPanel.onExpansionChanged` also reports the sections `collapseOnExpand` closes, before the one that opened; the length check of `headers` and `children` runs on every build.
 - `Oito2FloatingPanel` shows no close button without `onClose`.
-- macOS-style window controls are 24-pixel targets; the circles keep their size.
+- macOS-style window controls keep the native 20-pixel pitch of the traffic lights (`Oito2WindowControl.macosWidth`) where tap targets aren't padded, and 48-pixel targets on touch; the circles keep their size.
 - `Oito2ColorDisk` keeps its ring in its own hue but adjusts it to stand out from the surface, and reports when it is disabled.
 - `Oito2SegmentedEntry` advances on the first visible character of a spaced delimiter, such as `-` for `' - '`.
 - `Oito2NumberEntry` asserts that `decimals` is at most 20.
@@ -251,9 +266,30 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2SearchField` owns a focus node when none is given.
 - `Oito2Commands` runs shortcuts that start with a function key (F1 to F24) while a text field has focus, since function keys don't type text.
 - `Oito2TabBar.tabHeight` defaults to `Oito2Sizes.minTouchTarget` (48), the height of a touch tab with its indicator space, so `preferredSize` fits the bar on every platform.
+- `Oito2ListCollection` keeps the items of each group together: with `groupOf`, `items`, `values` and the indexes follow the order the groups are shown in (groups in the order they first appear, items in their original order within a group). Keyboard navigation, typeahead and Shift ranges of `Oito2ListBox` and the other collection widgets now follow the rows as shown; with interleaved groups, the order of `items` and the indexes `onReorder` reports change.
+- `Oito2SearchField` without `onEscape` leaves Escape on an empty field to its ancestors, so a dialog, `Oito2Popover` or `Oito2Sheet` around it closes; with text, Escape still clears it.
+- `Oito2Commands`: the innermost scope around the focus matches the shortcuts of every enclosing scope at once, so an inner sequence such as `G H` no longer swallows an outer `G` or `G J`.
+- `showOito2ShortcutsHelp` opens nothing while a help it opened is still showing on the same root navigator, so F1 pressed again with `Oito2Commands` above the `Navigator` doesn't stack a second help.
+- `Oito2Draggable` stays inside its `Stack` by default (see `boundedByStack`).
+- `Oito2NavigationPage` with the bottom bar hands `leading` and `trailing` to the page's title bar: an `Oito2WindowTitleBar` (or `Oito2HeaderBar`) in the page shows `leading` when it has no leading widget of its own, and `trailing` after its actions, instead of dropping them.
+- `Oito2Carousel` changes pages with the arrow keys only while the carousel itself has the focus; arrows pressed in a focused button or page content are left to them.
+- `Oito2HighlightedText` highlights the whole character when a match covers part of a character that folds into several, such as "stras" in "Straße".
+- `Oito2TreeView` drags leave out the disabled nodes of a selection made through the controller and no longer hold back their enabled descendants.
+- `Oito2Sparkline`, `Oito2Splitter` and `Oito2PanedView` assert in debug mode, with a message that names the problem, when `min` or `max` of the sparkline isn't finite, or when the splitter or paned view gets an unbounded extent along its axis.
+- pt-BR: the busy presence status (`statusBusy`) reads "Indisponível", a neutral form, instead of "Ocupado".
+- `Oito2TocEntry` compares by value (`title`, `target` and `depth`), so `Oito2TableOfContents` rebuilt with equal entries no longer measures its headings again.
+- `Oito2FormFieldMixin`: a field rebuilds when the form starts or stops showing every error (`formShowsErrors`), no longer on every change of the form, so typing in one field doesn't rebuild the others. `Oito2Form.maybeOf` still rebuilds its caller on every change.
+- Performance: a checkable `Oito2TreeView` without `checkState` computes its check states only when the collection or the checked nodes change, instead of on every build; `Oito2Breadcrumb` measures each label once per style and text scale and releases the focus nodes of segments that are gone; `Oito2WeekScheduleGrid` builds its day names, times and label widths once per locale, slot count, style and text scale instead of on every build and drag; `Oito2NumberEntry` builds its number format and input filter only when the locale or `decimals` change; `Oito2ChoiceChipBar` no longer schedules a post-frame callback on every build.
 
 ### Fixed
 
+- `Oito2PasswordField`, `Oito2PinEntry` and `Oito2SearchField`: when a new `controller` replaces the previous one, its text becomes the clean value, so the field no longer reports unsaved changes to its `Oito2Form`, and `reset` no longer puts the previous controller's text in the new one. With `required`, a search text of only spaces counts as empty, while a password of only spaces doesn't, as before.
+- `Oito2Autocomplete`: moving the highlight with the arrow keys scrolls the highlighted suggestion into view, instead of scrolling the suggestion list to its middle.
+- `Oito2Tour`: a `waitForTap` step shows its next button while an assistive technology asks for accessible navigation, because the tour hides the target from it.
+- `Oito2ListBox` and `Oito2VirtualList` no longer offer the "Move up" and "Move down" accessibility actions on disabled items, and don't move a disabled item from the keyboard, as they already refused to drag it.
+- `Oito2PasswordStrength.estimate` counts a character outside the Basic Multilingual Plane, such as an emoji, as one character: a password such as `😀qwe` no longer throws a `RangeError`, which turned `Oito2PasswordField` with `showStrength` into an error widget, and dates, keyboard runs and repeats after an emoji are found at the right place.
+- `Oito2WeekScheduleGrid`: when `slotsPerDay` changes, the active cell moves inside the new day and the selection and drag are dropped, so Enter or Space no longer paints a cell of the next day or throws a `RangeError` on the last day.
+- `Oito2NavigationPage` with a single destination shows it in a rail also on narrow touch layouts, instead of failing because a bottom `NavigationBar` needs two destinations.
 - `Oito2DataTable` and `Oito2TreeView` columns: a touch drag of a resize handle in a table or tree grid that scrolls sideways resizes by the whole movement, instead of losing the first touch-slop pixels while the sideways scroll competed for the drag.
 - `Oito2TreeView`: the focus border of the active row is drawn over the row, so in a tree grid it no longer takes room from the cells and overflows the row.
 - Selected list tiles (and `Oito2MasterTile`) keep their text and icon at the text contrast target over the primary-tinted fill on every surface; the light sidebar fell to 3.9:1.
@@ -344,3 +380,20 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2DataTable` and `Oito2VirtualList` rows, fixed or of variable height, are 48 pixels tall where the theme pads tap targets (touch platforms); an explicit `rowHeight` or `itemExtent` is still kept, and pointer platforms are unchanged.
 - `Oito2ColorPicker`: the hue and opacity sliders and the hex, RGB and HSL fields get a 48-pixel touch target where the theme pads tap targets, keeping their drawn size.
 - `Oito2WindowControl` buttons take a 48-pixel box where the theme pads tap targets, and an `Oito2TitleBar` with window buttons then grows to fit them, unless its `height` is set; `Oito2TitleBar.preferredSizeOf` returns that touch height (and takes an optional `border`), while the context-free `preferredSize` stays 46; the `Oito2FloatingPanel` title bar follows. Pointer title bars are unchanged.
+
+- `Oito2TreeView`: nodes dropped, or moved with Alt and the arrows, into a branch whose children `onLoadChildren` hasn't loaded yet wait for the load and go after the loaded children, instead of keeping the branch from ever loading.
+- `Oito2PasswordField` rates the password again when `strengthUserInputs` or `strengthEstimator` change.
+- `Oito2Splitter` keeps the state of a pane collapsed to nothing: the pane stays in the tree, hidden and with its animations paused.
+- `Oito2Calendar`: in right-to-left text the range band at the first and last days reaches toward the days between them.
+- `Oito2DetailPage` shows no back button in the wide layout of `Oito2MasterDetailPage`, where it closed the whole master-detail route when that route could be popped.
+- `Oito2HeaderBar` with two or more `start` widgets no longer overflows the 56-pixel leading slot of the touch `AppBar`.
+- `showOito2CommandPalette` leaves out disabled commands also when given `commands`.
+- `Oito2DateTimeEntry` no longer reports the old date with the new time when the date text becomes valid again.
+- `Oito2ColorPicker` with `showAlpha: false`: a swatch keeps the current opacity, as the other edits do, and shows as selected.
+- `Oito2ContextMenuRegion`: on the web, a change of `enabled` with the pointer over the region updates the browser menu at once; a disabled region leaves Shift+F10 and the Menu key to its ancestors.
+- `Oito2FloatingPanel`: growing past the right edge of the stack stops there instead of moving the left edge.
+- `Oito2ExpansionPanel` drops open sections past the new end when its sections change, and keeps only the first open one when `collapseOnExpand` turns on.
+- `Oito2Marquee` starts or stops at once when `pauseOnHover` changes with the pointer over it or the focus in it.
+- `Oito2PanedView` with the pane at the end and less space than the pane keeps its handle in view.
+- `Oito2TagsField` keeps a refused suggestion in the input, as it does a typed tag.
+- Searches that ignore accents (`Oito2ListCollection`, `Oito2TreeView`, the command palette, the shortcuts help, `Oito2HighlightedText`) fold ą, ă, đ, ĺ, ľ, ő, ŕ, ş, ș, ţ, ț and ű.

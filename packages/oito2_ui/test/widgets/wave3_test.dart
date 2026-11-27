@@ -170,6 +170,27 @@ void main() {
       handle.dispose();
     });
 
+    testWidgets('group titles are headers', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpOito2(
+        tester,
+        Center(
+          child: Oito2Select(
+            collection: _desktops,
+            value: 'kde',
+            onChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.tap(find.text('KDE Plasma'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSemantics(find.text('GTK')),
+        isSemantics(label: 'GTK', isHeader: true),
+      );
+      handle.dispose();
+    });
+
     testWidgets('hovered and selected items draw no border', (tester) async {
       await pumpOito2(
         tester,
@@ -333,6 +354,36 @@ void main() {
         ),
       );
       expect(tester.takeException(), isAssertionError);
+    });
+
+    testWidgets('follows collapseOnExpand and removed sections', (
+      tester,
+    ) async {
+      await pumpOito2(tester, panel(collapse: false));
+      await tester.tap(find.text('Second'));
+      await tester.pumpAndSettle();
+      await pumpOito2(tester, panel());
+      await tester.pumpAndSettle();
+      expect(find.text('First body'), findsOneWidget);
+      expect(find.text('Second body'), findsNothing);
+      await tester.tap(find.text('Second'));
+      await tester.pumpAndSettle();
+      await pumpOito2(
+        tester,
+        const Oito2ExpansionPanel(
+          headers: [Text('First')],
+          children: [Text('First body')],
+        ),
+      );
+      await pumpOito2(
+        tester,
+        const Oito2ExpansionPanel(
+          headers: [Text('First'), Text('Other')],
+          children: [Text('First body'), Text('Other body')],
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Other body'), findsNothing);
     });
 
     testWidgets('sections stay open without collapseOnExpand', (tester) async {

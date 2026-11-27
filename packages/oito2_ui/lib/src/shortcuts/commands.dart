@@ -137,6 +137,8 @@ class Oito2Command {
 /// Scopes nest: a shortcut first matches the commands of the innermost
 /// scope around the focus, then those of the enclosing scopes, and an
 /// inner command replaces an outer one with the same [Oito2Command.id].
+/// The innermost scope matches the shortcuts of the whole chain at once,
+/// so an inner sequence such as `G H` doesn't hide an outer `G` or `G J`.
 /// Sequences such as `G H` wait up to [sequenceTimeout] between chords.
 /// Shortcuts without Control, Alt, Command or the primary modifier (such
 /// as `G H` or `Shift+/`) don't run while a text field has focus, so they
@@ -269,6 +271,25 @@ class _Oito2CommandsState extends State<Oito2Commands> {
     _pending.clear();
   }
 
+  /// The commands of this scope and of the enclosing ones, the innermost
+  /// first, with inner commands, disabled ones included, replacing outer
+  /// ones of the same id.
+  List<Oito2Command> _chainCommands() {
+    final result = <Oito2Command>[];
+    final ids = <String>{};
+    for (final command in widget.commands) {
+      if (ids.add(command.id)) result.add(command);
+    }
+    var scope = _CommandScope.of(context);
+    while (scope != null) {
+      for (final command in scope.commands) {
+        if (ids.add(command.id)) result.add(command);
+      }
+      scope = scope.parent;
+    }
+    return result;
+  }
+
   /// Whether the primary focus is in an [EditableText].
   static bool _textFieldFocused() {
     final context = FocusManager.instance.primaryFocus?.context;
@@ -280,9 +301,20 @@ class _Oito2CommandsState extends State<Oito2Commands> {
   /// Matches a key press against the commands; when a pending sequence
   /// doesn't continue with it, retries the press as the start of a new
   /// sequence.
+  ///
+  /// Only the innermost scope around the focus matches, against the
+  /// commands of every enclosing scope; the enclosing scopes ignore the
+  /// press, so a sequence is followed in one place.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent ||
         Oito2KeyChord.isModifierKey(event.logicalKey)) {
+      return KeyEventResult.ignored;
+    }
+    final focusContext = FocusManager.instance.primaryFocus?.context;
+    final innermost = focusContext == null
+        ? null
+        : _CommandScope.of(focusContext)?.owner;
+    if (innermost != null && !identical(innermost, this)) {
       return KeyEventResult.ignored;
     }
     final chord = Oito2KeyChord.fromEvent(event);
@@ -292,20 +324,6 @@ class _Oito2CommandsState extends State<Oito2Commands> {
       return _match(chord);
     }
     return result;
-  }
-
-  /// The ids of the commands of the scopes between the focus and this
-  /// one, which replace this scope's commands of the same id, even when
-  /// they are disabled.
-  Set<String> _overriddenIds() {
-    final ids = <String>{};
-    final focusContext = FocusManager.instance.primaryFocus?.context;
-    var scope = focusContext == null ? null : _CommandScope.of(focusContext);
-    while (scope != null && !identical(scope.owner, this)) {
-      ids.addAll(scope.commands.map((command) => command.id));
-      scope = scope.parent;
-    }
-    return ids;
   }
 
   /// Whether a shortcut starting with [chord] runs while a text field has
@@ -323,22 +341,23 @@ class _Oito2CommandsState extends State<Oito2Commands> {
     final platform = _platform;
     final typing = _textFieldFocused();
     final sequence = Oito2Shortcut([..._pending, chord]);
-    final overridden = _overriddenIds();
-    final own = [
-      for (final command in widget.commands)
-        if (command.enabled && !overridden.contains(command.id))
+    // The commands of this scope and of the enclosing ones, inner first; a
+    // disabled inner command still replaces an outer one of the same id.
+    final candidates = [
+      for (final command in _chainCommands())
+        if (command.enabled)
           for (final shortcut in command.shortcuts)
             if (!typing || _runsWhileTyping(shortcut.chords.first))
               (command, shortcut),
     ];
-    for (final (command, shortcut) in own) {
+    for (final (command, shortcut) in candidates) {
       if (shortcut.matches(sequence, platform)) {
         _reset();
         command.onInvoke();
         return KeyEventResult.handled;
       }
     }
-    if (own.any((entry) => entry.$2.startsWith(sequence, platform))) {
+    if (candidates.any((entry) => entry.$2.startsWith(sequence, platform))) {
       _pending.add(chord);
       _timer?.cancel();
       _timer = Timer(widget.sequenceTimeout, _reset);

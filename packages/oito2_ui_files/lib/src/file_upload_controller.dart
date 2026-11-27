@@ -32,6 +32,10 @@ enum Oito2FileRejection {
   /// The item is a directory, not a file, and the controller doesn't
   /// accept directories.
   directory,
+
+  /// The size of the file couldn't be read, such as when it was removed
+  /// or its drive was unmounted after it was chosen.
+  unreadable,
 }
 
 /// A file an [Oito2FileUploadController] refused, with the reason.
@@ -139,7 +143,8 @@ class Oito2FileUploadController extends ChangeNotifier {
   /// lists the others in [rejected].
   ///
   /// Reading the size of each file can take a moment, so this completes
-  /// once every file is checked. Nothing changes when the controller is
+  /// once every file is checked. With [maxFileSize], a file whose size
+  /// can't be read is refused as [Oito2FileRejection.unreadable]. Nothing changes when the controller is
   /// disposed meanwhile. A call made before an earlier one completes waits
   /// for it, so the limits hold across both.
   Future<void> add(Iterable<XFile> incoming) {
@@ -162,12 +167,10 @@ class Oito2FileUploadController extends ChangeNotifier {
         reason = _fits(added) ? null : Oito2FileRejection.count;
       } else if (!oito2FileMatchesTypes(file, accept)) {
         reason = Oito2FileRejection.type;
-      } else if (maxFileSize != null && await file.length() > maxFileSize!) {
-        reason = Oito2FileRejection.size;
-      } else if (!_fits(added)) {
-        reason = Oito2FileRejection.count;
       } else {
-        reason = null;
+        final max = maxFileSize;
+        final size = max == null ? null : await _sizeRejection(file, max);
+        reason = size ?? (_fits(added) ? null : Oito2FileRejection.count);
       }
       if (reason == null) {
         added.add(file);
@@ -179,6 +182,19 @@ class Oito2FileUploadController extends ChangeNotifier {
     _files.addAll(added);
     _rejected = List.unmodifiable(rejected);
     notifyListeners();
+  }
+
+  /// Returns [Oito2FileRejection.size] when [file] is larger than [max]
+  /// bytes, [Oito2FileRejection.unreadable] when its size can't be read,
+  /// and null when it fits.
+  static Future<Oito2FileRejection?> _sizeRejection(XFile file, int max) async {
+    final int length;
+    try {
+      length = await file.length();
+    } on Object {
+      return Oito2FileRejection.unreadable;
+    }
+    return length > max ? Oito2FileRejection.size : null;
   }
 
   /// Whether one more item fits beside the held files and [added].

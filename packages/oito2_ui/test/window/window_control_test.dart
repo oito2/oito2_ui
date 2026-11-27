@@ -75,7 +75,7 @@ void main() {
     }
   }
 
-  testWidgets('every drawn style is at least a 24-pixel target', (
+  testWidgets('every drawn style but macOS is at least a 24-pixel target', (
     tester,
   ) async {
     for (final style in drawn) {
@@ -89,8 +89,13 @@ void main() {
         ),
       );
       final size = tester.getSize(find.byType(Oito2WindowControl));
-      expect(size.width, greaterThanOrEqualTo(24), reason: style.name);
       expect(size.height, greaterThanOrEqualTo(24), reason: style.name);
+      if (style == Oito2WindowControlStyle.macos) {
+        // macOS-style buttons keep the native traffic-light pitch.
+        expect(size.width, Oito2WindowControl.macosWidth);
+      } else {
+        expect(size.width, greaterThanOrEqualTo(24), reason: style.name);
+      }
     }
   });
 

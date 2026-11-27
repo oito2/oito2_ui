@@ -23,9 +23,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Files dragged from the desktop can be dropped on `Oito2FileDropZone` and `Oito2FileUpload` on Linux, Windows and macOS, through the `desktop_drop` plugin, as well as on the web; `oito2CanDropFiles` is true on those platforms.
 - `Oito2FileUploadController` refuses dropped folders with the new `Oito2FileRejection.directory` reason, on the desktop and on the web.
 - `Oito2FileDropZone` shows the click (hand) cursor on every platform while enabled.
+- Web drops no longer read every dropped file into memory: the files carry the name, type, size and date the browser reports, an empty `path` (no object URL is created) and read their bytes into memory only when asked, so `Oito2FileUploadController` refuses files by type, size and count before loading them. A file the browser can no longer read throws when its bytes are read, instead of being skipped at the drop.
+- `Oito2FileUpload` shows image previews only for files up to 20 MB; larger images show the file icon without being read.
 
 ### Fixed
 
+- `Oito2FileUploadController.add` refuses a file whose size can't be read, such as one removed or on an unmounted drive, with the new `Oito2FileRejection.unreadable` reason, and still adds the other files of the batch, instead of failing the whole addition with an unhandled error. `Oito2FileUpload` explains it with `Oito2Localizations.fileUnreadable`. A `switch` over `Oito2FileRejection` must handle the new value.
 - `Oito2FileUploadController.add` calls made while an earlier one is still checking files wait for it, so `maxFiles` holds across them.
 - `Oito2FileDropZone` reports when it is disabled to assistive technologies.
 - On the web, a dropped item the browser can't read, such as a folder, is skipped instead of losing the whole drop.
+- On the web, a file dropped where a dialog, a menu or another drop zone is drawn over a drop zone goes to the widget on top, not to the zone beneath.

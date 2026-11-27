@@ -20,7 +20,9 @@ import 'package:material_ui/material_ui.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'avatar.dart';
+import 'touch_target.dart';
 import 'utilities.dart';
+import 'widget_helpers.dart';
 
 /// An account of an [Oito2AccountSwitcher].
 @immutable
@@ -169,20 +171,11 @@ class Oito2AccountSwitcher extends StatelessWidget {
   }
 }
 
-/// Returns the localized name of [status].
-String _statusLabel(Oito2Localizations strings, Oito2AvatarStatus status) =>
-    switch (status) {
-      Oito2AvatarStatus.online => strings.statusOnline,
-      Oito2AvatarStatus.away => strings.statusAway,
-      Oito2AvatarStatus.busy => strings.statusBusy,
-      Oito2AvatarStatus.offline => strings.statusOffline,
-    };
-
 /// Returns the accessibility description of [account]: its name, status,
 /// subtitle and pending count.
 String _describe(Oito2Localizations strings, Oito2Account account) => [
   account.name,
-  if (account.status case final status?) _statusLabel(strings, status),
+  if (account.status case final status?) avatarStatusLabel(strings, status),
   ?account.subtitle,
   if (account.count > 0) strings.pendingCount(account.count),
 ].join(', ');
@@ -306,16 +299,20 @@ class _AccountButton extends StatelessWidget {
       bindings: open
           ? const {}
           : {const SingleActivator(LogicalKeyboardKey.arrowDown): onOpen},
-      child: Semantics(
-        button: true,
-        expanded: open,
-        label: strings.switchAccount(_describe(strings, account)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Oito2Spacing.sm,
-            vertical: Oito2Spacing.xxs,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Oito2Spacing.sm,
+          vertical: Oito2Spacing.xxs,
+        ),
+        // On touch platforms the button reaches a 48-pixel tap target.
+        child: Oito2TouchTarget(
+          mergeSemantics: true,
+          child: Semantics(
+            button: true,
+            expanded: open,
+            label: strings.switchAccount(_describe(strings, account)),
+            child: button,
           ),
-          child: button,
         ),
       ),
     );

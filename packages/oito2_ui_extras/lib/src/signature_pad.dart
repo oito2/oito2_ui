@@ -47,14 +47,18 @@ class Oito2SignatureController extends ChangeNotifier {
   bool get isEmpty => _strokes.isEmpty;
 
   /// Removes the last stroke, if any.
+  ///
+  /// Undoing the stroke being drawn ends it: the next moves of that
+  /// pointer extend no stroke.
   void undo() {
     if (_strokes.isEmpty) return;
-    _strokes.removeLast();
+    if (identical(_strokes.removeLast(), _active)) _active = null;
     notifyListeners();
   }
 
-  /// Removes every stroke.
+  /// Removes every stroke, ending the stroke being drawn.
   void clear() {
+    _active = null;
     if (_strokes.isEmpty) return;
     _strokes.clear();
     notifyListeners();
@@ -69,32 +73,44 @@ class Oito2SignatureController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The stroke the pointer is drawing, or null when none is.
+  List<Oito2SignaturePoint>? _active;
+
   /// Starts a stroke at [point].
   void _begin(Oito2SignaturePoint point) {
-    _strokes.add([point]);
+    _strokes.add(_active = [point]);
     notifyListeners();
   }
 
-  /// Appends [point] to the last stroke, if any.
+  /// Appends [point] to the stroke being drawn, while it is still the
+  /// last one; a stroke added or undone meanwhile ends it.
   void _extend(Oito2SignaturePoint point) {
-    if (_strokes.isEmpty) return;
-    _strokes.last.add(point);
+    final active = _active;
+    if (active == null || !identical(active, _strokes.lastOrNull)) return;
+    active.add(point);
     notifyListeners();
   }
 
   /// Returns the strokes as an SVG document of [size] (the pad size by
   /// default), one path per stroke segment so the width can vary.
   ///
+  /// The drawing keeps the pad's coordinates in its `viewBox`, so a
+  /// different [size] scales the whole signature to fit, keeping its
+  /// proportions and centering it.
+  ///
   /// Strokes use the opaque RGB value of [color]; its alpha is ignored. A
   /// single-point stroke becomes a filled circle.
   String toSvg({Size? size, Color color = const Color(0xFF000000)}) {
-    final s = size ?? this.size;
+    final out = size ?? this.size;
+    final box = this.size;
     String n(double v) => v.toStringAsFixed(1);
     final hex =
         '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
     final buffer = StringBuffer(
-      '<svg xmlns="http://www.w3.org/2000/svg" width="${n(s.width)}" '
-      'height="${n(s.height)}" viewBox="0 0 ${n(s.width)} ${n(s.height)}">',
+      '<svg xmlns="http://www.w3.org/2000/svg" width="${n(out.width)}" '
+      'height="${n(out.height)}" '
+      'viewBox="0 0 ${n(box.width)} ${n(box.height)}" '
+      'preserveAspectRatio="xMidYMid meet">',
     );
     buffer.write(
       '<g fill="none" stroke="$hex" stroke-linecap="round" '

@@ -183,6 +183,9 @@ class Oito2CodeEditor extends StatefulWidget {
   final int? maxLines;
 
   /// The accessibility label; defaults to [Oito2Localizations.codeEditor].
+  ///
+  /// The accessibility value is the code, up to its first 20 000
+  /// characters, so long files don't slow down every edit.
   final String? semanticLabel;
 
   @override
@@ -238,11 +241,42 @@ class _Oito2CodeEditorState extends State<Oito2CodeEditor> {
     super.dispose();
   }
 
+  /// The longest accessibility value, in UTF-16 code units.
+  static const _maxSemanticsLength = 20000;
+
+  /// The lines [_semanticsText] was taken from.
+  CodeLines? _semanticsLines;
+  String _semanticsText = '';
+
+  /// The accessibility value: the code up to [_maxSemanticsLength] code
+  /// units, without splitting a surrogate pair, taken again only when the
+  /// lines change.
+  String get _semanticsValue {
+    final lines = _controller.codeLines;
+    if (!identical(lines, _semanticsLines)) {
+      _semanticsLines = lines;
+      final text = _controller.text;
+      if (text.length <= _maxSemanticsLength) {
+        _semanticsText = text;
+      } else {
+        var end = _maxSemanticsLength;
+        final last = text.codeUnitAt(end - 1);
+        if (last >= 0xD800 && last <= 0xDBFF) end--;
+        _semanticsText = text.substring(0, end);
+      }
+    }
+    return _semanticsText;
+  }
+
   /// Reports text changes to [Oito2CodeEditor.onChanged] and rebuilds for
   /// the line count and the semantics value.
+  ///
+  /// The editor replaces its lines on every edit and keeps them on a
+  /// selection change, so comparing them by identity tells edits apart
+  /// without reading the whole text.
   void _onValue() {
     final lines = _controller.codeLines;
-    if (identical(lines, _lines) || lines == _lines) return;
+    if (identical(lines, _lines)) return;
     _lines = lines;
     widget.onChanged?.call(_controller.text);
     if (mounted) setState(() {});
@@ -371,7 +405,7 @@ class _Oito2CodeEditorState extends State<Oito2CodeEditor> {
       readOnly: readOnly,
       focused: _focused,
       label: widget.semanticLabel ?? strings.codeEditor,
-      value: _controller.text,
+      value: _semanticsValue,
       // Tab indents inside the editor, so Ctrl+Tab and Ctrl+Shift+Tab move
       // the focus out of it.
       child: Shortcuts(

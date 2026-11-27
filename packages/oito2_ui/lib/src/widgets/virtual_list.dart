@@ -18,6 +18,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/rendering.dart'
     show RenderAbstractViewport, ScrollCacheExtent;
+import 'package:flutter/semantics.dart' show CustomSemanticsAction;
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
@@ -31,6 +32,7 @@ import 'list_box.dart';
 import 'list_reorder.dart';
 import 'progress.dart';
 import 'row_drag.dart';
+import 'type_ahead.dart';
 import 'widget_helpers.dart';
 
 /// A scrolling list of the items of [collection] that builds only the
@@ -224,8 +226,7 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>>
   String? _active;
 
   /// The text typed for type-ahead search, cleared after a pause.
-  String _typed = '';
-  Timer? _typeTimer;
+  final _typeAhead = TypeAheadBuffer();
   final _clicks = DoubleClickDetector();
 
   /// Whether [Oito2VirtualList.onReachEnd] can run the next time the end
@@ -277,7 +278,7 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>>
     widget.asyncController?.removeListener(_onAsyncChange);
     _focusNode.dispose();
     _scroll.dispose();
-    _typeTimer?.cancel();
+    _typeAhead.dispose();
     _clicks.cancel();
     disposeReorder();
     super.dispose();
@@ -519,20 +520,14 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>>
       widget.onActivate?.call(item);
     } else {
       final character = event.character;
-      if (character == null ||
-          command ||
-          character.trim().isEmpty ||
-          character.codeUnitAt(0) < 0x20) {
+      if (command || !TypeAheadBuffer.accepts(character)) {
         return KeyEventResult.ignored;
       }
-      _typeTimer?.cancel();
-      _typeTimer = Timer(const Duration(milliseconds: 600), () => _typed = '');
-      final repeat = _typed == character;
-      _typed = repeat ? character : _typed + character;
-      final from = repeat || _typed.length == 1 ? active : null;
+      final (:prefix, :fromNext) = _typeAhead.add(character!);
+      final from = fromNext ? active : null;
       final match =
-          _collection.search(_typed, from: from) ??
-          (from == null ? null : _collection.search(_typed));
+          _collection.search(prefix, from: from) ??
+          (from == null ? null : _collection.search(prefix));
       if (match != null) _activate(match);
     }
     return KeyEventResult.handled;
@@ -602,6 +597,17 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>>
         ? (Offset global) => startRowDrag(value, global)
         : null;
     final handle = reorderable && widget.dragHandle;
+    final activate = widget.onActivate;
+    final actions = <CustomSemanticsAction, VoidCallback>{
+      // The localized "Open" calls [Oito2VirtualList.onActivate] for
+      // assistive technologies without a keyboard.
+      if (activate != null && !disabled)
+        CustomSemanticsAction(
+          label: Oito2Localizations.of(context).activateItem,
+        ): () =>
+            activate(item),
+      if (reorderable) ...?reorderActions(value),
+    };
     final row = Padding(
       padding: const EdgeInsets.symmetric(vertical: _rowGap),
       child: Semantics(
@@ -611,7 +617,7 @@ class _Oito2VirtualListState<T> extends State<Oito2VirtualList<T>>
         focused: active,
         button: true,
         onTap: disabled ? null : () => _click(value),
-        customSemanticsActions: reorderable ? reorderActions(value) : null,
+        customSemanticsActions: actions.isEmpty ? null : actions,
         child: InkWell(
           mouseCursor: reorderDragging
               ? MouseCursor.defer

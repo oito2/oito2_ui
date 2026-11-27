@@ -230,6 +230,48 @@ void main() {
       expect(changes.last[_at(1, 0)], _Speed.limited);
     });
 
+    testWidgets('keeps the active cell inside fewer slots a day', (
+      tester,
+    ) async {
+      final changes = <List<_Speed>>[];
+      var slots = 48;
+      late StateSetter setSlots;
+      await pumpOito2(
+        tester,
+        StatefulBuilder(
+          builder: (context, setState) {
+            setSlots = setState;
+            return Oito2WeekScheduleGrid<_Speed>(
+              values: _values,
+              schedule: _full(slots),
+              slotsPerDay: slots,
+              paintValue: _Speed.paused,
+              autofocus: true,
+              onChanged: changes.add,
+            );
+          },
+        ),
+      );
+      await tester.pump();
+      // The first row is Sunday in English, the last day of the schedule.
+      await tester.sendKeyEvent(LogicalKeyboardKey.end);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+      setSlots(() => slots = 24);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(
+        [
+          for (var i = 0; i < changes.last.length; i++)
+            if (changes.last[i] == _Speed.paused) i,
+        ],
+        [_at(6, 23)],
+      );
+    });
+
     testWidgets('the legend marks the brush as selected', (tester) async {
       final handle = tester.ensureSemantics();
       var picked = <_Speed>[];

@@ -28,6 +28,9 @@ import 'line_highlight.dart';
 /// The colors come from the theme's [Oito2SyntaxTheme], or from the oito2
 /// base scheme of the current brightness when the theme has none. Long
 /// lines scroll horizontally instead of wrapping.
+///
+/// Highlighting runs on the UI thread, so code longer than
+/// [maxHighlightLength] shows as plain text in the foreground color.
 class Oito2CodeBlock extends StatefulWidget {
   /// Creates a code block.
   const Oito2CodeBlock({
@@ -40,7 +43,8 @@ class Oito2CodeBlock extends StatefulWidget {
     this.showCopyButton = true,
     this.textStyle,
     this.padding = const EdgeInsets.all(Oito2Spacing.lg),
-  });
+    this.maxHighlightLength = defaultMaxHighlightLength,
+  }) : assert(maxHighlightLength >= 0);
 
   /// The source code.
   final String code;
@@ -71,6 +75,19 @@ class Oito2CodeBlock extends StatefulWidget {
 
   /// Space around the code.
   final EdgeInsetsGeometry padding;
+
+  /// The longest code, in UTF-16 code units, that is highlighted; longer
+  /// code shows as plain text in the foreground color.
+  ///
+  /// Defaults to [defaultMaxHighlightLength]. Highlighting takes time in
+  /// proportion to the length of the code and blocks the UI meanwhile, so
+  /// raise it only for code known to be short enough on the slowest
+  /// target device.
+  final int maxHighlightLength;
+
+  /// The default [maxHighlightLength]: 20 000 code units, which
+  /// highlight in about 50 milliseconds on a desktop computer.
+  static const int defaultMaxHighlightLength = 20000;
 
   /// The family name of JetBrains Mono as bundled by this package,
   /// including the package prefix.
@@ -113,18 +130,27 @@ class _Oito2CodeBlockState extends State<Oito2CodeBlock> {
   Object? _key;
   TextSpan? _span;
 
-  /// The highlighted code, computed again only when an input changes.
+  /// The highlighted code, or the plain code when it is longer than
+  /// [Oito2CodeBlock.maxHighlightLength], computed again only when an
+  /// input changes.
   TextSpan _highlighted(Oito2SyntaxPalette palette, TextStyle style) {
     final highlighter = widget.highlighter ?? Oito2Highlighter.instance;
-    final key = (widget.code, widget.language, palette, style, highlighter);
+    final code = widget.code;
+    final plain = code.length > widget.maxHighlightLength;
+    final key = (code, widget.language, palette, style, highlighter, plain);
     if (key != _key || _span == null) {
       _key = key;
-      _span = highlighter.highlight(
-        widget.code,
-        language: widget.language,
-        palette: palette,
-        style: style,
-      );
+      _span = plain
+          ? TextSpan(
+              text: code,
+              style: style.copyWith(color: palette.foreground),
+            )
+          : highlighter.highlight(
+              code,
+              language: widget.language,
+              palette: palette,
+              style: style,
+            );
     }
     return _span!;
   }

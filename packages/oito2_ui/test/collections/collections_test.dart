@@ -38,12 +38,42 @@ void main() {
   group('Oito2ListCollection', () {
     test('looks items up by value', () {
       expect(_fruits.length, 5);
-      expect(_fruits.values, ['apple', 'banana', 'cherry', 'pear', 'plum']);
+      expect(_fruits.values, ['apple', 'pear', 'banana', 'cherry', 'plum']);
       expect(_fruits.find('cherry')?.name, 'Cherry');
-      expect(_fruits.indexOf('pear'), 3);
+      expect(_fruits.indexOf('pear'), 1);
       expect(_fruits.has('kiwi'), isFalse);
       expect(_fruits.labelOf(_fruits.items.first), 'Apple');
       expect(_fruits.isEnabled('banana'), isFalse);
+    });
+
+    test('filters ignore the accents of Central European letters', () {
+      final cities = Oito2ListCollection(const [
+        'Iași',
+        'Mąka',
+        'Győr',
+        'Đakovo',
+      ]);
+      expect(cities.filter('iasi').values, ['Iași']);
+      expect(cities.filter('maka').values, ['Mąka']);
+      expect(cities.filter('gyor').values, ['Győr']);
+      expect(cities.filter('dakovo').values, ['Đakovo']);
+      final more = Oito2ListCollection(const [
+        'Ľubľana',
+        'Ĺ',
+        'Ŕ',
+        'Şiş',
+        'Ţară',
+        'Ţ',
+        'Ăă',
+        'Űű',
+      ]);
+      expect(more.search('lublana'), 'Ľubľana');
+      expect(more.search('sis'), 'Şiş');
+      expect(more.search('tara'), 'Ţară');
+      expect(more.search('aa'), 'Ăă');
+      expect(more.search('uu'), 'Űű');
+      expect(more.search('r'), 'Ŕ');
+      expect(more.search('l', from: 'Ľubľana'), 'Ĺ');
     });
 
     test('strings are their own value and label', () {
@@ -55,8 +85,9 @@ void main() {
     test('navigation skips disabled items', () {
       expect(_fruits.firstValue, 'apple');
       expect(_fruits.lastValue, 'plum');
-      expect(_fruits.nextValue('apple'), 'cherry');
-      expect(_fruits.previousValue('cherry'), 'apple');
+      expect(_fruits.nextValue('apple'), 'pear');
+      expect(_fruits.nextValue('pear'), 'cherry');
+      expect(_fruits.previousValue('cherry'), 'pear');
       expect(_fruits.nextValue('plum'), isNull);
       expect(_fruits.nextValue('plum', loop: true), 'apple');
       expect(_fruits.previousValue('apple', loop: true), 'plum');
@@ -68,6 +99,16 @@ void main() {
       expect(_fruits.search('p', from: 'plum'), 'pear');
       expect(_fruits.search('PERA'), 'pear');
       expect(_fruits.search('b'), isNull);
+    });
+
+    test('groupOf keeps the items of each group together', () {
+      // The source list interleaves the groups (Pome, Berry, Drupe, Pome,
+      // Drupe); the items follow the order the groups are shown in.
+      expect(
+        [for (final f in _fruits.items) f.id],
+        ['apple', 'pear', 'banana', 'cherry', 'plum'],
+      );
+      expect(Oito2ListCollection(['a', 'b', 'c']).values, ['a', 'b', 'c']);
     });
 
     test('groups keep the order of first appearance', () {
@@ -82,13 +123,21 @@ void main() {
     });
 
     test('filters and reorders into new collections', () {
-      expect(_fruits.filter('er').values, ['cherry', 'pear']);
+      expect(_fruits.filter('er').values, ['pear', 'cherry']);
+      // An item moved past the other groups stays with its own group.
       expect(_fruits.reorder(0, 4).values, [
+        'pear',
+        'apple',
         'banana',
         'cherry',
-        'pear',
         'plum',
+      ]);
+      expect(_fruits.reorder(3, 4).values, [
         'apple',
+        'pear',
+        'banana',
+        'plum',
+        'cherry',
       ]);
       expect(_fruits.values.first, 'apple');
     });
@@ -143,7 +192,7 @@ void main() {
       );
       selection.click('plum');
       selection.click('apple', extend: true);
-      expect(selection.selectedValues, ['apple', 'cherry', 'pear', 'plum']);
+      expect(selection.selectedValues, ['apple', 'pear', 'cherry', 'plum']);
       selection.click('pear', toggle: true);
       expect(selection.selectedValues, ['apple', 'cherry', 'plum']);
       selection.click('cherry');

@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
@@ -21,6 +22,7 @@ import '../l10n/oito2_localizations.dart';
 import 'form.dart';
 import 'info.dart';
 import 'password_strength.dart';
+import 'text_form_field_state.dart';
 import 'touch_target.dart';
 import 'widget_helpers.dart';
 
@@ -118,7 +120,7 @@ class Oito2PasswordField extends StatefulWidget {
   final String? Function(String password)? validator;
 
   /// Whether an empty field shows the localized "This field is required"
-  /// error.
+  /// error; a password of only spaces is not empty.
   final bool required;
 
   /// Whether the field registers with the closest [Oito2Form], taking
@@ -135,15 +137,10 @@ class _Oito2PasswordFieldState extends State<Oito2PasswordField>
     with
         OwnedFocusNodeMixin,
         OwnedControllerMixin<Oito2PasswordField, TextEditingController>,
-        Oito2FormFieldMixin {
+        Oito2FormFieldMixin,
+        TextFormFieldStateMixin {
   bool _visible = false;
   bool _capsLock = false;
-
-  /// Whether the validation error shows, once the field lost focus.
-  bool _showError = false;
-
-  /// The text while the field has no unsaved changes.
-  late String _cleanText;
 
   @override
   FocusNode? get widgetFocusNode => widget.focusNode;
@@ -153,8 +150,8 @@ class _Oito2PasswordFieldState extends State<Oito2PasswordField>
   @override
   void onEffectiveFocusChange() {
     _checkCapsLock();
-    if (!_focusNode.hasFocus && !_showError && mounted) {
-      setState(() => _showError = true);
+    if (!_focusNode.hasFocus && !showsValidationError && mounted) {
+      setState(() => showsValidationError = true);
     }
   }
 
@@ -168,32 +165,17 @@ class _Oito2PasswordFieldState extends State<Oito2PasswordField>
   FocusNode get formFieldFocusNode => _focusNode;
 
   @override
-  String? get formFieldError {
-    final text = effectiveController.text;
-    if (widget.required && text.isEmpty) {
-      return Oito2Localizations.of(context).fieldRequired;
-    }
-    return widget.validator?.call(text);
-  }
+  bool get fieldRequired => widget.required;
+
+  /// A password of only spaces is a value, so it is not trimmed.
+  @override
+  bool get requiredTrimsText => false;
 
   @override
-  bool get isFormFieldDirty => effectiveController.text != _cleanText;
+  String? Function(String text)? get fieldValidator => widget.validator;
 
   @override
-  void showFormFieldError() {
-    if (mounted) setState(() => _showError = true);
-  }
-
-  @override
-  void markFormFieldClean() => _cleanText = effectiveController.text;
-
-  @override
-  void resetFormField() {
-    setState(() => _showError = false);
-    if (effectiveController.text == _cleanText) return;
-    effectiveController.text = _cleanText;
-    widget.onChanged?.call(_cleanText);
-  }
+  ValueChanged<String>? get onTextReset => widget.onChanged;
 
   @override
   TextEditingController? get widgetController => widget.controller;
@@ -204,22 +186,18 @@ class _Oito2PasswordFieldState extends State<Oito2PasswordField>
   @override
   void onControllerChange() {
     if ((widget.showStrength && effectiveController.text != _ratedText) ||
-        _showError ||
+        showsValidationError ||
         formShowsErrors) {
       setState(() {});
     }
-    final text = effectiveController.text;
-    if (text != _notifiedText) {
-      _notifiedText = text;
-      notifyFormFieldChanged();
-    }
+    notifyIfTextChanged();
   }
 
-  /// The text the form was last told about.
-  late String _notifiedText;
-
   @override
-  void didChangeController(TextEditingController previous) => setState(() {});
+  void didChangeController(TextEditingController previous) {
+    super.didChangeController(previous);
+    setState(() {});
+  }
 
   /// The text [_strength] was computed for.
   String? _ratedText;
@@ -227,8 +205,22 @@ class _Oito2PasswordFieldState extends State<Oito2PasswordField>
   /// The rating of [_ratedText].
   Oito2PasswordStrength _strength = const Oito2PasswordStrength(0);
 
+  @override
+  void didUpdateWidget(Oito2PasswordField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A new estimator or new user inputs rate the same text again.
+    if (oldWidget.strengthEstimator != widget.strengthEstimator ||
+        !listEquals(
+          oldWidget.strengthUserInputs.toList(),
+          widget.strengthUserInputs.toList(),
+        )) {
+      _ratedText = null;
+    }
+  }
+
   /// Returns the rating of the current text, computed again only when the
-  /// text changed.
+  /// text, [Oito2PasswordField.strengthEstimator] or
+  /// [Oito2PasswordField.strengthUserInputs] changed.
   Oito2PasswordStrength _rate() {
     final text = effectiveController.text;
     if (text != _ratedText) {
@@ -246,7 +238,6 @@ class _Oito2PasswordFieldState extends State<Oito2PasswordField>
   @override
   void initState() {
     super.initState();
-    _cleanText = _notifiedText = effectiveController.text;
     HardwareKeyboard.instance.addHandler(_onKey);
   }
 
@@ -296,7 +287,7 @@ class _Oito2PasswordFieldState extends State<Oito2PasswordField>
         : null;
     final errorText =
         widget.errorText ??
-        (_showError || formShowsErrors ? formFieldError : null);
+        (showsValidationError || formShowsErrors ? formFieldError : null);
     // The decorator hides the helper while an error shows, so the Caps Lock
     // warning joins the error in that case.
     final combinedError = capsWarning != null && errorText != null

@@ -270,10 +270,13 @@ class Oito2Select<T> extends StatelessWidget {
                 Oito2Spacing.md,
                 Oito2Spacing.xxs,
               ),
-              child: Text(
-                name,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              child: Semantics(
+                header: true,
+                child: Text(
+                  name,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),

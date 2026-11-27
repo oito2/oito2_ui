@@ -70,6 +70,9 @@ class _Oito2ContextMenuRegionState extends State<Oito2ContextMenuRegion> {
   final _controller = MenuController();
   bool _browserMenuOff = false;
 
+  /// Whether the pointer is over the region.
+  bool _hovered = false;
+
   /// One non-focusable node around each menu child, through which the
   /// focusable items inside are found.
   final _itemNodes = <FocusNode>[];
@@ -88,6 +91,11 @@ class _Oito2ContextMenuRegionState extends State<Oito2ContextMenuRegion> {
         oldWidget.controller?._region = null;
       }
       widget.controller?._region = this;
+    }
+    // With the pointer over the region, the browser menu follows a change
+    // of enabled at once.
+    if (_hovered && oldWidget.enabled != widget.enabled) {
+      _setBrowserMenu(enabled: !widget.enabled);
     }
   }
 
@@ -183,14 +191,25 @@ class _Oito2ContextMenuRegionState extends State<Oito2ContextMenuRegion> {
       onOpen: widget.onOpen,
       onClose: widget.onClose,
       consumeOutsideTap: true,
+      // A disabled region leaves Shift+F10 and the Menu key to the
+      // ancestors.
       child: CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.f10, shift: true): _open,
-          const SingleActivator(LogicalKeyboardKey.contextMenu): _open,
-        },
+        bindings: widget.enabled
+            ? {
+                const SingleActivator(LogicalKeyboardKey.f10, shift: true):
+                    _open,
+                const SingleActivator(LogicalKeyboardKey.contextMenu): _open,
+              }
+            : const {},
         child: MouseRegion(
-          onEnter: (_) => _setBrowserMenu(enabled: !widget.enabled),
-          onExit: (_) => _setBrowserMenu(enabled: true),
+          onEnter: (_) {
+            _hovered = true;
+            _setBrowserMenu(enabled: !widget.enabled);
+          },
+          onExit: (_) {
+            _hovered = false;
+            _setBrowserMenu(enabled: true);
+          },
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
             onSecondaryTapUp: (details) => _open(details.localPosition),

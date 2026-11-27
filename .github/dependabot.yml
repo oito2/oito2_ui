@@ -5,3 +5,14 @@ updates:
     directory: /
     schedule:
       interval: weekly
+  # Keeps the pub dependencies of the whole workspace current: the entry at
+  # the workspace root updates a dependency in every package that uses it,
+  # and each week's updates arrive together in one pull request.
+  - package-ecosystem: pub
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      pub:
+        patterns:
+          - "*"

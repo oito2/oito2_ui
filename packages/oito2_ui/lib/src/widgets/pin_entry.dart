@@ -19,6 +19,7 @@ import 'package:material_ui/material_ui.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import 'form.dart';
+import 'text_form_field_state.dart';
 import 'touch_target.dart';
 import 'widget_helpers.dart';
 
@@ -110,22 +111,8 @@ class _Oito2PinEntryState extends State<Oito2PinEntry>
     with
         OwnedFocusNodeMixin,
         OwnedControllerMixin<Oito2PinEntry, TextEditingController>,
-        Oito2FormFieldMixin {
-  /// Whether the validation error shows, once the entry lost focus.
-  bool _showError = false;
-
-  /// The code while the entry has no unsaved changes.
-  late String _cleanText;
-
-  /// The code the form was last told about.
-  late String _notifiedText;
-
-  @override
-  void initState() {
-    super.initState();
-    _cleanText = _notifiedText = _controller.text;
-  }
-
+        Oito2FormFieldMixin,
+        TextFormFieldStateMixin {
   @override
   bool get participatesInForm => widget.participatesInForm;
 
@@ -138,32 +125,17 @@ class _Oito2PinEntryState extends State<Oito2PinEntry>
   FocusNode get formFieldFocusNode => _focusNode;
 
   @override
-  String? get formFieldError {
-    final text = _controller.text;
-    if (widget.required && text.isEmpty) {
-      return Oito2Localizations.of(context).fieldRequired;
-    }
-    return widget.validator?.call(text);
-  }
+  bool get fieldRequired => widget.required;
+
+  /// The cells refuse whitespace, so the code is never trimmed.
+  @override
+  bool get requiredTrimsText => false;
 
   @override
-  bool get isFormFieldDirty => _controller.text != _cleanText;
+  String? Function(String text)? get fieldValidator => widget.validator;
 
   @override
-  void showFormFieldError() {
-    if (mounted) setState(() => _showError = true);
-  }
-
-  @override
-  void markFormFieldClean() => _cleanText = _controller.text;
-
-  @override
-  void resetFormField() {
-    setState(() => _showError = false);
-    if (_controller.text == _cleanText) return;
-    _controller.text = _cleanText;
-    widget.onChanged?.call(_cleanText);
-  }
+  ValueChanged<String>? get onTextReset => widget.onChanged;
 
   @override
   TextEditingController? get widgetController => widget.controller;
@@ -179,7 +151,7 @@ class _Oito2PinEntryState extends State<Oito2PinEntry>
 
   @override
   void onEffectiveFocusChange() {
-    if (!_focusNode.hasFocus) _showError = true;
+    if (!_focusNode.hasFocus) showsValidationError = true;
     _refresh();
   }
 
@@ -201,10 +173,7 @@ class _Oito2PinEntryState extends State<Oito2PinEntry>
       _controller.selection = TextSelection.collapsed(offset: end);
     }
     _refresh();
-    if (value.text != _notifiedText) {
-      _notifiedText = value.text;
-      notifyFormFieldChanged();
-    }
+    notifyIfTextChanged();
   }
 
   /// Reports [text], and when every cell is filled reports the completed
@@ -226,7 +195,9 @@ class _Oito2PinEntryState extends State<Oito2PinEntry>
     final height = controlHeightOf(context) + 6;
     final chars = _controller.text.characters.toList();
     final focused = _focusNode.hasFocus;
-    final error = _showError || formShowsErrors ? formFieldError : null;
+    final error = showsValidationError || formShowsErrors
+        ? formFieldError
+        : null;
     final hasError = widget.hasError || error != null;
     final active = chars.length.clamp(0, widget.length - 1);
     final style = theme.textTheme.titleLarge?.copyWith(

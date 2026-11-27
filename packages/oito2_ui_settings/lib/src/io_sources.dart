@@ -100,6 +100,9 @@ class Oito2DconfGSettingsSource implements Oito2GSettingsSource {
 /// Reads files under the user's configuration directory and watches their
 /// parent directories for changes, since editors often replace a file
 /// instead of writing it in place.
+///
+/// A path that leaves the configuration directory, such as an absolute
+/// path or one that climbs out with `..`, reads as null and never emits.
 class Oito2HomeConfigFileSource implements Oito2ConfigFileSource {
   /// Creates a source rooted at [configHome].
   Oito2HomeConfigFileSource(this.configHome);
@@ -121,15 +124,20 @@ class Oito2HomeConfigFileSource implements Oito2ConfigFileSource {
   /// The configuration directory.
   final String configHome;
 
-  /// The file at [relativePath] under [configHome].
-  File _file(String relativePath) =>
-      File(p.normalize(p.join(configHome, relativePath)));
+  /// Returns the file at [relativePath] under [configHome], or null when
+  /// the path leaves [configHome].
+  File? _file(String relativePath) {
+    final root = p.normalize(configHome);
+    final path = p.normalize(p.join(root, relativePath));
+    return p.isWithin(root, path) ? File(path) : null;
+  }
 
   @override
   Future<String?> read(String relativePath) async {
     if (configHome.isEmpty) return null;
+    final file = _file(relativePath);
+    if (file == null) return null;
     try {
-      final file = _file(relativePath);
       return await file.exists() ? await file.readAsString() : null;
     } on FileSystemException {
       return null;
@@ -143,21 +151,47 @@ class Oito2HomeConfigFileSource implements Oito2ConfigFileSource {
   /// nearest existing ancestor is watched until the folder appears; the
   /// stream emits once the folder exists, since the file may have been
   /// written along with it.
+  ///
+  /// When the file is a symbolic link, as with dotfiles managed by a tool
+  /// such as GNU Stow or home-manager, the folder of the file it points to
+  /// is watched too, so changes to that file also emit; the link is
+  /// followed again whenever it changes.
   @override
   Stream<void> changes(String relativePath) {
     if (configHome.isEmpty) return const Stream.empty();
     final file = _file(relativePath);
+    if (file == null) return const Stream.empty();
     final folder = file.parent;
     late final StreamController<void> controller;
     StreamSubscription<FileSystemEvent>? subscription;
+    StreamSubscription<FileSystemEvent>? targetSubscription;
 
     // Matches writes in place and atomic replacements, where a temporary
-    // file is renamed onto the watched path.
-    bool touches(FileSystemEvent event) =>
-        p.equals(event.path, file.path) ||
+    // file is renamed onto [path].
+    bool touchesPath(FileSystemEvent event, String path) =>
+        p.equals(event.path, path) ||
         (event is FileSystemMoveEvent &&
             event.destination != null &&
-            p.equals(event.destination!, file.path));
+            p.equals(event.destination!, path));
+    bool touches(FileSystemEvent event) => touchesPath(event, file.path);
+
+    // Watches the folder of the file the link at [file] points to, when it
+    // is a link to an existing file; stops watching otherwise.
+    void watchTarget() {
+      final previous = targetSubscription;
+      if (previous != null) unawaited(previous.cancel());
+      targetSubscription = null;
+      final String target;
+      try {
+        if (!FileSystemEntity.isLinkSync(file.path)) return;
+        target = file.resolveSymbolicLinksSync();
+      } on FileSystemException {
+        return;
+      }
+      targetSubscription = File(target).parent.watch().listen((event) {
+        if (touchesPath(event, target)) controller.add(null);
+      }, onError: (Object _) {});
+    }
 
     // Watches the file's folder, or its nearest existing ancestor until
     // the folder appears. Returns whether the folder itself is watched.
@@ -172,9 +206,13 @@ class Oito2HomeConfigFileSource implements Oito2ConfigFileSource {
         directory = parent;
       }
       if (p.equals(directory.path, folder.path)) {
+        watchTarget();
         subscription = directory.watch().listen(
           (event) {
-            if (touches(event)) controller.add(null);
+            if (!touches(event)) return;
+            // The link may point elsewhere now.
+            watchTarget();
+            controller.add(null);
           },
           onError: (Object _) {},
           // The folder was removed: wait for it to come back.
@@ -196,7 +234,9 @@ class Oito2HomeConfigFileSource implements Oito2ConfigFileSource {
       onListen: watch,
       onCancel: () async {
         await subscription?.cancel();
+        await targetSubscription?.cancel();
         subscription = null;
+        targetSubscription = null;
       },
     );
     return controller.stream;

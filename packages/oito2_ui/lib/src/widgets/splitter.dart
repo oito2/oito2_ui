@@ -18,7 +18,6 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
-import '../tokens/geometry.dart';
 import 'resize_handle.dart';
 
 /// One pane of an [Oito2Splitter].
@@ -76,7 +75,9 @@ class Oito2Splitter extends StatefulWidget {
   /// Creates a splitter.
   ///
   /// Throws an [AssertionError] in debug mode, when the splitter is first
-  /// built, if [panes] has fewer than two entries.
+  /// built, if [panes] has fewer than two entries, and when it is laid out
+  /// with an unbounded extent along [axis], such as directly in a [Row]
+  /// for a horizontal splitter.
   const Oito2Splitter({
     super.key,
     required this.panes,
@@ -272,6 +273,12 @@ class _Oito2SplitterState extends State<Oito2Splitter> {
         final extent = _horizontal
             ? constraints.maxWidth
             : constraints.maxHeight;
+        assert(
+          extent.isFinite,
+          'Oito2Splitter was given an unbounded '
+          '${_horizontal ? 'width' : 'height'}. Place it where its extent '
+          'along its axis is bounded, such as in an Expanded or a SizedBox.',
+        );
         final available = (extent - (_panes.length - 1)).clamp(
           0.0,
           double.infinity,
@@ -287,10 +294,16 @@ class _Oito2SplitterState extends State<Oito2Splitter> {
             SizedBox(
               width: _horizontal ? _sizes[i] : null,
               height: _horizontal ? null : _sizes[i],
+              // A pane collapsed to nothing stays in the tree, hidden and
+              // with its animations paused, so it keeps its state.
               child: ClipRect(
-                child: _collapsed[i] && _panes[i].collapsedSize == 0
-                    ? const SizedBox.shrink()
-                    : _panes[i].child,
+                child: Offstage(
+                  offstage: _collapsed[i] && _panes[i].collapsedSize == 0,
+                  child: TickerMode(
+                    enabled: !(_collapsed[i] && _panes[i].collapsedSize == 0),
+                    child: _panes[i].child,
+                  ),
+                ),
               ),
             ),
           );
@@ -303,7 +316,7 @@ class _Oito2SplitterState extends State<Oito2Splitter> {
                 color: divider,
               ),
             );
-            final start = position + 0.5 - Oito2Spacing.sm / 2;
+            final start = position + 0.5 - ResizeHandle.extentOf(context) / 2;
             handles.add(
               _horizontal
                   ? PositionedDirectional(

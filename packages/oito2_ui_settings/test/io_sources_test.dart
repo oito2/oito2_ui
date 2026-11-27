@@ -40,6 +40,20 @@ void main() {
       expect(await source.read('missing'), isNull);
     });
 
+    test('refuses paths that leave the configuration directory', () async {
+      final config = Directory('${home.path}/config')..createSync();
+      await File('${home.path}/secret').writeAsString('secret');
+      await File('${config.path}/kwinrc').writeAsString('ok');
+      final source = Oito2HomeConfigFileSource(config.path);
+      expect(await source.read('kwinrc'), 'ok');
+      expect(await source.read('sub/../kwinrc'), 'ok');
+      expect(await source.read('../secret'), isNull);
+      expect(await source.read('${home.path}/secret'), isNull);
+      expect(await source.read(''), isNull);
+      expect(await source.changes('../secret').isEmpty, isTrue);
+      expect(await source.changes('${home.path}/secret').isEmpty, isTrue);
+    });
+
     test('emits when a watched file changes', () async {
       final file = File('${home.path}/kdeglobals');
       await file.writeAsString('one');
@@ -59,6 +73,20 @@ void main() {
       final temp = File('${home.path}/kwinrc.tmp');
       await temp.writeAsString('two');
       await temp.rename(file.path);
+      await changed.timeout(const Duration(seconds: 5));
+    });
+
+    test('emits when the file a symbolic link points to changes', () async {
+      final dotfiles = Directory('${home.path}/dotfiles')..createSync();
+      final config = Directory('${home.path}/config')..createSync();
+      final target = File('${dotfiles.path}/kdeglobals');
+      await target.writeAsString('one');
+      await Link('${config.path}/kdeglobals').create(target.path);
+      final source = Oito2HomeConfigFileSource(config.path);
+      expect(await source.read('kdeglobals'), 'one');
+      final changed = source.changes('kdeglobals').first;
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await target.writeAsString('two');
       await changed.timeout(const Duration(seconds: 5));
     });
 
@@ -103,6 +131,38 @@ void main() {
       await _until(() => events.length > count);
       await subscription.cancel();
     });
+
+    test(
+      'keeps watching after the folder is removed and created again',
+      () async {
+        final folder = Directory(
+          '${home.path}/cosmic/com.system76.CosmicTk/v1',
+        );
+        await folder.create(recursive: true);
+        await File('${folder.path}/show_minimize').writeAsString('false');
+        final source = Oito2HomeConfigFileSource(home.path);
+        final events = <void>[];
+        final subscription = source
+            .changes('cosmic/com.system76.CosmicTk/v1/show_minimize')
+            .listen(events.add);
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        await Directory('${home.path}/cosmic').delete(recursive: true);
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+        final count = events.length;
+        await folder.create(recursive: true);
+        await File('${folder.path}/show_minimize').writeAsString('true');
+        await _until(() => events.length > count);
+
+        // Later writes are watched in the new folder.
+        final again = events.length;
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        await File('${folder.path}/show_minimize').writeAsString('false');
+        await _until(() => events.length > again);
+        await subscription.cancel();
+      },
+      skip: !Platform.isLinux,
+    );
 
     test('ignores new folders off the path to the file', () async {
       final source = Oito2HomeConfigFileSource(home.path);

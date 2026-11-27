@@ -147,18 +147,20 @@ class _Oito2ExpandableState extends State<Oito2Expandable> {
               borderRadius: Oito2Radius.mediumAll,
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: Oito2Spacing.xs),
-                child: Row(
-                  spacing: Oito2Spacing.sm,
-                  children: [
-                    if (atStart) icon,
-                    Expanded(
-                      child: DefaultTextStyle.merge(
-                        style: theme.textTheme.titleSmall,
-                        child: widget.header,
+                child: _HeaderHeight(
+                  child: Row(
+                    spacing: Oito2Spacing.sm,
+                    children: [
+                      if (atStart) icon,
+                      Expanded(
+                        child: DefaultTextStyle.merge(
+                          style: theme.textTheme.titleSmall,
+                          child: widget.header,
+                        ),
                       ),
-                    ),
-                    if (!atStart) icon,
-                  ],
+                      if (!atStart) icon,
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -177,6 +179,27 @@ class _Oito2ExpandableState extends State<Oito2Expandable> {
                 ),
         ),
       ],
+    );
+  }
+}
+
+/// Gives the header row of [Oito2Expandable] a height that, with its
+/// vertical padding, reaches the 48-pixel minimum tap target when the
+/// theme pads tap targets, as on touch platforms; otherwise returns
+/// [child] unchanged.
+class _HeaderHeight extends StatelessWidget {
+  const _HeaderHeight({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!padsTapTargets(context)) return child;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minHeight: Oito2Sizes.minTouchTarget - 2 * Oito2Spacing.xs,
+      ),
+      child: child,
     );
   }
 }

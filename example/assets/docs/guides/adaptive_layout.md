@@ -46,7 +46,7 @@ The side-by-side layout is an `Oito2PanedView`: the pane starts at `paneSize` (2
 
 ## Panes and splitters
 
-`Oito2PanedView` splits its area between one pane and a page with a 1 px divider; the defaults are the ones above, and arrow keys move a focused divider by 16 px. `Oito2Splitter` holds two or more panes, side by side or stacked, each with its own `minSize` (48 px by default) and `maxSize`, and collapsible panes that Enter, Space or a double click on the divider collapse and restore. Splitters nest, so a horizontal splitter can hold a vertical one.
+`Oito2PanedView` splits its area between one pane and a page with a 1 px divider; the defaults are the ones above, and arrow keys move a focused divider by 16 px. `Oito2Splitter` holds two or more panes, side by side or stacked, each with its own `minSize` (48 px by default) and `maxSize`, and collapsible panes that Enter, Space or a double click on the divider collapse and restore. Splitters nest, so a horizontal splitter can hold a vertical one. On touch platforms the divider keeps its thin line but takes drags across 48 px centered on it, and taps there still reach the panes.
 
 ## Columns
 

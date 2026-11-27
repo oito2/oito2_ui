@@ -105,6 +105,33 @@ void main() {
       expect(activated, ['Apple']);
     });
 
+    testWidgets('assistive technologies activate enabled items', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      final activated = <String>[];
+      await pumpList(
+        tester,
+        Oito2SelectionMode.single,
+        onActivate: activated.add,
+      );
+      final open = CustomSemanticsAction.getIdentifier(
+        const CustomSemanticsAction(label: 'Open'),
+      );
+      List<int> actionsOf(String label) =>
+          tester
+              .getSemantics(find.text(label))
+              .getSemanticsData()
+              .customSemanticsActionIds ??
+          const [];
+      expect(actionsOf('Banana'), contains(open));
+      expect(actionsOf('Cherry'), isNot(contains(open)));
+      final node = tester.getSemantics(find.text('Banana'));
+      node.owner!.performAction(node.id, SemanticsAction.customAction, open);
+      expect(activated, ['Banana']);
+      semantics.dispose();
+    });
+
     testWidgets('a double click activates; two slow clicks do not', (
       tester,
     ) async {

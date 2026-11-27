@@ -203,8 +203,9 @@ class ShowcasePage {
 Widget Function(BuildContext, Oito2ColorTheme) _page(Widget page) =>
     (_, _) => page;
 
-/// The guides: title, Markdown file name, icon and lead paragraph.
-const _guides = [
+/// The guides: title, Markdown file name under `assets/docs/guides/`,
+/// icon and lead paragraph.
+const showcaseGuides = [
   (
     'Styling',
     'styling',
@@ -283,7 +284,7 @@ final List<ShowcasePage> showcasePages = [
       const MarkdownDocPage(title: 'About', asset: 'assets/docs/about.md'),
     ),
   ),
-  for (final (title, file, icon, description) in _guides)
+  for (final (title, file, icon, description) in showcaseGuides)
     ShowcasePage(
       title: title,
       icon: icon,

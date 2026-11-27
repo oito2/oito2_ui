@@ -22,6 +22,7 @@ import '../foundation/platform_info.dart';
 import '../foundation/system_settings.dart';
 import '../foundation/window_button_layout.dart';
 import '../tokens/geometry.dart';
+import '../widgets/navigation_page.dart';
 import '../widgets/widget_helpers.dart';
 import 'title_bar_gesture_detector.dart';
 import 'title_bar_theme.dart';
@@ -401,7 +402,9 @@ enum Oito2WindowButtonSides {
 /// - On the web it shows the title and actions without window buttons,
 ///   since the browser owns the page lifecycle.
 /// - On touch platforms it is a regular [AppBar], which handles the
-///   status bar safe area.
+///   status bar safe area. Inside an [Oito2NavigationPage] that shows its
+///   bottom bar, the page's leading widget fills an empty [leading] and
+///   its trailing widget follows the [actions].
 class Oito2WindowTitleBar extends StatelessWidget
     implements PreferredSizeWidget {
   /// Creates an adaptive window title bar.
@@ -409,6 +412,7 @@ class Oito2WindowTitleBar extends StatelessWidget
     super.key,
     this.title,
     this.leading,
+    this.leadingWidth,
     this.actions = const [],
     this.centerTitle,
     this.style,
@@ -426,6 +430,12 @@ class Oito2WindowTitleBar extends StatelessWidget
 
   /// A widget placed before the title.
   final Widget? leading;
+
+  /// The width given to [leading] on touch platforms, where the bar is an
+  /// [AppBar]; defaults to the AppBar's square leading slot. Set it when
+  /// [leading] holds more than one button. Desktop and web bars size
+  /// [leading] to its content and ignore it.
+  final double? leadingWidth;
 
   /// Widgets placed after the title.
   final List<Widget> actions;
@@ -477,10 +487,14 @@ class Oito2WindowTitleBar extends StatelessWidget
     final target = settings.platform;
 
     if (target.usesTouchInput) {
+      // The leading and trailing widgets of an enclosing navigation page
+      // that shows its bottom bar join this bar.
+      final slots = Oito2NavigationPage.titleBarWidgetsOf(context);
       return AppBar(
         title: title,
-        leading: leading,
-        actions: actions,
+        leading: leading ?? slots?.leading,
+        leadingWidth: leadingWidth,
+        actions: [...actions, ?slots?.trailing],
         centerTitle: centerTitle,
       );
     }

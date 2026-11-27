@@ -131,6 +131,27 @@ void main() {
       expect(_rate('asdfghjk').hints.first, Oito2PasswordHint.avoidSequences);
     });
 
+    test('counts a character outside the BMP once', () {
+      for (final password in [
+        '😀qwe',
+        '😀😀😀1990',
+        'senha😀1990x',
+        '🔒a😀b',
+      ]) {
+        expect(() => _rate(password), returnsNormally, reason: password);
+      }
+      expect(_rate('😀qwe').hints, contains(Oito2PasswordHint.avoidSequences));
+      expect(
+        _rate('senha😀1990x').hints,
+        contains(Oito2PasswordHint.avoidDates),
+      );
+      expect(_rate('😀😀😀😀').hints, contains(Oito2PasswordHint.avoidRepeats));
+      expect(
+        _rate('😀😁😂🤣').hints,
+        isNot(contains(Oito2PasswordHint.avoidRepeats)),
+      );
+    });
+
     test('suggests avoiding dates and years', () {
       expect(_rate('14/03/1990').hints.first, Oito2PasswordHint.avoidDates);
       expect(_rate('zkq1987wpx').hints, contains(Oito2PasswordHint.avoidDates));
@@ -232,6 +253,16 @@ void main() {
       expect(find.text('Strong'), findsNothing);
     });
 
+    testWidgets('rates a password with an emoji without failing', (
+      tester,
+    ) async {
+      await pumpOito2(tester, const Oito2PasswordField(showStrength: true));
+      await tester.enterText(find.byType(TextField), '😀qwe');
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(find.text('Very weak'), findsOneWidget);
+    });
+
     testWidgets('the level is a live region read with its label', (
       tester,
     ) async {
@@ -276,6 +307,31 @@ void main() {
       await tester.enterText(find.byType(TextField), 'souza#Tree9');
       await tester.pump();
       expect(find.text('Avoid your name or email'), findsOneWidget);
+    });
+
+    testWidgets('new user inputs or a new estimator rate the text again', (
+      tester,
+    ) async {
+      await pumpOito2(tester, const Oito2PasswordField(showStrength: true));
+      await tester.enterText(find.byType(TextField), 'souza#Tree9');
+      await tester.pump();
+      expect(find.text('Avoid your name or email'), findsNothing);
+      await pumpOito2(
+        tester,
+        const Oito2PasswordField(
+          showStrength: true,
+          strengthUserInputs: ['Ana Souza'],
+        ),
+      );
+      expect(find.text('Avoid your name or email'), findsOneWidget);
+      await pumpOito2(
+        tester,
+        Oito2PasswordField(
+          showStrength: true,
+          strengthEstimator: (_) => const Oito2PasswordStrength(1),
+        ),
+      );
+      expect(find.text('Weak'), findsOneWidget);
     });
 
     testWidgets('rates the text of a given controller', (tester) async {

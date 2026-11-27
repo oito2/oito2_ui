@@ -121,14 +121,6 @@ class Oito2Avatar extends StatelessWidget {
     return accents[hash % accents.length].color;
   }
 
-  /// Returns the localized name of [status], which must not be null.
-  String _statusLabel(Oito2Localizations strings) => switch (status!) {
-    Oito2AvatarStatus.online => strings.statusOnline,
-    Oito2AvatarStatus.away => strings.statusAway,
-    Oito2AvatarStatus.busy => strings.statusBusy,
-    Oito2AvatarStatus.offline => strings.statusOffline,
-  };
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -205,7 +197,10 @@ class Oito2Avatar extends StatelessWidget {
         ],
       );
     }
-    final label = [?name, if (status != null) _statusLabel(strings)].join(', ');
+    final label = [
+      ?name,
+      if (status != null) avatarStatusLabel(strings, status),
+    ].join(', ');
     return Semantics(
       image: true,
       label: label.isEmpty ? null : label,

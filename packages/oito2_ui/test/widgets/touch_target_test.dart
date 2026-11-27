@@ -230,6 +230,79 @@ void main() {
       ),
       'rating': () =>
           Oito2Rating(value: 3, onChanged: (_) {}, semanticLabel: 'Quality'),
+      'alert dismiss button': () => SizedBox(
+        width: 360,
+        child: Oito2Alert(
+          type: Oito2InfoType.information,
+          title: const Text('Saved'),
+          onDismiss: () {},
+        ),
+      ),
+      'property list copy button': () => SizedBox(
+        width: 360,
+        child: Oito2PropertyList(
+          properties: const [
+            Oito2Property(label: 'Token', value: 'abc123', copyable: true),
+          ],
+        ),
+      ),
+      'search title field toggle': () => Oito2SearchTitleField(
+        title: const Text('Inbox'),
+        searchActive: false,
+        onSearchActiveChanged: (_) {},
+      ),
+      'compact account switcher': () => Oito2AccountSwitcher(
+        accounts: const [Oito2Account(id: 'ana', name: 'Ana')],
+        current: const Oito2Account(id: 'ana', name: 'Ana'),
+        onSelected: (_) {},
+        compact: true,
+      ),
+      'account switcher': () => SizedBox(
+        width: 260,
+        child: Oito2AccountSwitcher(
+          accounts: const [Oito2Account(id: 'ana', name: 'Ana')],
+          current: const Oito2Account(id: 'ana', name: 'Ana'),
+          onSelected: (_) {},
+        ),
+      ),
+      'expandable header': () => const SizedBox(
+        width: 300,
+        child: Oito2Expandable(header: Text('Details'), child: Text('Body')),
+      ),
+      'expansion panel headers': () => SizedBox(
+        width: 300,
+        child: Oito2ExpansionPanel(
+          headers: const [Text('First'), Text('Second')],
+          children: const [Text('One'), Text('Two')],
+        ),
+      ),
+      'vertical tab bar': () => const DefaultTabController(
+        length: 2,
+        child: SizedBox(
+          width: 200,
+          child: Oito2VerticalTabBar(
+            tabs: [
+              Oito2Tab(label: Text('General')),
+              Oito2Tab(label: Text('About')),
+            ],
+          ),
+        ),
+      ),
+      'vertical steps': () => SizedBox(
+        width: 300,
+        child: Oito2Steps(
+          axis: Axis.vertical,
+          linear: false,
+          steps: const [
+            Oito2Step(title: 'Account'),
+            Oito2Step(title: 'Profile'),
+          ],
+          current: 0,
+          onStepTapped: (_) {},
+        ),
+      ),
+      'shortcut recorder': () =>
+          Oito2ShortcutRecorder(value: null, onChanged: (_) {}),
     };
     for (final MapEntry(key: name, value: build) in cases.entries) {
       testWidgets(name, (tester) => _expectTouchTargets(tester, build()));
@@ -471,6 +544,311 @@ void main() {
         const Size.square(Oito2Sizes.windowControlSize),
       );
       semantics.dispose();
+    });
+
+    testWidgets('copy field keeps the field height and pads its targets', (
+      tester,
+    ) async {
+      await _expectTouchTargets(
+        tester,
+        const SizedBox(width: 300, child: Oito2CopyField(value: 'abc123')),
+      );
+      final field = tester.getSize(find.byType(TextField)).height;
+      await pumpOito2(
+        tester,
+        const Center(child: SizedBox(width: 300, child: TextField())),
+        theme: _touchTheme,
+      );
+      // The copy button doesn't grow the field past a plain one.
+      expect(field, tester.getSize(find.byType(TextField)).height);
+    });
+
+    testWidgets('copy field button reaches 48 pixels on touch', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpOito2(
+        tester,
+        const Center(
+          child: SizedBox(width: 300, child: Oito2CopyField(value: 'abc123')),
+        ),
+        theme: _touchTheme,
+      );
+      expect(
+        tester.getSemantics(find.byTooltip('Copy')).rect.size,
+        const Size.square(48),
+      );
+      expect(
+        tester.getSize(find.byType(Oito2CopyField)).height,
+        greaterThanOrEqualTo(48),
+      );
+      semantics.dispose();
+    });
+
+    for (final style in Oito2NavigationRailStyle.values) {
+      testWidgets('navigation rail items, ${style.name}', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await pumpOito2(
+          tester,
+          Center(
+            child: SizedBox(
+              height: 400,
+              child: Oito2NavigationRail(
+                style: style,
+                items: const [
+                  Oito2NavigationItem(
+                    icon: Icon(LucideIcons.house),
+                    label: 'Home',
+                  ),
+                  Oito2NavigationItem(
+                    icon: Icon(LucideIcons.star),
+                    label: 'Starred',
+                  ),
+                ],
+                selectedIndex: 0,
+                onDestinationSelected: (_) {},
+              ),
+            ),
+          ),
+          theme: _touchTheme,
+        );
+        await tester.pumpAndSettle();
+        final size = tester.getSemantics(find.byIcon(LucideIcons.star)).rect;
+        expect(size.width, greaterThanOrEqualTo(48));
+        expect(size.height, greaterThanOrEqualTo(48));
+        semantics.dispose();
+      });
+    }
+
+    testWidgets('toast close button', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpOito2(
+        tester,
+        Oito2Toaster(child: const SizedBox.expand()),
+        theme: _touchTheme,
+      );
+      tester
+          .state<Oito2ToasterState>(find.byType(Oito2Toaster))
+          .show(const Oito2Toast(title: 'Saved', duration: null));
+      await tester.pumpAndSettle();
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      semantics.dispose();
+    });
+
+    testWidgets('autocomplete suggestions', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpOito2(
+        tester,
+        Align(
+          alignment: Alignment.topCenter,
+          child: SizedBox(
+            width: 300,
+            child: Oito2Autocomplete<String>(
+              collection: Oito2ListCollection(const [
+                'Belo Horizonte',
+                'Bauru',
+              ]),
+              hintText: 'City',
+            ),
+          ),
+        ),
+        theme: _touchTheme,
+      );
+      await tester.enterText(find.byType(TextField), 'B');
+      await tester.pumpAndSettle();
+      expect(find.text('Bauru'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.text('Bauru')).rect.height,
+        greaterThanOrEqualTo(48),
+      );
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      semantics.dispose();
+    });
+
+    testWidgets('bottom sheet snap handle', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpOito2(
+        tester,
+        Builder(
+          builder: (context) => Center(
+            child: ElevatedButton(
+              onPressed: () => showOito2Sheet<void>(
+                context,
+                side: Oito2SheetSide.bottom,
+                snapPoints: const [0.3, 0.8],
+                builder: (context) =>
+                    const Oito2Sheet(title: Text('Sheet'), child: Text('Body')),
+              ),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+        theme: _touchTheme,
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      final size = tester.getSemantics(find.bySemanticsLabel('Resize sheet'));
+      expect(size.rect.height, greaterThanOrEqualTo(48));
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      semantics.dispose();
+    });
+
+    group('row drag handles and the tree chevron', () {
+      final fruits = Oito2ListCollection(const ['Apple', 'Banana']);
+
+      Widget list() => SizedBox(
+        width: 300,
+        height: 200,
+        child: Oito2ListBox(
+          collection: fruits,
+          controller: Oito2SelectionController(collection: fruits),
+          onReorder: (_, _) {},
+          dragHandle: true,
+        ),
+      );
+
+      Widget tree() => SizedBox(
+        width: 300,
+        height: 200,
+        child: Oito2TreeView(
+          controller: Oito2TreeController(),
+          collection: Oito2TreeCollection<void>([
+            const Oito2TreeNode(
+              value: 'docs',
+              children: [Oito2TreeNode(value: 'docs/a.txt')],
+            ),
+          ]),
+        ),
+      );
+
+      final handle = find.byKey(const ValueKey('oito2-drag-handle'));
+      Size chevron(WidgetTester tester) => tester.getSize(
+        find
+            .ancestor(
+              of: find.byIcon(LucideIcons.chevron_right),
+              matching: find.byType(SizedBox),
+            )
+            .first,
+      );
+
+      testWidgets('reach 48 pixels on touch', (tester) async {
+        await pumpOito2(tester, Center(child: list()), theme: _touchTheme);
+        expect(tester.getSize(handle.first), const Size.square(48));
+        await pumpOito2(tester, Center(child: tree()), theme: _touchTheme);
+        expect(chevron(tester).width, 48);
+      });
+
+      testWidgets('keep their pointer size', (tester) async {
+        await pumpOito2(tester, Center(child: list()));
+        expect(tester.getSize(handle.first), const Size.square(24));
+        await pumpOito2(tester, Center(child: tree()));
+        expect(chevron(tester).width, 20);
+      });
+    });
+
+    group('resize handles', () {
+      Widget paned({VoidCallback? onTap, ValueChanged<double>? onSize}) =>
+          SizedBox(
+            width: 600,
+            height: 300,
+            child: Oito2PanedView(
+              initialPaneSize: 200,
+              onPaneSizeChanged: onSize,
+              pane: const SizedBox.expand(),
+              page: Align(
+                alignment: Alignment.centerLeft,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onTap,
+                  child: const SizedBox(width: 60, height: 60),
+                ),
+              ),
+            ),
+          );
+
+      /// Drags with a touch from [dx] pixels to the right of the divider
+      /// of the paned view and returns the change of the pane width.
+      Future<double> dragNearDivider(
+        WidgetTester tester, {
+        required double dx,
+        ThemeData? theme,
+      }) async {
+        var size = 200.0;
+        await pumpOito2(
+          tester,
+          Center(child: paned(onSize: (value) => size = value)),
+          theme: theme,
+        );
+        final view = tester.getTopLeft(find.byType(Oito2PanedView));
+        final divider = view + const Offset(200.5, 150);
+        final gesture = await tester.startGesture(divider + Offset(dx, 0));
+        for (var i = 0; i < 5; i++) {
+          await gesture.moveBy(const Offset(10, 0));
+          await tester.pump();
+        }
+        await gesture.up();
+        await tester.pump();
+        return size - 200;
+      }
+
+      testWidgets('take drags 20 pixels from the divider on touch', (
+        tester,
+      ) async {
+        expect(
+          await dragNearDivider(tester, dx: 20, theme: _touchTheme),
+          greaterThan(0),
+        );
+      });
+
+      testWidgets('keep a narrow drag area on pointer platforms', (
+        tester,
+      ) async {
+        expect(await dragNearDivider(tester, dx: 20), 0);
+      });
+
+      testWidgets('let taps beside the divider reach the widgets below', (
+        tester,
+      ) async {
+        var taps = 0;
+        await pumpOito2(
+          tester,
+          Center(child: paned(onTap: () => taps++)),
+          theme: _touchTheme,
+        );
+        final view = tester.getTopLeft(find.byType(Oito2PanedView));
+        await tester.tapAt(view + const Offset(212, 150));
+        await tester.pump();
+        expect(taps, 1);
+      });
+    });
+
+    testWidgets('floating panel grips straddle the edges on touch', (
+      tester,
+    ) async {
+      Rect? changed;
+      await pumpOito2(
+        tester,
+        SizedBox.expand(
+          child: Stack(
+            children: [
+              Oito2FloatingPanel(
+                title: 'Inspector',
+                initialRect: const Rect.fromLTWH(40, 40, 300, 240),
+                onRectChanged: (rect) => changed = rect,
+                child: const SizedBox.expand(),
+              ),
+            ],
+          ),
+        ),
+        theme: _touchTheme,
+      );
+      // 20 pixels outside the right edge, below the title bar.
+      final gesture = await tester.startGesture(const Offset(360, 200));
+      for (var i = 0; i < 4; i++) {
+        await gesture.moveBy(const Offset(10, 0));
+        await tester.pump();
+      }
+      await gesture.up();
+      await tester.pump();
+      expect(changed?.width, greaterThan(300));
     });
 
     testWidgets('week schedule legend', (tester) async {

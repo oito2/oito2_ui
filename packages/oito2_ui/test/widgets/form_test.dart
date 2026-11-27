@@ -581,6 +581,70 @@ void main() {
       expect(find.text('Enter an email'), findsNothing);
       expect(form.errors, isEmpty);
     });
+
+    // Each builder returns a text-based field on the given controller.
+    final textFields = <String, Widget Function(TextEditingController)>{
+      'password': (controller) =>
+          Oito2PasswordField(labelText: 'Password', controller: controller),
+      'PIN': (controller) => Oito2PinEntry(length: 4, controller: controller),
+      'search': (controller) =>
+          Oito2SearchField(participatesInForm: true, controller: controller),
+    };
+    for (final MapEntry(key: name, value: build) in textFields.entries) {
+      testWidgets('a $name field takes the text of a new controller as '
+          'clean', (tester) async {
+        final form = _controller();
+        final first = TextEditingController(text: '12');
+        final second = TextEditingController(text: '34');
+        addTearDown(first.dispose);
+        addTearDown(second.dispose);
+        await _pumpForm(tester, form, [build(first)]);
+        expect(form.isDirty, isFalse);
+
+        await _pumpForm(tester, form, [build(second)]);
+        await tester.pump();
+        expect(form.isDirty, isFalse);
+
+        second.text = '56';
+        await tester.pump();
+        expect(form.isDirty, isTrue);
+        form.reset();
+        await tester.pump();
+        expect(second.text, '34');
+        expect(form.isDirty, isFalse);
+      });
+    }
+
+    testWidgets('required trims the search text but not the password or '
+        'the PIN', (tester) async {
+      final form = _controller();
+      final password = TextEditingController(text: '   ');
+      final pin = TextEditingController(text: '  ');
+      final search = TextEditingController(text: '   ');
+      addTearDown(password.dispose);
+      addTearDown(pin.dispose);
+      addTearDown(search.dispose);
+      await _pumpForm(tester, form, [
+        Oito2PasswordField(
+          labelText: 'Password',
+          required: true,
+          controller: password,
+        ),
+        Oito2PinEntry(length: 4, required: true, controller: pin),
+        Oito2SearchField(
+          hintText: 'Find',
+          participatesInForm: true,
+          required: true,
+          controller: search,
+        ),
+      ]);
+      expect(form.validate(), isFalse);
+      await tester.pump();
+      expect(
+        [for (final e in form.errors) (e.label, e.message)],
+        [('Find', 'This field is required')],
+      );
+    });
   });
 
   group('Oito2FormErrorSummary', () {

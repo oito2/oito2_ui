@@ -82,8 +82,9 @@ class Oito2CarouselController extends PageController {
 /// an [Oito2PageIndicator] below.
 ///
 /// Pages change by the buttons, the dots, the Left and Right arrow keys
-/// (swapped in right-to-left text) while the carousel has focus (it takes focus as a whole and shows the
-/// focus ring), or a swipe (also with a mouse). The buttons and arrows
+/// (swapped in right-to-left text) while the carousel itself has focus (it
+/// takes focus as a whole and shows the focus ring; arrows pressed while a
+/// button or page content has focus are left to them), or a swipe (also with a mouse). The buttons and arrows
 /// wrap around when [loop] is true, jumping straight to the other end.
 /// Automatic scrolling comes from an [Oito2CarouselController].
 class Oito2Carousel extends StatefulWidget {
@@ -267,8 +268,12 @@ class _Oito2CarouselState extends State<Oito2Carousel>
           _focused = value;
           _schedule();
         },
+        // The arrows change pages only while the carousel itself has the
+        // focus; a focused button or page content keeps them.
         onKeyEvent: (node, event) {
-          if (event is! KeyDownEvent) return KeyEventResult.ignored;
+          if (event is! KeyDownEvent || !node.hasPrimaryFocus) {
+            return KeyEventResult.ignored;
+          }
           final forward = rtl
               ? LogicalKeyboardKey.arrowLeft
               : LogicalKeyboardKey.arrowRight;

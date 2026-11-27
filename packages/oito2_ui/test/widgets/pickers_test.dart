@@ -585,6 +585,33 @@ void main() {
       await tester.pumpAndSettle();
       expect(_hostValue<List<String>>(tester), ['Dart', 'Flutter']);
     });
+
+    testWidgets('a refused suggestion stays in the input', (tester) async {
+      await pumpOito2(
+        tester,
+        SizedBox(
+          width: 400,
+          child: _Host<List<String>>(
+            initial: const ['Dart'],
+            builder: (value, set) => Oito2TagsField(
+              tags: value,
+              onChanged: set,
+              tagValidator: (tag) => tag != 'Flutter',
+              suggestions: Oito2ListCollection(const ['Flutter', 'Fuchsia']),
+            ),
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(TextField), 'f');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Flutter'));
+      await tester.pumpAndSettle();
+      expect(_hostValue<List<String>>(tester), ['Dart']);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Flutter',
+      );
+    });
   });
 
   group('Oito2Rating', () {
@@ -750,17 +777,39 @@ void main() {
         Oito2SelectionMode.single,
         onActivate: activated.add,
       );
+      // The rows show the ungrouped items first and then group B: Apple,
+      // Cherry (disabled), Date, [B] Banana, Blueberry. The arrows, Home
+      // and End follow that order.
       await _key(tester, LogicalKeyboardKey.tab);
       expect(controller.selectedValues, isEmpty);
       await _key(tester, LogicalKeyboardKey.arrowDown);
+      expect(controller.selectedValues, ['Date']);
+      await _key(tester, LogicalKeyboardKey.arrowDown);
       expect(controller.selectedValues, ['Banana']);
       await _key(tester, LogicalKeyboardKey.end);
-      expect(controller.selectedValues, ['Date']);
-      await _key(tester, LogicalKeyboardKey.arrowUp);
       expect(controller.selectedValues, ['Blueberry']);
+      await _key(tester, LogicalKeyboardKey.arrowUp);
+      expect(controller.selectedValues, ['Banana']);
       await _key(tester, LogicalKeyboardKey.enter);
-      expect(activated, ['Blueberry']);
+      expect(activated, ['Banana']);
       expect(find.text('B'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Date')).dy,
+        lessThan(tester.getTopLeft(find.text('Banana')).dy),
+      );
+    });
+
+    testWidgets('Shift+click selects the rows shown between the two', (
+      tester,
+    ) async {
+      final controller = await pumpList(tester, Oito2SelectionMode.multiple);
+      await tester.tap(find.text('Apple'));
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.tap(find.text('Date'));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pump();
+      expect(controller.selectedValues, ['Apple', 'Date']);
     });
 
     testWidgets('a double click activates; two slow clicks do not', (
@@ -799,21 +848,21 @@ void main() {
       await tester.pump();
       expect(controller.selectedValues, ['Apple']);
       await _key(tester, LogicalKeyboardKey.arrowDown, shift: true);
-      expect(controller.selectedValues, ['Apple', 'Banana']);
+      expect(controller.selectedValues, ['Apple', 'Date']);
       await _key(tester, LogicalKeyboardKey.arrowDown);
       await _key(tester, LogicalKeyboardKey.space);
-      expect(controller.selectedValues, ['Apple', 'Banana', 'Blueberry']);
+      expect(controller.selectedValues, ['Apple', 'Date', 'Banana']);
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.tap(find.text('Banana'));
+      await tester.tap(find.text('Date'));
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
       await tester.pump();
-      expect(controller.selectedValues, ['Apple', 'Blueberry']);
+      expect(controller.selectedValues, ['Apple', 'Banana']);
       await _key(tester, LogicalKeyboardKey.keyA, control: true);
       expect(controller.selectedValues, [
         'Apple',
+        'Date',
         'Banana',
         'Blueberry',
-        'Date',
       ]);
     });
 
@@ -898,6 +947,33 @@ void main() {
       await tester.tap(find.bySemanticsLabel('#2EC27E'));
       await tester.pump();
       expect(_hostValue<Color>(tester).toARGB32(), 0xFF2EC27E);
+    });
+
+    testWidgets('without alpha, a swatch keeps the opacity and shows '
+        'selected', (tester) async {
+      await pumpOito2(
+        tester,
+        Center(
+          child: _Host<Color>(
+            initial: const Color(0x803584E4),
+            builder: (value, set) => Oito2ColorPicker(
+              value: value,
+              onChanged: set,
+              showAlpha: false,
+              swatches: const [Color(0xFF2EC27E)],
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.bySemanticsLabel('#2EC27E'));
+      await tester.pump();
+      expect(_hostValue<Color>(tester).toARGB32(), 0x802EC27E);
+      final disk = tester.widget<Oito2ColorDisk>(
+        find.byWidgetPredicate(
+          (w) => w is Oito2ColorDisk && w.label == '#2EC27E',
+        ),
+      );
+      expect(disk.selected, isTrue);
     });
 
     testWidgets('assistive technologies adjust saturation and brightness', (
@@ -1141,6 +1217,57 @@ void main() {
         );
         expect(iconOf('Previous month').icon, back, reason: direction.name);
         expect(iconOf('Next month').icon, forward, reason: direction.name);
+      }
+    });
+
+    testWidgets('the range band joins the ends in both directions', (
+      tester,
+    ) async {
+      for (final direction in TextDirection.values) {
+        await pumpOito2(
+          tester,
+          Center(
+            child: Oito2Calendar(
+              firstDate: DateTime(2026),
+              lastDate: DateTime(2026, 12, 31),
+              initialMonth: DateTime(2026, 3),
+              selectedRange: DateTimeRange(
+                start: DateTime(2026, 3, 10),
+                end: DateTime(2026, 3, 12),
+              ),
+              onRangeSelected: (_) {},
+            ),
+          ),
+          textDirection: direction,
+        );
+        // The band of a day: its colored, childless containers.
+        Rect bandOf(String day) => tester.getRect(
+          find.descendant(
+            of: find
+                .ancestor(of: find.text(day), matching: find.byType(Stack))
+                .first,
+            matching: find.byWidgetPredicate(
+              (w) =>
+                  w is Container &&
+                  w.child == null &&
+                  (w.decoration as BoxDecoration?)?.color != null,
+            ),
+          ),
+        );
+        final start = bandOf('10');
+        final end = bandOf('12');
+        final middle = tester.getCenter(find.text('11'));
+        // Each end's half band reaches toward the middle day.
+        expect(
+          (start.center.dx - middle.dx).abs(),
+          lessThan((tester.getCenter(find.text('10')).dx - middle.dx).abs()),
+          reason: direction.name,
+        );
+        expect(
+          (end.center.dx - middle.dx).abs(),
+          lessThan((tester.getCenter(find.text('12')).dx - middle.dx).abs()),
+          reason: direction.name,
+        );
       }
     });
 

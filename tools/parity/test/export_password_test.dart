@@ -88,6 +88,12 @@ const samples = [
   '密码密码密码',
   'Пароль2024',
   '        ',
+  '😀qwe',
+  'senha😀1990x',
+  '😀😀😀1990',
+  '😀😀😀😀',
+  '😀😁😂🤣',
+  'abc😀abc😀abc😀',
 ];
 
 /// The inputs the user-input samples are rated with: a name and an email.

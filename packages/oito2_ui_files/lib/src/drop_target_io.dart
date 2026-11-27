@@ -40,15 +40,19 @@ Widget buildDropTarget({
     enable: enabled,
     onDragEntered: (_) => onHover(true),
     onDragExited: (_) => onHover(false),
-    onDragDone: (details) => _drop(details.files, onDrop),
+    onDragDone: (details) => dropExistingFiles(details.files, onDrop),
     child: child,
   );
 }
 
 /// Hands the dropped [items] that exist in the file system to [onDrop],
 /// with directories marked as such; dragged items that aren't local paths,
-/// such as web links, are skipped.
-Future<void> _drop(List<XFile> items, ValueChanged<List<XFile>> onDrop) async {
+/// such as web links, are skipped, and [onDrop] isn't called when none
+/// is left.
+Future<void> dropExistingFiles(
+  List<XFile> items,
+  ValueChanged<List<XFile>> onDrop,
+) async {
   final existing = <XFile>[];
   for (final item in items) {
     if (item.path.isEmpty) continue;

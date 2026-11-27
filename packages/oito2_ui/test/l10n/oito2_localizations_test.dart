@@ -70,6 +70,12 @@ void main() {
       expect(const Oito2LocalizationsPtBr().partOf(1, 3), 'Parte 1 de 3');
     });
 
+    test('the Portuguese presence statuses use neutral forms', () {
+      const pt = Oito2LocalizationsPtBr();
+      expect(pt.statusBusy, 'Indisponível');
+      expect(pt.statusAway, 'Ausente');
+    });
+
     test('forLocale picks Portuguese for any pt locale', () {
       expect(
         Oito2Localizations.forLocale(const Locale('pt')),

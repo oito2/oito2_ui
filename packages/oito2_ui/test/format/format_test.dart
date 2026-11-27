@@ -171,6 +171,10 @@ void main() {
       expect(Oito2HighlightedText.matches('Straße', 'strasse'), const [
         TextRange(start: 0, end: 6),
       ]);
+      // A match of the first "s" of "ß" takes the whole letter.
+      expect(Oito2HighlightedText.matches('Straße', 'stras'), const [
+        TextRange(start: 0, end: 5),
+      ]);
       expect(Oito2HighlightedText.matches('İstanbul', 'stan'), const [
         TextRange(start: 1, end: 5),
       ]);

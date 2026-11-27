@@ -318,4 +318,23 @@ void main() {
     expect((border()! as Border).top.width, Oito2Sizes.focusBorderWidth);
     await _dispose(tester);
   }, variant: _linux);
+
+  testWidgets('the semantics value holds at most 20000 characters', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    final line = '${'a' * 99}\n';
+    final controller = CodeLineEditingController.fromText(line * 300);
+    addTearDown(controller.dispose);
+    await _pump(tester, Oito2CodeEditor(controller: controller, minLines: 2));
+    String value() => tester.getSemantics(find.byType(Oito2CodeEditor)).value;
+    expect(controller.text.length, greaterThan(20000));
+    expect(value(), controller.text.substring(0, 20000));
+
+    controller.text = 'short';
+    await tester.pump();
+    expect(value(), 'short');
+    await _dispose(tester);
+    handle.dispose();
+  }, variant: _linux);
 }

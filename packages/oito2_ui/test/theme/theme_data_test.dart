@@ -408,6 +408,85 @@ void main() {
       expect(await cursorOver(find.text('Disabled')), SystemMouseCursors.basic);
     });
 
+    testWidgets('dials, rail labels, recorders and sheet handles show the '
+        'click cursor', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: Oito2Theme.light(platform: _linux),
+          localizationsDelegates: const [Oito2Localizations.delegate],
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => Row(
+                children: [
+                  SizedBox(
+                    height: 300,
+                    child: Oito2NavigationRail(
+                      style: Oito2NavigationRailStyle.labelled,
+                      items: const [
+                        Oito2NavigationItem(
+                          icon: Icon(Icons.home),
+                          label: 'Home',
+                        ),
+                        Oito2NavigationItem(
+                          icon: Icon(Icons.star),
+                          label: 'Starred',
+                        ),
+                      ],
+                      selectedIndex: 0,
+                      onDestinationSelected: (_) {},
+                    ),
+                  ),
+                  Oito2AngleSlider(value: 90, onChanged: (_) {}, size: 80),
+                  Oito2ShortcutRecorder(value: null, onChanged: (_) {}),
+                  TextButton(
+                    onPressed: () => showOito2Sheet<void>(
+                      context,
+                      side: Oito2SheetSide.bottom,
+                      snapPoints: const [0.3, 0.8],
+                      builder: (context) => const Oito2Sheet(
+                        title: Text('Sheet'),
+                        child: SizedBox(),
+                      ),
+                    ),
+                    child: const Text('Open'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      addTearDown(mouse.removePointer);
+      Future<MouseCursor?> cursorAt(Offset position) async {
+        await mouse.moveTo(position);
+        await tester.pump();
+        return RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1);
+      }
+
+      expect(
+        await cursorAt(tester.getCenter(find.text('Starred'))),
+        SystemMouseCursors.click,
+      );
+      expect(
+        await cursorAt(tester.getCenter(find.byType(Oito2AngleSlider))),
+        SystemMouseCursors.click,
+      );
+      expect(
+        await cursorAt(tester.getCenter(find.byType(Oito2ShortcutRecorder))),
+        SystemMouseCursors.click,
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      // The handle sits right above the sheet content.
+      final sheet = tester.getRect(find.byType(Oito2Sheet));
+      expect(
+        await cursorAt(Offset(sheet.center.dx, sheet.top - 12)),
+        SystemMouseCursors.click,
+      );
+    });
+
     testWidgets('buttons are 34 tall on pointer platforms', (tester) async {
       await pump(
         tester,

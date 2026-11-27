@@ -523,12 +523,68 @@ void main() {
     Future<Oito2ToasterState> pumpToaster(
       WidgetTester tester, {
       int maxVisible = 3,
+      Oito2ToasterPlacement placement = Oito2ToasterPlacement.bottom,
+      TextDirection direction = TextDirection.ltr,
     }) async {
       await pumpOito2(
         tester,
-        Oito2Toaster(maxVisible: maxVisible, child: const SizedBox.expand()),
+        Directionality(
+          textDirection: direction,
+          child: Oito2Toaster(
+            maxVisible: maxVisible,
+            placement: placement,
+            child: const SizedBox.expand(),
+          ),
+        ),
       );
       return tester.state<Oito2ToasterState>(find.byType(Oito2Toaster));
+    }
+
+    for (final (placement, direction, side) in [
+      (Oito2ToasterPlacement.topStart, TextDirection.ltr, -1),
+      (Oito2ToasterPlacement.top, TextDirection.ltr, 0),
+      (Oito2ToasterPlacement.topEnd, TextDirection.ltr, 1),
+      (Oito2ToasterPlacement.topStart, TextDirection.rtl, 1),
+      (Oito2ToasterPlacement.topEnd, TextDirection.rtl, -1),
+    ]) {
+      testWidgets('${placement.name} stacks toasts at the top, oldest '
+          'first, ${direction.name}', (tester) async {
+        final toaster = await pumpToaster(
+          tester,
+          placement: placement,
+          direction: direction,
+        );
+        expect(placement.isTop, isTrue);
+        toaster
+          ..show(const Oito2Toast(title: 'First', duration: null))
+          ..show(const Oito2Toast(title: 'Second', duration: null));
+        await tester.pumpAndSettle();
+        final screen = tester.getSize(find.byType(Oito2Toaster));
+        final first = tester.getRect(
+          find
+              .ancestor(of: find.text('First'), matching: find.byType(Material))
+              .first,
+        );
+        final second = tester.getRect(
+          find
+              .ancestor(
+                of: find.text('Second'),
+                matching: find.byType(Material),
+              )
+              .first,
+        );
+        expect(first.top, lessThan(second.top));
+        expect(first.top, lessThan(screen.height / 4));
+        final center = first.center.dx;
+        switch (side) {
+          case -1:
+            expect(first.left, lessThan(screen.width / 4));
+          case 1:
+            expect(first.right, greaterThan(screen.width * 3 / 4));
+          default:
+            expect(center, moreOrLessEquals(screen.width / 2, epsilon: 1));
+        }
+      });
     }
 
     testWidgets('shows a toast and dismisses it after its time', (
@@ -717,6 +773,38 @@ void main() {
       await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
       await tester.pumpAndSettle();
       expect(find.text('Copy'), findsOneWidget);
+    });
+
+    testWidgets('a disabled region leaves Shift+F10 to the ancestors', (
+      tester,
+    ) async {
+      var outer = 0;
+      await pumpOito2(
+        tester,
+        CallbackShortcuts(
+          bindings: {
+            const SingleActivator(LogicalKeyboardKey.f10, shift: true): () =>
+                outer++,
+          },
+          child: Center(
+            child: Oito2ContextMenuRegion(
+              enabled: false,
+              menuChildren: [
+                MenuItemButton(onPressed: () {}, child: const Text('Copy')),
+              ],
+              child: TextButton(onPressed: () {}, child: const Text('Target')),
+            ),
+          ),
+        ),
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.f10);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pumpAndSettle();
+      expect(find.text('Copy'), findsNothing);
+      expect(outer, 1);
     });
 
     testWidgets('from the keyboard it focuses the first item', (tester) async {
@@ -986,6 +1074,24 @@ void main() {
       await tester.tap(find.text('B'));
       await tester.pumpAndSettle();
       expect(taps, ['second']);
+      expect(controller.index, 2);
+    });
+
+    testWidgets('a wait-for-tap step offers Next to assistive technologies', (
+      tester,
+    ) async {
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(accessibleNavigation: true);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
+      final (controller, _, _) = await pumpTour(tester, waitForTap: true);
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      expect(controller.index, 1);
+      expect(find.text('Next'), findsOneWidget);
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
       expect(controller.index, 2);
     });
   });

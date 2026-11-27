@@ -18,4 +18,6 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- `Oito2NativeWindowController`: a close handler that throws keeps the window open and reports its error through `FlutterError.reportError`, instead of leaving an uncaught error; the next close request asks the handlers again.
+- `Oito2NativeWindowController.dispose` lets the native close through again when close handlers held it back, so the window can still be closed, and forgets the handlers; calling it again does nothing.
 - `Oito2NativeWindowController.refresh` keeps the last state when the window can't be queried, when a window event arrives meanwhile, or after `dispose`.

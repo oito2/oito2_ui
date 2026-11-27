@@ -261,6 +261,10 @@ class Oito2SparklineStats {
 /// rising". It doesn't animate value changes.
 class Oito2Sparkline extends StatelessWidget {
   /// Creates a sparkline of [values].
+  ///
+  /// Throws an [AssertionError] in debug mode when [min] or [max] is NaN
+  /// or infinite, when [strokeWidth] isn't positive, or when [height] or
+  /// [trendThreshold] is negative.
   const Oito2Sparkline({
     super.key,
     required this.values,
@@ -280,7 +284,22 @@ class Oito2Sparkline extends StatelessWidget {
     this.trendThreshold = Oito2SparklineStats.defaultTrendThreshold,
   }) : assert(strokeWidth > 0),
        assert(height >= 0),
-       assert(trendThreshold >= 0);
+       assert(trendThreshold >= 0),
+       // A NaN is the only value that differs from itself.
+       assert(
+         min == null ||
+             (min == min &&
+                 min != double.infinity &&
+                 min != double.negativeInfinity),
+         'The min of Oito2Sparkline must be a finite number.',
+       ),
+       assert(
+         max == null ||
+             (max == max &&
+                 max != double.infinity &&
+                 max != double.negativeInfinity),
+         'The max of Oito2Sparkline must be a finite number.',
+       );
 
   /// The width used when the parent doesn't bound it and [width] is null.
   static const double defaultWidth = 120;

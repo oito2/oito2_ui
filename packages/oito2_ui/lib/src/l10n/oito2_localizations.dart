@@ -251,6 +251,10 @@ abstract class Oito2Localizations {
   /// The accessibility action that moves a widget right.
   String get moveRight;
 
+  /// The accessibility action that opens, or activates, an item of a list
+  /// or tree.
+  String get activateItem;
+
   /// The label of a page button, such as "Page 3".
   String pageNumber(int page);
 
@@ -416,6 +420,9 @@ abstract class Oito2Localizations {
 
   /// Why [name] was refused: it is a folder, not a file.
   String folderNotAccepted(String name);
+
+  /// Why the file [name] was refused: its size couldn't be read.
+  String fileUnreadable(String name);
 
   /// The button that saves a file to the device.
   String get download;
@@ -835,6 +842,9 @@ class Oito2LocalizationsEn extends Oito2Localizations {
   String get moveRight => 'Move right';
 
   @override
+  String get activateItem => 'Open';
+
+  @override
   String pageNumber(int page) => 'Page $page';
 
   @override
@@ -1000,6 +1010,9 @@ class Oito2LocalizationsEn extends Oito2Localizations {
 
   @override
   String folderNotAccepted(String name) => '$name: folders are not accepted';
+
+  @override
+  String fileUnreadable(String name) => '$name: the file could not be read';
 
   @override
   String get download => 'Download';
@@ -1400,6 +1413,9 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
   String get moveRight => 'Mover para a direita';
 
   @override
+  String get activateItem => 'Abrir';
+
+  @override
   String pageNumber(int page) => 'Página $page';
 
   @override
@@ -1484,7 +1500,7 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
   String get statusAway => 'Ausente';
 
   @override
-  String get statusBusy => 'Ocupado';
+  String get statusBusy => 'Indisponível';
 
   @override
   String get statusOffline => 'Offline';
@@ -1566,6 +1582,9 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String folderNotAccepted(String name) => '$name: pastas não são aceitas';
+
+  @override
+  String fileUnreadable(String name) => '$name: não foi possível ler o arquivo';
 
   @override
   String get download => 'Baixar';

@@ -119,6 +119,7 @@ class Oito2SystemSettingsReader {
     this.platformReduceMotion = _unknownMotion,
     this.platformTextScaleFactor = _unknownTextScale,
     this.debounce = const Duration(milliseconds: 150),
+    this.onClose,
   });
 
   static bool _never() => false;
@@ -172,6 +173,14 @@ class Oito2SystemSettingsReader {
   /// burst of changes produces one update.
   final Duration debounce;
 
+  /// Called by [close] after the sources are closed, to release what the
+  /// sources share, such as D-Bus connections passed to them.
+  final Future<void> Function()? onClose;
+
+  /// How long [read] waits for each desktop portal setting before it
+  /// takes the setting as missing.
+  static const portalTimeout = Duration(seconds: 1);
+
   static const _gnomeWm = 'org.gnome.desktop.wm.preferences';
   static const _cinnamonWm = 'org.cinnamon.desktop.wm.preferences';
   static const _mateWm = 'org.mate.Marco.general';
@@ -213,34 +222,54 @@ class Oito2SystemSettingsReader {
   /// Reads the current settings from every source.
   ///
   /// A source that fails to read counts as missing, so its value falls
-  /// back to the desktop default.
+  /// back to the desktop default. On native Linux the independent
+  /// settings are read at the same time, each configuration file is read
+  /// once, and a desktop portal setting that doesn't answer within
+  /// [portalTimeout] counts as missing; [watch] reads again when the
+  /// portal reports a change.
   Future<Oito2SystemSettings> read() async {
     final environment = desktopEnvironment;
     final fallback = Oito2SystemSettings.fallback(
       platform,
       desktopEnvironment: environment,
     );
-    final layout = environment == null
-        ? null
-        : await _buttonLayout(environment);
-    final accentColor = environment == null
-        ? await _safe(accent.read)
-        : await _linuxAccent(environment);
-    final highContrast =
-        platformHighContrast() ||
-        (environment != null && await _linuxHighContrast(environment));
-    final scheme = environment == null
-        ? platformBrightness()
-        : await _linuxColorScheme(environment);
-    final reduceMotion = environment == null
-        ? platformReduceMotion()
-        : await _linuxReduceMotion(environment);
-    final textScaleFactor = environment == null
-        ? platformTextScaleFactor()
-        : await _linuxTextScaleFactor(environment);
-    final cursorSize = environment == null
-        ? null
-        : await _linuxCursorSize(environment);
+    final Oito2WindowButtonLayout? layout;
+    final Color? accentColor;
+    final bool highContrast;
+    final Brightness? scheme;
+    final bool? reduceMotion;
+    final double? textScaleFactor;
+    final int? cursorSize;
+    if (environment == null) {
+      layout = null;
+      accentColor = await _safe(accent.read);
+      highContrast = platformHighContrast();
+      scheme = platformBrightness();
+      reduceMotion = platformReduceMotion();
+      textScaleFactor = platformTextScaleFactor();
+      cursorSize = null;
+    } else {
+      final files = _FileReads(configFiles);
+      final bool linuxHighContrast;
+      (
+        layout,
+        accentColor,
+        linuxHighContrast,
+        scheme,
+        reduceMotion,
+        textScaleFactor,
+        cursorSize,
+      ) = await (
+        _buttonLayout(environment, files),
+        _linuxAccent(environment, files),
+        _linuxHighContrast(environment, files),
+        _linuxColorScheme(environment, files),
+        _linuxReduceMotion(environment, files),
+        _linuxTextScaleFactor(environment, files),
+        _linuxCursorSize(environment, files),
+      ).wait;
+      highContrast = platformHighContrast() || linuxHighContrast;
+    }
     return Oito2SystemSettings(
       platform: platform,
       desktopEnvironment: environment,
@@ -314,6 +343,7 @@ class Oito2SystemSettingsReader {
     await portalAccent.close();
     await colorScheme.close();
     await reducedMotion.close();
+    await onClose?.call();
   }
 
   /// The change streams of the sources that [read] uses on this platform
@@ -364,10 +394,11 @@ class Oito2SystemSettingsReader {
   /// GSettings key is missing or unparsable.
   Future<Oito2WindowButtonLayout?> _buttonLayout(
     Oito2DesktopEnvironment environment,
+    _FileReads files,
   ) async {
     switch (environment) {
       case Oito2DesktopEnvironment.kde:
-        final kwinrc = await _safe(() => configFiles.read(_kwinrc)) ?? '';
+        final kwinrc = await files.read(_kwinrc) ?? '';
         const group = 'org.kde.kdecoration2';
         // Missing keys use KWin's default buttons.
         return Oito2WindowButtonLayout.parseKde(
@@ -379,7 +410,7 @@ class Oito2SystemSettingsReader {
               'HIAX',
         );
       case Oito2DesktopEnvironment.xfce:
-        final xml = await _safe(() => configFiles.read(_xfwm)) ?? '';
+        final xml = await files.read(_xfwm) ?? '';
         // A missing property uses xfwm4's default layout.
         return Oito2WindowButtonLayout.parseXfwm(
           Oito2ConfigParsers.xfconfProperty(xml, 'button_layout') ?? 'O|SHMC',
@@ -387,7 +418,7 @@ class Oito2SystemSettingsReader {
       case Oito2DesktopEnvironment.cosmic:
         // A missing or unparsable flag shows the button.
         Future<bool> flag(String path) async {
-          final content = await _safe(() => configFiles.read(path));
+          final content = await files.read(path);
           return content == null
               ? true
               : Oito2ConfigParsers.cosmicBool(content) ?? true;
@@ -421,11 +452,14 @@ class Oito2SystemSettingsReader {
   /// The GNOME `accent-color` key is read on GNOME alone: other desktops
   /// may install its schema without using it, and its default would hide
   /// their theme's accent.
-  Future<Color?> _linuxAccent(Oito2DesktopEnvironment environment) async {
-    final portal = await _safe(portalAccent.read);
+  Future<Color?> _linuxAccent(
+    Oito2DesktopEnvironment environment,
+    _FileReads files,
+  ) async {
+    final portal = await _portal(portalAccent.read);
     if (portal != null) return portal;
     if (environment == Oito2DesktopEnvironment.kde) {
-      final globals = await _safe(() => configFiles.read(_kdeglobals)) ?? '';
+      final globals = await files.read(_kdeglobals) ?? '';
       final value = Oito2ConfigParsers.iniValue(
         globals,
         'General',
@@ -445,9 +479,12 @@ class Oito2SystemSettingsReader {
   }
 
   /// Whether the desktop settings of [environment] ask for high contrast.
-  Future<bool> _linuxHighContrast(Oito2DesktopEnvironment environment) async {
+  Future<bool> _linuxHighContrast(
+    Oito2DesktopEnvironment environment,
+    _FileReads files,
+  ) async {
     if (environment == Oito2DesktopEnvironment.kde) {
-      final globals = await _safe(() => configFiles.read(_kdeglobals)) ?? '';
+      final globals = await files.read(_kdeglobals) ?? '';
       final scheme =
           Oito2ConfigParsers.iniValue(globals, 'General', 'ColorScheme') ?? '';
       return scheme.toLowerCase().contains('contrast');
@@ -467,19 +504,20 @@ class Oito2SystemSettingsReader {
   /// preference.
   Future<Brightness?> _linuxColorScheme(
     Oito2DesktopEnvironment environment,
+    _FileReads files,
   ) async {
-    final portal = await _safe(colorScheme.read);
+    final portal = await _portal(colorScheme.read);
     if (portal != null) return portal;
     switch (environment) {
       case Oito2DesktopEnvironment.kde:
-        final globals = await _safe(() => configFiles.read(_kdeglobals)) ?? '';
+        final globals = await files.read(_kdeglobals) ?? '';
         final scheme =
             Oito2ConfigParsers.iniValue(globals, 'General', 'ColorScheme') ??
             Oito2ConfigParsers.iniValue(globals, 'KDE', 'LookAndFeelPackage') ??
             '';
         return scheme.toLowerCase().contains('dark') ? Brightness.dark : null;
       case Oito2DesktopEnvironment.cosmic:
-        final content = await _safe(() => configFiles.read(_cosmicDark));
+        final content = await files.read(_cosmicDark);
         return switch (content == null
             ? null
             : Oito2ConfigParsers.cosmicBool(content)) {
@@ -505,10 +543,13 @@ class Oito2SystemSettingsReader {
   /// Whether [environment] or the platform asks for reduced motion: true
   /// when any source asks for it, false when a source states no such
   /// preference, null when none is available.
-  Future<bool?> _linuxReduceMotion(Oito2DesktopEnvironment environment) async {
+  Future<bool?> _linuxReduceMotion(
+    Oito2DesktopEnvironment environment,
+    _FileReads files,
+  ) async {
     final answers = <bool?>[
       platformReduceMotion(),
-      await _safe(reducedMotion.read),
+      await _portal(reducedMotion.read),
     ];
     // A turned-off animation switch asks for reduced motion.
     Future<bool?> animationsOff(String schema, String key) async {
@@ -518,7 +559,7 @@ class Oito2SystemSettingsReader {
 
     switch (environment) {
       case Oito2DesktopEnvironment.kde:
-        final globals = await _safe(() => configFiles.read(_kdeglobals)) ?? '';
+        final globals = await files.read(_kdeglobals) ?? '';
         final factor = double.tryParse(
           Oito2ConfigParsers.iniValue(
                 globals,
@@ -560,6 +601,7 @@ class Oito2SystemSettingsReader {
   /// desktop has no such setting or leaves it to the automatic DPI.
   Future<double?> _linuxTextScaleFactor(
     Oito2DesktopEnvironment environment,
+    _FileReads files,
   ) async {
     // Converts a font DPI to a factor; 0 or less is the automatic DPI.
     double? fromDpi(num? dpi) =>
@@ -576,14 +618,14 @@ class Oito2SystemSettingsReader {
       case Oito2DesktopEnvironment.kde:
         // Plasma applies the forced font DPI on X11 only.
         if (this.environment['XDG_SESSION_TYPE'] == 'wayland') return 1.0;
-        final fonts = await _safe(() => configFiles.read(_kcmfonts)) ?? '';
+        final fonts = await files.read(_kcmfonts) ?? '';
         final dpi = int.tryParse(
           Oito2ConfigParsers.iniValue(fonts, 'General', 'forceFontDPI') ?? '',
         );
         // An unforced DPI leaves text at its normal size.
         return fromDpi(dpi) ?? 1.0;
       case Oito2DesktopEnvironment.xfce:
-        final xml = await _safe(() => configFiles.read(_xsettings));
+        final xml = await files.read(_xsettings);
         final value = xml == null
             ? null
             : Oito2ConfigParsers.xfconfProperty(xml, 'DPI');
@@ -605,7 +647,10 @@ class Oito2SystemSettingsReader {
 
   /// Reads the cursor size of [environment], or null when it is unknown or
   /// left to the cursor theme's default.
-  Future<int?> _linuxCursorSize(Oito2DesktopEnvironment environment) async {
+  Future<int?> _linuxCursorSize(
+    Oito2DesktopEnvironment environment,
+    _FileReads files,
+  ) async {
     int? positive(int? size) => size == null || size <= 0 ? null : size;
 
     Future<int?> gsettingsSize(String schema) async {
@@ -615,23 +660,23 @@ class Oito2SystemSettingsReader {
 
     switch (environment) {
       case Oito2DesktopEnvironment.kde:
-        final input = await _safe(() => configFiles.read(_kcminputrc)) ?? '';
+        final input = await files.read(_kcminputrc) ?? '';
         final value = Oito2ConfigParsers.iniValue(input, 'Mouse', 'cursorSize');
         // A missing size is KDE's default of 24.
         return positive(value == null ? 24 : int.tryParse(value));
       case Oito2DesktopEnvironment.xfce:
-        final xml = await _safe(() => configFiles.read(_xsettings)) ?? '';
+        final xml = await files.read(_xsettings) ?? '';
         final value = Oito2ConfigParsers.xfconfProperty(xml, 'CursorThemeSize');
         return positive(value == null ? null : int.tryParse(value));
       case Oito2DesktopEnvironment.cosmic:
-        final content = await _safe(() => configFiles.read(_cosmicCursorSize));
+        final content = await files.read(_cosmicCursorSize);
         return positive(
           content == null
               ? null
               : Oito2ConfigParsers.cosmicOptionalInt(content),
         );
       case Oito2DesktopEnvironment.lxqt:
-        final session = await _safe(() => configFiles.read(_lxqtSession)) ?? '';
+        final session = await files.read(_lxqtSession) ?? '';
         final value = Oito2ConfigParsers.iniValue(
           session,
           'Mouse',
@@ -647,6 +692,11 @@ class Oito2SystemSettingsReader {
     }
   }
 
+  /// Runs [read] on a desktop portal source, turning an error or an answer
+  /// slower than [portalTimeout] into null.
+  static Future<T?> _portal<T>(Future<T?> Function() read) =>
+      _safe(() => read().timeout(portalTimeout));
+
   /// Runs [read], turning any error into null so one broken store never
   /// prevents reading the others.
   static Future<T?> _safe<T>(Future<T?> Function() read) async {
@@ -656,4 +706,20 @@ class Oito2SystemSettingsReader {
       return null;
     }
   }
+}
+
+/// The configuration files of one [Oito2SystemSettingsReader.read], each
+/// read once however many settings use it.
+class _FileReads {
+  _FileReads(this._source);
+
+  final Oito2ConfigFileSource _source;
+  final Map<String, Future<String?>> _reads = {};
+
+  /// Returns the content of the file at [relativePath], or null when it is
+  /// missing or fails to read.
+  Future<String?> read(String relativePath) => _reads.putIfAbsent(
+    relativePath,
+    () => Oito2SystemSettingsReader._safe(() => _source.read(relativePath)),
+  );
 }

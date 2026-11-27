@@ -293,8 +293,8 @@ class DocText extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: Oito2Spacing.sm),
       child: SelectionArea(
-        child: Text.rich(
-          inlineSpan(context, text),
+        child: DocInlineText(
+          text,
           style: style ?? Theme.of(context).textTheme.bodyMedium,
         ),
       ),
@@ -302,8 +302,70 @@ class DocText extends StatelessWidget {
   }
 }
 
-/// Returns [text], in inline Markdown, as styled spans.
-InlineSpan inlineSpan(BuildContext context, String text) {
+/// Inline Markdown text whose links open with [openDocLink].
+///
+/// The tap recognizers of the links live as long as the widget and are
+/// made again only when [text] changes.
+class DocInlineText extends StatefulWidget {
+  /// Creates the text of [text], in inline Markdown.
+  const DocInlineText(this.text, {super.key, this.style});
+
+  /// The inline Markdown text.
+  final String text;
+
+  /// The text style; defaults to the ambient text style.
+  final TextStyle? style;
+
+  @override
+  State<DocInlineText> createState() => _DocInlineTextState();
+}
+
+/// Owns the tap recognizers of the links of a [DocInlineText].
+class _DocInlineTextState extends State<DocInlineText> {
+  final Map<String, TapGestureRecognizer> _recognizers = {};
+
+  /// Returns the recognizer that opens [url], made on first use.
+  TapGestureRecognizer _recognizerFor(String url) => _recognizers.putIfAbsent(
+    url,
+    () => TapGestureRecognizer()..onTap = () => openDocLink(context, url),
+  );
+
+  /// Disposes every recognizer and forgets them.
+  void _clearRecognizers() {
+    for (final recognizer in _recognizers.values) {
+      recognizer.dispose();
+    }
+    _recognizers.clear();
+  }
+
+  @override
+  void didUpdateWidget(DocInlineText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.text != oldWidget.text) _clearRecognizers();
+  }
+
+  @override
+  void dispose() {
+    _clearRecognizers();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      inlineSpan(context, widget.text, linkRecognizer: _recognizerFor),
+      style: widget.style,
+    );
+  }
+}
+
+/// Returns [text], in inline Markdown, as styled spans; [linkRecognizer]
+/// returns the recognizer that handles a tap on a link to the given URL.
+InlineSpan inlineSpan(
+  BuildContext context,
+  String text, {
+  required GestureRecognizer Function(String url) linkRecognizer,
+}) {
   final theme = Theme.of(context);
   final scheme = theme.colorScheme;
   final link = theme.extension<Oito2SemanticColors>()?.primaryText;
@@ -324,8 +386,7 @@ InlineSpan inlineSpan(BuildContext context, String text) {
           TextSpan(
             text: run.text,
             style: TextStyle(color: link, decoration: TextDecoration.underline),
-            recognizer: TapGestureRecognizer()
-              ..onTap = () => launchUrl(Uri.parse(url)),
+            recognizer: linkRecognizer(url),
           )
         else
           TextSpan(
@@ -337,6 +398,28 @@ InlineSpan inlineSpan(BuildContext context, String text) {
           ),
     ],
   );
+}
+
+/// Opens [url] in the browser when it is an http or https address, and
+/// shows a toast when it is not one or the browser doesn't open it.
+///
+/// Returns once the browser was asked to open the link, or the toast was
+/// shown.
+Future<void> openDocLink(BuildContext context, String url) async {
+  final uri = Uri.tryParse(url);
+  final opened =
+      uri != null &&
+      (uri.scheme == 'https' || uri.scheme == 'http') &&
+      uri.host.isNotEmpty &&
+      await launchUrl(uri).catchError((Object _) => false);
+  if (!opened && context.mounted) {
+    Oito2Toaster.maybeOf(context)?.show(
+      const Oito2Toast(
+        title: 'Could not open the link',
+        type: Oito2InfoType.warning,
+      ),
+    );
+  }
 }
 
 /// A block of code with a copy button.
@@ -460,10 +543,7 @@ class DocNote extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: Oito2Spacing.md),
-      child: Oito2InfoBox(
-        type: type,
-        subtitle: Text.rich(inlineSpan(context, text)),
-      ),
+      child: Oito2InfoBox(type: type, subtitle: DocInlineText(text)),
     );
   }
 }
@@ -488,8 +568,8 @@ class DocTable extends StatelessWidget {
         horizontal: Oito2Spacing.md,
         vertical: Oito2Spacing.sm,
       ),
-      child: Text.rich(
-        inlineSpan(context, text),
+      child: DocInlineText(
+        text,
         style: head ? theme.textTheme.labelLarge : theme.textTheme.bodyMedium,
       ),
     );
@@ -532,29 +612,33 @@ List<Widget> markdownWidgets(
   String source, {
   int levelOffset = 0,
   bool skipIntro = false,
+}) => markdownBlockWidgets(
+  parseMarkdown(source),
+  levelOffset: levelOffset,
+  skipIntro: skipIntro,
+);
+
+/// Returns the widgets of the parsed Markdown [blocks], as
+/// [markdownWidgets] does for a whole document.
+List<Widget> markdownBlockWidgets(
+  Iterable<MdBlock> blocks, {
+  int levelOffset = 0,
+  bool skipIntro = false,
 }) {
   final widgets = <Widget>[];
   var intro = skipIntro;
-  for (final block in parseMarkdown(source)) {
+  for (final block in blocks) {
     if (intro && block is! MdHeading) continue;
     if (block is MdHeading && block.level > 1) intro = false;
     switch (block) {
       case MdHeading(level: 1):
         break;
       case MdHeading(:final level, :final text):
-        widgets.add(
-          DocHeading(
-            text.replaceAllMapped(
-              RegExp(r'\[([^\]]+)\](\([^)]*\))?'),
-              (match) => match.group(1)!,
-            ),
-            level: level + levelOffset,
-          ),
-        );
+        widgets.add(DocHeading(headingText(text), level: level + levelOffset));
       case MdParagraph(:final text):
         widgets.add(DocText(text));
-      case MdList(:final items, :final ordered):
-        widgets.add(_DocList(items: items, ordered: ordered));
+      case final MdList list:
+        widgets.add(_DocList(list));
       case MdCode(:final language, :final code):
         widgets.add(
           DocCode(code, language: language.isEmpty ? 'plaintext' : language),
@@ -568,16 +652,27 @@ List<Widget> markdownWidgets(
   return widgets;
 }
 
-/// A bulleted or numbered list of inline Markdown items.
-class _DocList extends StatelessWidget {
-  const _DocList({required this.items, required this.ordered});
+/// Returns the Markdown heading [text] without link brackets, so that
+/// `[1.0.0](url)` and `[1.0.0]` read `1.0.0`.
+String headingText(String text) => text.replaceAllMapped(
+  RegExp(r'\[([^\]]+)\](\([^)]*\))?'),
+  (match) => match.group(1)!,
+);
 
-  final List<String> items;
-  final bool ordered;
+/// A bulleted or numbered list of inline Markdown items, each indented by
+/// its nesting depth.
+class _DocList extends StatelessWidget {
+  const _DocList(this.list);
+
+  final MdList list;
 
   @override
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.bodyMedium;
+    final items = list.items;
+    // The number of the next item at each depth; deeper counts restart
+    // after a shallower item.
+    final counters = <int>[];
     return Padding(
       padding: const EdgeInsets.only(bottom: Oito2Spacing.sm),
       child: SelectionArea(
@@ -586,20 +681,21 @@ class _DocList extends StatelessWidget {
           children: [
             for (var i = 0; i < items.length; i++)
               Padding(
-                padding: const EdgeInsets.only(bottom: Oito2Spacing.xs),
+                padding: EdgeInsetsDirectional.only(
+                  start: 24.0 * list.depthOf(i),
+                  bottom: Oito2Spacing.xs,
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
                       width: 24,
-                      child: Text(ordered ? '${i + 1}.' : '•', style: style),
-                    ),
-                    Expanded(
-                      child: Text.rich(
-                        inlineSpan(context, items[i]),
+                      child: Text(
+                        _marker(counters, list.depthOf(i)),
                         style: style,
                       ),
                     ),
+                    Expanded(child: DocInlineText(items[i], style: style)),
                   ],
                 ),
               ),
@@ -607,6 +703,19 @@ class _DocList extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Returns the marker of the next item at [depth], updating [counters]:
+  /// its number in a numbered list, or a disc at the top level and a
+  /// circle below it in a bulleted list.
+  String _marker(List<int> counters, int depth) {
+    if (counters.length > depth + 1) counters.length = depth + 1;
+    while (counters.length <= depth) {
+      counters.add(0);
+    }
+    counters[depth]++;
+    if (list.ordered) return '${counters[depth]}.';
+    return depth == 0 ? '•' : '◦';
   }
 }
 
@@ -822,14 +931,11 @@ class _ApiList extends StatelessWidget {
                               ),
                             ),
                           if (rows[i].doc.isNotEmpty)
-                            Text.rich(
-                              inlineSpan(
-                                context,
-                                rows[i].doc
-                                    .replaceAll('\n\n', ' ')
-                                    .replaceAll('\n', ' ')
-                                    .replaceAll(' ', '\n\n'),
-                              ),
+                            DocInlineText(
+                              rows[i].doc
+                                  .replaceAll('\n\n', ' ')
+                                  .replaceAll('\n', ' ')
+                                  .replaceAll(' ', '\n\n'),
                               style: theme.textTheme.bodyMedium,
                             ),
                         ],

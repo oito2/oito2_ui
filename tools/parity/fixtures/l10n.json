@@ -504,6 +504,7 @@
 			"moveDown": "Move down",
 			"moveLeft": "Move left",
 			"moveRight": "Move right",
+			"activateItem": "Open",
 			"itemsPerPage": "Items per page",
 			"stepCompleted": "Completed",
 			"stepCurrent": "Current",
@@ -983,6 +984,13 @@
 					"docs"
 				],
 				"result": "docs: folders are not accepted"
+			},
+			{
+				"name": "fileUnreadable",
+				"args": [
+					"a.png"
+				],
+				"result": "a.png: the file could not be read"
 			},
 			{
 				"name": "scheduleSlot",
@@ -1654,6 +1662,7 @@
 			"moveDown": "Mover para baixo",
 			"moveLeft": "Mover para a esquerda",
 			"moveRight": "Mover para a direita",
+			"activateItem": "Abrir",
 			"itemsPerPage": "Itens por página",
 			"stepCompleted": "Concluído",
 			"stepCurrent": "Atual",
@@ -1677,7 +1686,7 @@
 			"showFewer": "Mostrar menos",
 			"statusOnline": "Online",
 			"statusAway": "Ausente",
-			"statusBusy": "Ocupado",
+			"statusBusy": "Indisponível",
 			"statusOffline": "Offline",
 			"qrCode": "Código QR",
 			"qrTooLong": "Dados demais para um código QR",
@@ -2133,6 +2142,13 @@
 					"docs"
 				],
 				"result": "docs: pastas não são aceitas"
+			},
+			{
+				"name": "fileUnreadable",
+				"args": [
+					"a.png"
+				],
+				"result": "a.png: não foi possível ler o arquivo"
 			},
 			{
 				"name": "scheduleSlot",

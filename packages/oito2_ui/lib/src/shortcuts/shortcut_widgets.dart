@@ -20,6 +20,7 @@ import 'package:material_ui/material_ui.dart';
 import '../l10n/oito2_localizations.dart';
 import '../tokens/geometry.dart';
 import '../widgets/icon_buttons.dart';
+import '../widgets/touch_target.dart';
 import '../widgets/utilities.dart';
 import 'shortcut.dart';
 
@@ -203,43 +204,51 @@ class _Oito2ShortcutRecorderState extends State<Oito2ShortcutRecorder> {
       mainAxisSize: MainAxisSize.min,
       spacing: Oito2Spacing.xs,
       children: [
-        Oito2FocusBorder(
-          child: Focus(
-            focusNode: _node,
-            autofocus: widget.autofocus,
-            canRequestFocus: enabled,
-            onKeyEvent: _onKey,
-            onFocusChange: (focused) {
-              if (!focused && _recording) setState(() => _recording = false);
-            },
-            child: Semantics(
-              button: true,
-              enabled: enabled,
-              label: _recording
-                  ? l10n.pressShortcut
-                  : value?.label(theme.platform) ?? l10n.noShortcut,
-              excludeSemantics: true,
-              onTap: enabled ? _start : null,
-              child: GestureDetector(
+        // On touch platforms the recorder reaches a 48-pixel tap target.
+        Oito2TouchTarget(
+          child: Oito2FocusBorder(
+            child: Focus(
+              focusNode: _node,
+              autofocus: widget.autofocus,
+              canRequestFocus: enabled,
+              onKeyEvent: _onKey,
+              onFocusChange: (focused) {
+                if (!focused && _recording) setState(() => _recording = false);
+              },
+              child: Semantics(
+                button: true,
+                enabled: enabled,
+                label: _recording
+                    ? l10n.pressShortcut
+                    : value?.label(theme.platform) ?? l10n.noShortcut,
+                excludeSemantics: true,
                 onTap: enabled ? _start : null,
-                child: Container(
-                  height: Oito2Sizes.buttonHeight,
-                  constraints: const BoxConstraints(minWidth: 140),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Oito2Spacing.md,
-                  ),
-                  alignment: AlignmentDirectional.centerStart,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHigh,
-                    borderRadius: Oito2Radius.mediumAll,
-                    border: Border.all(
-                      color: _recording
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.outline,
-                      width: _recording ? 2 : 1,
+                child: MouseRegion(
+                  cursor: enabled
+                      ? SystemMouseCursors.click
+                      : SystemMouseCursors.basic,
+                  child: GestureDetector(
+                    onTap: enabled ? _start : null,
+                    child: Container(
+                      height: Oito2Sizes.buttonHeight,
+                      constraints: const BoxConstraints(minWidth: 140),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Oito2Spacing.md,
+                      ),
+                      alignment: AlignmentDirectional.centerStart,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHigh,
+                        borderRadius: Oito2Radius.mediumAll,
+                        border: Border.all(
+                          color: _recording
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.outline,
+                          width: _recording ? 2 : 1,
+                        ),
+                      ),
+                      child: content,
                     ),
                   ),
-                  child: content,
                 ),
               ),
             ),

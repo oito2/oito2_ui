@@ -22,12 +22,15 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../foundation/contrast.dart';
+import '../l10n/oito2_localizations.dart';
 import '../theme/extensions/chrome_colors.dart';
 import '../theme/extensions/semantic_colors.dart';
 import '../tokens/colors.dart';
 import '../tokens/geometry.dart';
+import 'avatar.dart';
 import 'info.dart';
 import 'touch_target.dart';
+import 'unsaved_changes.dart';
 
 /// Returns the semantic colors of the closest theme, or colors derived
 /// from its `ColorScheme` and the status palette when the theme wasn't
@@ -116,11 +119,32 @@ class FieldIconButton extends StatelessWidget {
       ),
       icon: Icon(icon, size: Oito2Sizes.iconSize),
     );
-    if (!padded) return button;
+    return FieldButtonSlot(child: button);
+  }
+}
+
+/// Holds a button placed inside a text field decoration, such as an
+/// [IconButton] whose theme pads its tap target on touch platforms.
+///
+/// When the theme pads tap targets, it takes a box
+/// [Oito2Sizes.minTouchTarget] wide and as tall as the field, and lets the
+/// 48-pixel tap target of [child] overflow the field height without
+/// growing it, reaching into the touch margin that [Oito2TouchTarget] adds
+/// around the field. Otherwise it returns [child] unchanged.
+class FieldButtonSlot extends StatelessWidget {
+  /// Creates a field button slot around [child].
+  const FieldButtonSlot({super.key, required this.child});
+
+  /// The button.
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!padsTapTargets(context)) return child;
     return SizedBox(
       width: Oito2Sizes.minTouchTarget,
       height: controlHeightOf(context),
-      child: OverflowBox(maxHeight: Oito2Sizes.minTouchTarget, child: button),
+      child: OverflowBox(maxHeight: Oito2Sizes.minTouchTarget, child: child),
     );
   }
 }
@@ -446,5 +470,37 @@ double densityOffsetHeight(BuildContext context, double height) =>
   return (
     background,
     Oito2Contrast.ensure(color, [background], Oito2Contrast.textAA),
+  );
+}
+
+/// Returns the localized name of [status].
+String avatarStatusLabel(
+  Oito2Localizations strings,
+  Oito2AvatarStatus status,
+) => switch (status) {
+  Oito2AvatarStatus.online => strings.statusOnline,
+  Oito2AvatarStatus.away => strings.statusAway,
+  Oito2AvatarStatus.busy => strings.statusBusy,
+  Oito2AvatarStatus.offline => strings.statusOffline,
+};
+
+/// Calls [apply] at once when [isCurrent] is true or no unsaved changes
+/// are pending in the closest [Oito2UnsavedChangesScope] of [context], and
+/// otherwise once that scope confirms leaving, while [context] is still
+/// mounted.
+void runGuardedSwitch(
+  BuildContext context, {
+  required bool isCurrent,
+  required VoidCallback apply,
+}) {
+  final leave = Oito2UnsavedChangesScope.maybeOf(context, listen: false);
+  if (leave == null || !leave.hasUnsavedChanges || isCurrent) {
+    apply();
+    return;
+  }
+  unawaited(
+    leave.confirmLeave().then((confirmed) {
+      if (confirmed && context.mounted) apply();
+    }),
   );
 }

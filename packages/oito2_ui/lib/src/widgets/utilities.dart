@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/semantics.dart';
@@ -420,7 +422,8 @@ class _DiagonalClipper extends CustomClipper<Path> {
 /// focused, with the arrow keys.
 ///
 /// It must be a direct child of a [Stack]. The position is relative to
-/// the stack's top-left corner.
+/// the stack's top-left corner. With [boundedByStack], the default, moves
+/// stop at the stack's edges, so the widget stays inside it.
 class Oito2Draggable extends StatefulWidget {
   /// Creates a draggable widget.
   const Oito2Draggable({
@@ -432,6 +435,7 @@ class Oito2Draggable extends StatefulWidget {
     this.onMoved,
     this.keyboardStep = 8,
     this.semanticLabel,
+    this.boundedByStack = true,
   });
 
   /// The content that moves.
@@ -458,6 +462,10 @@ class Oito2Draggable extends StatefulWidget {
   /// tell can be moved with the arrow keys or the move actions.
   final String? semanticLabel;
 
+  /// Whether moves keep the widget inside the [Stack]; when false, it can
+  /// be moved past the stack's edges.
+  final bool boundedByStack;
+
   @override
   State<Oito2Draggable> createState() => _Oito2DraggableState();
 }
@@ -466,10 +474,31 @@ class _Oito2DraggableState extends State<Oito2Draggable> {
   late Offset _position = widget.initialPosition;
   bool _dragging = false;
 
-  /// Shifts the position by [delta] and reports it.
+  /// Shifts the position by [delta], within the stack with
+  /// [Oito2Draggable.boundedByStack], and reports it when it changed.
   void _move(Offset delta) {
-    setState(() => _position += delta);
+    final next = _bound(_position + delta);
+    if (next == _position) return;
+    setState(() => _position = next);
     widget.onMoved?.call(_position);
+  }
+
+  /// Returns [position] limited so the widget stays inside the stack, or
+  /// [position] itself without [Oito2Draggable.boundedByStack] or before
+  /// the first layout.
+  Offset _bound(Offset position) {
+    if (!widget.boundedByStack) return position;
+    final box = context.findRenderObject();
+    final stack = box?.parent;
+    if (box is! RenderBox ||
+        stack is! RenderBox ||
+        !box.hasSize ||
+        !stack.hasSize) {
+      return position;
+    }
+    final maxX = math.max(0.0, stack.size.width - box.size.width);
+    final maxY = math.max(0.0, stack.size.height - box.size.height);
+    return Offset(position.dx.clamp(0.0, maxX), position.dy.clamp(0.0, maxY));
   }
 
   /// Moves the widget by [Oito2Draggable.keyboardStep] along the arrow key

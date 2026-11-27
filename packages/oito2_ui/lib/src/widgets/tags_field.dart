@@ -496,9 +496,10 @@ class _Oito2TagsFieldState extends State<Oito2TagsField>
         focusNode: _input,
         displayStringForOption: suggestions.labelOf,
         optionsBuilder: (value) => _options(value.text),
+        // A refused suggestion stays in the input, as a typed tag does.
         onSelected: (option) {
-          _add([suggestions.labelOf(option)]);
-          _controller.clear();
+          final refused = _add([suggestions.labelOf(option)]);
+          if (refused.isEmpty) _controller.clear();
         },
         fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) =>
             _buildInput(context, controller, focusNode, onFieldSubmitted),

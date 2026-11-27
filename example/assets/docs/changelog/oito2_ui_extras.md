@@ -22,6 +22,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- `Oito2NavigationMenu`: Down on the trigger of a panel already opened by hover moves the focus into the panel, as it does for a closed one.
 - `Oito2CropController.rotateRight` and `rotateLeft` turn a flipped image the way their names say, with the pan following.
 - `Oito2CropController` keeps its own handle to the image, so `crop()` and `Oito2CropPreview` keep working after the `Oito2ImageCropper` that loaded it is gone.
 - `Oito2SignaturePad` draws one stroke at a time and only with the primary mouse button, and repaints a stroke without rebuilding the pad.
@@ -29,3 +30,5 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Oito2ImageCropper` resets the zoom, pan, rotation and flip for a new picture, and `Oito2CropPreview` follows a resized crop box.
 - `Oito2NavigationMenu` rejects a negative `selectedIndex`, and `toPngBytes` releases its image when encoding fails.
 - `Oito2ImageCropper` no longer notifies a controller its owner disposed while swapping controllers.
+- `Oito2SignatureController.toSvg` with a `size` scales the whole signature to that size, keeping its proportions, instead of cropping it.
+- `Oito2SignatureController`: an `undo`, `clear` or `addStroke` while a stroke is being drawn ends that stroke, so the next moves of the pointer no longer extend another stroke.

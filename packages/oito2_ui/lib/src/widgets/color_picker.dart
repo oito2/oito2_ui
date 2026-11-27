@@ -92,7 +92,8 @@ class Oito2ColorPicker extends StatefulWidget {
   /// alpha channel; without it, edits keep the current opacity.
   final bool showAlpha;
 
-  /// Preset colors offered below the fields.
+  /// Preset colors offered below the fields. Without [showAlpha], a
+  /// swatch keeps the current opacity, as the other edits do.
   final List<Color> swatches;
 
   /// The field format shown first.
@@ -129,6 +130,11 @@ class _Oito2ColorPickerState extends State<Oito2ColorPicker> {
     if (mounted) setState(() => _hsv = hsv);
     widget.onChanged(hsv.toColor());
   }
+
+  /// Returns [swatch] as the picker applies it: as it is with
+  /// [Oito2ColorPicker.showAlpha], or with the current opacity without it.
+  Color _ofSwatch(Color swatch) =>
+      widget.showAlpha ? swatch : swatch.withValues(alpha: _hsv.alpha);
 
   /// Sets [color], keeping the current hue, or [hue] when given, for grays,
   /// which have no hue of their own.
@@ -224,9 +230,9 @@ class _Oito2ColorPickerState extends State<Oito2ColorPicker> {
                   Oito2ColorDisk(
                     color: swatch,
                     size: 20,
-                    selected: swatch.toARGB32() == color.toARGB32(),
+                    selected: _ofSwatch(swatch).toARGB32() == color.toARGB32(),
                     label: oito2ColorToHex(swatch),
-                    onPressed: () => _setColor(swatch),
+                    onPressed: () => _setColor(_ofSwatch(swatch)),
                   ),
               ],
             ),

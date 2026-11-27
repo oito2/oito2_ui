@@ -23,7 +23,10 @@ import 'expandable.dart';
 /// content, as an accordion.
 ///
 /// [headers] and [children] pair up by index. With [collapseOnExpand],
-/// opening a section closes the others, so at most one is open.
+/// opening a section closes the others, so at most one is open. The open
+/// sections are kept by index: when the sections change, those past the
+/// new end close, and turning [collapseOnExpand] on keeps only the first
+/// open one.
 /// [onExpansionChanged] reports each section that opens or closes.
 class Oito2ExpansionPanel extends StatefulWidget {
   /// Creates an expansion panel.
@@ -80,6 +83,20 @@ class _Oito2ExpansionPanelState extends State<Oito2ExpansionPanel> {
     else
       ...widget.initiallyExpanded,
   };
+
+  @override
+  void didUpdateWidget(Oito2ExpansionPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Sections that no longer exist are dropped, and turning
+    // collapseOnExpand on keeps only the first open section.
+    _expanded.removeWhere((i) => i >= widget.headers.length);
+    if (widget.collapseOnExpand && _expanded.length > 1) {
+      final keep = _expanded.reduce((a, b) => a < b ? a : b);
+      _expanded
+        ..clear()
+        ..add(keep);
+    }
+  }
 
   /// Opens or closes the section at [index], closing the others first
   /// when [Oito2ExpansionPanel.collapseOnExpand] is set, and reports every

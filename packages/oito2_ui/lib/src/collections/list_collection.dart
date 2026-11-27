@@ -33,6 +33,11 @@ class Oito2ListCollection<T> {
   /// [isDisabled] says otherwise, and ungrouped unless [groupOf] returns
   /// a group name.
   ///
+  /// With [groupOf], [items] keeps the items of each group together: the
+  /// groups follow the order in which each first appears, and the items of
+  /// a group keep their relative order. Keyboard navigation, typeahead and
+  /// range selection therefore follow the order the groups are shown in.
+  ///
   /// Throws an [ArgumentError] when two items share a value.
   Oito2ListCollection(
     Iterable<T> items, {
@@ -40,7 +45,7 @@ class Oito2ListCollection<T> {
     this._labelOf,
     this._isDisabled,
     this._groupOf,
-  }) : items = List.unmodifiable(items),
+  }) : items = List<T>.unmodifiable(_byGroup<T>(items, _groupOf)),
        _valueOf = valueOf ?? _defaultValue {
     for (var i = 0; i < this.items.length; i++) {
       final value = _valueOf(this.items[i]);
@@ -54,7 +59,22 @@ class Oito2ListCollection<T> {
   static String _defaultValue(Object? item) =>
       item is String ? item : item.toString();
 
-  /// The items, in order.
+  /// Returns [items] with the items of each group together, the groups in
+  /// the order they first appear and the items in their original order;
+  /// returns [items] unchanged when [groupOf] is null.
+  static Iterable<T> _byGroup<T>(
+    Iterable<T> items,
+    String? Function(T item)? groupOf,
+  ) {
+    if (groupOf == null) return items;
+    final groups = <String?, List<T>>{};
+    for (final item in items) {
+      groups.putIfAbsent(groupOf(item), () => []).add(item);
+    }
+    return [for (final group in groups.values) ...group];
+  }
+
+  /// The items, in order, with the items of each group together.
   final List<T> items;
 
   final String Function(T item) _valueOf;

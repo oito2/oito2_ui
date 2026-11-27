@@ -18,7 +18,6 @@ import 'dart:math' as math;
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/oito2_localizations.dart';
-import '../tokens/geometry.dart';
 import 'resize_handle.dart';
 
 /// The side of an [Oito2PanedView] its pane is placed on.
@@ -47,6 +46,11 @@ enum Oito2PaneSide {
 /// [minPaneSize] and never leaves less than [minPageSize] for the page.
 class Oito2PanedView extends StatefulWidget {
   /// Creates a paned view.
+  ///
+  /// Throws an [AssertionError] in debug mode when the view is laid out
+  /// with an unbounded extent along the split: an unbounded width for a
+  /// pane at the start or end, or an unbounded height for one at the top
+  /// or bottom.
   const Oito2PanedView({
     super.key,
     required this.pane,
@@ -136,6 +140,12 @@ class _Oito2PanedViewState extends State<Oito2PanedView> {
     return LayoutBuilder(
       builder: (context, constraints) {
         _available = vertical ? constraints.maxHeight : constraints.maxWidth;
+        assert(
+          _available.isFinite,
+          'Oito2PanedView was given an unbounded '
+          '${vertical ? 'height' : 'width'}. Place it where its extent '
+          'along the split is bounded, such as in an Expanded or a SizedBox.',
+        );
         final size = _clamp(_size);
 
         final divider = Container(
@@ -173,8 +183,12 @@ class _Oito2PanedViewState extends State<Oito2PanedView> {
         // each neighbour, so the drag area is wider than the line without
         // shifting the layout. The divider sits after the pane when the
         // pane is on the left or top, and before it otherwise.
-        final dividerStart = forward ? size : _available - size - 1;
-        final handleStart = dividerStart + 0.5 - Oito2Spacing.sm / 2;
+        // When the pane doesn't fit, the content keeps the pane's size
+        // and the divider stays within it.
+        final width = math.max(_available, size + 1);
+        final dividerStart = forward ? size : width - size - 1;
+        final handleStart =
+            dividerStart + 0.5 - ResizeHandle.extentOf(context) / 2;
         final content = Stack(
           children: [
             Flex(

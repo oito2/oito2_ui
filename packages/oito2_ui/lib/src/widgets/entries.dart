@@ -736,7 +736,8 @@ class _Oito2DateTimeEntryState extends State<Oito2DateTimeEntry> {
             onErrorChanged: (error) {
               _dateError = error;
               _reportError();
-              _report();
+              // A text that becomes valid is followed by onChanged, which
+              // reports the new date with the time.
             },
           ),
         ),
@@ -754,7 +755,8 @@ class _Oito2DateTimeEntryState extends State<Oito2DateTimeEntry> {
             onErrorChanged: (error) {
               _timeError = error;
               _reportError();
-              _report();
+              // A text that becomes valid is followed by onChanged, which
+              // reports the date with the new time.
             },
           ),
         ),

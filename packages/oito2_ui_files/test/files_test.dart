@@ -22,6 +22,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart' show LucideIcons;
 import 'package:oito2_ui_files/oito2_ui_files.dart';
+import 'package:oito2_ui_files/src/drop_hit_test.dart';
+import 'package:oito2_ui_files/src/drop_target_io.dart' show dropExistingFiles;
 import 'package:oito2_ui_test_utils/oito2_ui_test_utils.dart';
 
 /// A 1x1 PNG image.
@@ -32,6 +34,32 @@ final _png = base64Decode(
 // On the VM, an in-memory file takes its name from its path.
 XFile _file(String name, int size, {String? mimeType}) =>
     XFile.fromData(Uint8List(size), path: name, mimeType: mimeType);
+
+/// A file whose size can't be read, as one removed after it was chosen.
+class _UnreadableFile extends XFile {
+  _UnreadableFile(super.path);
+
+  @override
+  Future<int> length() =>
+      Future.error(FileSystemException('Cannot read the file', path));
+}
+
+/// An image of [size] bytes that counts how often its bytes are read.
+class _CountingFile extends XFile {
+  _CountingFile(super.path, this.size);
+
+  final int size;
+  int bytesReads = 0;
+
+  @override
+  Future<int> length() async => size;
+
+  @override
+  Future<Uint8List> readAsBytes() async {
+    bytesReads++;
+    return _png;
+  }
+}
 
 const _images = XTypeGroup(
   label: 'Images',
@@ -96,6 +124,58 @@ class _TestDropSource {
 }
 
 void main() {
+  testWidgets('a web drop reaches only the zone on top at the point', (
+    tester,
+  ) async {
+    late BuildContext lower;
+    late BuildContext upper;
+    await pumpOito2(
+      tester,
+      Align(
+        alignment: Alignment.topLeft,
+        child: SizedBox(
+          width: 300,
+          height: 300,
+          child: Stack(
+            children: [
+              Builder(
+                builder: (context) {
+                  lower = context;
+                  return dropHitRegion(const SizedBox.expand());
+                },
+              ),
+              Positioned(
+                left: 0,
+                top: 0,
+                width: 100,
+                height: 100,
+                child: Builder(
+                  builder: (context) {
+                    upper = context;
+                    return dropHitRegion(const ColoredBox(color: Colors.red));
+                  },
+                ),
+              ),
+              // A dialog-like layer over the bottom right corner.
+              const Positioned(
+                left: 200,
+                top: 200,
+                width: 100,
+                height: 100,
+                child: ModalBarrier(dismissible: false),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    expect(dropReaches(lower, const Offset(150, 150)), isTrue);
+    expect(dropReaches(upper, const Offset(150, 150)), isFalse);
+    expect(dropReaches(upper, const Offset(50, 50)), isTrue);
+    expect(dropReaches(lower, const Offset(50, 50)), isFalse);
+    expect(dropReaches(lower, const Offset(250, 250)), isFalse);
+  });
+
   late _FakeFileSelector selector;
 
   setUp(() {
@@ -155,6 +235,20 @@ void main() {
       ]);
       expect(controller.canAddMore, isFalse);
       expect(notified, 1);
+    });
+
+    test('refuses a file whose size cannot be read', () async {
+      final controller = Oito2FileUploadController(maxFileSize: 100);
+      addTearDown(controller.dispose);
+      await controller.add([
+        _file('a.png', 10),
+        _UnreadableFile('gone.png'),
+        _file('b.png', 10),
+      ]);
+      expect(controller.files.map((f) => f.name), ['a.png', 'b.png']);
+      expect(controller.rejected.map((r) => (r.file.name, r.reason)), [
+        ('gone.png', Oito2FileRejection.unreadable),
+      ]);
     });
 
     test('remove, clearRejected and clear', () async {
@@ -326,6 +420,25 @@ void main() {
           (_) {},
         );
 
+    test('a drop keeps the items that exist and marks folders', () async {
+      final dropped = <List<XFile>>[];
+      await dropExistingFiles([
+        XFile(file.path),
+        XFile(''),
+        XFile('${dir.path}/missing.txt'),
+        XFile(folder.path),
+      ], dropped.add);
+      expect(dropped, hasLength(1));
+      expect(dropped.single.map((f) => f.path), [file.path, folder.path]);
+      expect(dropped.single.map(oito2IsDirectory), [false, true]);
+
+      await dropExistingFiles([
+        XFile(''),
+        XFile('${dir.path}/missing.txt'),
+      ], dropped.add);
+      expect(dropped, hasLength(1));
+    });
+
     testWidgets('the zone receives files and refuses folders', (tester) async {
       expect(oito2CanDropFiles, Platform.isLinux || Platform.isWindows);
       final controller = Oito2FileUploadController();
@@ -402,6 +515,20 @@ void main() {
   });
 
   group('Oito2FileUpload', () {
+    testWidgets('explains a file that could not be read', (tester) async {
+      final controller = Oito2FileUploadController(maxFileSize: 1000);
+      addTearDown(controller.dispose);
+      await pumpOito2(
+        tester,
+        SizedBox(width: 400, child: Oito2FileUpload(controller: controller)),
+      );
+      await tester.runAsync(
+        () => controller.add([_UnreadableFile('gone.png')]),
+      );
+      await tester.pump();
+      expect(find.text('gone.png: the file could not be read'), findsOneWidget);
+    });
+
     testWidgets('lists files with size and preview, and removes them', (
       tester,
     ) async {
@@ -437,6 +564,25 @@ void main() {
       await tester.pump();
       expect(controller.files, isEmpty);
       expect(find.text('dot.png'), findsNothing);
+    });
+
+    testWidgets('a large image shows the file icon without being read', (
+      tester,
+    ) async {
+      final controller = Oito2FileUploadController();
+      addTearDown(controller.dispose);
+      await pumpOito2(
+        tester,
+        SizedBox(width: 400, child: Oito2FileUpload(controller: controller)),
+      );
+      final large = _CountingFile('huge.png', 21 * 1024 * 1024);
+      final small = _CountingFile('dot.png', _png.length);
+      await tester.runAsync(() => controller.add([large, small]));
+      await tester.pump();
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+      await tester.pump();
+      expect(large.bytesReads, 0);
+      expect(small.bytesReads, 1);
     });
 
     testWidgets('the zone is disabled once the upload is full', (tester) async {

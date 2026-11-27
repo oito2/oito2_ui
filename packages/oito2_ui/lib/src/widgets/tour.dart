@@ -50,7 +50,9 @@ class Oito2TourStep {
 
   /// Whether the step waits for a tap on the target instead of offering
   /// a next button. The tap reaches the target, then the tour moves on.
-  /// While the target isn't on screen, the next button shows instead.
+  /// While the target isn't on screen, or while an assistive technology
+  /// asks for accessible navigation, which can't reach the target behind
+  /// the tour, the next button shows instead.
   final bool waitForTap;
 
   /// The space around the target inside the spotlight, in logical
@@ -311,8 +313,12 @@ class _Oito2TourState extends State<Oito2Tour> with TickerProviderStateMixin {
     final last = index == _controller.steps.length - 1;
     final rtl = Directionality.of(context) == TextDirection.rtl;
     final description = step.description;
-    // A step waits for a tap only while its target is on screen to tap.
-    final waits = step.waitForTap && _target != null;
+    // A step waits for a tap only while its target is on screen to tap
+    // and no assistive technology hides it behind the tour.
+    final waits =
+        step.waitForTap &&
+        _target != null &&
+        !MediaQuery.accessibleNavigationOf(context);
     return FocusScope(
       key: ValueKey(index),
       autofocus: true,

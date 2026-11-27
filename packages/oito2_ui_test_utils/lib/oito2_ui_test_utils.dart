@@ -21,10 +21,15 @@
 ///
 /// ## Updating goldens
 ///
+/// The comparator accepts anti-aliasing noise: up to [goldenTolerance] of
+/// the pixels may differ, and up to [goldenStrongTolerance] may differ by
+/// more than [goldenStrongDelta] in some channel. A few pixels that change
+/// strongly, such as a moved dot or a recolored icon, fail the test.
+///
 /// `flutter test --update-goldens` rewrites every golden, including the
 /// ones that only differ by anti-aliasing noise. To rewrite only the
-/// goldens that are missing or differ beyond [goldenTolerance], run the
-/// tests with [updateFailedGoldensVariable] set to `1`, from the package
+/// goldens that are missing or differ beyond the tolerance, run the tests
+/// with [updateFailedGoldensVariable] set to `1`, from the package
 /// directory:
 ///
 /// ```sh

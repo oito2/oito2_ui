@@ -52,8 +52,9 @@ class Oito2NavigationMenuItem {
 /// triggers.
 ///
 /// A panel opens on hover after [hoverDelay], or when its trigger is
-/// pressed or gets Down, which also move the focus into it; moving the
-/// pointer to another trigger switches panels at once. Tab moves the focus
+/// pressed or gets Down, which also move the focus into it; Down on the
+/// trigger of a panel already open by hover moves the focus into it too.
+/// Moving the pointer to another trigger switches panels at once. Tab moves the focus
 /// between the items and Escape closes a panel.
 class Oito2NavigationMenu extends StatefulWidget {
   /// Creates a navigation menu.
@@ -97,6 +98,7 @@ class _Oito2NavigationMenuState extends State<Oito2NavigationMenu> {
   final _stackKey = GlobalKey();
   late List<GlobalKey> _keys;
   late List<Oito2PopoverController> _popovers;
+  late List<FocusNode> _panelNodes;
   Rect? _indicator;
   int? _open;
   bool _keyboard = false;
@@ -128,12 +130,23 @@ class _Oito2NavigationMenuState extends State<Oito2NavigationMenu> {
   void _createItems() {
     _keys = [for (final _ in widget.items) GlobalKey()];
     _popovers = [for (final _ in widget.items) Oito2PopoverController()];
+    _panelNodes = [
+      for (final _ in widget.items)
+        FocusNode(
+          debugLabel: 'Oito2NavigationMenu panel',
+          canRequestFocus: false,
+          skipTraversal: true,
+        ),
+    ];
     _open = null;
   }
 
   void _disposeItems() {
     for (final popover in _popovers) {
       popover.dispose();
+    }
+    for (final node in _panelNodes) {
+      node.dispose();
     }
   }
 
@@ -156,10 +169,16 @@ class _Oito2NavigationMenuState extends State<Oito2NavigationMenu> {
   }
 
   /// Opens the panel of the item at [index], or closes every panel when
-  /// [index] is null; [keyboard] moves the focus into the opened panel.
+  /// [index] is null; [keyboard] moves the focus into the opened panel,
+  /// or into the panel of [index] when it is already open.
   void _show(int? index, {bool keyboard = false}) {
     _timer?.cancel();
-    if (index == _open) return;
+    if (index == _open) {
+      if (keyboard && index != null) {
+        _panelNodes[index].traversalDescendants.firstOrNull?.requestFocus();
+      }
+      return;
+    }
     setState(() {
       _keyboard = keyboard;
       _open = index;
@@ -252,7 +271,11 @@ class _Oito2NavigationMenuState extends State<Oito2NavigationMenu> {
       popoverBuilder: (context, _) => MouseRegion(
         onEnter: (_) => _timer?.cancel(),
         onExit: (_) => _leave(),
-        child: item.panelBuilder!(context),
+        child: Focus(
+          focusNode: _panelNodes[index],
+          includeSemantics: false,
+          child: item.panelBuilder!(context),
+        ),
       ),
     );
   }

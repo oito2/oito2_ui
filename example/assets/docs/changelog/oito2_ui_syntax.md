@@ -21,8 +21,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The code editor, `Oito2CodeEditor`, lives in the `oito2_ui_code_editor` package, so this package doesn't depend on `re_editor`.
 - `Oito2Highlighter.modeOf`: the grammar registered for a language name or alias.
 - `Oito2GitignoreMatcher`: parses gitignore rules (`Oito2GitignoreMatcher.parse`) and tells whether a relative path is ignored with git's semantics: comments, negation, escapes, trailing spaces, anchoring, directory-only rules, `*`, `?`, bracket classes with ranges, negation and POSIX classes, `**` forms, the last matching rule winning and no re-including inside an ignored directory. `match` returns the deciding `Oito2GitignoreRule` (1-based line, pattern, negation) with the path it matched, and `isIgnored` the verdict.
+- `Oito2CodeBlock.maxHighlightLength` and `Oito2CodeBlock.defaultMaxHighlightLength` (20 000 UTF-16 code units): longer code shows as plain text in the foreground color instead of blocking the UI while it is highlighted.
 
 ### Fixed
 
+- `Oito2GitignoreMatcher` matches patterns with a token matcher whose time grows with the pattern length times the path length, instead of a backtracking regular expression: an untrusted gitignore with patterns such as `*a*a*a*a*a*b` or `**/a/**/a/**/b` no longer blocks the app for seconds on long paths. A line break in a path is now an ordinary character, as in git.
 - `Oito2Highlighter` and `Oito2CodeBlock` accept language aliases and any letter case (`js`, `ts`, `sh`, `yml`, `py`, `Dart`); `Oito2Highlighter.supports` tells whether a name or alias is registered.
 - `Oito2CodeBlock` highlights again only when its code, language, palette, style or highlighter change, and `Oito2Highlighter` reuses the token styles of recent palettes.

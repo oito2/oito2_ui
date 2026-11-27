@@ -61,6 +61,30 @@ void main() {
       expect(pages, [1, 0, 2, 0, 2]);
     });
 
+    testWidgets('the arrows in a focused page leave the page alone', (
+      tester,
+    ) async {
+      final pages = <int>[];
+      await pumpOito2(
+        tester,
+        Oito2Carousel(
+          onPageChanged: pages.add,
+          children: [
+            for (var i = 0; i < 3; i++)
+              Center(
+                child: TextButton(onPressed: () {}, child: Text('Button $i')),
+              ),
+          ],
+        ),
+      );
+      Focus.of(tester.element(find.text('Button 0'))).requestFocus();
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(pages, isEmpty);
+      expect(find.text('Button 0'), findsOneWidget);
+    });
+
     testWidgets('without loop the ends disable the buttons', (tester) async {
       await pumpOito2(tester, Oito2Carousel(loop: false, children: _slides(2)));
       Oito2IconButton button(IconData icon) => tester.widget<Oito2IconButton>(

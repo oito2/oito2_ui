@@ -737,6 +737,171 @@ void main() {
     });
   });
 
+  group('Oito2TreeView lazy branches', () {
+    /// Pumps a tree with an empty `archive` branch that loads
+    /// `archive/old.txt` after 200 milliseconds, followed by `notes.txt`,
+    /// applying `onMove` to the tree; returns the controller, the moves
+    /// and the loaded branches.
+    Future<
+      (
+        Oito2TreeController,
+        List<_Move>,
+        List<String>,
+        ValueGetter<Oito2TreeCollection<void>>,
+        ValueSetter<Oito2TreeCollection<void>>,
+      )
+    >
+    pumpLazy(
+      WidgetTester tester, {
+      Oito2SelectionMode mode = Oito2SelectionMode.single,
+      List<Oito2TreeNode<void>>? roots,
+    }) async {
+      final controller = Oito2TreeController(selectionMode: mode);
+      addTearDown(controller.dispose);
+      final moves = <_Move>[];
+      final loads = <String>[];
+      var tree = Oito2TreeCollection<void>(
+        roots ??
+            const [
+              Oito2TreeNode(value: 'archive', children: []),
+              Oito2TreeNode(value: 'notes.txt'),
+            ],
+      );
+      late StateSetter update;
+      await pumpOito2(
+        tester,
+        Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: 300,
+            height: 400,
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                update = setState;
+                return Oito2TreeView(
+                  collection: tree,
+                  controller: controller,
+                  rowHeight: 40,
+                  semanticLabel: 'Files',
+                  onLoadChildren: (node) async {
+                    loads.add(node.value);
+                    await Future<void>.delayed(
+                      const Duration(milliseconds: 200),
+                    );
+                    setState(
+                      () => tree = tree.insert(node.value, [
+                        Oito2TreeNode(value: '${node.value}/old.txt'),
+                      ]),
+                    );
+                  },
+                  onMove: (nodes, parent, index) {
+                    final values = [for (final n in nodes) n.value];
+                    moves.add((values.join(','), parent, index));
+                    setState(
+                      () => tree = tree.move(values, parent, index: index),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      return (
+        controller,
+        moves,
+        loads,
+        () => tree,
+        (Oito2TreeCollection<void> next) => update(() => tree = next),
+      );
+    }
+
+    testWidgets('a quick drop into an unloaded branch loads it first', (
+      tester,
+    ) async {
+      final (controller, moves, loads, tree, _) = await pumpLazy(tester);
+      await _drag(tester, _at(tester, 'notes.txt'), _at(tester, 'archive'));
+      expect(moves, isEmpty);
+      expect(controller.isExpanded('archive'), isTrue);
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump();
+      await tester.pump();
+      expect(loads, ['archive']);
+      expect(moves, [('notes.txt', 'archive', 1)]);
+      expect(tree().childrenOf('archive').map((n) => n.value), [
+        'archive/old.txt',
+        'notes.txt',
+      ]);
+    });
+
+    testWidgets('Alt+Right into an unloaded branch loads it first', (
+      tester,
+    ) async {
+      final (_, moves, loads, tree, _) = await pumpLazy(tester);
+      await tester.tap(find.text('notes.txt'));
+      await tester.pump();
+      await _alt(tester, LogicalKeyboardKey.arrowRight);
+      expect(moves, isEmpty);
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump();
+      await tester.pump();
+      expect(loads, ['archive']);
+      expect(moves, [('notes.txt', 'archive', 1)]);
+      expect(tree().childrenOf('archive').map((n) => n.value), [
+        'archive/old.txt',
+        'notes.txt',
+      ]);
+    });
+
+    testWidgets('reloadChildren loads a loaded branch again', (tester) async {
+      final (controller, _, loads, tree, setTree) = await pumpLazy(tester);
+      controller.setExpanded('archive', true);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump();
+      expect(loads, ['archive']);
+      expect(find.text('archive/old.txt'), findsOneWidget);
+      // Emptying the branch alone doesn't load it again.
+      setTree(tree().remove(['archive/old.txt']));
+      await tester.pump();
+      await tester.pump();
+      expect(loads, ['archive']);
+      controller.reloadChildren('archive');
+      await tester.pump();
+      await tester.pump();
+      expect(loads, ['archive', 'archive']);
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump();
+      expect(find.text('archive/old.txt'), findsOneWidget);
+    });
+
+    testWidgets('a drag leaves out disabled selected nodes', (tester) async {
+      final (controller, moves, _, _, _) = await pumpLazy(
+        tester,
+        mode: Oito2SelectionMode.multiple,
+        roots: const [
+          Oito2TreeNode(
+            value: 'locked',
+            disabled: true,
+            children: [Oito2TreeNode(value: 'draft.txt')],
+          ),
+          Oito2TreeNode(
+            value: 'inbox',
+            children: [Oito2TreeNode(value: 'a')],
+          ),
+          Oito2TreeNode(value: 'notes.txt'),
+        ],
+      );
+      controller.setExpanded('locked', true);
+      controller.setSelected(['locked', 'draft.txt', 'notes.txt']);
+      await tester.pump();
+      await _drag(tester, _at(tester, 'draft.txt'), _at(tester, 'inbox'));
+      expect(moves, [('draft.txt,notes.txt', 'inbox', 1)]);
+      // The emptied branch loads its children again.
+      await tester.pump(const Duration(milliseconds: 200));
+    });
+  });
+
   for (final virtual in [false, true]) {
     group(virtual ? 'Oito2VirtualList reorder' : 'Oito2ListBox reorder', () {
       final fruits = Oito2ListCollection(const [
@@ -894,6 +1059,20 @@ void main() {
         );
         await tester.pump();
         expect(moves, [(0, 1)]);
+        semantics.dispose();
+      });
+
+      testWidgets('disabled rows offer no move actions', (tester) async {
+        final semantics = tester.ensureSemantics();
+        final moves = <(int, int)>[];
+        await pumpList(tester, moves);
+        final ids =
+            tester
+                .getSemantics(find.text('Cherry'))
+                .getSemanticsData()
+                .customSemanticsActionIds ??
+            const <int>[];
+        expect(ids, isEmpty);
         semantics.dispose();
       });
 

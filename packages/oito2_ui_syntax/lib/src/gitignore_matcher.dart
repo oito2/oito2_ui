@@ -20,7 +20,8 @@ import 'package:flutter/foundation.dart';
 @immutable
 class Oito2GitignoreRule {
   const Oito2GitignoreRule._(
-    this._regex, {
+    this._tokens,
+    this._ignoreCase, {
     required this.line,
     required this.pattern,
     required this.negated,
@@ -46,14 +47,18 @@ class Oito2GitignoreRule {
     if (directoryOnly) text = text.substring(0, text.length - 1);
     final anchored = text.contains('/');
     if (text.startsWith('/')) text = text.substring(1);
-    final source = text.isEmpty ? null : _globToRegExp(text);
+    final tokens = text.isEmpty
+        ? null
+        : _globToTokens(text, ignoreCase: ignoreCase);
     return Oito2GitignoreRule._(
-      source == null
+      tokens == null
           ? null
-          : RegExp(
-              '^${anchored ? '' : '(?:.*/)?'}$source\$',
-              caseSensitive: !ignoreCase,
-            ),
+          : [
+              // A rule without a slash matches a name at any depth.
+              if (!anchored) const _Token(_TokenKind.directories),
+              ...tokens,
+            ],
+      tokens != null && ignoreCase,
       line: line,
       pattern: written,
       negated: negated,
@@ -80,20 +85,30 @@ class Oito2GitignoreRule {
   /// matches a name at any depth.
   final bool anchored;
 
-  final RegExp? _regex;
+  /// The compiled pattern, or null when it is malformed.
+  final List<_Token>? _tokens;
+
+  /// Whether letters match in any case; always false for an invalid rule.
+  final bool _ignoreCase;
 
   /// Whether the pattern is well formed; a rule with an unclosed `[` or a
   /// trailing lone backslash matches nothing, as in git.
-  bool get isValid => _regex != null;
+  bool get isValid => _tokens != null;
 
   /// Returns whether the rule matches [path], a slash-separated path
   /// relative to the gitignore file's directory, which is a directory
   /// when [isDirectory].
   ///
   /// Only the path itself is compared: [Oito2GitignoreMatcher.match] also
-  /// looks at the directories that hold it.
-  bool matches(String path, {bool isDirectory = false}) =>
-      (!directoryOnly || isDirectory) && (_regex?.hasMatch(path) ?? false);
+  /// looks at the directories that hold it. The time it takes grows with
+  /// the length of the pattern times the length of [path], whatever the
+  /// pattern.
+  bool matches(String path, {bool isDirectory = false}) {
+    final tokens = _tokens;
+    return (!directoryOnly || isDirectory) &&
+        tokens != null &&
+        _wildmatch(tokens, path);
+  }
 
   /// Returns [line] without its trailing spaces, keeping a space escaped
   /// with a backslash and dropping a carriage return.
@@ -120,8 +135,8 @@ class Oito2GitignoreRule {
       other.negated == negated &&
       other.directoryOnly == directoryOnly &&
       other.anchored == anchored &&
-      other._regex?.pattern == _regex?.pattern &&
-      other._regex?.isCaseSensitive == _regex?.isCaseSensitive;
+      other.isValid == isValid &&
+      other._ignoreCase == _ignoreCase;
 
   @override
   int get hashCode => Object.hash(line, pattern, negated, directoryOnly);
@@ -189,7 +204,7 @@ class Oito2GitignoreMatcher {
   /// `core.ignoreCase`.
   factory Oito2GitignoreMatcher.parse(String text, {bool ignoreCase = false}) {
     final lines = text.split('\n');
-    if (lines.first.startsWith('﻿')) {
+    if (lines.first.startsWith('\u{FEFF}')) {
       lines.first = lines.first.substring(1);
     }
     return Oito2GitignoreMatcher([
@@ -264,16 +279,62 @@ const _posixClasses = {
 /// Returns [c] escaped for use inside a regular expression class.
 String _classChar(String c) => r'\]^-['.contains(c) ? '\\$c' : RegExp.escape(c);
 
-/// Returns [glob] as a regular expression source, or null when it has an
-/// unclosed `[`, an unknown POSIX class or a trailing lone backslash.
-String? _globToRegExp(String glob) {
-  final out = StringBuffer();
+/// The kinds of [_Token].
+enum _TokenKind {
+  /// One character that passes [_Token.test].
+  one,
+
+  /// `*`: any run of characters without `/`.
+  star,
+
+  /// `**/`: zero or more whole directories, each ending with `/`.
+  directories,
+
+  /// A trailing `**`: everything that is left.
+  rest,
+}
+
+/// One step of a compiled gitignore pattern.
+@immutable
+class _Token {
+  const _Token(this.kind, [this.test]);
+
+  /// What the token matches.
+  final _TokenKind kind;
+
+  /// For [_TokenKind.one], returns whether the UTF-16 code unit passes.
+  final bool Function(int unit)? test;
+}
+
+/// The UTF-16 code unit of `/`.
+const _slash = 0x2f;
+
+/// Returns a token that matches the single character [c], in any case
+/// when [ignoreCase].
+_Token _literal(String c, {required bool ignoreCase}) {
+  final unit = c.codeUnitAt(0);
+  if (!ignoreCase || c.toLowerCase() == c.toUpperCase()) {
+    return _Token(_TokenKind.one, (u) => u == unit);
+  }
+  final regex = RegExp('^${RegExp.escape(c)}\$', caseSensitive: false);
+  return _Token(
+    _TokenKind.one,
+    (u) => u == unit || regex.hasMatch(String.fromCharCode(u)),
+  );
+}
+
+/// Returns [glob] as tokens, or null when it has an unclosed `[`, an
+/// unknown POSIX class or a trailing lone backslash.
+///
+/// With [ignoreCase], letters match in any case.
+List<_Token>? _globToTokens(String glob, {required bool ignoreCase}) {
+  final out = <_Token>[];
   var i = 0;
   while (i < glob.length) {
     final c = glob[i];
     if (c == r'\') {
       if (i + 1 == glob.length) return null;
-      out.write(RegExp.escape(glob[i + 1]));
+      out.add(_literal(glob[i + 1], ignoreCase: ignoreCase));
       i += 2;
     } else if (c == '*') {
       var end = i;
@@ -285,31 +346,117 @@ String? _globToRegExp(String glob) {
       if (end - i == 2 && atStart && atEnd) {
         if (end == glob.length) {
           // A trailing "**" matches everything inside.
-          out.write('.*');
+          out.add(const _Token(_TokenKind.rest));
           i = end;
         } else {
           // "**/" matches zero or more directories.
-          out.write('(?:.*/)?');
+          out.add(const _Token(_TokenKind.directories));
           i = end + 1;
         }
       } else {
-        out.write('[^/]*');
+        out.add(const _Token(_TokenKind.star));
         i = end;
       }
     } else if (c == '?') {
-      out.write('[^/]');
+      out.add(_Token(_TokenKind.one, (u) => u != _slash));
       i++;
     } else if (c == '[') {
       final parsed = _bracket(glob, i);
       if (parsed == null) return null;
-      out.write(parsed.source);
+      final regex = RegExp(
+        '^(?:${parsed.source})\$',
+        caseSensitive: !ignoreCase,
+      );
+      out.add(
+        _Token(_TokenKind.one, (u) => regex.hasMatch(String.fromCharCode(u))),
+      );
       i = parsed.end;
     } else {
-      out.write(RegExp.escape(c));
+      out.add(_literal(c, ignoreCase: ignoreCase));
       i++;
     }
   }
-  return out.toString();
+  return out;
+}
+
+/// Returns whether [tokens] match the whole of [path].
+///
+/// Every pair of a token and a position in [path] is decided at most
+/// once, so the time grows with the number of tokens times the length of
+/// [path], and the recursion is at most as deep as the number of tokens.
+bool _wildmatch(List<_Token> tokens, String path) {
+  final n = path.length;
+  final width = n + 1;
+  // 0: not decided yet, 1: matches, 2: doesn't match.
+  final memo = Uint8List((tokens.length + 1) * width);
+
+  // Records [result] for token [t] at the positions from [from] to [to]
+  // that [next] walks through.
+  void fill(int t, int from, int to, int Function(int p) next, bool result) {
+    final value = result ? 1 : 2;
+    for (var p = from; ; p = next(p)) {
+      memo[t * width + p] = value;
+      if (p >= to) break;
+    }
+  }
+
+  bool go(int t, int p) {
+    final key = t * width + p;
+    if (memo[key] != 0) return memo[key] == 1;
+    if (t == tokens.length) return p == n;
+    final token = tokens[t];
+    switch (token.kind) {
+      case _TokenKind.one:
+        final result =
+            p < n && token.test!(path.codeUnitAt(p)) && go(t + 1, p + 1);
+        memo[key] = result ? 1 : 2;
+        return result;
+      case _TokenKind.rest:
+        memo[key] = 1;
+        return true;
+      case _TokenKind.star:
+        // Tries the rest of the pattern after each run of characters
+        // without a slash, stopping at a position already decided.
+        var q = p;
+        var result = false;
+        while (true) {
+          if (q != p && memo[t * width + q] != 0) {
+            result = memo[t * width + q] == 1;
+            break;
+          }
+          if (go(t + 1, q)) {
+            result = true;
+            break;
+          }
+          if (q == n || path.codeUnitAt(q) == _slash) break;
+          q++;
+        }
+        fill(t, p, q, (x) => x + 1, result);
+        return result;
+      case _TokenKind.directories:
+        // Tries the rest of the pattern here and after each later slash.
+        int next(int x) => path.indexOf('/', x) + 1;
+        var q = p;
+        var result = false;
+        while (true) {
+          if (q != p && memo[t * width + q] != 0) {
+            result = memo[t * width + q] == 1;
+            break;
+          }
+          if (go(t + 1, q)) {
+            result = true;
+            break;
+          }
+          final after = next(q);
+          if (after == 0) break;
+          q = after;
+        }
+        fill(t, p, q, next, result);
+        return result;
+    }
+  }
+
+  return go(0, 0);
 }
 
 /// Returns the bracket expression of [glob] that opens at [start] as a

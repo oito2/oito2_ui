@@ -18,6 +18,7 @@ import 'package:material_ui/material_ui.dart';
 import '../collections/list_collection.dart';
 import '../tokens/geometry.dart';
 import 'highlighted_text.dart';
+import 'widget_helpers.dart';
 
 /// The suggestion list of an autocomplete field: [options] in a panel
 /// below the field, with [query] highlighted in each label and the
@@ -56,6 +57,7 @@ class AutocompleteOptionsView<T extends Object> extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final highlighted = AutocompleteHighlightedOption.of(context);
+    final touch = padsTapTargets(context);
     return Align(
       alignment: AlignmentDirectional.topStart,
       child: Padding(
@@ -77,38 +79,55 @@ class AutocompleteOptionsView<T extends Object> extends StatelessWidget {
               itemBuilder: (context, index) {
                 final option = options[index];
                 final selected = index == highlighted;
-                if (selected) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (context.mounted) {
-                      Scrollable.ensureVisible(context, alignment: 0.5);
+                return Builder(
+                  builder: (context) {
+                    // The context of this builder is the row's own, so the
+                    // row, not the whole list, scrolls into view.
+                    if (selected) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (context.mounted) {
+                          Scrollable.ensureVisible(context, alignment: 0.5);
+                        }
+                      });
                     }
-                  });
-                }
-                return Semantics(
-                  selected: selected,
-                  button: true,
-                  child: InkWell(
-                    mouseCursor: WidgetStateMouseCursor.clickable,
-                    onTap: () => onSelected(option),
-                    child: Container(
-                      color: selected ? scheme.secondaryContainer : null,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: Oito2Spacing.md,
-                        vertical: Oito2Spacing.sm,
-                      ),
-                      child: Oito2HighlightedText(
-                        collection.labelOf(option),
-                        query: query,
-                        style: TextStyle(
-                          color: selected
-                              ? scheme.onSecondaryContainer
-                              : scheme.onSurface,
-                        ),
-                      ),
-                    ),
-                  ),
+                    return _option(context, option, selected, touch);
+                  },
                 );
               },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Builds the row of [option], highlighted when [selected] and at least
+  /// 48 pixels tall when [touch].
+  Widget _option(BuildContext context, T option, bool selected, bool touch) {
+    final scheme = Theme.of(context).colorScheme;
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: InkWell(
+        mouseCursor: WidgetStateMouseCursor.clickable,
+        onTap: () => onSelected(option),
+        child: Container(
+          color: selected ? scheme.secondaryContainer : null,
+          // On touch platforms each row reaches the 48-pixel
+          // minimum tap target.
+          constraints: touch
+              ? const BoxConstraints(minHeight: Oito2Sizes.minTouchTarget)
+              : null,
+          alignment: touch ? AlignmentDirectional.centerStart : null,
+          padding: const EdgeInsets.symmetric(
+            horizontal: Oito2Spacing.md,
+            vertical: Oito2Spacing.sm,
+          ),
+          child: Oito2HighlightedText(
+            collection.labelOf(option),
+            query: query,
+            style: TextStyle(
+              color: selected ? scheme.onSecondaryContainer : scheme.onSurface,
             ),
           ),
         ),

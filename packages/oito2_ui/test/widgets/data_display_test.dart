@@ -408,6 +408,61 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
     });
 
+    testWidgets('a pane collapsed to nothing keeps its state', (tester) async {
+      await pumpOito2(
+        tester,
+        const SizedBox(
+          width: 602,
+          height: 300,
+          child: Oito2Splitter(
+            panes: [
+              Oito2SplitterPane(
+                collapsible: true,
+                child: Material(child: TextField()),
+              ),
+              Oito2SplitterPane(child: Text('C')),
+            ],
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(TextField), 'typed');
+      await _key(tester, LogicalKeyboardKey.tab);
+      final divider = find.bySemanticsLabel('Resize pane');
+      await tester.tap(divider);
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(divider);
+      await tester.pumpAndSettle();
+      expect(find.byType(TextField), findsNothing);
+      await tester.tap(divider);
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(divider);
+      await tester.pumpAndSettle();
+      expect(find.text('typed'), findsOneWidget);
+    });
+
+    testWidgets('an unbounded width asserts with a clear message', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        const SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            height: 100,
+            child: Oito2Splitter(
+              panes: [
+                Oito2SplitterPane(child: Text('A')),
+                Oito2SplitterPane(child: Text('B')),
+              ],
+            ),
+          ),
+        ),
+      );
+      final error = tester.takeException();
+      expect(error, isA<AssertionError>());
+      expect('$error', contains('unbounded width'));
+    });
+
     testWidgets('keys resize and Enter collapses and restores', (tester) async {
       await pumpSplitter(tester);
       await _key(tester, LogicalKeyboardKey.tab);
@@ -617,6 +672,30 @@ void main() {
       await tester.dragFrom(corner, const Offset(50, 30));
       await tester.pump();
       expect(panelRect(tester).size, const Size(350, 230));
+      await tester.pump(const Duration(seconds: 1));
+    });
+
+    testWidgets('growing past the right edge keeps the left edge', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        const Stack(
+          children: [
+            Oito2FloatingPanel(
+              title: 'Inspector',
+              initialRect: Rect.fromLTWH(700, 50, 280, 200),
+              child: SizedBox(),
+            ),
+          ],
+        ),
+      );
+      final corner = panelRect(tester).bottomRight - const Offset(3, 3);
+      await tester.dragFrom(corner, const Offset(100, 0));
+      await tester.pump();
+      final rect = panelRect(tester);
+      expect(rect.left, 700);
+      expect(rect.right, 1000);
       await tester.pump(const Duration(seconds: 1));
     });
 
@@ -862,6 +941,112 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(tester.getTopLeft(find.text('A long headline').first).dx, x);
     });
+
+    double left(WidgetTester tester) =>
+        tester.getTopLeft(find.text('A long headline').first).dx;
+
+    testWidgets('a tap pauses and resumes the scroll', (tester) async {
+      await pumpOito2(tester, marquee(width: 60));
+      await tester.pump();
+      await tester.tap(find.byType(Oito2Marquee));
+      await tester.pump();
+      final paused = left(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(left(tester), paused);
+      await tester.tap(find.byType(Oito2Marquee));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(left(tester), isNot(paused));
+    });
+
+    testWidgets('takes the focus, which pauses it, and Space toggles it', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        Center(
+          child: SizedBox(
+            width: 60,
+            child: Oito2Marquee(
+              speed: 100,
+              pauseOnHover: false,
+              child: const Text('A long headline'),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      // Without pauseOnHover the focus alone doesn't stop it.
+      var start = left(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(left(tester), isNot(start));
+      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      await tester.pump();
+      start = left(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(left(tester), start);
+      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(left(tester), isNot(start));
+    });
+
+    testWidgets('the keyboard focus stops it with pauseOnHover', (
+      tester,
+    ) async {
+      await pumpOito2(tester, marquee(width: 60));
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      final start = left(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(left(tester), start);
+    });
+
+    testWidgets('turning pauseOnHover off while hovered resumes it', (
+      tester,
+    ) async {
+      Widget build(bool pause) => Center(
+        child: SizedBox(
+          width: 60,
+          child: Oito2Marquee(
+            speed: 100,
+            pauseOnHover: pause,
+            child: const Text('A long headline'),
+          ),
+        ),
+      );
+      await pumpOito2(tester, build(true));
+      await tester.pump();
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer(
+        location: tester.getCenter(find.byType(Oito2Marquee)),
+      );
+      await tester.pump();
+      await pumpOito2(tester, build(false));
+      await tester.pump();
+      final start = left(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(left(tester), isNot(start));
+    });
+
+    testWidgets('shows the click cursor while it scrolls', (tester) async {
+      await pumpOito2(tester, marquee(width: 60));
+      await tester.pump();
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer(
+        location: tester.getCenter(find.byType(Oito2Marquee)),
+      );
+      await tester.pump();
+      expect(
+        RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1),
+        SystemMouseCursors.click,
+      );
+    });
   });
 
   group('Oito2TimerController', () {
@@ -993,6 +1178,57 @@ void main() {
           SystemMouseCursors.click,
         );
       }
+    });
+
+    testWidgets('assistive technologies open and close branches', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      final controller = await pumpTree(tester);
+      SemanticsData data() =>
+          tester.getSemantics(find.text('src')).getSemanticsData();
+      void perform(SemanticsAction action) {
+        final node = tester.getSemantics(find.text('src'));
+        node.owner!.performAction(node.id, action);
+      }
+
+      expect(data().hasAction(SemanticsAction.expand), isTrue);
+      expect(data().hasAction(SemanticsAction.collapse), isFalse);
+      perform(SemanticsAction.expand);
+      await tester.pump();
+      expect(controller.isExpanded('src'), isTrue);
+      expect(data().hasAction(SemanticsAction.expand), isFalse);
+      expect(data().hasAction(SemanticsAction.collapse), isTrue);
+      perform(SemanticsAction.collapse);
+      await tester.pump();
+      expect(controller.isExpanded('src'), isFalse);
+      final leaf = tester
+          .getSemantics(find.text('README.md'))
+          .getSemanticsData();
+      expect(leaf.hasAction(SemanticsAction.expand), isFalse);
+      expect(leaf.hasAction(SemanticsAction.collapse), isFalse);
+      semantics.dispose();
+    });
+
+    testWidgets('assistive technologies activate enabled rows', (tester) async {
+      final semantics = tester.ensureSemantics();
+      final activated = <String>[];
+      await pumpTree(tester, onActivate: (node) => activated.add(node.value));
+      final open = CustomSemanticsAction.getIdentifier(
+        const CustomSemanticsAction(label: 'Open'),
+      );
+      List<int> actionsOf(String label) =>
+          tester
+              .getSemantics(find.text(label))
+              .getSemanticsData()
+              .customSemanticsActionIds ??
+          const [];
+      expect(actionsOf('README.md'), contains(open));
+      expect(actionsOf('LICENSE'), isNot(contains(open)));
+      final node = tester.getSemantics(find.text('README.md'));
+      node.owner!.performAction(node.id, SemanticsAction.customAction, open);
+      expect(activated, ['README.md']);
+      semantics.dispose();
     });
 
     testWidgets('the arrow keys move, open and close branches', (tester) async {

@@ -880,6 +880,87 @@ void main() {
     expect(portalAccent.closed, isTrue);
     expect(colorScheme.closed, isTrue);
   });
+
+  test('close calls onClose after closing the sources', () async {
+    final gsettings = FakeGSettings();
+    final calls = <String>[];
+    final reader = Oito2SystemSettingsReader(
+      platform: _linux,
+      gsettings: gsettings,
+      onClose: () async =>
+          calls.add('onClose, gsettings closed: ${gsettings.closed}'),
+    );
+    await reader.close();
+    expect(calls, ['onClose, gsettings closed: true']);
+  });
+
+  group('portal timeout', () {
+    test('slow portal settings fall back to their defaults together', () async {
+      final reader = Oito2SystemSettingsReader(
+        platform: _linux,
+        environment: const {'XDG_CURRENT_DESKTOP': 'GNOME'},
+        gsettings: FakeGSettings({
+          '$_interface/accent-color': 'teal',
+          '$_interface/color-scheme': 'prefer-dark',
+        }),
+        portalAccent: _HangingAccent(),
+        colorScheme: _HangingColorScheme(),
+        reducedMotion: _HangingReducedMotion(),
+      );
+      final watch = Stopwatch()..start();
+      final settings = await reader.read().timeout(const Duration(seconds: 5));
+      watch.stop();
+      expect(settings.accentColor, Oito2AccentColor.teal.color);
+      expect(settings.colorScheme, Brightness.dark);
+      expect(settings.reduceMotion, isNull);
+      // The three portal reads wait at the same time, not one after the
+      // other.
+      expect(
+        watch.elapsed,
+        lessThan(Oito2SystemSettingsReader.portalTimeout * 2.5),
+      );
+    }, timeout: const Timeout(Duration(seconds: 10)));
+  });
+
+  test('KDE Plasma reads kdeglobals once per read', () async {
+    final files = _CountingFiles({
+      _kdeglobals: '[General]\nColorScheme=BreezeDark\n',
+    });
+    final settings = await _reader(desktop: 'KDE', files: files).read();
+    expect(settings.colorScheme, Brightness.dark);
+    expect(files.reads[_kdeglobals], 1);
+  });
+}
+
+/// Configuration files that count the reads of each path.
+class _CountingFiles extends FakeConfigFiles {
+  _CountingFiles(super.files);
+
+  final Map<String, int> reads = {};
+
+  @override
+  Future<String?> read(String relativePath) {
+    reads.update(relativePath, (n) => n + 1, ifAbsent: () => 1);
+    return super.read(relativePath);
+  }
+}
+
+/// A portal accent that never answers.
+class _HangingAccent extends FakeAccent {
+  @override
+  Future<Color?> read() => Completer<Color?>().future;
+}
+
+/// A portal color scheme that never answers.
+class _HangingColorScheme extends FakeColorScheme {
+  @override
+  Future<Brightness?> read() => Completer<Brightness?>().future;
+}
+
+/// A portal reduced motion setting that never answers.
+class _HangingReducedMotion extends FakeReducedMotion {
+  @override
+  Future<bool?> read() => Completer<bool?>().future;
 }
 
 /// An accent source whose first read waits for [gate] and returns the

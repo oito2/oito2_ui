@@ -543,23 +543,30 @@ class _SheetFrameState extends State<_SheetFrame>
           child: Builder(
             builder: (context) {
               final focused = Focus.of(context).hasFocus;
-              return GestureDetector(
-                onTap: () => _setSnap((_snap + 1) % snaps.length),
-                child: Container(
-                  height: Oito2Spacing.xl,
-                  alignment: Alignment.center,
+              return MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => _setSnap((_snap + 1) % snaps.length),
                   child: Container(
-                    padding: const EdgeInsets.all(Oito2Spacing.xxs),
-                    decoration: BoxDecoration(
-                      borderRadius: Oito2Radius.smallAll,
-                      border: Border.all(
-                        width: 2,
-                        color: focused
-                            ? scheme.primary
-                            : const Color(0x00000000),
+                    // On touch platforms the handle reaches the 48-pixel
+                    // minimum tap target.
+                    height: padsTapTargets(context)
+                        ? Oito2Sizes.minTouchTarget
+                        : Oito2Spacing.xl,
+                    alignment: Alignment.center,
+                    child: Container(
+                      padding: const EdgeInsets.all(Oito2Spacing.xxs),
+                      decoration: BoxDecoration(
+                        borderRadius: Oito2Radius.smallAll,
+                        border: Border.all(
+                          width: 2,
+                          color: focused
+                              ? scheme.primary
+                              : const Color(0x00000000),
+                        ),
                       ),
+                      child: pill,
                     ),
-                    child: pill,
                   ),
                 ),
               );

@@ -281,7 +281,9 @@ class _PropertyRowState extends State<_PropertyRow> {
                         fixedSize: const Size.square(_rowHeight),
                         iconSize: 16,
                         padding: EdgeInsets.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        tapTargetSize: padsTapTargets(context)
+                            ? MaterialTapTargetSize.padded
+                            : MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
                     child: Oito2CopyButton(text: copied),

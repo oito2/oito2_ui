@@ -388,6 +388,46 @@ void main() {
     expect(positions.last, const Offset(50, 38));
   });
 
+  testWidgets('Oito2Draggable stays inside the stack unless unbounded', (
+    tester,
+  ) async {
+    Future<void> pump({required bool bounded}) => pumpOito2(
+      tester,
+      Align(
+        alignment: Alignment.topLeft,
+        child: SizedBox.square(
+          dimension: 200,
+          child: Stack(
+            children: [
+              Oito2Draggable(
+                key: ValueKey(bounded),
+                initialPosition: const Offset(20, 20),
+                boundedByStack: bounded,
+                child: const SizedBox.square(
+                  dimension: 40,
+                  child: ColoredBox(color: Color(0xFF3584E4)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await pump(bounded: true);
+    await tester.drag(find.byType(ColoredBox), const Offset(300, 300));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byType(ColoredBox)), const Offset(160, 160));
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    expect(tester.getTopLeft(find.byType(ColoredBox)), const Offset(160, 160));
+
+    await pump(bounded: false);
+    await tester.drag(find.byType(ColoredBox), const Offset(-100, 0));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byType(ColoredBox)).dx, lessThan(0));
+  });
+
   testWidgets('Oito2Draggable ends a cancelled drag', (tester) async {
     final events = <String>[];
     await pumpOito2(

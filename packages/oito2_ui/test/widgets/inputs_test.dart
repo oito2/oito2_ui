@@ -62,6 +62,30 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       expect(escaped, 1);
     });
+
+    testWidgets('without onEscape, Escape on an empty field reaches the '
+        'ancestors', (tester) async {
+      var dismissed = 0;
+      await pumpOito2(
+        tester,
+        Center(
+          child: CallbackShortcuts(
+            bindings: {
+              const SingleActivator(LogicalKeyboardKey.escape): () =>
+                  dismissed++,
+            },
+            child: const SizedBox(width: 300, child: Oito2SearchField()),
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(TextField), 'docs');
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(find.text('docs'), findsNothing);
+      expect(dismissed, 0);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      expect(dismissed, 1);
+    });
   });
 
   testWidgets('Oito2SearchTitleField toggles between title and search', (
@@ -91,6 +115,32 @@ void main() {
     await tester.pumpAndSettle();
     expect(active, isFalse);
     expect(find.text('Files'), findsOneWidget);
+  });
+
+  testWidgets('Oito2SearchTitleField switches at once without animations', (
+    tester,
+  ) async {
+    var active = false;
+    await pumpOito2(
+      tester,
+      MediaQuery(
+        data: const MediaQueryData(disableAnimations: true),
+        child: StatefulBuilder(
+          builder: (context, setState) => Center(
+            child: Oito2SearchTitleField(
+              title: const Text('Files'),
+              searchActive: active,
+              onSearchActiveChanged: (v) => setState(() => active = v),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byIcon(LucideIcons.search));
+    await tester.pump();
+    await tester.pump();
+    expect(active, isTrue);
+    expect(find.text('Files'), findsNothing);
   });
 
   testWidgets('Oito2SearchTitleField keeps its size and one search icon', (
@@ -540,6 +590,33 @@ void main() {
     await tester.pump();
     expect(errors.last, isNull);
     expect(values.last, DateTime(2026, 7, 1, 8, 30));
+  });
+
+  testWidgets('Oito2DateTimeEntry reports no mix of an old date and a new '
+      'time when the date becomes valid', (tester) async {
+    final values = <DateTime?>[];
+    await pumpOito2(
+      tester,
+      Center(
+        child: SizedBox(
+          width: 520,
+          child: Oito2DateTimeEntry(
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2030),
+            onChanged: values.add,
+          ),
+        ),
+      ),
+    );
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.first, '06/01/2026');
+    await tester.enterText(fields.first, '06/01/');
+    await tester.enterText(fields.last, '08:30');
+    await tester.pump();
+    values.clear();
+    await tester.enterText(fields.first, '07/01/2026');
+    await tester.pump();
+    expect(values, [DateTime(2026, 7, 1, 8, 30)]);
   });
 
   group('Oito2SegmentedEntry', () {

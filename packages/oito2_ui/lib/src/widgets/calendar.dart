@@ -336,7 +336,6 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
         : inRange
         ? scheme.onSecondaryContainer
         : scheme.onSurface;
-    final rtl = Directionality.of(context) == TextDirection.rtl;
     Widget cell = Container(
       width: size,
       height: size,
@@ -368,18 +367,13 @@ class _Oito2CalendarState extends State<Oito2Calendar> {
         alignment: Alignment.center,
         children: [
           Positioned.fill(
+            // The Row follows the reading direction, so the first day
+            // leaves its leading half empty and the last day its trailing
+            // half, in both directions.
             child: Row(
               children: [
-                Expanded(
-                  child: (start && !rtl) || (end && rtl)
-                      ? const SizedBox()
-                      : band,
-                ),
-                Expanded(
-                  child: (end && !rtl) || (start && rtl)
-                      ? const SizedBox()
-                      : band,
-                ),
+                Expanded(child: start ? const SizedBox() : band),
+                Expanded(child: end ? const SizedBox() : band),
               ],
             ),
           ),

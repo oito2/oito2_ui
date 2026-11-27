@@ -229,7 +229,7 @@ class _Oito2AngleSliderState extends State<Oito2AngleSlider> {
           child: Focus(
             focusNode: _focusNode,
             child: MouseRegion(
-              cursor: SystemMouseCursors.grab,
+              cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 onTapDown: (d) => _pointAt(d.localPosition),
                 onTapUp: (_) => _end(),

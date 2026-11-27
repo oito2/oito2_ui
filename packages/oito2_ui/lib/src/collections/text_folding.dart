@@ -23,6 +23,8 @@ const _accents = {
   'ä': 'a',
   'å': 'a',
   'ā': 'a',
+  'ă': 'a',
+  'ą': 'a',
   'ç': 'c',
   'ć': 'c',
   'č': 'c',
@@ -48,23 +50,33 @@ const _accents = {
   'ö': 'o',
   'ø': 'o',
   'ō': 'o',
+  'ő': 'o',
   'ù': 'u',
   'ú': 'u',
   'û': 'u',
   'ü': 'u',
   'ū': 'u',
   'ů': 'u',
+  'ű': 'u',
   'ý': 'y',
   'ÿ': 'y',
   'ś': 's',
   'š': 's',
+  'ş': 's',
+  'ș': 's',
   'ź': 'z',
   'ż': 'z',
   'ž': 'z',
   'ł': 'l',
+  'ĺ': 'l',
+  'ľ': 'l',
   'ř': 'r',
+  'ŕ': 'r',
   'ť': 't',
+  'ţ': 't',
+  'ț': 't',
   'ď': 'd',
+  'đ': 'd',
   'ğ': 'g',
   'ı': 'i',
   'ß': 'ss',
@@ -80,6 +92,14 @@ const _accents = {
 /// "Ação" matching "acao". [foldTextWithOffsets] also maps the result back
 /// to [text].
 String foldText(String text) => foldTextWithOffsets(text).folded;
+
+/// Returns the words of [query] folded by [foldText], split at whitespace,
+/// without empty words.
+List<String> foldWords(String query) =>
+    foldText(query)
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
 
 /// Folds [text] like [foldText] and returns the folded string with the
 /// index in [text] of each folded character: `starts[i]` is where the

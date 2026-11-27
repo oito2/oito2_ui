@@ -71,7 +71,23 @@ class Oito2FileUpload extends StatefulWidget {
 
 class _Oito2FileUploadState extends State<Oito2FileUpload> {
   final Map<XFile, Future<int>> _sizes = {};
-  final Map<XFile, Future<Uint8List>> _previews = {};
+  final Map<XFile, Future<Uint8List?>> _previews = {};
+
+  /// The largest image file, in bytes, that is read for its thumbnail;
+  /// larger images show the file icon.
+  static const _maxPreviewBytes = 20 * 1024 * 1024;
+
+  /// Reads [file] for its thumbnail, or returns null when it is larger
+  /// than [_maxPreviewBytes] or its size can't be read.
+  static Future<Uint8List?> _preview(XFile file) async {
+    final int length;
+    try {
+      length = await file.length();
+    } on Object {
+      return null;
+    }
+    return length <= _maxPreviewBytes ? file.readAsBytes() : null;
+  }
 
   @override
   void initState() {
@@ -138,6 +154,7 @@ class _Oito2FileUploadState extends State<Oito2FileUpload> {
         controller.maxFiles ?? 0,
       ),
       Oito2FileRejection.directory => strings.folderNotAccepted(name),
+      Oito2FileRejection.unreadable => strings.fileUnreadable(name),
     };
   }
 
@@ -186,7 +203,7 @@ class _Oito2FileUploadState extends State<Oito2FileUpload> {
                 : _sizes.putIfAbsent(file, file.length),
             preview:
                 widget.showPreviews && !oito2IsDirectory(file) && _isImage(file)
-                ? _previews.putIfAbsent(file, file.readAsBytes)
+                ? _previews.putIfAbsent(file, () => _preview(file))
                 : null,
             onRemove: widget.enabled ? () => controller.remove(file) : null,
           ),
@@ -223,7 +240,7 @@ class _FileRow extends StatelessWidget {
   final XFile file;
   final bool directory;
   final Future<int>? size;
-  final Future<Uint8List>? preview;
+  final Future<Uint8List?>? preview;
   final VoidCallback? onRemove;
 
   static const _thumbnail = 40.0;
@@ -251,7 +268,7 @@ class _FileRow extends StatelessWidget {
         alignment: Alignment.center,
         child: preview == null
             ? icon
-            : FutureBuilder<Uint8List>(
+            : FutureBuilder<Uint8List?>(
                 future: preview,
                 builder: (context, snapshot) {
                   final bytes = snapshot.data;

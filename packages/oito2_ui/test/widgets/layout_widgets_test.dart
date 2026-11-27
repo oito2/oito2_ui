@@ -119,6 +119,46 @@ void main() {
       expect(tester.getSize(find.byKey(_paneKey)).width, 584);
     });
 
+    testWidgets('an end pane wider than the space keeps its handle in view', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: 150,
+            height: 300,
+            child: _paned(side: Oito2PaneSide.end),
+          ),
+        ),
+      );
+      final view = tester.getRect(find.byType(Oito2PanedView));
+      final handle = tester.getCenter(find.bySemanticsLabel('Resize pane'));
+      expect(handle.dx, inInclusiveRange(view.left, view.right));
+      await tester.drag(
+        find.bySemanticsLabel('Resize pane'),
+        const Offset(20, 0),
+        warnIfMissed: true,
+      );
+      await tester.pump();
+    });
+
+    testWidgets('an unbounded width asserts with a clear message', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(height: 100, child: _paned()),
+        ),
+      );
+      final error = tester.takeException();
+      expect(error, isA<AssertionError>());
+      expect('$error', contains('unbounded width'));
+    });
+
     testWidgets('assistive technologies can adjust it', (tester) async {
       final handle = tester.ensureSemantics();
       await pumpOito2(tester, _paned());
@@ -261,6 +301,27 @@ void main() {
         find.widgetWithText(ListTile, 'Item 2'),
       );
       expect(tile.selected, isTrue);
+    });
+
+    testWidgets('a wide layout on a pushed route shows no back button', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () =>
+                Navigator.of(context)
+                    .push(MaterialPageRoute<void>(builder: (_) => page())),
+            child: const Text('Open'),
+          ),
+        ),
+        scaffold: false,
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Body 0'), findsOneWidget);
+      expect(find.byType(Oito2BackButton), findsNothing);
     });
 
     testWidgets('narrow layouts push the detail and pop back', (tester) async {
@@ -484,6 +545,74 @@ void main() {
       expect(item.bottom, lessThanOrEqualTo(400));
     });
 
+    testWidgets('a single destination uses a rail also on narrow touch', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(400, 700);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: Oito2Theme.light(
+            platform: const Oito2Platform(
+              targetPlatform: TargetPlatform.android,
+              isWeb: false,
+            ),
+          ),
+          home: Scaffold(
+            body: Oito2NavigationPage(
+              items: [items.first],
+              pageBuilder: (context, index) => const Text('Only page'),
+            ),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.byType(Oito2NavigationRail), findsOneWidget);
+      expect(find.text('Only page'), findsOneWidget);
+    });
+
+    test('asserts that there is at least one item', () {
+      expect(
+        () => Oito2NavigationPage(
+          items: [
+            for (final item in items)
+              if (item.label == '') item,
+          ],
+          pageBuilder: (context, index) => const SizedBox(),
+        ),
+        throwsA(
+          isA<AssertionError>().having(
+            (e) => e.message,
+            'message',
+            contains('at least one item'),
+          ),
+        ),
+      );
+    });
+
+    testWidgets('asserts that the controller length matches the items', (
+      tester,
+    ) async {
+      final controller = Oito2PageController(length: 2);
+      addTearDown(controller.dispose);
+      await pumpOito2(
+        tester,
+        Oito2NavigationPage(
+          items: items,
+          controller: controller,
+          pageBuilder: (context, index) => const SizedBox(),
+        ),
+      );
+      final error = tester.takeException();
+      expect(error, isA<AssertionError>());
+      expect(
+        (error as AssertionError).message,
+        contains('has length 2, but there are 3 items'),
+      );
+    });
+
     testWidgets('narrow touch layouts use a bottom bar', (tester) async {
       tester.view.physicalSize = const Size(400, 700);
       tester.view.devicePixelRatio = 1;
@@ -504,6 +633,65 @@ void main() {
       await tester.tap(find.text('Search'));
       await tester.pumpAndSettle();
       expect(find.text('Page Search'), findsOneWidget);
+    });
+
+    testWidgets('with the bottom bar, leading and trailing join the page '
+        'title bar', (tester) async {
+      const android = Oito2Platform(
+        targetPlatform: TargetPlatform.android,
+        isWeb: false,
+      );
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      Future<void> pumpAt(double width) async {
+        tester.view.physicalSize = Size(width, 700);
+        await tester.pumpWidget(
+          Oito2SystemScope(
+            settings: Oito2SystemSettings.fallback(android),
+            child: MaterialApp(
+              theme: Oito2Theme.light(platform: android),
+              home: Scaffold(
+                body: Oito2NavigationPage(
+                  items: items,
+                  leading: const Icon(Icons.circle, semanticLabel: 'Logo'),
+                  trailing: Oito2IconButton(
+                    tooltip: 'Account',
+                    icon: const Icon(Icons.person),
+                    onPressed: () {},
+                  ),
+                  pageBuilder: (context, index) => const Scaffold(
+                    appBar: Oito2WindowTitleBar(title: Text('Title')),
+                    body: SizedBox(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+
+      await pumpAt(400);
+      final appBar = find.byType(AppBar);
+      expect(
+        find.descendant(of: appBar, matching: find.byTooltip('Account')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: appBar, matching: find.bySemanticsLabel('Logo')),
+        findsOneWidget,
+      );
+      await pumpAt(900);
+      expect(
+        find.descendant(of: appBar, matching: find.byTooltip('Account')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(Oito2NavigationRail),
+          matching: find.byTooltip('Account'),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('the page keeps its state between bar and rail', (

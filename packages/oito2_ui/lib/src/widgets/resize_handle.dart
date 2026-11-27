@@ -23,11 +23,16 @@ import 'widget_helpers.dart';
 /// A focusable divider line that resizes the panes beside it by dragging,
 /// the arrow keys and assistive-technology adjustments.
 ///
-/// It is [Oito2Spacing.sm] thick across [axis] and fills the other
-/// direction. The line is highlighted while hovered or focused, and
-/// thicker while focused. Movements come in screen coordinates: positive
-/// toward the right for a horizontal [axis] and toward the bottom for a
-/// vertical one, whatever the text direction.
+/// It is [extentOf] thick across [axis] and fills the other direction:
+/// [Oito2Spacing.sm] on pointer platforms, and the 48-pixel minimum tap
+/// target when the theme pads tap targets, as on touch platforms. The
+/// line stays 1 pixel thick in the middle; a double click toggles only on
+/// the central [Oito2Spacing.sm] band, and the rest of the wider touch
+/// area only takes drags, so taps there still reach the widgets beneath.
+/// The line is highlighted while hovered or focused, and thicker while
+/// focused. Movements come in screen coordinates: positive toward the
+/// right for a horizontal [axis] and toward the bottom for a vertical
+/// one, whatever the text direction.
 class ResizeHandle extends StatefulWidget {
   /// Creates a resize handle.
   const ResizeHandle({
@@ -46,6 +51,12 @@ class ResizeHandle extends StatefulWidget {
     this.onMoveEnd,
     this.dragStartBehavior = DragStartBehavior.start,
   });
+
+  /// Returns the thickness of a handle across its axis under the closest
+  /// theme: the 48-pixel minimum tap target when it pads tap targets, as
+  /// on touch platforms, and [Oito2Spacing.sm] otherwise.
+  static double extentOf(BuildContext context) =>
+      padsTapTargets(context) ? Oito2Sizes.minTouchTarget : Oito2Spacing.sm;
 
   /// The axis the divider moves along.
   final Axis axis;
@@ -133,6 +144,20 @@ class _ResizeHandleState extends State<ResizeHandle> {
   Widget build(BuildContext context) {
     final highlighted = _hovered || _focused;
     final line = _focused ? 2.0 : 1.0;
+    final extent = ResizeHandle.extentOf(context);
+    final band = SizedBox(
+      width: _horizontal ? Oito2Spacing.sm : double.infinity,
+      height: _horizontal ? double.infinity : Oito2Spacing.sm,
+      child: Center(
+        child: Container(
+          width: _horizontal ? line : null,
+          height: _horizontal ? null : line,
+          color: highlighted
+              ? semanticColorsOf(context).primaryText
+              : Theme.of(context).colorScheme.outlineVariant,
+        ),
+      ),
+    );
     return Semantics(
       slider: true,
       label: widget.semanticLabel,
@@ -145,6 +170,8 @@ class _ResizeHandleState extends State<ResizeHandle> {
         onFocusChange: (focused) => setState(() => _focused = focused),
         onKeyEvent: _onKey,
         child: MouseRegion(
+          // The wider touch area lets hits through to the widgets beneath.
+          opaque: !padsTapTargets(context),
           cursor: _horizontal
               ? SystemMouseCursors.resizeLeftRight
               : SystemMouseCursors.resizeUpDown,
@@ -153,7 +180,6 @@ class _ResizeHandleState extends State<ResizeHandle> {
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
             dragStartBehavior: widget.dragStartBehavior,
-            onDoubleTap: widget.onToggle,
             onHorizontalDragUpdate: _horizontal
                 ? (d) => widget.onMove(d.delta.dx)
                 : null,
@@ -167,15 +193,13 @@ class _ResizeHandleState extends State<ResizeHandle> {
                 ? (_) => widget.onMoveEnd!()
                 : null,
             child: SizedBox(
-              width: _horizontal ? Oito2Spacing.sm : double.infinity,
-              height: _horizontal ? double.infinity : Oito2Spacing.sm,
+              width: _horizontal ? extent : double.infinity,
+              height: _horizontal ? double.infinity : extent,
               child: Center(
-                child: Container(
-                  width: _horizontal ? line : null,
-                  height: _horizontal ? null : line,
-                  color: highlighted
-                      ? semanticColorsOf(context).primaryText
-                      : Theme.of(context).colorScheme.outlineVariant,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onDoubleTap: widget.onToggle,
+                  child: band,
                 ),
               ),
             ),

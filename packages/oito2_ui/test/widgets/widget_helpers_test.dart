@@ -16,8 +16,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/gestures.dart' show kDoubleTapTimeout;
 import 'package:flutter/services.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
+
+import 'dart:async';
+
+import 'package:oito2_ui/oito2_ui.dart';
+import 'package:oito2_ui/src/collections/text_folding.dart';
+import 'package:oito2_ui/src/widgets/type_ahead.dart';
 import 'package:oito2_ui/src/widgets/widget_helpers.dart';
 
 /// Shows whether its node has focus and counts its controller's changes.
@@ -174,5 +179,145 @@ void main() {
     await tester.pumpWidget(build(100));
     await tester.pumpWidget(build(150));
     expect(sizes, const [Size(100, 20), Size(150, 20)]);
+  });
+
+  test('avatarStatusLabel names every status in each language', () {
+    final en = Oito2LocalizationsEn();
+    final pt = Oito2LocalizationsPtBr();
+    expect(
+      [for (final s in Oito2AvatarStatus.values) avatarStatusLabel(en, s)],
+      [en.statusOnline, en.statusAway, en.statusBusy, en.statusOffline],
+    );
+    expect(avatarStatusLabel(pt, Oito2AvatarStatus.busy), pt.statusBusy);
+  });
+
+  test('foldWords folds the query and drops empty words', () {
+    expect(foldWords('  Ação   Rápida '), ['acao', 'rapida']);
+    expect(foldWords('   '), isEmpty);
+    expect(foldWords(''), isEmpty);
+  });
+
+  group('TypeAheadBuffer', () {
+    test('accepts printable characters only', () {
+      expect(TypeAheadBuffer.accepts('a'), isTrue);
+      expect(TypeAheadBuffer.accepts('é'), isTrue);
+      expect(TypeAheadBuffer.accepts(null), isFalse);
+      expect(TypeAheadBuffer.accepts(' '), isFalse);
+      expect(TypeAheadBuffer.accepts('\t'), isFalse);
+      expect(TypeAheadBuffer.accepts('\u{7}'), isFalse);
+    });
+
+    testWidgets('grows the prefix, cycles on a repeat and resets after a '
+        'pause', (tester) async {
+      final buffer = TypeAheadBuffer();
+      addTearDown(buffer.dispose);
+      expect(buffer.add('d'), (prefix: 'd', fromNext: true));
+      expect(buffer.add('o'), (prefix: 'do', fromNext: false));
+      expect(buffer.add('c'), (prefix: 'doc', fromNext: false));
+      await tester.pump(TypeAheadBuffer.resetDelay);
+      expect(buffer.add('a'), (prefix: 'a', fromNext: true));
+      expect(buffer.add('a'), (prefix: 'a', fromNext: true));
+      expect(buffer.add('a'), (prefix: 'a', fromNext: true));
+      expect(buffer.add('b'), (prefix: 'ab', fromNext: false));
+      await tester.pump(
+        TypeAheadBuffer.resetDelay - const Duration(milliseconds: 1),
+      );
+      expect(buffer.add('c'), (prefix: 'abc', fromNext: false));
+    });
+  });
+
+  group('runGuardedSwitch', () {
+    /// Pumps a probe under a scope of [controller] and returns its
+    /// context.
+    Future<BuildContext> pumpScope(
+      WidgetTester tester,
+      Oito2UnsavedChangesController? controller,
+    ) async {
+      final key = GlobalKey();
+      Widget child = SizedBox(key: key);
+      if (controller != null) {
+        child = Oito2UnsavedChangesScope(controller: controller, child: child);
+      }
+      await tester.pumpWidget(child);
+      return key.currentContext!;
+    }
+
+    testWidgets('applies at once without a scope or pending changes', (
+      tester,
+    ) async {
+      var applied = 0;
+      runGuardedSwitch(
+        await pumpScope(tester, null),
+        isCurrent: false,
+        apply: () => applied++,
+      );
+      runGuardedSwitch(
+        await pumpScope(tester, Oito2UnsavedChangesController()),
+        isCurrent: false,
+        apply: () => applied++,
+      );
+      expect(applied, 2);
+    });
+
+    testWidgets('applies at once for the current item, without asking', (
+      tester,
+    ) async {
+      var asked = 0;
+      final controller = Oito2UnsavedChangesController()
+        ..addHandler(() async {
+          asked++;
+          return false;
+        });
+      var applied = 0;
+      runGuardedSwitch(
+        await pumpScope(tester, controller),
+        isCurrent: true,
+        apply: () => applied++,
+      );
+      expect((applied, asked), (1, 0));
+    });
+
+    testWidgets('waits for the confirmation and applies only when leaving '
+        'is confirmed', (tester) async {
+      final answer = Completer<bool>();
+      final controller = Oito2UnsavedChangesController()
+        ..addHandler(() => answer.future);
+      var applied = 0;
+      final context = await pumpScope(tester, controller);
+      runGuardedSwitch(context, isCurrent: false, apply: () => applied++);
+      await tester.pump();
+      expect(applied, 0);
+      answer.complete(true);
+      await tester.pump();
+      expect(applied, 1);
+
+      final refused = Oito2UnsavedChangesController()
+        ..addHandler(() async => false);
+      runGuardedSwitch(
+        await pumpScope(tester, refused),
+        isCurrent: false,
+        apply: () => applied++,
+      );
+      await tester.pump();
+      expect(applied, 1);
+    });
+
+    testWidgets('does not apply after the context is unmounted', (
+      tester,
+    ) async {
+      final answer = Completer<bool>();
+      final controller = Oito2UnsavedChangesController()
+        ..addHandler(() => answer.future);
+      var applied = 0;
+      runGuardedSwitch(
+        await pumpScope(tester, controller),
+        isCurrent: false,
+        apply: () => applied++,
+      );
+      await tester.pumpWidget(const SizedBox());
+      answer.complete(true);
+      await tester.pump();
+      expect(applied, 0);
+    });
   });
 }

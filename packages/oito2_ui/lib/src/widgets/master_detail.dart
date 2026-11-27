@@ -13,8 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'dart:async';
-
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens/geometry.dart';
@@ -164,20 +162,11 @@ class _Oito2MasterDetailPageState extends State<Oito2MasterDetailPage>
   /// Selects the item at [index] and reports it to the `onSelected`
   /// callback, once the closest [Oito2UnsavedChangesScope], if any,
   /// confirms leaving the item shown.
-  void _select(int index) {
-    final leave = Oito2UnsavedChangesScope.maybeOf(context, listen: false);
-    if (leave == null ||
-        !leave.hasUnsavedChanges ||
-        index == _controller.index) {
-      _apply(index);
-      return;
-    }
-    unawaited(
-      leave.confirmLeave().then((confirmed) {
-        if (confirmed && mounted) _apply(index);
-      }),
-    );
-  }
+  void _select(int index) => runGuardedSwitch(
+    context,
+    isCurrent: index == _controller.index,
+    apply: () => _apply(index),
+  );
 
   /// Selects the item at [index] and reports it to the `onSelected`
   /// callback.
@@ -249,9 +238,11 @@ class _Oito2MasterDetailPageState extends State<Oito2MasterDetailPage>
               builder: (context, pane) =>
                   _master(context, pane.maxWidth, index),
             ),
-            page: KeyedSubtree(
-              key: ValueKey(index),
-              child: widget.pageBuilder(context, index),
+            page: _WideDetailScope(
+              child: KeyedSubtree(
+                key: ValueKey(index),
+                child: widget.pageBuilder(context, index),
+              ),
             ),
           );
         }
@@ -281,6 +272,19 @@ class _Oito2MasterDetailPageState extends State<Oito2MasterDetailPage>
       },
     );
   }
+}
+
+/// Marks the detail page shown beside the master in the wide layout of an
+/// [Oito2MasterDetailPage], where there is nothing to go back to.
+class _WideDetailScope extends InheritedWidget {
+  const _WideDetailScope({required super.child});
+
+  /// Whether [context] is inside the detail page of a wide layout.
+  static bool of(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<_WideDetailScope>() != null;
+
+  @override
+  bool updateShouldNotify(_WideDetailScope oldWidget) => false;
 }
 
 /// The list of an [Oito2MasterDetailPage] master pane: one tile per item,
@@ -511,7 +515,9 @@ class Oito2MasterTile extends StatelessWidget {
 
 /// A detail page of an [Oito2MasterDetailPage]: a [Scaffold] whose bar
 /// shows a back button when the page can be popped, which happens in the
-/// narrow layout.
+/// narrow layout. In the wide layout, where the master shows beside it,
+/// the bar shows no back button, even when the route around the
+/// master-detail can be popped.
 class Oito2DetailPage extends StatelessWidget {
   /// Creates a detail page.
   const Oito2DetailPage({
@@ -544,7 +550,9 @@ class Oito2DetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canPop = ModalRoute.of(context)?.canPop ?? false;
+    final canPop =
+        !_WideDetailScope.of(context) &&
+        (ModalRoute.of(context)?.canPop ?? false);
     final bar =
         appBar ??
         (title == null && actions.isEmpty && !canPop

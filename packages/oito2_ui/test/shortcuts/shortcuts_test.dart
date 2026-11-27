@@ -259,6 +259,58 @@ void main() {
       expect(runs, isEmpty);
     });
 
+    /// Pumps an outer scope with [outer] around an inner scope with the
+    /// `G H` command, focused inside the inner scope; returns the runs.
+    Future<List<String>> pumpNested(WidgetTester tester, String outer) async {
+      final runs = <String>[];
+      await pumpOito2(
+        tester,
+        Oito2Commands(
+          commands: [
+            Oito2Command(
+              id: 'outer',
+              label: 'Outer',
+              shortcut: Oito2Shortcut.parse(outer),
+              onInvoke: () => runs.add('outer $outer'),
+            ),
+          ],
+          child: Oito2Commands(
+            commands: [
+              Oito2Command(
+                id: 'home',
+                label: 'Home',
+                shortcut: Oito2Shortcut.parse('G H'),
+                onInvoke: () => runs.add('inner G H'),
+              ),
+            ],
+            child: const Focus(autofocus: true, child: SizedBox()),
+          ),
+        ),
+      );
+      await tester.pump();
+      return runs;
+    }
+
+    testWidgets('an inner sequence prefix leaves an outer sequence alone', (
+      tester,
+    ) async {
+      final runs = await pumpNested(tester, 'G J');
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyJ);
+      expect(runs, ['outer G J']);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
+      expect(runs, ['outer G J', 'inner G H']);
+    });
+
+    testWidgets('an inner sequence prefix leaves an outer key alone', (
+      tester,
+    ) async {
+      final runs = await pumpNested(tester, 'G');
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+      expect(runs, ['outer G']);
+    });
+
     testWidgets('an inner scope that is not rebuilt sees the outer update', (
       tester,
     ) async {
@@ -458,6 +510,35 @@ void main() {
       await tester.pumpAndSettle();
       return runs;
     }
+
+    testWidgets('leaves out disabled commands given explicitly', (
+      tester,
+    ) async {
+      await pumpOito2(
+        tester,
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showOito2CommandPalette(
+              context,
+              commands: [
+                Oito2Command(id: 'on', label: 'Enabled', onInvoke: () {}),
+                Oito2Command(
+                  id: 'off',
+                  label: 'Disabled',
+                  enabled: false,
+                  onInvoke: () {},
+                ),
+              ],
+            ),
+            child: const Text('Commands'),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Commands'));
+      await tester.pumpAndSettle();
+      expect(find.text('Enabled'), findsOneWidget);
+      expect(find.text('Disabled'), findsNothing);
+    });
 
     testWidgets('lists the commands with their shortcuts', (tester) async {
       await openPalette(tester);

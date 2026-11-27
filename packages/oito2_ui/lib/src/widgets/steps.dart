@@ -330,8 +330,17 @@ class _StepHeader extends StatelessWidget {
           ),
       ],
     );
+    // On touch platforms a vertical header, with its padding, reaches the
+    // 48-pixel minimum tap target; its text stays at the top.
     final header = vertical
-        ? Padding(padding: const EdgeInsets.only(top: 4), child: text)
+        ? ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: padsTapTargets(context)
+                  ? Oito2Sizes.minTouchTarget - 2 * Oito2Spacing.xxs
+                  : 0,
+            ),
+            child: Padding(padding: const EdgeInsets.only(top: 4), child: text),
+          )
         : Column(
             mainAxisSize: MainAxisSize.min,
             spacing: Oito2Spacing.xs,

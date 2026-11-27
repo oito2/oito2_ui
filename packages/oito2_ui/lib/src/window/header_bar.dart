@@ -121,6 +121,9 @@ class Oito2HeaderBar extends StatefulWidget implements PreferredSizeWidget {
   final double tabWidth;
 
   /// The widgets after the leading window buttons.
+  ///
+  /// On touch platforms, where the bar is an [AppBar], each widget gets a
+  /// 48 dp wide slot, so [start] suits icon buttons there.
   final List<Widget> start;
 
   /// The widgets before the search and menu buttons and the trailing
@@ -229,6 +232,7 @@ class _Oito2HeaderBarState extends State<Oito2HeaderBar> {
     final strings = Oito2Localizations.of(context);
     final search = widget.search;
     final menuChildren = widget.menuChildren;
+    final starts = widget.start.length;
     return Oito2WindowTitleBar(
       title: _middle(context),
       // Tabs and the search field take clicks; a plain title lets the
@@ -241,6 +245,14 @@ class _Oito2HeaderBarState extends State<Oito2HeaderBar> {
               spacing: Oito2Spacing.xs,
               children: widget.start,
             ),
+      // On touch, the AppBar gives the leading slot a single button's
+      // width; several start widgets get a 48 dp target each, the gaps
+      // between them and a small inset.
+      leadingWidth: starts > 1
+          ? starts * Oito2Sizes.minTouchTarget +
+                (starts - 1) * Oito2Spacing.xs +
+                Oito2Spacing.sm
+          : null,
       actions: [
         ...widget.end,
         if (search != null)

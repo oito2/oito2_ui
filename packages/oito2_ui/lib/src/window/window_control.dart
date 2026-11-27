@@ -92,8 +92,10 @@ class Oito2WindowControlLabels {
 
 /// A single window control button drawn in the visual family of [style].
 ///
-/// The button stays out of keyboard focus traversal, as native window
-/// buttons do, and exposes its [label] to assistive technologies.
+/// The button stays out of keyboard focus traversal on purpose, as native
+/// window buttons do: Tab skips it, and keyboard users reach the same
+/// actions through the platform's window shortcuts. It exposes its
+/// [label] to assistive technologies.
 ///
 /// Where the theme pads tap targets (touch platforms), the button takes a
 /// box of at least [Oito2Sizes.minTouchTarget] on each axis, with its
@@ -134,13 +136,19 @@ class Oito2WindowControl extends StatefulWidget {
   /// Whether the window is active; inactive macOS buttons turn grey.
   final bool isActive;
 
+  /// The width of a macOS-style button where the theme doesn't pad tap
+  /// targets: the native 20-pixel pitch of the traffic lights.
+  static const double macosWidth = 20;
+
   /// Returns the width this button takes for [style] where the theme
   /// doesn't pad tap targets; every style has a fixed width, so [height]
-  /// doesn't change it.
+  /// doesn't change it. macOS-style buttons follow the native pitch
+  /// ([macosWidth]); the others are [Oito2Sizes.windowControlSize] wide,
+  /// or [Oito2Sizes.windowsWindowControlWidth] for the Windows style.
   static double widthFor(Oito2WindowControlStyle style, double height) {
     return switch (style) {
       Oito2WindowControlStyle.windows => Oito2Sizes.windowsWindowControlWidth,
-      Oito2WindowControlStyle.macos => Oito2Sizes.windowControlSize,
+      Oito2WindowControlStyle.macos => macosWidth,
       Oito2WindowControlStyle.none => 0,
       _ => Oito2Sizes.windowControlSize,
     };

@@ -109,6 +109,11 @@ class _Oito2ChoiceChipBarState extends State<Oito2ChoiceChipBar> {
   void initState() {
     super.initState();
     _controller.addListener(_update);
+    // The first layout gives the row its extent; later changes arrive as
+    // scroll metrics notifications.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _update();
+    });
   }
 
   @override
@@ -174,9 +179,6 @@ class _Oito2ChoiceChipBarState extends State<Oito2ChoiceChipBar> {
         children: _chips(),
       );
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _update();
-    });
     Widget arrow(bool forward) => IconButton(
       tooltip: forward
           ? widget.nextLabel ?? Oito2Localizations.of(context).scrollForward

@@ -212,6 +212,52 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets('code longer than maxHighlightLength shows as plain text', (
+    tester,
+  ) async {
+    final highlighter = _CountingHighlighter();
+    const code = 'final x = 1;';
+    await _pump(
+      tester,
+      Oito2CodeBlock(
+        code: code,
+        language: 'dart',
+        highlighter: highlighter,
+        maxHighlightLength: code.length - 1,
+      ),
+    );
+    final span = _codeSpan(tester);
+    expect(highlighter.calls, 0);
+    expect(span.children, isNull);
+    expect(span.text, code);
+    expect(span.style!.color, Oito2ColorTheme.dark().syntax.foreground);
+
+    await _pump(
+      tester,
+      Oito2CodeBlock(
+        code: code,
+        language: 'dart',
+        highlighter: highlighter,
+        maxHighlightLength: code.length,
+      ),
+    );
+    expect(highlighter.calls, 1);
+    expect(_codeSpan(tester).children, isNotEmpty);
+  });
+
+  testWidgets('the default limit leaves longer code unhighlighted', (
+    tester,
+  ) async {
+    final highlighter = _CountingHighlighter();
+    final code = 'x' * (Oito2CodeBlock.defaultMaxHighlightLength + 1);
+    await _pump(
+      tester,
+      Oito2CodeBlock(code: code, language: 'dart', highlighter: highlighter),
+    );
+    expect(highlighter.calls, 0);
+    expect(_codeSpan(tester).text, code);
+  });
 }
 
 /// Counts its highlight calls.
