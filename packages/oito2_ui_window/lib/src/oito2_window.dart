@@ -33,7 +33,7 @@ abstract final class Oito2Window {
   /// the app doesn't own a desktop window, and when no native window can
   /// be found; `Oito2WindowTitleBar` then adapts on its own. On
   /// desktop the controller is an [Oito2NativeWindowController], which the
-  /// app can dispose when it no longer needs it.
+  /// app can dispose when it no longer needs it; it is only created here.
   ///
   /// On macOS the native traffic lights stay visible over the hidden
   /// title bar.

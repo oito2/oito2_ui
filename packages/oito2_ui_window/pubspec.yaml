@@ -12,8 +12,10 @@ environment:
 resolution: workspace
 
 dependencies:
+  ffi: ^2.1.0
   flutter:
     sdk: flutter
+  nativeapi: ^0.6.2
   oito2_ui: ^0.1.0
   window_manager: ^0.7.1
 

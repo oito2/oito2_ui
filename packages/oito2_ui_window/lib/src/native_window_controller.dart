@@ -13,50 +13,52 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// The window_manager 0.5.x API lives on, deprecated, in its legacy library.
-// ignore_for_file: deprecated_member_use
-
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-import 'package:window_manager/legacy.dart';
 
-/// An [Oito2WindowController] backed by `window_manager`.
+import 'native_window_port.dart';
+
+/// Creates an [Oito2NativeWindowController] for [port], reads the current
+/// window state and starts listening to window events.
 ///
-/// Forwards the window actions to a [WindowManager] and keeps [state] in
-/// sync with its maximize, focus and full-screen events.
+/// [canShowMenu] tells whether the platform supports the native window
+/// menu.
+Future<Oito2NativeWindowController> attachNativeWindowController(
+  NativeWindowPort port, {
+  required bool canShowMenu,
+}) async {
+  final controller = Oito2NativeWindowController._(
+    port,
+    canShowMenu: canShowMenu,
+  );
+  await controller.refresh();
+  controller._removeListener = port.addListener(controller._onEvent);
+  return controller;
+}
+
+/// The [Oito2WindowController] of the app's native window on Linux, Windows
+/// and macOS, backed by `window_manager`.
 ///
-/// As an [Oito2WindowCloseGuard], it keeps the native close from going
-/// through while close handlers are added: a close request then asks the
-/// handlers and destroys the window once every one of them allows it.
-class Oito2NativeWindowController
-    with WindowListener
+/// `Oito2Window.ensureInitialized` creates it; the app keeps it, hands it
+/// to an [Oito2WindowScope] and may [dispose] it. It forwards the window
+/// actions to the native window and keeps [state] in sync with its
+/// maximize, focus and full-screen events.
+///
+/// As an [Oito2WindowCloseGuard], it holds every native close request while
+/// close handlers are added: the request asks the handlers and goes through
+/// once every one of them allows it, or keeps the window open otherwise.
+final class Oito2NativeWindowController
     implements Oito2WindowController, Oito2WindowCloseGuard {
-  Oito2NativeWindowController._(this._manager, {required bool canShowMenu})
+  Oito2NativeWindowController._(this._port, {required bool canShowMenu})
     : _state = ValueNotifier(Oito2WindowState(canShowMenu: canShowMenu));
 
-  /// Creates a controller for [manager], reads the current window state and
-  /// starts listening to window events.
-  ///
-  /// [canShowMenu] tells whether the platform supports the native window
-  /// menu.
-  static Future<Oito2NativeWindowController> attach(
-    WindowManager manager, {
-    required bool canShowMenu,
-  }) async {
-    final controller = Oito2NativeWindowController._(
-      manager,
-      canShowMenu: canShowMenu,
-    );
-    await controller.refresh();
-    manager.addListener(controller);
-    return controller;
-  }
-
-  final WindowManager _manager;
+  final NativeWindowPort _port;
   final ValueNotifier<Oito2WindowState> _state;
+
+  /// Stops the window events, once listening started.
+  void Function()? _removeListener;
 
   @override
   ValueListenable<Oito2WindowState> get state => _state;
@@ -74,16 +76,16 @@ class Oito2NativeWindowController
   Future<void> refresh() async {
     final generation = ++_generation;
     try {
-      final isMaximized = await _manager.isMaximized();
-      final isFullScreen = await _manager.isFullScreen();
-      final isActive = await _manager.isFocused();
+      final isMaximized = await _port.isMaximized();
+      final isFullScreen = await _port.isFullScreen();
+      final isActive = await _port.isFocused();
       if (_disposed || generation != _generation) return;
       _state.value = _state.value.copyWith(
         isMaximized: isMaximized,
         isFullScreen: isFullScreen,
         isActive: isActive,
       );
-    } on PlatformException {
+    } on NativeWindowUnavailableException {
       return;
     }
   }
@@ -97,24 +99,21 @@ class Oito2NativeWindowController
   }
 
   @override
-  Future<void> minimize() => _manager.minimize();
+  Future<void> minimize() => _port.minimize();
 
   @override
   Future<void> toggleMaximize() async {
-    if (await _manager.isMaximized()) {
-      await _manager.unmaximize();
+    if (await _port.isMaximized()) {
+      await _port.unmaximize();
     } else {
-      await _manager.maximize();
+      await _port.maximize();
     }
   }
 
   @override
-  Future<void> close() => _manager.close();
+  Future<void> close() => _port.close();
 
   final List<Oito2WindowCloseHandler> _closeHandlers = [];
-
-  /// Whether the native close is held back, as last asked.
-  bool _preventingClose = false;
 
   /// Whether the close handlers are being asked.
   bool _askingToClose = false;
@@ -122,47 +121,30 @@ class Oito2NativeWindowController
   @override
   void addCloseHandler(Oito2WindowCloseHandler handler) {
     _closeHandlers.add(handler);
-    _syncPreventClose();
   }
 
   @override
   void removeCloseHandler(Oito2WindowCloseHandler handler) {
     _closeHandlers.remove(handler);
-    _syncPreventClose();
   }
 
-  /// Holds back the native close while there are close handlers and lets
-  /// it through otherwise.
-  void _syncPreventClose() {
-    final prevent = _closeHandlers.isNotEmpty;
-    if (_disposed || prevent == _preventingClose) return;
-    _preventingClose = prevent;
-    unawaited(_setPreventClose(prevent));
-  }
-
-  /// Asks the window to hold back the native close when [prevent] is true;
-  /// a window that can't be asked keeps closing as usual.
-  Future<void> _setPreventClose(bool prevent) async {
-    try {
-      await _manager.setPreventClose(prevent);
-    } on PlatformException {
-      return;
-    } on MissingPluginException {
-      return;
-    }
-  }
-
-  /// Asks the close handlers, the last added first, and destroys the
-  /// window when every one of them allows it.
+  /// Asks the close handlers, the last added first, and lets [request]
+  /// through when every one of them allows it; otherwise cancels it, which
+  /// keeps the window open.
   ///
   /// A handler that throws keeps the window open: its error goes to
   /// [FlutterError.reportError] and the remaining handlers aren't asked.
   ///
-  /// Does nothing while the native close isn't held back, since the window
-  /// then closes on its own, or while the handlers are already being
-  /// asked.
-  Future<void> _askToClose() async {
-    if (!_preventingClose || _askingToClose || _disposed) return;
+  /// Lets the request through at once when there are no handlers or the
+  /// controller is disposed, and cancels a request that arrives while the
+  /// handlers are already being asked. The request stays pending until the
+  /// returned future completes.
+  Future<void> _askToClose(NativeWindowCloseRequested request) async {
+    if (_disposed || _closeHandlers.isEmpty) return;
+    if (_askingToClose) {
+      request.cancel();
+      return;
+    }
     _askingToClose = true;
     try {
       for (final handler in _closeHandlers.reversed.toList()) {
@@ -178,28 +160,29 @@ class Oito2NativeWindowController
               context: ErrorDescription('while asking a window close handler'),
             ),
           );
+          request.cancel();
           return;
         }
-        if (!allowed) return;
+        if (!allowed) {
+          request.cancel();
+          return;
+        }
       }
-      if (_disposed) return;
-      _closeHandlers.clear();
-      _preventingClose = false;
-      await _manager.destroy();
+      if (_disposed) request.cancel();
     } finally {
       _askingToClose = false;
     }
   }
 
   @override
-  Future<void> startDrag() => _manager.startDragging();
+  Future<void> startDrag() => _port.startDragging();
 
   @override
   Future<void> showMenu() async {
-    if (_state.value.canShowMenu) await _manager.popUpWindowMenu();
+    if (_state.value.canShowMenu) await _port.showSystemMenu();
   }
 
-  /// Stops listening to window events, lets the native close through
+  /// Stops listening to window events, which lets the native close through
   /// again when close handlers held it back, forgets the close handlers
   /// and releases [state].
   ///
@@ -207,38 +190,31 @@ class Oito2NativeWindowController
   void dispose() {
     if (_disposed) return;
     _disposed = true;
-    _manager.removeListener(this);
-    if (_preventingClose) {
-      _preventingClose = false;
-      unawaited(_setPreventClose(false));
-    }
+    _removeListener?.call();
+    _removeListener = null;
     _closeHandlers.clear();
     _state.dispose();
   }
 
-  @override
-  void onWindowMaximize() => _update((s) => s.copyWith(isMaximized: true));
-
-  @override
-  void onWindowUnmaximize() => _update((s) => s.copyWith(isMaximized: false));
-
-  @override
-  void onWindowFocus() => _update((s) => s.copyWith(isActive: true));
-
-  @override
-  void onWindowBlur() => _update((s) => s.copyWith(isActive: false));
-
-  @override
-  void onWindowEnterFullScreen() =>
-      _update((s) => s.copyWith(isFullScreen: true));
-
-  @override
-  void onWindowLeaveFullScreen() =>
-      _update((s) => s.copyWith(isFullScreen: false));
-
-  @override
-  void onWindowRestore() => unawaited(refresh());
-
-  @override
-  void onWindowClose() => unawaited(_askToClose());
+  /// Updates [state] from [event], or asks the close handlers when the
+  /// window is asked to close; a close request stays pending until the
+  /// returned future completes.
+  FutureOr<void> _onEvent(NativeWindowEvent event) {
+    switch (event) {
+      case NativeWindowMaximized():
+        _update((s) => s.copyWith(isMaximized: true));
+      case NativeWindowRestored():
+        unawaited(refresh());
+      case NativeWindowFocused():
+        _update((s) => s.copyWith(isActive: true));
+      case NativeWindowBlurred():
+        _update((s) => s.copyWith(isActive: false));
+      case NativeWindowEnteredFullScreen():
+        _update((s) => s.copyWith(isFullScreen: true));
+      case NativeWindowExitedFullScreen():
+        _update((s) => s.copyWith(isFullScreen: false));
+      case NativeWindowCloseRequested():
+        return _askToClose(event);
+    }
+  }
 }

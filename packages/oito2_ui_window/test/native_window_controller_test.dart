@@ -13,29 +13,25 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// The window_manager 0.5.x API lives on, deprecated, in its legacy library.
-// ignore_for_file: deprecated_member_use
-
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_window/oito2_ui_window.dart';
-import 'package:window_manager/legacy.dart';
+import 'package:oito2_ui_window/src/native_window_controller.dart';
+import 'package:oito2_ui_window/src/native_window_port.dart';
 
-/// A [WindowManager] that records the calls it gets and lets the tests
+/// A [NativeWindowPort] that records the calls it gets and lets the tests
 /// send window events to its listeners.
-class _FakeWindowManager implements WindowManager {
+class _FakeWindowPort implements NativeWindowPort {
   final List<String> calls = [];
-  final List<bool> preventClose = [];
   bool maximized = false;
 
   /// Answers the state queries in place of the defaults when set.
   Future<bool> Function(String method)? query;
 
-  final List<WindowListener> _listeners = [];
+  final List<NativeWindowListener> listeners = [];
 
   Future<bool> _query(String method, bool value) async {
     calls.add(method);
@@ -46,38 +42,21 @@ class _FakeWindowManager implements WindowManager {
 
   Future<void> _call(String method) async => calls.add(method);
 
-  /// Sends the window event [name] to the listeners.
-  void emit(String name) {
-    for (final listener in List.of(_listeners)) {
-      switch (name) {
-        case 'maximize':
-          listener.onWindowMaximize();
-        case 'unmaximize':
-          listener.onWindowUnmaximize();
-        case 'focus':
-          listener.onWindowFocus();
-        case 'blur':
-          listener.onWindowBlur();
-        case 'enter-full-screen':
-          listener.onWindowEnterFullScreen();
-        case 'leave-full-screen':
-          listener.onWindowLeaveFullScreen();
-        case 'restore':
-          listener.onWindowRestore();
-        case 'close':
-          listener.onWindowClose();
-      }
+  /// Sends [event] to the listeners and returns what they return.
+  List<FutureOr<void>> emit(NativeWindowEvent event) => [
+    for (final listener in List.of(listeners)) listener(event),
+  ];
+
+  /// Sends a close request to the listeners and completes with whether one
+  /// of them cancelled it, once every listener has finished with it.
+  Future<bool> requestClose() async {
+    var cancelled = false;
+    final results = emit(NativeWindowCloseRequested(() => cancelled = true));
+    for (final result in results) {
+      await result;
     }
+    return cancelled;
   }
-
-  @override
-  List<WindowListener> get listeners => List.of(_listeners);
-
-  @override
-  void addListener(WindowListener listener) => _listeners.add(listener);
-
-  @override
-  void removeListener(WindowListener listener) => _listeners.remove(listener);
 
   @override
   Future<bool> isMaximized() => _query('isMaximized', maximized);
@@ -92,7 +71,7 @@ class _FakeWindowManager implements WindowManager {
   Future<void> minimize() => _call('minimize');
 
   @override
-  Future<void> maximize({bool vertically = false}) => _call('maximize');
+  Future<void> maximize() => _call('maximize');
 
   @override
   Future<void> unmaximize() => _call('unmaximize');
@@ -101,43 +80,34 @@ class _FakeWindowManager implements WindowManager {
   Future<void> close() => _call('close');
 
   @override
-  Future<void> destroy() => _call('destroy');
-
-  @override
   Future<void> startDragging() => _call('startDragging');
 
   @override
-  Future<void> popUpWindowMenu() => _call('popUpWindowMenu');
+  Future<void> showSystemMenu() => _call('showSystemMenu');
 
   @override
-  Future<void> setPreventClose(bool isPreventClose) async {
-    calls.add('setPreventClose');
-    preventClose.add(isPreventClose);
+  void Function() addListener(NativeWindowListener listener) {
+    listeners.add(listener);
+    return () => listeners.remove(listener);
   }
-
-  @override
-  Object? noSuchMethod(Invocation invocation) =>
-      throw UnimplementedError('${invocation.memberName}');
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late _FakeWindowManager manager;
+  late _FakeWindowPort port;
   late List<String> calls;
-  late List<bool> preventClose;
 
   setUp(() {
-    manager = _FakeWindowManager();
-    calls = manager.calls;
-    preventClose = manager.preventClose;
+    port = _FakeWindowPort();
+    calls = port.calls;
   });
 
-  Future<void> sendEvent(String name) async => manager.emit(name);
+  Future<void> sendEvent(NativeWindowEvent event) async => port.emit(event);
 
   Future<Oito2NativeWindowController> attach({bool canShowMenu = true}) async {
-    final controller = await Oito2NativeWindowController.attach(
-      manager,
+    final controller = await attachNativeWindowController(
+      port,
       canShowMenu: canShowMenu,
     );
     addTearDown(controller.dispose);
@@ -145,7 +115,7 @@ void main() {
   }
 
   test('attach reads the initial window state', () async {
-    manager.maximized = true;
+    port.maximized = true;
     final controller = await attach();
     expect(
       controller.state.value,
@@ -154,14 +124,14 @@ void main() {
     expect(calls, containsAll(['isMaximized', 'isFullScreen', 'isFocused']));
   });
 
-  test('actions call window_manager', () async {
+  test('actions call the native window', () async {
     final controller = await attach();
     calls.clear();
     await controller.minimize();
     await controller.close();
     await controller.startDrag();
     await controller.showMenu();
-    expect(calls, ['minimize', 'close', 'startDragging', 'popUpWindowMenu']);
+    expect(calls, ['minimize', 'close', 'startDragging', 'showSystemMenu']);
   });
 
   test('toggleMaximize maximizes or restores', () async {
@@ -170,7 +140,7 @@ void main() {
     await controller.toggleMaximize();
     expect(calls, ['isMaximized', 'maximize']);
 
-    manager.maximized = true;
+    port.maximized = true;
     calls.clear();
     await controller.toggleMaximize();
     expect(calls, ['isMaximized', 'unmaximize']);
@@ -186,27 +156,30 @@ void main() {
   test('window events update the state', () async {
     final controller = await attach();
 
-    await sendEvent('maximize');
+    await sendEvent(const NativeWindowMaximized());
     expect(controller.state.value.isMaximized, isTrue);
-    await sendEvent('unmaximize');
+    // Leaving the maximized state comes as a restore, which re-reads it.
+    port.maximized = false;
+    await sendEvent(const NativeWindowRestored());
+    await Future<void>.delayed(Duration.zero);
     expect(controller.state.value.isMaximized, isFalse);
 
-    await sendEvent('blur');
+    await sendEvent(const NativeWindowBlurred());
     expect(controller.state.value.isActive, isFalse);
-    await sendEvent('focus');
+    await sendEvent(const NativeWindowFocused());
     expect(controller.state.value.isActive, isTrue);
 
-    await sendEvent('enter-full-screen');
+    await sendEvent(const NativeWindowEnteredFullScreen());
     expect(controller.state.value.isFullScreen, isTrue);
-    await sendEvent('leave-full-screen');
+    await sendEvent(const NativeWindowExitedFullScreen());
     expect(controller.state.value.isFullScreen, isFalse);
   });
 
   test('restore re-reads the window state', () async {
     final controller = await attach();
-    manager.maximized = true;
+    port.maximized = true;
     calls.clear();
-    await sendEvent('restore');
+    await sendEvent(const NativeWindowRestored());
     await Future<void>.delayed(Duration.zero);
     expect(calls, contains('isMaximized'));
     expect(controller.state.value.isMaximized, isTrue);
@@ -214,20 +187,20 @@ void main() {
 
   test('a failed refresh keeps the last state', () async {
     final controller = await attach();
-    manager.query = (method) async {
-      throw PlatformException(code: 'unavailable');
+    port.query = (method) async {
+      throw const NativeWindowUnavailableException();
     };
     await expectLater(controller.refresh(), completes);
     expect(controller.state.value.isActive, isTrue);
   });
 
   test('a refresh that ends after dispose changes nothing', () async {
-    final controller = await Oito2NativeWindowController.attach(
-      manager,
+    final controller = await attachNativeWindowController(
+      port,
       canShowMenu: true,
     );
     final gate = Completer<void>();
-    manager.query = (method) async {
+    port.query = (method) async {
       await gate.future;
       return false;
     };
@@ -240,12 +213,12 @@ void main() {
   test('a window event overtakes a refresh in flight', () async {
     final controller = await attach();
     final gate = Completer<void>();
-    manager.query = (method) async {
+    port.query = (method) async {
       await gate.future;
       return false;
     };
     final refresh = controller.refresh();
-    await sendEvent('maximize');
+    await sendEvent(const NativeWindowMaximized());
     gate.complete();
     await refresh;
     expect(controller.state.value.isMaximized, isTrue);
@@ -257,22 +230,24 @@ void main() {
 
   test('close handlers hold back the native close while added', () async {
     final controller = await attach();
-    Future<bool> allow() async => true;
-    Future<bool> refuse() async => false;
-    calls.clear();
-    controller
-      ..addCloseHandler(allow)
-      ..addCloseHandler(refuse);
+    final gate = Completer<bool>();
+    Future<bool> waiting() => gate.future;
+    controller.addCloseHandler(waiting);
+
+    // The request stays pending until the handler answers.
+    var settled = false;
+    final request = port.requestClose()..then((_) => settled = true);
     await Future<void>.delayed(Duration.zero);
-    expect(calls, ['setPreventClose']);
-    controller
-      ..removeCloseHandler(refuse)
-      ..removeCloseHandler(allow);
-    await Future<void>.delayed(Duration.zero);
-    expect(calls, ['setPreventClose', 'setPreventClose']);
+    expect(settled, isFalse);
+    gate.complete(false);
+    expect(await request, isTrue);
+
+    // Without handlers the request goes through at once.
+    controller.removeCloseHandler(waiting);
+    expect(await port.requestClose(), isFalse);
   });
 
-  test('a close request asks the handlers before destroying', () async {
+  test('a close request asks the handlers before closing', () async {
     final controller = await attach();
     final asked = <String>[];
     var allowFirst = false;
@@ -285,27 +260,20 @@ void main() {
         asked.add('second');
         return true;
       });
-    await Future<void>.delayed(Duration.zero);
-    calls.clear();
 
-    await sendEvent('close');
-    await Future<void>.delayed(Duration.zero);
+    expect(await port.requestClose(), isTrue);
     expect(asked, ['second', 'first']);
-    expect(calls, isNot(contains('destroy')));
 
     allowFirst = true;
     asked.clear();
-    await sendEvent('close');
-    await Future<void>.delayed(Duration.zero);
+    expect(await port.requestClose(), isFalse);
     expect(asked, ['second', 'first']);
-    expect(calls, contains('destroy'));
   });
 
   test('a close request without handlers leaves the window alone', () async {
     await attach();
     calls.clear();
-    await sendEvent('close');
-    await Future<void>.delayed(Duration.zero);
+    expect(await port.requestClose(), isFalse);
     expect(calls, isEmpty);
   });
 
@@ -317,12 +285,13 @@ void main() {
       asked++;
       return gate.future;
     });
-    await sendEvent('close');
-    await sendEvent('close');
+    final first = port.requestClose();
+    final second = port.requestClose();
+    // The second request is vetoed at once; the first one decides.
+    expect(await second, isTrue);
     gate.complete(true);
-    await Future<void>.delayed(Duration.zero);
+    expect(await first, isFalse);
     expect(asked, 1);
-    expect(calls.where((call) => call == 'destroy'), hasLength(1));
   });
 
   test('a close handler that throws keeps the window open and reports '
@@ -343,45 +312,51 @@ void main() {
         if (fail) throw StateError('broken handler');
         return true;
       });
-    await Future<void>.delayed(Duration.zero);
-    calls.clear();
 
-    await sendEvent('close');
-    await Future<void>.delayed(Duration.zero);
+    expect(await port.requestClose(), isTrue);
     expect(reported.single.exception, isA<StateError>());
     expect(reported.single.library, 'oito2_ui_window');
     expect(asked, 0);
-    expect(calls, isNot(contains('destroy')));
 
     // The next close request asks the handlers again.
     fail = false;
-    await sendEvent('close');
-    await Future<void>.delayed(Duration.zero);
+    expect(await port.requestClose(), isFalse);
     expect(asked, 1);
-    expect(calls, contains('destroy'));
+  });
+
+  test('a close handler that answers after dispose keeps the window '
+      'open', () async {
+    final controller = await attachNativeWindowController(
+      port,
+      canShowMenu: true,
+    );
+    final gate = Completer<bool>();
+    controller.addCloseHandler(() => gate.future);
+    final request = port.requestClose();
+    controller.dispose();
+    gate.complete(true);
+    expect(await request, isTrue);
   });
 
   test('dispose lets the native close through again', () async {
     final controller = await attach();
     controller.addCloseHandler(() async => false);
-    await Future<void>.delayed(Duration.zero);
-    expect(preventClose, [true]);
+    expect(await port.requestClose(), isTrue);
     controller.dispose();
-    await Future<void>.delayed(Duration.zero);
-    expect(preventClose, [true, false]);
     calls.clear();
-    await sendEvent('close');
-    await Future<void>.delayed(Duration.zero);
+    expect(await port.requestClose(), isFalse);
     expect(calls, isEmpty);
+    // Disposing again does nothing.
+    controller.dispose();
   });
 
   test('dispose stops listening to window events', () async {
-    final controller = await Oito2NativeWindowController.attach(
-      manager,
+    final controller = await attachNativeWindowController(
+      port,
       canShowMenu: true,
     );
-    expect(manager.listeners, contains(controller));
+    expect(port.listeners, hasLength(1));
     controller.dispose();
-    expect(manager.listeners, isNot(contains(controller)));
+    expect(port.listeners, isEmpty);
   });
 }

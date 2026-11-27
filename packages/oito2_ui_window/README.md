@@ -21,6 +21,7 @@ oito2_ui_window is part of the [oito2_ui](https://github.com/oito2/oito2_ui) des
 - `Oito2Window.ensureInitialized` hides the native title bar (keeping the macOS traffic lights) and returns an `Oito2WindowController` backed by `window_manager`.
 - The controller drives the `oito2_ui` title bars: minimize, maximize, close, drag and the window menu, and follows the window state.
 - `Oito2NativeWindowController` asks the close handlers, such as an `Oito2UnsavedChangesGuard` with unsaved changes, before the window closes.
+- Built on the native `Window` API of `window_manager` 0.7; the controller is created only by `Oito2Window.ensureInitialized`.
 
 **Platforms:** Linux, Windows and macOS. On the web, Android and iOS `Oito2Window.ensureInitialized` returns null and the title bars show no window buttons.
 

@@ -13,19 +13,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:oito2_ui/oito2_ui.dart';
+import 'dart:io';
 
-/// The [Oito2WindowController] backed by `window_manager` on Linux, Windows
-/// and macOS.
-///
-/// Platforms without `dart:io`, such as the web, have no native window:
-/// `Oito2Window.ensureInitialized` returns null there and no instance of
-/// this class exists.
-abstract final class Oito2NativeWindowController
-    implements Oito2WindowController, Oito2WindowCloseGuard {
-  /// Reads the maximized, full-screen and focus state from the window.
-  Future<void> refresh();
+import 'package:flutter_test/flutter_test.dart';
 
-  /// Stops listening to window events and releases [state].
-  void dispose();
+void main() {
+  test('the library uses the native window_manager API, not the deprecated '
+      'legacy bridge', () {
+    final sources = Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'));
+    expect(sources, isNotEmpty);
+    for (final file in sources) {
+      expect(
+        file.readAsStringSync(),
+        isNot(contains('package:window_manager/legacy.dart')),
+        reason: file.path,
+      );
+    }
+  });
 }
