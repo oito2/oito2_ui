@@ -30,8 +30,8 @@ abstract final class Oito2Window {
   ///
   /// Call it in `main` before `runApp`, and provide the result through an
   /// [Oito2WindowScope]. Returns null on the web, Android and iOS, where
-  /// the app doesn't own a desktop window, and when the window plugin
-  /// isn't available; `Oito2WindowTitleBar` then adapts on its own. On
+  /// the app doesn't own a desktop window, and when no native window can
+  /// be found; `Oito2WindowTitleBar` then adapts on its own. On
   /// desktop the controller is an [Oito2NativeWindowController], which the
   /// app can dispose when it no longer needs it.
   ///

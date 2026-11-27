@@ -13,21 +13,23 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// The window_manager 0.5.x API lives on, deprecated, in its legacy library.
+// ignore_for_file: deprecated_member_use
+
 import 'dart:io' show Platform;
 import 'dart:ui' show Size;
 
-import 'package:flutter/services.dart' show MissingPluginException;
 import 'package:flutter/widgets.dart' show WidgetsFlutterBinding;
 import 'package:oito2_ui/oito2_ui.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:window_manager/legacy.dart';
 
 import 'native_window_controller.dart';
 
 /// Prepares the native desktop window for client-side decorations and
 /// returns its controller.
 ///
-/// Returns null on non-desktop platforms and when the window plugin isn't
-/// registered. [title], [size], [minimumSize] and [center] become the
+/// Returns null on non-desktop platforms and when there is no native window
+/// to control. [title], [size], [minimumSize] and [center] become the
 /// initial window options.
 Future<Oito2WindowController?> ensureInitialized({
   String? title,
@@ -39,13 +41,10 @@ Future<Oito2WindowController?> ensureInitialized({
     return null;
   }
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await windowManager.ensureInitialized();
-  } on MissingPluginException {
-    // The window plugin isn't registered, such as in tests or an embedder
-    // without it: the app runs without window control.
-    return null;
-  }
+  await windowManager.ensureInitialized();
+  // An id of 0 means no native window was found, such as in tests or an
+  // embedder without one: the app runs without window control.
+  if (await windowManager.getId() == 0) return null;
   final options = WindowOptions(
     title: title,
     size: size,

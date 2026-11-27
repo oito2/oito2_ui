@@ -6,8 +6,8 @@ oito2_ui is a Material 3 design system for Flutter apps on Linux, Windows, macOS
 
 | Tool | Version |
 |---|---|
-| Flutter | 3.47 or newer |
-| Dart | 3.13 or newer |
+| Flutter | 3.47 or newer (3.50 or newer with `oito2_ui_window`) |
+| Dart | 3.13 or newer (3.14 or newer with `oito2_ui_window`) |
 
 ## Install
 

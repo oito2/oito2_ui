@@ -3,7 +3,7 @@
 Window chrome integration for oito2_ui: client-side decorations and window controls on Linux, Windows and macOS.
 
 [![CI](https://github.com/oito2/oito2_ui/actions/workflows/ci.yml/badge.svg)](https://github.com/oito2/oito2_ui/actions/workflows/ci.yml)
-[![Flutter](https://img.shields.io/badge/Flutter-%E2%89%A53.47-02569B?logo=flutter)](https://flutter.dev)
+[![Flutter](https://img.shields.io/badge/Flutter-%E2%89%A53.50-02569B?logo=flutter)](https://flutter.dev)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
 ## Table of Contents
@@ -26,7 +26,13 @@ oito2_ui_window is part of the [oito2_ui](https://github.com/oito2/oito2_ui) des
 
 ## Installation
 
-Requires Flutter 3.47 or later (Dart 3.13 or later).
+Requires Flutter 3.50 or later (Dart 3.14 or later) and, on macOS, macOS 10.15 or later.
+
+Building for Linux needs the GTK 3, X11 and Xi development files, for the native window library `window_manager` builds. On Debian and Ubuntu:
+
+```sh
+sudo apt-get install libgtk-3-dev libx11-dev libxi-dev pkg-config
+```
 
 The package isn't published on pub.dev yet. Add it as a git dependency:
 

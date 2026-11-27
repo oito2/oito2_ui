@@ -13,6 +13,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// The window_manager 0.5.x API lives on, deprecated, in its legacy library.
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -20,52 +23,121 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:oito2_ui_window/oito2_ui_window.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:window_manager/legacy.dart';
 
-const _channel = MethodChannel('window_manager');
+/// A [WindowManager] that records the calls it gets and lets the tests
+/// send window events to its listeners.
+class _FakeWindowManager implements WindowManager {
+  final List<String> calls = [];
+  final List<bool> preventClose = [];
+  bool maximized = false;
+
+  /// Answers the state queries in place of the defaults when set.
+  Future<bool> Function(String method)? query;
+
+  final List<WindowListener> _listeners = [];
+
+  Future<bool> _query(String method, bool value) async {
+    calls.add(method);
+    final query = this.query;
+    if (query != null) return query(method);
+    return value;
+  }
+
+  Future<void> _call(String method) async => calls.add(method);
+
+  /// Sends the window event [name] to the listeners.
+  void emit(String name) {
+    for (final listener in List.of(_listeners)) {
+      switch (name) {
+        case 'maximize':
+          listener.onWindowMaximize();
+        case 'unmaximize':
+          listener.onWindowUnmaximize();
+        case 'focus':
+          listener.onWindowFocus();
+        case 'blur':
+          listener.onWindowBlur();
+        case 'enter-full-screen':
+          listener.onWindowEnterFullScreen();
+        case 'leave-full-screen':
+          listener.onWindowLeaveFullScreen();
+        case 'restore':
+          listener.onWindowRestore();
+        case 'close':
+          listener.onWindowClose();
+      }
+    }
+  }
+
+  @override
+  List<WindowListener> get listeners => List.of(_listeners);
+
+  @override
+  void addListener(WindowListener listener) => _listeners.add(listener);
+
+  @override
+  void removeListener(WindowListener listener) => _listeners.remove(listener);
+
+  @override
+  Future<bool> isMaximized() => _query('isMaximized', maximized);
+
+  @override
+  Future<bool> isFullScreen() => _query('isFullScreen', false);
+
+  @override
+  Future<bool> isFocused() => _query('isFocused', true);
+
+  @override
+  Future<void> minimize() => _call('minimize');
+
+  @override
+  Future<void> maximize({bool vertically = false}) => _call('maximize');
+
+  @override
+  Future<void> unmaximize() => _call('unmaximize');
+
+  @override
+  Future<void> close() => _call('close');
+
+  @override
+  Future<void> destroy() => _call('destroy');
+
+  @override
+  Future<void> startDragging() => _call('startDragging');
+
+  @override
+  Future<void> popUpWindowMenu() => _call('popUpWindowMenu');
+
+  @override
+  Future<void> setPreventClose(bool isPreventClose) async {
+    calls.add('setPreventClose');
+    preventClose.add(isPreventClose);
+  }
+
+  @override
+  Object? noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName}');
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  final messenger =
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
 
+  late _FakeWindowManager manager;
   late List<String> calls;
-  late List<Object?> preventClose;
-  late bool maximized;
+  late List<bool> preventClose;
 
   setUp(() {
-    calls = [];
-    preventClose = [];
-    maximized = false;
-    messenger.setMockMethodCallHandler(_channel, (call) async {
-      calls.add(call.method);
-      if (call.method == 'setPreventClose') {
-        preventClose.add((call.arguments as Map)['isPreventClose']);
-      }
-      return switch (call.method) {
-        'isMaximized' => maximized,
-        'isFullScreen' => false,
-        'isFocused' => true,
-        _ => null,
-      };
-    });
+    manager = _FakeWindowManager();
+    calls = manager.calls;
+    preventClose = manager.preventClose;
   });
 
-  tearDown(() => messenger.setMockMethodCallHandler(_channel, null));
-
-  Future<void> sendEvent(String name) async {
-    await messenger.handlePlatformMessage(
-      _channel.name,
-      const StandardMethodCodec().encodeMethodCall(
-        MethodCall('onEvent', {'eventName': name}),
-      ),
-      (_) {},
-    );
-  }
+  Future<void> sendEvent(String name) async => manager.emit(name);
 
   Future<Oito2NativeWindowController> attach({bool canShowMenu = true}) async {
     final controller = await Oito2NativeWindowController.attach(
-      windowManager,
+      manager,
       canShowMenu: canShowMenu,
     );
     addTearDown(controller.dispose);
@@ -73,7 +145,7 @@ void main() {
   }
 
   test('attach reads the initial window state', () async {
-    maximized = true;
+    manager.maximized = true;
     final controller = await attach();
     expect(
       controller.state.value,
@@ -98,7 +170,7 @@ void main() {
     await controller.toggleMaximize();
     expect(calls, ['isMaximized', 'maximize']);
 
-    maximized = true;
+    manager.maximized = true;
     calls.clear();
     await controller.toggleMaximize();
     expect(calls, ['isMaximized', 'unmaximize']);
@@ -132,7 +204,7 @@ void main() {
 
   test('restore re-reads the window state', () async {
     final controller = await attach();
-    maximized = true;
+    manager.maximized = true;
     calls.clear();
     await sendEvent('restore');
     await Future<void>.delayed(Duration.zero);
@@ -142,23 +214,23 @@ void main() {
 
   test('a failed refresh keeps the last state', () async {
     final controller = await attach();
-    messenger.setMockMethodCallHandler(_channel, (call) async {
+    manager.query = (method) async {
       throw PlatformException(code: 'unavailable');
-    });
+    };
     await expectLater(controller.refresh(), completes);
     expect(controller.state.value.isActive, isTrue);
   });
 
   test('a refresh that ends after dispose changes nothing', () async {
     final controller = await Oito2NativeWindowController.attach(
-      windowManager,
+      manager,
       canShowMenu: true,
     );
     final gate = Completer<void>();
-    messenger.setMockMethodCallHandler(_channel, (call) async {
+    manager.query = (method) async {
       await gate.future;
       return false;
-    });
+    };
     final refresh = controller.refresh();
     controller.dispose();
     gate.complete();
@@ -168,10 +240,10 @@ void main() {
   test('a window event overtakes a refresh in flight', () async {
     final controller = await attach();
     final gate = Completer<void>();
-    messenger.setMockMethodCallHandler(_channel, (call) async {
+    manager.query = (method) async {
       await gate.future;
       return false;
-    });
+    };
     final refresh = controller.refresh();
     await sendEvent('maximize');
     gate.complete();
@@ -179,8 +251,7 @@ void main() {
     expect(controller.state.value.isMaximized, isTrue);
   });
 
-  test('without the window plugin, initialization returns null', () async {
-    messenger.setMockMethodCallHandler(_channel, null);
+  test('without a native window, initialization returns null', () async {
     expect(await Oito2Window.ensureInitialized(), isNull);
   });
 
@@ -306,11 +377,11 @@ void main() {
 
   test('dispose stops listening to window events', () async {
     final controller = await Oito2NativeWindowController.attach(
-      windowManager,
+      manager,
       canShowMenu: true,
     );
-    expect(windowManager.listeners, contains(controller));
+    expect(manager.listeners, contains(controller));
     controller.dispose();
-    expect(windowManager.listeners, isNot(contains(controller)));
+    expect(manager.listeners, isNot(contains(controller)));
   });
 }

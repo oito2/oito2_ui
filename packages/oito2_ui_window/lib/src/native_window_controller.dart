@@ -13,12 +13,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// The window_manager 0.5.x API lives on, deprecated, in its legacy library.
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:oito2_ui/oito2_ui.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:window_manager/legacy.dart';
 
 /// An [Oito2WindowController] backed by `window_manager`.
 ///
