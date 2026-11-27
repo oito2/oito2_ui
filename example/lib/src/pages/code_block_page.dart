@@ -82,6 +82,14 @@ LIMIT 10;''',
 +  re_highlight: ^0.0.3''',
 };
 
+/// About 15 000 characters of Dart, long enough to be highlighted in the
+/// background.
+final String _longSample = [
+  for (var i = 1; i <= 150; i++)
+    '/// Returns the input scaled by step $i.\n'
+        'int step$i(int input) => input * $i + ${i % 7}; // step $i\n',
+].join('\n');
+
 /// Documents [Oito2CodeBlock] and [Oito2Highlighter]: highlighting several
 /// languages with the active scheme's syntax palette.
 class CodeBlockPage extends StatefulWidget {
@@ -95,6 +103,7 @@ class CodeBlockPage extends StatefulWidget {
 class _CodeBlockPageState extends State<CodeBlockPage> {
   String _language = 'dart';
   bool _lineNumbers = true;
+  bool _longFile = false;
 
   @override
   Widget build(BuildContext context) {
@@ -133,10 +142,10 @@ class _CodeBlockPageState extends State<CodeBlockPage> {
           'is listed in the app\'s license page.',
         ),
         const DocNote(
-          'Tokenizing runs synchronously in pure Dart through '
-          '`re_highlight`, with no native code and no asset loading. The '
-          'block highlights again only when the code, language, palette, '
-          'style or highlighter changes.',
+          'Tokenizing runs in pure Dart through `re_highlight`, with no '
+          'native code and no asset loading. The block highlights again '
+          'only when the code, language, palette, style or highlighter '
+          'changes.',
         ),
         const DocHeading('Examples'),
         const DocHeading('Languages and line numbers', level: 3),
@@ -197,6 +206,46 @@ class _CodeBlockPageState extends State<CodeBlockPage> {
               highlightedLines: {3, 4},
             ),
             // #endregion
+          ),
+        ),
+        const DocHeading('Long code', level: 3),
+        DocText(
+          'Code up to `backgroundHighlightLength` (5 000 characters by '
+          'default) is highlighted as the block builds. Longer code, up to '
+          '`maxHighlightLength` (20 000), first shows as plain text with a '
+          'small notice in the top end corner while another isolate '
+          'highlights it, then the colors replace the plain text without '
+          'moving it. Longer code stays plain text. This file has '
+          '${_longSample.length} characters.',
+        ),
+        ExamplePanel(
+          region: 'long',
+          child: SizedBox(
+            width: 640,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: Oito2Spacing.md,
+              children: [
+                Oito2SwitchButton(
+                  value: _longFile,
+                  onChanged: (v) => setState(() => _longFile = v),
+                  title: const Text('Show the long file'),
+                ),
+                if (_longFile)
+                  SizedBox(
+                    height: 320,
+                    child: SingleChildScrollView(
+                      // #region long
+                      child: Oito2CodeBlock(
+                        code: _longSample,
+                        language: 'dart',
+                        showLineNumbers: true,
+                      ),
+                      // #endregion
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
         const DocHeading('Plain text, without the copy button', level: 3),
@@ -274,13 +323,17 @@ Oito2CodeBlock(code: source, language: 'lua', highlighter: highlighter);'''),
         const DocHeading('Accessibility'),
         const DocText(
           'The code is selectable text, read as written. Line numbers are '
-          'hidden from assistive technologies. Every syntax color of an '
+          'hidden from assistive technologies. The notice shown while long '
+          'code is highlighted is announced once as a polite status, takes '
+          'no focus, lets the code under it be selected, and its indicator '
+          'stays still when animations are disabled. Every syntax color of an '
           'oito2 scheme reaches a 4.5:1 contrast against the scheme '
           'surfaces, 7:1 with high contrast.',
         ),
         ...apiReferenceWidgets([
           'Oito2CodeBlock',
           'Oito2Highlighter',
+          'Oito2HighlightTokens',
           'oito2DefaultLanguages',
           'Oito2SyntaxTheme',
           'Oito2SyntaxPalette',

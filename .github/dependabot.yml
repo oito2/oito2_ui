@@ -6,13 +6,22 @@ updates:
     schedule:
       interval: weekly
   # Keeps the pub dependencies of the whole workspace current: the entry at
-  # the workspace root updates a dependency in every package that uses it,
-  # and each week's updates arrive together in one pull request.
+  # the workspace root updates a dependency in every package that uses it.
+  # Only versions published at least 14 days ago are proposed (security
+  # updates aren't held back). The window packages and the icon font get
+  # pull requests of their own; each week's other updates arrive together
+  # in one pull request.
   - package-ecosystem: pub
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 14
     groups:
       pub:
         patterns:
           - "*"
+        exclude-patterns:
+          - window_manager
+          - nativeapi
+          - flutter_lucide

@@ -16,6 +16,8 @@
 @Tags(['golden'])
 library;
 
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
@@ -120,6 +122,33 @@ void main() {
       await expectLater(
         find.byType(RepaintBoundary).first,
         matchesGoldenFile('goldens/code_block_highlighted_$name.png'),
+      );
+    });
+
+    testWidgets('code block highlighting in the background in $name', (
+      tester,
+    ) async {
+      final pending = Completer<Oito2HighlightTokens?>();
+      Oito2CodeBlock.debugBackgroundTokenizer = (_, _, _) => pending.future;
+      addTearDown(() => Oito2CodeBlock.debugBackgroundTokenizer = null);
+      await _pumpGolden(
+        tester,
+        colors,
+        const Size(560, 200),
+        const MediaQuery(
+          data: MediaQueryData(disableAnimations: true),
+          child: Oito2CodeBlock(
+            code: _code,
+            language: 'dart',
+            showLineNumbers: true,
+            backgroundHighlightLength: 0,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(RepaintBoundary).first,
+        matchesGoldenFile('goldens/code_block_pending_$name.png'),
       );
     });
   }

@@ -508,6 +508,10 @@ abstract class Oito2Localizations {
   /// The accessibility label of a code editor.
   String get codeEditor;
 
+  /// Shown, and announced once, while a code block colors long code in
+  /// the background.
+  String get applyingSyntaxHighlighting;
+
   /// The accessibility label of a mark on line [line] of a code editor,
   /// counted from 1: its [kind], such as "Error", and its [message].
   String lineMessage(int line, String kind, String message);
@@ -1096,6 +1100,9 @@ class Oito2LocalizationsEn extends Oito2Localizations {
   String get codeEditor => 'Code editor';
 
   @override
+  String get applyingSyntaxHighlighting => 'Applying syntax highlighting…';
+
+  @override
   String lineMessage(int line, String kind, String message) =>
       'Line $line, $kind: $message';
 
@@ -1666,6 +1673,9 @@ class Oito2LocalizationsPtBr extends Oito2Localizations {
 
   @override
   String get codeEditor => 'Editor de código';
+
+  @override
+  String get applyingSyntaxHighlighting => 'Aplicando o destaque de sintaxe…';
 
   @override
   String lineMessage(int line, String kind, String message) =>

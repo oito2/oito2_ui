@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:typed_data';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
 import 'package:re_highlight/languages/bash.dart';
@@ -158,5 +160,153 @@ class Oito2Highlighter {
     final renderer = TextSpanRenderer(base, _themeFor(palette));
     result.render(renderer);
     return renderer.span ?? TextSpan(text: code, style: base);
+  }
+
+  /// Returns the tokens of [code] as [language], to be colored later with
+  /// [Oito2HighlightTokens.toSpan].
+  ///
+  /// [language] is a registered name or alias, in any letter case; with
+  /// [autoDetect], a null [language] is guessed among the registered ones.
+  /// Returns null when [language] isn't registered, or is null and
+  /// [autoDetect] is false.
+  ///
+  /// The highlighter and the result can be sent to another isolate, so
+  /// this can run off the UI thread, as `Oito2CodeBlock` does for long
+  /// code.
+  Oito2HighlightTokens? tokenize(
+    String code, {
+    String? language,
+    bool autoDetect = false,
+  }) {
+    final HighlightResult result;
+    if (language != null && supports(language)) {
+      result = _highlight.highlight(
+        code: code,
+        language: language.toLowerCase(),
+      );
+    } else if (language == null && autoDetect) {
+      result = _highlight.highlightAuto(code);
+    } else {
+      return null;
+    }
+    final collector = _TokenCollector();
+    result.render(collector);
+    return collector.finish(code);
+  }
+}
+
+/// The tokens of a piece of code: consecutive runs of text, each with the
+/// highlight.js scope of the innermost token it belongs to, or none.
+///
+/// Made by [Oito2Highlighter.tokenize]. The tokens hold no colors, so the
+/// same tokens are colored with any palette by [toSpan], and they can be
+/// sent between isolates.
+final class Oito2HighlightTokens {
+  Oito2HighlightTokens._(this.code, this._ends, this._scopes, this._names);
+
+  /// The tokenized code.
+  final String code;
+
+  /// The end offset of every run, in UTF-16 code units, in order.
+  final Int32List _ends;
+
+  /// The index in [_names] of the scope of every run, or -1 for none.
+  final Int32List _scopes;
+
+  /// The distinct scopes the runs refer to.
+  final List<String> _names;
+
+  /// The number of runs.
+  int get length => _ends.length;
+
+  /// Returns the text of run [index], counted from 0.
+  String textAt(int index) =>
+      code.substring(index == 0 ? 0 : _ends[index - 1], _ends[index]);
+
+  /// Returns the highlight.js scope of run [index], counted from 0, such as
+  /// `keyword` or `title.function`, or null for plain text.
+  String? scopeAt(int index) {
+    final scope = _scopes[index];
+    return scope < 0 ? null : _names[scope];
+  }
+
+  /// Returns the code colored with [palette] on top of [style] (whose
+  /// color is replaced by the palette foreground), drawn the same as
+  /// [Oito2Highlighter.highlight] draws it.
+  ///
+  /// The span is flat: one child per run, each with its scope style or
+  /// none, under a parent with the base style.
+  TextSpan toSpan({required Oito2SyntaxPalette palette, TextStyle? style}) {
+    final base = (style ?? const TextStyle()).copyWith(
+      color: palette.foreground,
+    );
+    if (length == 0) return TextSpan(text: code, style: base);
+    final theme = Oito2Highlighter._themeFor(palette);
+    final styles = [for (final name in _names) theme[name]];
+    return TextSpan(
+      style: base,
+      children: [
+        for (var i = 0; i < length; i++)
+          TextSpan(
+            text: textAt(i),
+            style: _scopes[i] < 0 ? null : styles[_scopes[i]],
+          ),
+      ],
+    );
+  }
+}
+
+/// Walks a `re_highlight` token tree into the runs of
+/// [Oito2HighlightTokens], joining neighboring runs of the same scope.
+class _TokenCollector implements HighlightRenderer {
+  final _ends = <int>[];
+  final _scopes = <int>[];
+  final _names = <String>[];
+  final _indexOf = <String, int>{};
+  final _open = <String?>[];
+  int _offset = 0;
+
+  @override
+  void addText(String text) {
+    if (text.isEmpty) return;
+    final name = _open.isEmpty ? null : _open.last;
+    final scope = name == null
+        ? -1
+        : _indexOf.putIfAbsent(name, () {
+            _names.add(name);
+            return _names.length - 1;
+          });
+    _offset += text.length;
+    if (_scopes.isNotEmpty && _scopes.last == scope) {
+      _ends.last = _offset;
+    } else {
+      _ends.add(_offset);
+      _scopes.add(scope);
+    }
+  }
+
+  @override
+  void openNode(DataNode node) => _open.add(node.scope);
+
+  @override
+  void closeNode(DataNode node) => _open.removeLast();
+
+  /// Returns the collected runs of [code], or a single plain run when the
+  /// tree doesn't cover [code] exactly.
+  Oito2HighlightTokens finish(String code) {
+    if (_offset != code.length) {
+      return Oito2HighlightTokens._(
+        code,
+        Int32List.fromList([if (code.isNotEmpty) code.length]),
+        Int32List.fromList([if (code.isNotEmpty) -1]),
+        const [],
+      );
+    }
+    return Oito2HighlightTokens._(
+      code,
+      Int32List.fromList(_ends),
+      Int32List.fromList(_scopes),
+      List.unmodifiable(_names),
+    );
   }
 }

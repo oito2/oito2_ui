@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -393,6 +395,34 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
     expect(live().values, after);
     expect(find.text('Resume'), findsOneWidget);
+  });
+
+  testWidgets('the long file shows the highlighting notice, then colors', (
+    tester,
+  ) async {
+    final pending = Completer<Oito2HighlightTokens?>();
+    Oito2CodeBlock.debugBackgroundTokenizer = (_, _, _) => pending.future;
+    addTearDown(() => Oito2CodeBlock.debugBackgroundTokenizer = null);
+    final semantics = tester.ensureSemantics();
+    await pumpShowcase(tester, slug: 'code-block');
+    await tester.ensureVisible(find.text('Show the long file'));
+    await tester.tap(find.text('Show the long file'));
+    await _settle(tester);
+    const notice = 'Applying syntax highlighting…';
+    expect(find.text(notice), findsOneWidget);
+    await tester.ensureVisible(find.text(notice));
+    await _settle(tester);
+    await _expectPointerGuidelines(tester, 'code-block');
+    final block = find.byWidgetPredicate(
+      (w) => w is Oito2CodeBlock && w.code.length > 10000,
+    );
+    final code = tester.widget<Oito2CodeBlock>(block).code;
+    pending.complete(
+      Oito2Highlighter.instance.tokenize(code, language: 'dart'),
+    );
+    await tester.pump();
+    expect(find.text(notice), findsNothing);
+    semantics.dispose();
   });
 
   testWidgets('F1 and Ctrl+? open the shortcuts help', (tester) async {

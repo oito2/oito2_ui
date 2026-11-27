@@ -8,6 +8,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `Oito2Localizations.applyingSyntaxHighlighting` ("Applying syntax highlighting…" / "Aplicando o destaque de sintaxe…"): the notice `Oito2CodeBlock` of `oito2_ui_syntax` shows while it highlights long code in the background.
 - `Oito2Localizations.activateItem` ("Open" / "Abrir"): the accessibility action that opens an item of a list or tree.
 - `Oito2VirtualList` and `Oito2TreeView` rows offer an "Open" accessibility action that calls `onActivate`, so a screen reader on a touch device can open an item without a keyboard or a double tap.
 - `Oito2TreeView` branch rows offer the expand and collapse accessibility actions, so a screen reader on a touch device can open and close branches.

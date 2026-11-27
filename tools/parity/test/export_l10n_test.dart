@@ -144,6 +144,7 @@ final Map<String, Getter> getters = {
   'passwordMixCharacters': (l) => l.passwordMixCharacters,
   'weekSchedule': (l) => l.weekSchedule,
   'codeEditor': (l) => l.codeEditor,
+  'applyingSyntaxHighlighting': (l) => l.applyingSyntaxHighlighting,
   'dropFilesOrFoldersHere': (l) => l.dropFilesOrFoldersHere,
   'folderItem': (l) => l.folderItem,
   'accounts': (l) => l.accounts,

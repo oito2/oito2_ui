@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oito2_ui/oito2_ui.dart';
@@ -34,6 +35,28 @@ List<(String, Color?)> _runs(InlineSpan span, [Color? inherited]) {
 
   visit(span, inherited);
   return runs;
+}
+
+/// Returns the resolved color, font style and weight of every code unit of
+/// a span tree.
+List<(Color?, FontStyle?, FontWeight?)> _unitStyles(InlineSpan span) {
+  final units = <(Color?, FontStyle?, FontWeight?)>[];
+  void visit(InlineSpan node, TextStyle inherited) {
+    if (node is! TextSpan) return;
+    final style = inherited.merge(node.style);
+    final text = node.text;
+    if (text != null) {
+      for (var i = 0; i < text.length; i++) {
+        units.add((style.color, style.fontStyle, style.fontWeight));
+      }
+    }
+    for (final child in node.children ?? const <InlineSpan>[]) {
+      visit(child, style);
+    }
+  }
+
+  visit(span, const TextStyle());
+  return units;
 }
 
 Color? _colorOf(List<(String, Color?)> runs, String text) =>
@@ -201,6 +224,89 @@ void main() {
       );
       expect(span.style!.fontSize, 20);
       expect(span.style!.color, palette.foreground);
+    });
+  });
+
+  group('Oito2HighlightTokens', () {
+    const markdown = '# Title\n\nSome *emphasis* and **strong** text.\n';
+    const html = '<style>p { color: red; }</style><p class="a">Hi</p>';
+
+    test('draw the same as highlight', () {
+      for (final (code, language) in [
+        (_dart, 'dart'),
+        (markdown, 'markdown'),
+        (html, 'html'),
+        ('', 'dart'),
+      ]) {
+        final tokens = highlighter.tokenize(code, language: language)!;
+        expect(tokens.code, code);
+        final span = tokens.toSpan(palette: palette);
+        expect(span.toPlainText(), code, reason: language);
+        expect(
+          _unitStyles(span),
+          _unitStyles(
+            highlighter.highlight(code, language: language, palette: palette),
+          ),
+          reason: language,
+        );
+      }
+    });
+
+    test('list runs with their scopes and join equal neighbors', () {
+      final tokens = highlighter.tokenize('final x = 1;', language: 'dart')!;
+      final runs = [
+        for (var i = 0; i < tokens.length; i++)
+          (tokens.textAt(i), tokens.scopeAt(i)),
+      ];
+      expect(runs.map((r) => r.$1).join(), 'final x = 1;');
+      expect(runs, contains(('final', 'keyword')));
+      expect(runs, contains(('1', 'number')));
+      for (var i = 1; i < runs.length; i++) {
+        expect(runs[i].$2, isNot(runs[i - 1].$2));
+      }
+    });
+
+    test('color the same tokens with any palette', () {
+      final tokens = highlighter.tokenize(_dart, language: 'dart')!;
+      final dark = Oito2ColorTheme.dark().syntax;
+      final runs = _runs(tokens.toSpan(palette: dark));
+      expect(_colorOf(runs, 'class'), dark.keyword);
+      expect(
+        _runs(tokens.toSpan(palette: palette))
+            .firstWhere((r) => r.$1.contains('class'))
+            .$2,
+        palette.keyword,
+      );
+    });
+
+    test('keep the style and replace its color', () {
+      final tokens = highlighter.tokenize('x', language: 'dart')!;
+      final span = tokens.toSpan(
+        palette: palette,
+        style: const TextStyle(fontSize: 20, color: Color(0xFF123456)),
+      );
+      expect(span.style!.fontSize, 20);
+      expect(span.style!.color, palette.foreground);
+    });
+
+    test('are null for an unregistered or missing language', () {
+      expect(highlighter.tokenize('x', language: 'cobol'), isNull);
+      expect(highlighter.tokenize('x'), isNull);
+      expect(highlighter.tokenize('{"a": 1}', autoDetect: true), isNotNull);
+      expect(highlighter.tokenize('x', language: 'DART'), isNotNull);
+    });
+
+    test('tokenize in another isolate', () async {
+      final tokens = await compute(
+        (String code) => highlighter.tokenize(code, language: 'dart'),
+        _dart,
+      );
+      expect(
+        _unitStyles(tokens!.toSpan(palette: palette)),
+        _unitStyles(
+          highlighter.highlight(_dart, language: 'dart', palette: palette),
+        ),
+      );
     });
   });
 }

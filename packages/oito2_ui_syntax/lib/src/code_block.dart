@@ -29,10 +29,20 @@ import 'line_highlight.dart';
 /// base scheme of the current brightness when the theme has none. Long
 /// lines scroll horizontally instead of wrapping.
 ///
-/// Highlighting runs on the UI thread, so code longer than
-/// [maxHighlightLength] shows as plain text in the foreground color.
+/// Code up to [backgroundHighlightLength] is highlighted on the UI thread
+/// as the block builds. Longer code, up to [maxHighlightLength], first
+/// shows as plain text in the foreground color, with a small notice in the
+/// top end corner, while another isolate highlights it; the colors then
+/// replace the plain text with the same layout. Code longer than
+/// [maxHighlightLength] stays plain text.
+///
+/// Creating the block throws an [AssertionError] when [maxHighlightLength]
+/// or [backgroundHighlightLength] is negative.
 class Oito2CodeBlock extends StatefulWidget {
   /// Creates a code block.
+  ///
+  /// Throws an [AssertionError] when [maxHighlightLength] or
+  /// [backgroundHighlightLength] is negative.
   const Oito2CodeBlock({
     super.key,
     required this.code,
@@ -44,7 +54,9 @@ class Oito2CodeBlock extends StatefulWidget {
     this.textStyle,
     this.padding = const EdgeInsets.all(Oito2Spacing.lg),
     this.maxHighlightLength = defaultMaxHighlightLength,
-  }) : assert(maxHighlightLength >= 0);
+    this.backgroundHighlightLength = defaultBackgroundHighlightLength,
+  }) : assert(maxHighlightLength >= 0),
+       assert(backgroundHighlightLength >= 0);
 
   /// The source code.
   final String code;
@@ -89,6 +101,38 @@ class Oito2CodeBlock extends StatefulWidget {
   /// highlight in about 50 milliseconds on a desktop computer.
   static const int defaultMaxHighlightLength = 20000;
 
+  /// The longest code, in UTF-16 code units, that is highlighted on the UI
+  /// thread; longer code, up to [maxHighlightLength], is highlighted in
+  /// another isolate.
+  ///
+  /// Defaults to [defaultBackgroundHighlightLength]. While the other
+  /// isolate works, the code shows as plain text in the foreground color
+  /// with a notice that highlighting is being applied, announced once to
+  /// assistive technologies. A value of [maxHighlightLength] or more
+  /// highlights everything on the UI thread.
+  ///
+  /// On the web there are no other isolates, so the highlighting runs on
+  /// the UI thread after the plain text shows, and blocks the UI
+  /// meanwhile.
+  final int backgroundHighlightLength;
+
+  /// The default [backgroundHighlightLength]: 5 000 code units, which
+  /// highlight in under 10 milliseconds on a desktop computer.
+  static const int defaultBackgroundHighlightLength = 5000;
+
+  /// Replaces the isolate that highlights long code, for tests; null runs
+  /// [Oito2Highlighter.tokenize] with `compute`.
+  ///
+  /// The function receives the block's highlighter, code and language and
+  /// returns the tokens, or null to keep the plain text.
+  @visibleForTesting
+  static Future<Oito2HighlightTokens?> Function(
+    Oito2Highlighter highlighter,
+    String code,
+    String language,
+  )?
+  debugBackgroundTokenizer;
+
   /// The family name of JetBrains Mono as bundled by this package,
   /// including the package prefix.
   static const String fontFamily = 'packages/oito2_ui_syntax/JetBrains Mono';
@@ -125,19 +169,121 @@ class _Oito2CodeBlockState extends State<Oito2CodeBlock> {
   void initState() {
     super.initState();
     _registerFontLicense();
+    _startBackgroundHighlight();
+  }
+
+  @override
+  void didUpdateWidget(Oito2CodeBlock oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _startBackgroundHighlight();
   }
 
   Object? _key;
   TextSpan? _span;
 
-  /// The highlighted code, or the plain code when it is longer than
-  /// [Oito2CodeBlock.maxHighlightLength], computed again only when an
-  /// input changes.
-  TextSpan _highlighted(Oito2SyntaxPalette palette, TextStyle style) {
-    final highlighter = widget.highlighter ?? Oito2Highlighter.instance;
+  /// The inputs of the background tokens: code, language and highlighter.
+  Object? _tokensKey;
+
+  /// The background tokens of [_tokensKey]; null while they are pending
+  /// or when they failed.
+  Oito2HighlightTokens? _tokens;
+
+  /// Whether the background tokens of [_tokensKey] are pending.
+  bool _pending = false;
+
+  /// Counts background requests, so a result that arrives after a newer
+  /// request is discarded.
+  int _generation = 0;
+
+  Oito2Highlighter get _highlighter =>
+      widget.highlighter ?? Oito2Highlighter.instance;
+
+  /// Whether the code is longer than the UI thread highlights, short
+  /// enough to be highlighted at all, and in a registered language.
+  bool get _inBackground {
+    final length = widget.code.length;
+    final language = widget.language;
+    return length > widget.backgroundHighlightLength &&
+        length <= widget.maxHighlightLength &&
+        language != null &&
+        _highlighter.supports(language);
+  }
+
+  /// Asks another isolate for the tokens of the code when it is highlighted
+  /// in the background and its tokens aren't known or pending yet.
+  void _startBackgroundHighlight() {
+    if (!_inBackground) {
+      _generation++;
+      _tokensKey = null;
+      _tokens = null;
+      _pending = false;
+      return;
+    }
+    final highlighter = _highlighter;
     final code = widget.code;
-    final plain = code.length > widget.maxHighlightLength;
-    final key = (code, widget.language, palette, style, highlighter, plain);
+    final language = widget.language!;
+    final key = (code, language, highlighter);
+    if (key == _tokensKey) return;
+    final generation = ++_generation;
+    _tokensKey = key;
+    _tokens = null;
+    _pending = true;
+    final tokenizer =
+        Oito2CodeBlock.debugBackgroundTokenizer ?? _tokenizeInBackground;
+    Future<Oito2HighlightTokens?>.sync(
+      () => tokenizer(highlighter, code, language),
+    ).then(
+      (tokens) => _finishBackgroundHighlight(generation, tokens),
+      onError: (Object error, StackTrace stack) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stack,
+            library: 'oito2_ui_syntax',
+            context: ErrorDescription(
+              'while highlighting code in the background',
+            ),
+          ),
+        );
+        _finishBackgroundHighlight(generation, null);
+      },
+    );
+  }
+
+  /// Shows [tokens], or keeps the plain text without the notice when they
+  /// are null, unless the block was disposed or a newer request than
+  /// [generation] was made meanwhile.
+  void _finishBackgroundHighlight(
+    int generation,
+    Oito2HighlightTokens? tokens,
+  ) {
+    if (!mounted || generation != _generation) return;
+    setState(() {
+      _tokens = tokens;
+      _pending = false;
+    });
+  }
+
+  /// The highlighted code, or the plain code when it is longer than
+  /// [Oito2CodeBlock.maxHighlightLength] or its background tokens are
+  /// pending or failed, computed again only when an input changes.
+  TextSpan _highlighted(Oito2SyntaxPalette palette, TextStyle style) {
+    final highlighter = _highlighter;
+    final code = widget.code;
+    final background = _inBackground;
+    final tokens = background ? _tokens : null;
+    final plain =
+        code.length > widget.maxHighlightLength ||
+        (background && tokens == null);
+    final key = (
+      code,
+      widget.language,
+      palette,
+      style,
+      highlighter,
+      plain,
+      tokens,
+    );
     if (key != _key || _span == null) {
       _key = key;
       _span = plain
@@ -145,6 +291,8 @@ class _Oito2CodeBlockState extends State<Oito2CodeBlock> {
               text: code,
               style: style.copyWith(color: palette.foreground),
             )
+          : tokens != null
+          ? tokens.toSpan(palette: palette, style: style)
           : highlighter.highlight(
               code,
               language: widget.language,
@@ -233,11 +381,84 @@ class _Oito2CodeBlockState extends State<Oito2CodeBlock> {
               end: Oito2Spacing.xs,
               child: Oito2CopyButton(text: code),
             ),
+          if (_pending && _inBackground)
+            PositionedDirectional(
+              top: Oito2Spacing.xs,
+              end: showCopyButton
+                  ? Oito2Spacing.xs * 2 + Oito2Sizes.buttonHeight
+                  : Oito2Spacing.xs,
+              height: Oito2Sizes.buttonHeight,
+              child: const Center(child: _HighlightingNotice()),
+            ),
         ],
       ),
     );
   }
 }
+
+/// A compact pill with a small progress indicator and the text that
+/// highlighting is being applied, announced once as a polite status.
+///
+/// It ignores pointers, so the code under it stays selectable, and it
+/// takes no focus. The indicator stays still when animations are
+/// disabled.
+class _HighlightingNotice extends StatelessWidget {
+  const _HighlightingNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Oito2Localizations.of(context).applyingSyntaxHighlighting;
+    return IgnorePointer(
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          color: scheme.surfaceContainerHighest,
+          shape: StadiumBorder(side: BorderSide(color: scheme.outlineVariant)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: Oito2Spacing.sm,
+            vertical: Oito2Spacing.xs,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: Oito2Spacing.xs,
+            children: [
+              const ExcludeSemantics(
+                child: Oito2CircularProgressIndicator(size: 12, strokeWidth: 2),
+              ),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  text,
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: scheme.onSurfaceVariant),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Returns the tokens of `message.$2` as language `message.$3` with the
+/// highlighter `message.$1`; runs in another isolate through `compute`.
+Oito2HighlightTokens? _tokenize((Oito2Highlighter, String, String) message) =>
+    message.$1.tokenize(message.$2, language: message.$3);
+
+/// Tokenizes [code] as [language] with [highlighter] in another isolate,
+/// or on the UI thread after the current frame on the web.
+Future<Oito2HighlightTokens?> _tokenizeInBackground(
+  Oito2Highlighter highlighter,
+  String code,
+  String language,
+) => compute(_tokenize, (
+  highlighter,
+  code,
+  language,
+), debugLabel: 'Oito2CodeBlock highlight');
 
 bool _fontLicenseRegistered = false;
 

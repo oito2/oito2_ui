@@ -13,6 +13,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:async';
+
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -258,6 +261,304 @@ void main() {
     expect(highlighter.calls, 0);
     expect(_codeSpan(tester).text, code);
   });
+
+  group('background highlighting', () {
+    const notice = 'Applying syntax highlighting…';
+    final dark = Oito2ColorTheme.dark().syntax;
+    late _FakeTokenizer tokenizer;
+
+    setUp(() {
+      tokenizer = _FakeTokenizer();
+      Oito2CodeBlock.debugBackgroundTokenizer = tokenizer.call;
+    });
+    tearDown(() => Oito2CodeBlock.debugBackgroundTokenizer = null);
+
+    /// Dart code of about [length] code units, longer than the default
+    /// background threshold when [length] is.
+    String longCode(int length, [String name = 'x']) {
+      final line = 'final $name = 1; // c\n';
+      return line * (length ~/ line.length + 1);
+    }
+
+    bool isPlain(TextSpan span, String code) =>
+        span.children == null && span.text == code;
+
+    testWidgets('shows plain text and the notice, then the colors', (
+      tester,
+    ) async {
+      final code = longCode(6000);
+      await _pump(tester, Oito2CodeBlock(code: code, language: 'dart'));
+      expect(tokenizer.requests, hasLength(1));
+      expect(tokenizer.requests.single.code, code);
+      expect(tokenizer.requests.single.language, 'dart');
+      expect(isPlain(_codeSpan(tester), code), isTrue);
+      expect(_codeSpan(tester).style!.color, dark.foreground);
+      expect(find.text(notice), findsOneWidget);
+      final pendingSize = tester.getSize(find.byType(Oito2CodeBlock));
+
+      tokenizer.completeAll();
+      await tester.pump();
+      expect(find.text(notice), findsNothing);
+      final span = _codeSpan(tester);
+      expect(span.toPlainText(), code);
+      expect(
+        span.children!.cast<TextSpan>().map((s) => s.style?.color),
+        contains(dark.keyword),
+      );
+      expect(tester.getSize(find.byType(Oito2CodeBlock)), pendingSize);
+    });
+
+    testWidgets('discards a result for code that changed meanwhile', (
+      tester,
+    ) async {
+      final first = longCode(6000);
+      final second = longCode(6000, 'y');
+      await _pump(tester, Oito2CodeBlock(code: first, language: 'dart'));
+      await _pump(tester, Oito2CodeBlock(code: second, language: 'dart'));
+      expect(tokenizer.requests, hasLength(2));
+
+      tokenizer.complete(0);
+      await tester.pump();
+      expect(isPlain(_codeSpan(tester), second), isTrue);
+      expect(find.text(notice), findsOneWidget);
+
+      tokenizer.complete(1);
+      await tester.pump();
+      expect(find.text(notice), findsNothing);
+      expect(_codeSpan(tester).toPlainText(), second);
+      expect(_codeSpan(tester).children, isNotEmpty);
+    });
+
+    testWidgets('discards a result when the language changed meanwhile', (
+      tester,
+    ) async {
+      final code = longCode(6000);
+      await _pump(tester, Oito2CodeBlock(code: code, language: 'dart'));
+      await _pump(tester, Oito2CodeBlock(code: code, language: 'rust'));
+      expect(tokenizer.requests.map((r) => r.language), ['dart', 'rust']);
+      tokenizer.complete(0);
+      await tester.pump();
+      expect(find.text(notice), findsOneWidget);
+      tokenizer.complete(1);
+      await tester.pump();
+      expect(find.text(notice), findsNothing);
+    });
+
+    testWidgets('a theme change reuses the tokens', (tester) async {
+      final code = longCode(6000);
+      final block = Oito2CodeBlock(code: code, language: 'dart');
+      await _pump(tester, block);
+      tokenizer.completeAll();
+      await tester.pump();
+      final light = Oito2ColorTheme.light();
+      await _pump(
+        tester,
+        block,
+        theme: Oito2Theme.fromColors(light, platform: testPlatform),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      expect(tokenizer.requests, hasLength(1));
+      expect(find.text(notice), findsNothing);
+      expect(
+        _codeSpan(tester).children!.cast<TextSpan>().map((s) => s.style?.color),
+        contains(light.syntax.keyword),
+      );
+    });
+
+    testWidgets('a theme change while pending keeps the request', (
+      tester,
+    ) async {
+      final code = longCode(6000);
+      final block = Oito2CodeBlock(code: code, language: 'dart');
+      await _pump(tester, block);
+      final light = Oito2ColorTheme.light();
+      await _pump(
+        tester,
+        block,
+        theme: Oito2Theme.fromColors(light, platform: testPlatform),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      expect(tokenizer.requests, hasLength(1));
+      tokenizer.completeAll();
+      await tester.pump();
+      expect(
+        _codeSpan(tester).children!.cast<TextSpan>().map((s) => s.style?.color),
+        contains(light.syntax.keyword),
+      );
+    });
+
+    testWidgets('a result after dispose is ignored', (tester) async {
+      await _pump(
+        tester,
+        Oito2CodeBlock(code: longCode(6000), language: 'dart'),
+      );
+      await _pump(tester, const SizedBox());
+      tokenizer.completeAll();
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a failure keeps the plain text without the notice', (
+      tester,
+    ) async {
+      final code = longCode(6000);
+      await _pump(tester, Oito2CodeBlock(code: code, language: 'dart'));
+      tokenizer.fail(0);
+      await tester.pump();
+      expect(tester.takeException(), isA<StateError>());
+      expect(find.text(notice), findsNothing);
+      expect(isPlain(_codeSpan(tester), code), isTrue);
+    });
+
+    testWidgets('code up to the threshold is highlighted synchronously', (
+      tester,
+    ) async {
+      final code = 'x' * Oito2CodeBlock.defaultBackgroundHighlightLength;
+      final highlighter = _CountingHighlighter();
+      await _pump(
+        tester,
+        Oito2CodeBlock(code: code, language: 'dart', highlighter: highlighter),
+      );
+      expect(tokenizer.requests, isEmpty);
+      expect(highlighter.calls, 1);
+      expect(find.text(notice), findsNothing);
+    });
+
+    testWidgets('code over the limit stays plain without the notice', (
+      tester,
+    ) async {
+      final code = longCode(6000);
+      await _pump(
+        tester,
+        Oito2CodeBlock(
+          code: code,
+          language: 'dart',
+          maxHighlightLength: code.length - 1,
+        ),
+      );
+      expect(tokenizer.requests, isEmpty);
+      expect(find.text(notice), findsNothing);
+      expect(isPlain(_codeSpan(tester), code), isTrue);
+    });
+
+    testWidgets('plain or unregistered languages skip the background', (
+      tester,
+    ) async {
+      final code = longCode(6000);
+      await _pump(tester, Oito2CodeBlock(code: code));
+      await _pump(tester, Oito2CodeBlock(code: code, language: 'cobol'));
+      expect(tokenizer.requests, isEmpty);
+      expect(find.text(notice), findsNothing);
+    });
+
+    testWidgets('backgroundHighlightLength sets the threshold', (tester) async {
+      const code = 'final x = 1;';
+      await _pump(
+        tester,
+        Oito2CodeBlock(
+          code: code,
+          language: 'dart',
+          backgroundHighlightLength: code.length - 1,
+        ),
+      );
+      expect(tokenizer.requests, hasLength(1));
+      expect(find.text(notice), findsOneWidget);
+    });
+
+    testWidgets('the notice is a polite status that takes no focus', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await _pump(
+        tester,
+        Oito2CodeBlock(code: longCode(6000), language: 'dart'),
+      );
+      expect(
+        tester.getSemantics(find.text(notice)),
+        matchesSemantics(label: notice, isLiveRegion: true, isFocusable: false),
+      );
+      expect(
+        find.ancestor(
+          of: find.text(notice),
+          matching: find.byType(IgnorePointer),
+        ),
+        findsWidgets,
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('the plain text stays selectable under the notice', (
+      tester,
+    ) async {
+      final code = longCode(6000);
+      await _pump(tester, Oito2CodeBlock(code: code, language: 'dart'));
+      final center = tester.getCenter(find.text(notice));
+      final hits = tester.hitTestOnBinding(center).path.map((e) => e.target);
+      expect(hits.whereType<RenderEditable>(), isNotEmpty);
+    });
+
+    testWidgets('the indicator is still when animations are disabled', (
+      tester,
+    ) async {
+      final code = longCode(6000);
+      await _pump(
+        tester,
+        MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: Oito2CodeBlock(code: code, language: 'dart'),
+        ),
+      );
+      await tester.pump();
+      expect(find.text(notice), findsOneWidget);
+      expect(tester.binding.hasScheduledFrame, isFalse);
+    });
+
+    testWidgets('the indicator spins when animations are enabled', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        Oito2CodeBlock(code: longCode(6000), language: 'dart'),
+      );
+      await tester.pump();
+      expect(tester.binding.hasScheduledFrame, isTrue);
+    });
+  });
+
+  test('the background thresholds default to 5 000 and 20 000', () {
+    expect(Oito2CodeBlock.defaultBackgroundHighlightLength, 5000);
+    expect(Oito2CodeBlock.defaultMaxHighlightLength, 20000);
+    const block = Oito2CodeBlock(code: '');
+    expect(block.backgroundHighlightLength, 5000);
+  });
+
+  test('negative thresholds throw an AssertionError', () {
+    expect(
+      () => Oito2CodeBlock(code: '', backgroundHighlightLength: -1),
+      throwsAssertionError,
+    );
+    expect(
+      () => Oito2CodeBlock(code: '', maxHighlightLength: -1),
+      throwsAssertionError,
+    );
+  });
+
+  testWidgets('the default runner tokenizes in another isolate', (
+    tester,
+  ) async {
+    final line = 'final x = 1; // c\n';
+    final code = line * 300;
+    await _pump(tester, Oito2CodeBlock(code: code, language: 'dart'));
+    expect(find.text('Applying syntax highlighting…'), findsOneWidget);
+    for (var i = 0; i < 100 && _codeSpan(tester).children == null; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump();
+    }
+    expect(_codeSpan(tester).children, isNotEmpty);
+    expect(find.text('Applying syntax highlighting…'), findsNothing);
+  });
 }
 
 /// Counts its highlight calls.
@@ -280,5 +581,41 @@ class _CountingHighlighter extends Oito2Highlighter {
       style: style,
       autoDetect: autoDetect,
     );
+  }
+}
+
+/// A background tokenizer completed by the test.
+class _FakeTokenizer {
+  final requests = <({String code, String language, Oito2Highlighter h})>[];
+  final _completers = <Completer<Oito2HighlightTokens?>>[];
+
+  Future<Oito2HighlightTokens?> call(
+    Oito2Highlighter highlighter,
+    String code,
+    String language,
+  ) {
+    requests.add((code: code, language: language, h: highlighter));
+    final completer = Completer<Oito2HighlightTokens?>();
+    _completers.add(completer);
+    return completer.future;
+  }
+
+  /// Completes request [index] with the real tokens.
+  void complete(int index) {
+    final request = requests[index];
+    _completers[index].complete(
+      request.h.tokenize(request.code, language: request.language),
+    );
+  }
+
+  /// Fails request [index].
+  void fail(int index) =>
+      _completers[index].completeError(StateError('tokenizer failed'));
+
+  /// Completes every pending request.
+  void completeAll() {
+    for (var i = 0; i < requests.length; i++) {
+      if (!_completers[i].isCompleted) complete(i);
+    }
   }
 }
